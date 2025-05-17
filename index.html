@@ -1,7 +1,8 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Create Watch Party</title>
 </head>
 <body>
@@ -14,6 +15,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBlh428ba5aSFt6x2pPkVjeEk5D6AbIU7Y",
@@ -26,23 +28,18 @@
       databaseURL: "https://kheemz-fb9b6-default-rtdb.firebaseio.com"
     };
     firebase.initializeApp(firebaseConfig);
-  </script>
 
-  <script>
     function createRoom() {
       const videoLink = document.getElementById("videoLink").value;
       const startTime = document.getElementById("startTime").value;
-      if (!videoLink || !startTime) {
-        alert("Please enter both video link and start time.");
-        return;
-      }
       const roomId = Math.random().toString(36).substring(2, 8);
 
       const roomRef = firebase.database().ref("rooms/" + roomId);
       roomRef.set({
         videoLink,
         startTime,
-        status: "waiting"
+        status: "waiting",
+        time: 0
       });
 
       document.getElementById("output").innerHTML = `
@@ -50,6 +47,107 @@
         <p><b>Host link:</b> room.html?room=${roomId}&host=true</p>
         <p><b>Viewer link:</b> room.html?room=${roomId}</p>
       `;
+    }
+  </script>
+</body>
+</html>
+
+<!-- room.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Watch Room</title>
+</head>
+<body>
+  <h2>Watch Party Room</h2>
+  <div id="player"></div>
+  <div id="controls" style="display:none;">
+    <button onclick="playVideo()">Play</button>
+    <button onclick="pauseVideo()">Pause</button>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBlh428ba5aSFt6x2pPkVjeEk5D6AbIU7Y",
+      authDomain: "kheemz-fb9b6.firebaseapp.com",
+      projectId: "kheemz-fb9b6",
+      storageBucket: "kheemz-fb9b6.firebasestorage.app",
+      messagingSenderId: "593310501630",
+      appId: "1:593310501630:web:c241a05e0d7c4a810173af",
+      measurementId: "G-Q50WK6G76P",
+      databaseURL: "https://kheemz-fb9b6-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomId = urlParams.get("room");
+    const isHost = urlParams.get("host") === "true";
+    const db = firebase.database();
+    const roomRef = db.ref("rooms/" + roomId);
+
+    let player;
+
+    function onYouTubeIframeAPIReady() {
+      roomRef.once("value").then(snapshot => {
+        const data = snapshot.val();
+        const videoId = extractVideoId(data.videoLink);
+
+        player = new YT.Player("player", {
+          height: "360",
+          width: "640",
+          videoId,
+          playerVars: { controls: 0, disablekb: 1 },
+          events: {
+            onReady: onPlayerReady
+          }
+        });
+      });
+    }
+
+    function onPlayerReady() {
+      if (isHost) {
+        document.getElementById("controls").style.display = "block";
+        setInterval(() => {
+          roomRef.update({ time: player.getCurrentTime() });
+        }, 1000);
+      } else {
+        roomRef.child("time").on("value", snapshot => {
+          const currentTime = snapshot.val();
+          const playerTime = player.getCurrentTime();
+          if (Math.abs(playerTime - currentTime) > 1) {
+            player.seekTo(currentTime, true);
+          }
+        });
+      }
+
+      roomRef.child("status").on("value", snapshot => {
+        const status = snapshot.val();
+        if (!isHost) {
+          if (status === "play") player.playVideo();
+          else if (status === "pause") player.pauseVideo();
+        }
+      });
+    }
+
+    function playVideo() {
+      player.playVideo();
+      roomRef.update({ status: "play" });
+    }
+
+    function pauseVideo() {
+      player.pauseVideo();
+      roomRef.update({ status: "pause" });
+    }
+
+    function extractVideoId(url) {
+      const regex = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([\w-]{11})/;
+      const match = url.match(regex);
+      return match ? match[1] : null;
     }
   </script>
 </body>

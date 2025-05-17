@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Create Watch Party</title>
+</head>
+<body>
+  <h2>Create a Watch Party</h2>
+  <input type="text" id="videoLink" placeholder="Paste YouTube or video link" />
+  <input type="datetime-local" id="startTime" />
+  <button onclick="createRoom()">Create Room</button>
+
+  <p id="output"></p>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBlh428ba5aSFt6x2pPkVjeEk5D6AbIU7Y",
+      authDomain: "kheemz-fb9b6.firebaseapp.com",
+      projectId: "kheemz-fb9b6",
+      storageBucket: "kheemz-fb9b6.firebasestorage.app",
+      messagingSenderId: "593310501630",
+      appId: "1:593310501630:web:c241a05e0d7c4a810173af",
+      measurementId: "G-Q50WK6G76P",
+      databaseURL: "https://kheemz-fb9b6-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <script>
+    function createRoom() {
+      const videoLink = document.getElementById("videoLink").value;
+      const startTime = document.getElementById("startTime").value;
+      if (!videoLink || !startTime) {
+        alert("Please enter both video link and start time.");
+        return;
+      }
+      const roomId = Math.random().toString(36).substring(2, 8);
+
+      const roomRef = firebase.database().ref("rooms/" + roomId);
+      roomRef.set({
+        videoLink,
+        startTime,
+        status: "waiting"
+      });
+
+      document.getElementById("output").innerHTML = `
+        <p>Share these links:</p>
+        <p><b>Host link:</b> room.html?room=${roomId}&host=true</p>
+        <p><b>Viewer link:</b> room.html?room=${roomId}</p>
+      `;
+    }
+  </script>
+</body>
+</html>

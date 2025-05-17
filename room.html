@@ -1,39 +1,38 @@
-<!-- room.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Watch Room</title>
+  <style>
+    #player-overlay {
+      position: relative;
+      width: 640px;
+      height: 360px;
+      pointer-events: none;
+    }
+    iframe {
+      pointer-events: none;
+    }
+    #controls {
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
   <h2>Watch Party Room</h2>
-  <div id="player"></div>
+  <div id="player-overlay">
+    <div id="player"></div>
+  </div>
   <div id="controls" style="display:none;">
     <button onclick="playVideo()">Play</button>
     <button onclick="pauseVideo()">Pause</button>
   </div>
 
-  <!-- Firebase & YouTube APIs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="firebase-config.js"></script>
 
-  <!-- Firebase Config & Init -->
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBlh428ba5aSFt6x2pPkVjeEk5D6AbIU7Y",
-      authDomain: "kheemz-fb9b6.firebaseapp.com",
-      projectId: "kheemz-fb9b6",
-      storageBucket: "kheemz-fb9b6.firebasestorage.app",
-      messagingSenderId: "593310501630",
-      appId: "1:593310501630:web:c241a05e0d7c4a810173af",
-      measurementId: "G-Q50WK6G76P",
-      databaseURL: "https://kheemz-fb9b6-default-rtdb.firebaseio.com"
-    };
-    firebase.initializeApp(firebaseConfig);
-  </script>
-
-  <!-- Core Logic -->
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const roomId = urlParams.get("room");
@@ -42,6 +41,7 @@
     const roomRef = db.ref("rooms/" + roomId);
 
     let player;
+    let syncing = false;
 
     function onYouTubeIframeAPIReady() {
       roomRef.once("value").then(snapshot => {
@@ -52,39 +52,37 @@
           height: "360",
           width: "640",
           videoId,
-          playerVars: { controls: 0, disablekb: 1 },
           events: {
-            onReady: onPlayerReady
+            onReady: () => {
+              if (isHost) {
+                document.getElementById("controls").style.display = "block";
+                setInterval(() => {
+                  roomRef.update({ currentTime: player.getCurrentTime() });
+                }, 1000);
+              } else {
+                setInterval(() => {
+                  roomRef.child("currentTime").once("value").then(snap => {
+                    const serverTime = snap.val();
+                    const localTime = player.getCurrentTime();
+                    const diff = Math.abs(serverTime - localTime);
+                    if (diff > 1.5) {
+                      player.seekTo(serverTime, true);
+                    }
+                  });
+                }, 1000);
+              }
+
+              roomRef.child("status").on("value", snap => {
+                const status = snap.val();
+                if (!isHost) {
+                  if (status === "play") player.playVideo();
+                  if (status === "pause") player.pauseVideo();
+                }
+              });
+            }
           }
         });
-
-        if (isHost) {
-          document.getElementById("controls").style.display = "block";
-        }
       });
-    }
-
-    function onPlayerReady() {
-      if (isHost) {
-        setInterval(() => {
-          const currentTime = player.getCurrentTime();
-          roomRef.update({ currentTime });
-        }, 1000);
-      } else {
-        roomRef.child("status").on("value", snapshot => {
-          const status = snapshot.val();
-          if (status === "play") player.playVideo();
-          if (status === "pause") player.pauseVideo();
-        });
-
-        roomRef.child("currentTime").on("value", snapshot => {
-          const hostTime = snapshot.val();
-          const viewerTime = player.getCurrentTime();
-          if (Math.abs(hostTime - viewerTime) > 1) {
-            player.seekTo(hostTime, true);
-          }
-        });
-      }
     }
 
     function playVideo() {

@@ -1,7 +1,8 @@
+<!-- room.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Watch Room</title>
 </head>
 <body>
@@ -12,10 +13,12 @@
     <button onclick="pauseVideo()">Pause</button>
   </div>
 
+  <!-- Firebase & YouTube APIs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
 
+  <!-- Firebase Config & Init -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBlh428ba5aSFt6x2pPkVjeEk5D6AbIU7Y",
@@ -30,11 +33,11 @@
     firebase.initializeApp(firebaseConfig);
   </script>
 
+  <!-- Core Logic -->
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const roomId = urlParams.get("room");
     const isHost = urlParams.get("host") === "true";
-
     const db = firebase.database();
     const roomRef = db.ref("rooms/" + roomId);
 
@@ -43,20 +46,13 @@
     function onYouTubeIframeAPIReady() {
       roomRef.once("value").then(snapshot => {
         const data = snapshot.val();
-        if (!data || !data.videoLink) {
-          alert("Room data not found or invalid video link.");
-          return;
-        }
         const videoId = extractVideoId(data.videoLink);
-        if (!videoId) {
-          alert("Invalid YouTube video link.");
-          return;
-        }
 
         player = new YT.Player("player", {
           height: "360",
           width: "640",
           videoId,
+          playerVars: { controls: 0, disablekb: 1 },
           events: {
             onReady: onPlayerReady
           }
@@ -69,13 +65,26 @@
     }
 
     function onPlayerReady() {
-      roomRef.child("status").on("value", snapshot => {
-        if (!isHost) {
+      if (isHost) {
+        setInterval(() => {
+          const currentTime = player.getCurrentTime();
+          roomRef.update({ currentTime });
+        }, 1000);
+      } else {
+        roomRef.child("status").on("value", snapshot => {
           const status = snapshot.val();
           if (status === "play") player.playVideo();
           if (status === "pause") player.pauseVideo();
-        }
-      });
+        });
+
+        roomRef.child("currentTime").on("value", snapshot => {
+          const hostTime = snapshot.val();
+          const viewerTime = player.getCurrentTime();
+          if (Math.abs(hostTime - viewerTime) > 1) {
+            player.seekTo(hostTime, true);
+          }
+        });
+      }
     }
 
     function playVideo() {

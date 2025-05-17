@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,26 +16,29 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="firebase-config.js"></script>
-
   <script>
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     function createRoom() {
       const videoLink = document.getElementById("videoLink").value;
       const startTime = document.getElementById("startTime").value;
       const roomId = Math.random().toString(36).substring(2, 8);
 
-      const roomRef = firebase.database().ref("rooms/" + roomId);
+      const roomRef = db.ref("rooms/" + roomId);
       roomRef.set({
         videoLink,
         startTime,
-        status: "waiting",
-        currentTime: 0
+        status: "waiting"
+      }).then(() => {
+        document.getElementById("output").innerHTML = `
+          <p>Share these links:</p>
+          <p><b>Host link:</b> room.html?room=${roomId}&host=true</p>
+          <p><b>Viewer link:</b> room.html?room=${roomId}</p>
+        `;
+      }).catch(error => {
+        document.getElementById("output").innerText = "Error creating room: " + error.message;
       });
-
-      document.getElementById("output").innerHTML = `
-        <p>Share these links:</p>
-        <p><b>Host link:</b> room.html?room=${roomId}&host=true</p>
-        <p><b>Viewer link:</b> room.html?room=${roomId}</p>
-      `;
     }
   </script>
 </body>

@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,38 +6,51 @@
 </head>
 <body>
   <h2>Create a Watch Party</h2>
-  <input type="text" id="videoLink" placeholder="Paste YouTube or video link" />
-  <input type="datetime-local" id="startTime" />
+  <input type="text" id="videoLink" placeholder="Paste YouTube link" required>
+  <input type="datetime-local" id="startTime" required>
   <button onclick="createRoom()">Create Room</button>
-
   <p id="output"></p>
 
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="firebase-config.js"></script>
+
   <script>
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    function createRoom() {
+    async function createRoom() {
       const videoLink = document.getElementById("videoLink").value;
       const startTime = document.getElementById("startTime").value;
-      const roomId = Math.random().toString(36).substring(2, 8);
+      
+      if (!videoLink || !startTime) {
+        alert("Please fill all fields");
+        return;
+      }
 
-      const roomRef = db.ref("rooms/" + roomId);
-      roomRef.set({
-        videoLink,
-        startTime,
-        status: "waiting"
-      }).then(() => {
+      try {
+        // Generate secure room ID
+        const roomRef = db.ref('rooms').push();
+        const roomId = roomRef.key;
+        
+        await roomRef.set({
+          videoLink,
+          startTime: firebase.database.ServerValue.TIMESTAMP,
+          status: "pause",
+          currentTime: 0,
+          host: true
+        });
+
         document.getElementById("output").innerHTML = `
           <p>Share these links:</p>
           <p><b>Host link:</b> room.html?room=${roomId}&host=true</p>
           <p><b>Viewer link:</b> room.html?room=${roomId}</p>
         `;
-      }).catch(error => {
-        document.getElementById("output").innerText = "Error creating room: " + error.message;
-      });
+      } catch (error) {
+        document.getElementById("output").innerText = "Error: " + error.message;
+      }
     }
   </script>
 </body>

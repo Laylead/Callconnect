@@ -6,7 +6,6 @@
     <title>Tic Tac Game | CallConnect</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Your original CSS preserved exactly */
         :root {
             --primary: #ff4757;
             --secondary: #57606f;
@@ -510,7 +509,6 @@
     </style>
 </head>
 <body>
-    <!-- Your original HTML structure preserved -->
     <div class="container">
         <div class="header">
             <a href="fun.html" class="logo">
@@ -534,9 +532,7 @@
                 <p class="game-description" id="game-description"></p>
             </div>
             
-            <div class="player-info" id="player-info">
-                <!-- Players dynamically populated -->
-            </div>
+            <div class="player-info" id="player-info"></div>
             
             <div class="game-board-container">
                 <div class="game-status" id="game-status">Waiting for players...</div>
@@ -583,9 +579,7 @@
 
         <div class="host-controls" id="host-controls" style="display: none;">
             <h3 class="sidebar-title"><i class="fas fa-crown"></i> Host Controls</h3>
-            <div class="player-list" id="player-management">
-                <!-- Players will be listed here with kick buttons -->
-            </div>
+            <div class="player-list" id="player-management"></div>
         </div>
     </div>
 
@@ -596,7 +590,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script>
-        // Preserved your original Firebase initialization with fixes
         const urlParams = new URLSearchParams(window.location.search);
         let roomId = urlParams.get('room');
         let playerName = urlParams.get('player');
@@ -611,8 +604,8 @@
 
         if (!playerName) {
             playerName = generateGuestName();
-            window.history.replaceState({}, document.title, 
-                `${window.location.pathname}?room=${roomId}&player=${encodeURIComponent(playerName)}`);
+            const newUrl = `${window.location.pathname}?room=${roomId}&player=${encodeURIComponent(playerName)}`;
+            window.history.replaceState({}, document.title, newUrl);
         }
 
         const firebaseConfig = {
@@ -622,7 +615,8 @@
             projectId: "YOUR_PROJECT_ID",
             storageBucket: "YOUR_PROJECT_ID.appspot.com",
             messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            appId: "YOUR_APP_ID",
+            measurementId: "G-YOUR_MEASUREMENT_ID"
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -630,13 +624,13 @@
         const gameRef = db.ref(`ticGames/${roomId}`);
 
         function initializeGameData() {
-            gameRef.transaction(gameData => {
-                if (!gameData) {
+            gameRef.transaction(currentData => {
+                if (!currentData) {
                     return {
                         players: {},
                         currentPlayers: [],
                         waitingPlayers: [],
-                        board: ['', '', '', '', '', '', '', '', ''],
+                        board: Array(9).fill(''),
                         status: 'waiting',
                         host: '',
                         currentPlayer: 'X',
@@ -647,15 +641,16 @@
                     };
                 }
 
-                gameData.players = gameData.players || {};
-                gameData.currentPlayers = gameData.currentPlayers || [];
-                gameData.waitingPlayers = gameData.waitingPlayers || [];
-                gameData.board = gameData.board || Array(9).fill('');
+                // Initialize missing properties
+                currentData.players = currentData.players || {};
+                currentData.currentPlayers = currentData.currentPlayers || [];
+                currentData.waitingPlayers = currentData.waitingPlayers || [];
+                currentData.board = currentData.board || Array(9).fill('');
 
-                if (!gameData.players[playerName]) {
-                    const isFirstPlayer = Object.keys(gameData.players).length === 0;
+                if (!currentData.players[playerName]) {
+                    const isFirstPlayer = Object.keys(currentData.players).length === 0;
                     
-                    gameData.players[playerName] = {
+                    currentData.players[playerName] = {
                         name: playerName,
                         symbol: isFirstPlayer ? 'X' : 'O',
                         avatar: `https://i.pravatar.cc/150?u=${playerName}`,
@@ -665,18 +660,20 @@
                     };
 
                     if (isFirstPlayer) {
-                        gameData.host = playerName;
-                        gameData.currentPlayers = [playerName];
-                        gameData.status = 'waiting';
-                    } else if (gameData.currentPlayers.length < 2) {
-                        gameData.currentPlayers.push(playerName);
-                        gameData.status = 'playing';
+                        currentData.host = playerName;
+                        currentData.currentPlayers = [playerName];
+                        currentData.status = 'waiting';
+                    } else if (currentData.currentPlayers.length < 2) {
+                        currentData.currentPlayers.push(playerName);
+                        currentData.status = 'playing';
                     } else {
-                        gameData.waitingPlayers.push(playerName);
+                        currentData.waitingPlayers.push(playerName);
                     }
                 }
-                return gameData;
-            }).catch(error => console.error('Transaction failed:', error));
+                return currentData;
+            }).catch(error => {
+                console.error('Transaction failed:', error);
+            });
         }
 
         gameRef.on('value', snapshot => {
@@ -688,9 +685,12 @@
             }
 
             currentGameData = gameData;
+            
+            // Update host controls
             document.getElementById('host-controls').style.display = 
                 gameData.host === playerName ? 'block' : 'none';
 
+            // Update game state
             updateBoard(gameData.board);
             updatePlayers(gameData);
             updateGameStatus(gameData);
@@ -702,7 +702,6 @@
             document.querySelectorAll('.cell').forEach((cell, index) => {
                 cell.textContent = board[index] || '';
                 cell.className = `cell ${board[index] ? board[index].toLowerCase() : ''}`;
-                cell.classList.toggle('winning', false);
             });
         }
 
@@ -719,18 +718,18 @@
                 const player = gameData.players[playerId];
                 if (!player) return;
 
-                const isCurrentPlayer = gameData.currentPlayer === player.symbol;
                 const isActive = gameData.currentPlayers.includes(playerId);
+                const isCurrentTurn = gameData.currentPlayer === player.symbol;
 
                 const playerCard = document.createElement('div');
                 playerCard.className = `player-card 
                     ${player.symbol === 'X' ? 'x-player' : 'o-player'} 
-                    ${isCurrentPlayer ? 'active' : ''}`;
+                    ${isCurrentTurn ? 'active' : ''}`;
 
                 playerCard.innerHTML = `
                     <img src="${player.avatar}" class="player-avatar">
                     <div>
-                        <div class="player-name">${player.name}</div>
+                        <div class="player-name">${player.name} ${player.isHost ? '👑' : ''}</div>
                         <div class="player-symbol">${player.symbol}</div>
                         <div class="player-stats">
                             <div class="stat-item">W: ${player.wins}</div>
@@ -743,9 +742,155 @@
             });
         }
 
-        // Rest of your original JavaScript logic with fixes
-        // ... (keep all other functions from previous answer) ...
+        function updatePlayerManagement(gameData) {
+            const playerManagement = document.getElementById('player-management');
+            playerManagement.innerHTML = '';
+            
+            Object.entries(gameData.players).forEach(([playerId, player]) => {
+                const playerElement = document.createElement('div');
+                playerElement.className = 'participant-item';
+                playerElement.innerHTML = `
+                    <div class="participant-info">
+                        <span>${player.name} ${player.isHost ? '👑' : ''}</span>
+                        <div class="player-stats">
+                            <div class="stat-item">W: ${player.wins}</div>
+                            <div class="stat-item">L: ${player.losses}</div>
+                        </div>
+                    </div>
+                    ${gameData.host === playerName && playerId !== gameData.host ? 
+                        `<button class="kick-btn" data-player="${playerId}">Kick</button>` : ''}
+                `;
+                playerManagement.appendChild(playerElement);
+            });
 
+            document.querySelectorAll('.kick-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const playerToKick = btn.dataset.player;
+                    gameRef.child(`players/${playerToKick}`).remove();
+                    gameRef.child('currentPlayers').transaction(current => 
+                        current.filter(p => p !== playerToKick)
+                    );
+                    gameRef.child('waitingPlayers').transaction(waiting => 
+                        waiting.filter(p => p !== playerToKick)
+                    );
+                });
+            });
+        }
+
+        function updateGameStatus(gameData) {
+            const statusElement = document.getElementById('game-status');
+            if (gameData.winner) {
+                statusElement.textContent = `${gameData.winner} wins!`;
+                statusElement.className = "game-status win";
+            } else if (gameData.status === 'draw') {
+                statusElement.textContent = "It's a draw!";
+                statusElement.className = "game-status draw";
+            } else {
+                const currentPlayer = gameData.currentPlayers.find(
+                    p => gameData.players[p].symbol === gameData.currentPlayer
+                );
+                statusElement.textContent = gameData.status === 'waiting' 
+                    ? "Waiting for players..." 
+                    : `${currentPlayer}'s turn (${gameData.currentPlayer})`;
+                statusElement.className = "game-status";
+            }
+        }
+
+        function updateStats(gameData) {
+            document.getElementById('x-wins').textContent = gameData.xWins || 0;
+            document.getElementById('o-wins').textContent = gameData.oWins || 0;
+            document.getElementById('draws').textContent = gameData.draws || 0;
+        }
+
+        function checkWinner() {
+            gameRef.once('value').then(snapshot => {
+                const gameData = snapshot.val();
+                const winPatterns = [
+                    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                    [0, 4, 8], [2, 4, 6]
+                ];
+
+                for (const pattern of winPatterns) {
+                    const [a, b, c] = pattern;
+                    if (gameData.board[a] && 
+                        gameData.board[a] === gameData.board[b] && 
+                        gameData.board[a] === gameData.board[c]) {
+                            gameRef.update({
+                                winner: gameData.board[a],
+                                status: 'won'
+                            });
+                            return;
+                        }
+                }
+
+                if (!gameData.board.includes('')) {
+                    gameRef.update({
+                        status: 'draw',
+                        draws: (gameData.draws || 0) + 1
+                    });
+                }
+            });
+        }
+
+        // Cell click handler
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.addEventListener('click', async () => {
+                if (!currentGameData || 
+                    currentGameData.status !== 'playing' ||
+                    !currentGameData.currentPlayers.includes(playerName)) return;
+
+                const index = cell.getAttribute('data-index');
+                const isPlayersTurn = currentGameData.players[playerName]?.symbol === currentGameData.currentPlayer;
+                const isEmptyCell = currentGameData.board[index] === '';
+                
+                if (isPlayersTurn && isEmptyCell) {
+                    try {
+                        await gameRef.update({
+                            [`board/${index}`]: currentGameData.currentPlayer,
+                            currentPlayer: currentGameData.currentPlayer === 'X' ? 'O' : 'X'
+                        });
+                        checkWinner();
+                    } catch (error) {
+                        console.error('Move error:', error);
+                    }
+                }
+            });
+        });
+
+        // Restart game handler
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            if (currentGameData?.host === playerName) {
+                gameRef.update({
+                    board: ['', '', '', '', '', '', '', '', ''],
+                    currentPlayer: 'X',
+                    status: 'playing',
+                    winner: null
+                });
+            }
+        });
+
+        // Theme toggle
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+            document.getElementById('theme-toggle').innerHTML = isDark ? 
+                '<i class="fas fa-moon"></i>' : 
+                '<i class="fas fa-sun"></i>';
+        });
+
+        // Microphone toggle
+        let isMuted = false;
+        document.getElementById('mic-button').addEventListener('click', () => {
+            isMuted = !isMuted;
+            const micButton = document.getElementById('mic-button');
+            micButton.classList.toggle('muted', isMuted);
+            micButton.querySelector('i').className = isMuted ? 
+                'fas fa-microphone-slash' : 
+                'fas fa-microphone';
+        });
+
+        // Initialize the game
         initializeGameData();
     </script>
 </body>

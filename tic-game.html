@@ -605,15 +605,23 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-    <script src="firebase-config.js"></script>
     <script>
+        // Replace with your Firebase config
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID",
+            measurementId: "G-YOUR_MEASUREMENT_ID"
+        };
+
         const urlParams = new URLSearchParams(window.location.search);
         const roomId = urlParams.get('room');
-        const playerName = urlParams.get('player');
-        const isHost = urlParams.has('host');
-        let playerSymbol = 'X';
-        let currentPlayerName = '';
-        let gameActive = false;
+        const playerName = decodeURIComponent(urlParams.get('player'));
+        let currentGameData = null;
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
@@ -626,25 +634,36 @@
                 window.location.href = 'start-tic-game.html';
                 return;
             }
-
-            // Update host controls visibility
-            document.getElementById('host-controls').style.display = isHost ? 'block' : 'none';
-
-            // Update player management
-            updatePlayerManagement(gameData);
             
-            // Update game board
+            currentGameData = gameData;
+            const isActualHost = gameData.host === playerName;
+            
+            document.getElementById('host-controls').style.display = isActualHost ? 'block' : 'none';
             updateBoard(gameData.board);
-            
-            // Update current player
-            currentPlayerName = gameData.currentPlayers[gameData.currentPlayer === 'X' ? 0 : 1];
-            gameActive = gameData.status === 'playing';
-            
-            // Update players
             updatePlayers(gameData.players);
-            
-            // Update game status
             updateGameStatus(gameData);
+            updatePlayerManagement(gameData);
+        });
+
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.addEventListener('click', async () => {
+                if (!currentGameData || currentGameData.status !== 'playing') return;
+                
+                const index = cell.getAttribute('data-index');
+                const isPlayersTurn = currentGameData.players[playerName]?.symbol === currentGameData.currentPlayer;
+                const isEmptyCell = currentGameData.board[index] === '';
+                
+                if (isPlayersTurn && isEmptyCell) {
+                    try {
+                        await gameRef.update({
+                            [`board/${index}`]: currentGameData.currentPlayer,
+                            currentPlayer: currentGameData.currentPlayer === 'X' ? 'O' : 'X'
+                        });
+                    } catch (error) {
+                        console.error('Move error:', error);
+                    }
+                }
+            });
         });
 
         function updateBoard(board) {
@@ -662,7 +681,7 @@
             Object.entries(players).forEach(([name, player]) => {
                 const playerCard = document.createElement('div');
                 playerCard.className = `player-card ${player.symbol === 'X' ? 'x-player' : 'o-player'} 
-                    ${name === currentPlayerName ? 'active' : ''}`;
+                    ${name === (currentGameData?.currentPlayers.find(p => players[p].symbol === currentGameData.currentPlayer)) ? 'active' : ''}`;
                 playerCard.innerHTML = `
                     <img src="${player.avatar}" class="player-avatar">
                     <div>
@@ -693,7 +712,7 @@
                             <div class="stat-item">L: ${player.losses}</div>
                         </div>
                     </div>
-                    ${isHost && name !== gameData.host ? 
+                    ${gameData.host === playerName && name !== gameData.host ? 
                         `<button class="kick-btn" data-player="${name}">Kick</button>` : ''}
                 `;
                 playerManagement.appendChild(playerElement);
@@ -710,105 +729,54 @@
         function updateGameStatus(gameData) {
             const statusElement = document.getElementById('game-status');
             if (gameData.winner) {
-                // Update stats
-                const winnerRef = gameRef.child(`players/${gameData.winner}`);
-                winnerRef.child('wins').transaction(wins => (wins || 0) + 1);
-                
-                gameData.currentPlayers.forEach(player => {
-                    if (player !== gameData.winner) {
-                        const loserRef = gameRef.child(`players/${player}`);
-                        loserRef.child('losses').transaction(losses => (losses || 0) + 1);
-                    }
-                });
-
-                // Rotate players
-                if (gameData.waitingPlayers.length > 0) {
-                    const newPlayer = gameData.waitingPlayers[0];
-                    const updates = {
-                        currentPlayers: [gameData.winner, newPlayer],
-                        waitingPlayers: gameData.waitingPlayers.slice(1),
-                        status: 'playing',
-                        winner: null,
-                        board: ['', '', '', '', '', '', '', '', ''],
-                        currentPlayer: 'X'
-                    };
-                    gameRef.update(updates);
-                } else {
-                    gameRef.update({
-                        status: 'waiting',
-                        winner: null,
-                        board: ['', '', '', '', '', '', '', '', ''],
-                        currentPlayer: 'X'
-                    });
-                }
-                
-                statusElement.textContent = `${gameData.winner} wins!`;
-                statusElement.className = "game-status win";
-                gameActive = false;
+                handleGameEnd(gameData);
             } else if (gameData.status === 'draw') {
                 statusElement.textContent = "It's a draw!";
                 statusElement.className = "game-status draw";
-                gameActive = false;
             } else {
-                statusElement.textContent = gameData.status === 'waiting' ? 
-                    "Waiting for players..." : 
-                    `${currentPlayerName}'s turn (${gameData.currentPlayer})`;
+                const currentSymbol = gameData.currentPlayer;
+                const currentPlayer = gameData.currentPlayers.find(
+                    p => gameData.players[p].symbol === currentSymbol
+                );
+                statusElement.textContent = gameData.status === 'waiting' 
+                    ? "Waiting for players..." 
+                    : `${currentPlayer}'s turn (${currentSymbol})`;
                 statusElement.className = "game-status";
             }
         }
 
-        document.querySelectorAll('.cell').forEach(cell => {
-            cell.addEventListener('click', async () => {
-                if (!gameActive || 
-                    !currentPlayerName || 
-                    currentPlayerName !== playerName ||
-                    !isHost && gameData.currentPlayer !== playerSymbol) return;
-
-                const index = cell.getAttribute('data-index');
-                const updates = {
-                    [`board/${index}`]: gameData.currentPlayer,
-                    currentPlayer: gameData.currentPlayer === 'X' ? 'O' : 'X'
-                };
-
-                try {
-                    await gameRef.update(updates);
-                } catch (error) {
-                    console.error('Error updating move:', error);
+        function handleGameEnd(gameData) {
+            const winnerRef = gameRef.child(`players/${gameData.winner}`);
+            winnerRef.child('wins').transaction(wins => (wins || 0) + 1);
+            
+            gameData.currentPlayers.forEach(player => {
+                if (player !== gameData.winner) {
+                    const loserRef = gameRef.child(`players/${player}`);
+                    loserRef.child('losses').transaction(losses => (losses || 0) + 1);
                 }
             });
-        });
 
-        document.getElementById('restart-btn').addEventListener('click', () => {
-            if (!isHost) return;
-            gameRef.update({
-                board: ['', '', '', '', '', '', '', '', ''],
-                currentPlayer: 'X',
-                status: 'playing',
-                winner: null
-            });
-        });
-
-        document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
-        function toggleTheme() {
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
-            document.getElementById('theme-toggle').innerHTML = isDark ? 
-                '<i class="fas fa-moon"></i>' : 
-                '<i class="fas fa-sun"></i>';
+            if (gameData.waitingPlayers.length > 0) {
+                const newPlayer = gameData.waitingPlayers[0];
+                const updates = {
+                    currentPlayers: [gameData.winner, newPlayer],
+                    waitingPlayers: gameData.waitingPlayers.slice(1),
+                    status: 'playing',
+                    winner: null,
+                    board: ['', '', '', '', '', '', '', '', ''],
+                    currentPlayer: 'X'
+                };
+                gameRef.update(updates);
+            } else {
+                gameRef.update({
+                    status: 'waiting',
+                    winner: null,
+                    board: ['', '', '', '', '', '', '', '', ''],
+                    currentPlayer: 'X'
+                });
+            }
         }
 
-        let isMuted = false;
-        document.getElementById('mic-button').addEventListener('click', () => {
-            isMuted = !isMuted;
-            const micButton = document.getElementById('mic-button');
-            micButton.classList.toggle('muted', isMuted);
-            micButton.querySelector('i').className = isMuted ? 
-                'fas fa-microphone-slash' : 
-                'fas fa-microphone';
-            console.log('Mic status:', isMuted ? 'Muted' : 'Active');
-        });
-
-        // Player join handler
         if (playerName) {
             gameRef.transaction(gameData => {
                 if (!gameData) return;
@@ -819,16 +787,21 @@
                 }
 
                 if (!gameData.players[playerName]) {
+                    const isFirstPlayer = Object.keys(gameData.players).length === 0;
+                    
                     gameData.players[playerName] = {
                         name: playerName,
-                        symbol: 'O',
+                        symbol: isFirstPlayer ? 'X' : 'O',
                         avatar: `https://i.pravatar.cc/150?u=${playerName}`,
-                        isHost: false,
+                        isHost: isFirstPlayer,
                         wins: 0,
                         losses: 0
                     };
 
-                    if (gameData.currentPlayers.length < 2) {
+                    if (isFirstPlayer) {
+                        gameData.host = playerName;
+                        gameData.currentPlayers = [playerName];
+                    } else if (gameData.currentPlayers.length < 2) {
                         gameData.currentPlayers.push(playerName);
                     } else {
                         gameData.waitingPlayers.push(playerName);
@@ -837,6 +810,35 @@
                 return gameData;
             });
         }
+
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            if (currentGameData?.host === playerName) {
+                gameRef.update({
+                    board: ['', '', '', '', '', '', '', '', ''],
+                    currentPlayer: 'X',
+                    status: 'playing',
+                    winner: null
+                });
+            }
+        });
+
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+            document.getElementById('theme-toggle').innerHTML = isDark ? 
+                '<i class="fas fa-moon"></i>' : 
+                '<i class="fas fa-sun"></i>';
+        });
+
+        let isMuted = false;
+        document.getElementById('mic-button').addEventListener('click', () => {
+            isMuted = !isMuted;
+            const micButton = document.getElementById('mic-button');
+            micButton.classList.toggle('muted', isMuted);
+            micButton.querySelector('i').className = isMuted ? 
+                'fas fa-microphone-slash' : 
+                'fas fa-microphone';
+        });
     </script>
 </body>
 </html>

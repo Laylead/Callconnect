@@ -562,9 +562,20 @@
 
                 await roomRef.set({
                     gameName,
-                    hostName,
+                    host: hostName,
                     visibility,
-                    players: {},
+                    players: {
+                        [hostName]: {
+                            name: hostName,
+                            symbol: 'X',
+                            avatar: `https://i.pravatar.cc/150?u=${hostName}`,
+                            isHost: true,
+                            wins: 0,
+                            losses: 0
+                        }
+                    },
+                    currentPlayers: [hostName],
+                    waitingPlayers: [],
                     board: ['', '', '', '', '', '', '', '', ''],
                     currentPlayer: 'X',
                     status: "waiting",
@@ -575,8 +586,8 @@
                 gameLinks.style.display = 'block';
 
                 const baseUrl = window.location.href.replace('start-tic-game.html', 'tic-game.html');
-                document.getElementById('host-link').value = `${baseUrl}?room=${roomId}&host=true&player=${encodeURIComponent(hostName)}`;
-                document.getElementById('player-link').value = `${baseUrl}?room=${roomId}&player=${encodeURIComponent(hostName)}`;
+                document.getElementById('host-link').value = `${baseUrl}?room=${roomId}&player=${encodeURIComponent(hostName)}&host=true`;
+                document.getElementById('player-link').value = `${baseUrl}?room=${roomId}`;
 
             } catch (error) {
                 alert('Error: ' + error.message);

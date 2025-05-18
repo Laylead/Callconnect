@@ -6,6 +6,7 @@
     <title>Start Tic Game | CallConnect</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* All previous CSS remains unchanged */
         :root {
             --primary: #ff4757;
             --secondary: #57606f;
@@ -549,6 +550,13 @@
             });
         });
 
+        function generateGuestName() {
+            let guestCount = localStorage.getItem('guestCount') || 0;
+            guestCount = (parseInt(guestCount) % 100) + 1;
+            localStorage.setItem('guestCount', guestCount);
+            return `Nerd anonymous${guestCount}`;
+        }
+
         createForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -596,19 +604,31 @@
 
         document.getElementById('join-btn').addEventListener('click', () => {
             const input = document.getElementById('game-code').value.trim();
-            const playerName = document.getElementById('player-name').value;
-            const roomId = extractRoomId(input);
+            let playerNameInput = document.getElementById('player-name');
+            let playerName = playerNameInput.value.trim();
+
+            if (!playerName) {
+                playerName = generateGuestName();
+                playerNameInput.value = playerName;
+            }
+
+            const roomId = extractRoomId(input || window.location.href);
             
-            if (roomId && playerName) {
+            if (roomId) {
                 window.location.href = `tic-game.html?room=${roomId}&player=${encodeURIComponent(playerName)}`;
             } else {
-                alert('Invalid game code or missing player name');
+                alert('Please provide a valid game code or link');
             }
         });
 
         function extractRoomId(input) {
-            const urlMatch = input.match(/room=([\w-]+)/);
-            return urlMatch ? urlMatch[1] : input;
+            try {
+                const url = new URL(input);
+                return url.searchParams.get('room') || url.pathname.split('/').pop();
+            } catch {
+                const match = input.match(/room=([\w-]+)/);
+                return match ? match[1] : input;
+            }
         }
 
         function copyLink(elementId) {

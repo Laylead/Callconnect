@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Game | CallConnect</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary: #ff4757;
+            --secondary: #57606f;
+            --light: #f1f2f6;
+            --dark: #2f3542;
+            --success: #2ed573;
+            --bg-color: #f5f5f5;
+            --text-color: #2f3542;
+            --card-bg: white;
+            --sidebar-bg: white;
+            --nav-bg: white;
+            --input-bg: white;
+            --story-border: linear-gradient(45deg, #ff4757, #ffa502, #2ed573, #1e90ff);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --text-color: #f1f2f6;
+            --card-bg: #2d3436;
+            --sidebar-bg: #2d3436;
+            --nav-bg: #2d3436;
+            --input-bg: #3d4547;
+            --secondary: #a4b0be;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 20px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(255, 71, 87, 0.2);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .logo i {
+            font-size: 28px;
+        }
+        
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            background-color: rgba(255, 71, 87, 0.1);
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            padding: 20px 0;
+        }
+        
+        .game-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .game-title {
+            font-size: 32px;
+            color: var(--primary);
+            margin-bottom: 10px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .game-title:after {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 3px;
+            background: var(--primary);
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .game-description {
+            color: var(--secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .game-board-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        .game-status {
+            font-size: 22px;
+            font-weight: 600;
+            padding: 12px 25px;
+            background-color: rgba(255, 71, 87, 0.1);
+            border-radius: 8px;
+            color: var(--text-color);
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .game-status.win {
+            background-color: rgba(46, 213, 115, 0.2);
+            color: var(--success);
+        }
+        
+        .game-status.draw {
+            background-color: rgba(255, 165, 2, 0.2);
+            color: #ffa502;
+        }
+        
+        .tic-tac-toe-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 10px;
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 1/1;
+        }
+        
+        .cell {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 2px solid rgba(255, 71, 87, 0.1);
+            aspect-ratio: 1/1;
+        }
+        
+        .cell:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 20px rgba(255, 71, 87, 0.1);
+            border-color: rgba(255, 71, 87, 0.3);
+        }
+        
+        .cell.x {
+            color: var(--primary);
+        }
+        
+        .cell.o {
+            color: #1e90ff;
+        }
+        
+        .cell.winning {
+            animation: pulse 1s infinite;
+            background-color: rgba(46, 213, 115, 0.1);
+            border-color: var(--success);
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .game-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .control-btn {
+            padding: 12px 25px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .restart-btn {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .restart-btn:hover {
+            background-color: #ff6b81;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);
+        }
+        
+        .new-game-btn {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .new-game-btn:hover {
+            background-color: #27ae60;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(46, 213, 115, 0.3);
+        }
+        
+        .stats-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .stat-box {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 15px 25px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 71, 87, 0.1);
+            min-width: 120px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: var(--secondary);
+        }
+        
+        .x-stat .stat-value {
+            color: var(--primary);
+        }
+        
+        .o-stat .stat-value {
+            color: #1e90ff;
+        }
+        
+        .draw-stat .stat-value {
+            color: #ffa502;
+        }
+        
+        .player-info {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+        
+        .player-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px 25px;
+            border-radius: 10px;
+            background-color: var(--card-bg);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 71, 87, 0.1);
+            transition: all 0.3s;
+            min-width: 150px;
+        }
+        
+        .player-card.active {
+            border-color: var(--primary);
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.1);
+            transform: translateY(-5px);
+        }
+        
+        .player-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 10px;
+            border: 3px solid rgba(255, 71, 87, 0.2);
+        }
+        
+        .player-card.active .player-avatar {
+            border-color: var(--primary);
+        }
+        
+        .player-card.o-player.active .player-avatar {
+            border-color: #1e90ff;
+        }
+        
+        .player-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .player-symbol {
+            font-size: 20px;
+            font-weight: bold;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+        
+        .x-player .player-symbol {
+            background-color: rgba(255, 71, 87, 0.1);
+            color: var(--primary);
+        }
+        
+        .o-player .player-symbol {
+            background-color: rgba(30, 144, 255, 0.1);
+            color: #1e90ff;
+        }
+        
+        .player-card.active .player-symbol {
+            animation: pulse 1.5s infinite;
+        }
+        
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 20px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        
+        .theme-toggle:hover {
+            background-color: rgba(255, 71, 87, 0.1);
+        }
+        
+        .floating-mic {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+        
+        .floating-mic.muted {
+            background: var(--secondary);
+        }
+        
+        .floating-mic i {
+            color: white;
+            font-size: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 28px;
+            }
+            
+            .tic-tac-toe-board {
+                max-width: 350px;
+            }
+            
+            .cell {
+                font-size: 50px;
+            }
+            
+            .player-info {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .player-card {
+                width: 100%;
+                max-width: 250px;
+                flex-direction: row;
+                justify-content: flex-start;
+                gap: 15px;
+            }
+            
+            .player-avatar {
+                width: 50px;
+                height: 50px;
+                margin-bottom: 0;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .game-title {
+                font-size: 24px;
+            }
+            
+            .tic-tac-toe-board {
+                max-width: 300px;
+            }
+            
+            .cell {
+                font-size: 40px;
+            }
+            
+            .game-status {
+                font-size: 18px;
+            }
+            
+            .game-controls {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .control-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .stats-container {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .stat-box {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="fun.html" class="logo">
+                <i class="fas fa-phone-alt"></i>
+                CallConnect
+            </a>
+            <div>
+                <button class="theme-toggle" id="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <a href="fun.html" class="back-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Games
+                </a>
+            </div>
+        </div>
+        
+        <div class="game-container">
+            <div class="game-header">
+                <h1 class="game-title" id="game-title">Tic Tac Toe</h1>
+                <p class="game-description" id="game-description"></p>
+            </div>
+            
+            <div class="player-info" id="player-info">
+                <!-- Players dynamically populated -->
+            </div>
+            
+            <div class="game-board-container">
+                <div class="game-status" id="game-status">Waiting for players...</div>
+                
+                <div class="tic-tac-toe-board" id="board">
+                    <div class="cell" data-index="0"></div>
+                    <div class="cell" data-index="1"></div>
+                    <div class="cell" data-index="2"></div>
+                    <div class="cell" data-index="3"></div>
+                    <div class="cell" data-index="4"></div>
+                    <div class="cell" data-index="5"></div>
+                    <div class="cell" data-index="6"></div>
+                    <div class="cell" data-index="7"></div>
+                    <div class="cell" data-index="8"></div>
+                </div>
+                
+                <div class="game-controls">
+                    <button class="control-btn restart-btn" id="restart-btn">
+                        <i class="fas fa-sync-alt"></i>
+                        Restart Game
+                    </button>
+                    <button class="control-btn new-game-btn" id="new-game-btn">
+                        <i class="fas fa-plus"></i>
+                        New Game
+                    </button>
+                </div>
+                
+                <div class="stats-container">
+                    <div class="stat-box x-stat">
+                        <div class="stat-value" id="x-wins">0</div>
+                        <div class="stat-label">X Wins</div>
+                    </div>
+                    <div class="stat-box draw-stat">
+                        <div class="stat-value" id="draws">0</div>
+                        <div class="stat-label">Draws</div>
+                    </div>
+                    <div class="stat-box o-stat">
+                        <div class="stat-value" id="o-wins">0</div>
+                        <div class="stat-label">O Wins</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="floating-mic" id="mic-button">
+        <i class="fas fa-microphone"></i>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomId = urlParams.get('room');
+        const isHost = urlParams.has('host');
+        const playerName = urlParams.get('player');
+        let playerSymbol = 'X';
+        let currentTurn = 'X';
+        let gameActive = false;
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const gameRef = db.ref(`ticGames/${roomId}`);
+
+        gameRef.on('value', snapshot => {
+            const gameData = snapshot.val();
+            if (!gameData) {
+                alert('Game room not found!');
+                window.location.href = 'start-tic-game.html';
+                return;
+            }
+
+            updateBoard(gameData.board);
+            currentTurn = gameData.currentPlayer;
+            gameActive = gameData.status === 'playing';
+            updatePlayers(gameData.players);
+            updateGameStatus(gameData);
+        });
+
+        function updateBoard(board) {
+            document.querySelectorAll('.cell').forEach((cell, index) => {
+                cell.textContent = board[index];
+                cell.classList.toggle('x', board[index] === 'X');
+                cell.classList.toggle('o', board[index] === 'O');
+            });
+        }
+
+        function updatePlayers(players) {
+            const playerInfo = document.getElementById('player-info');
+            playerInfo.innerHTML = '';
+            
+            Object.entries(players).forEach(([id, player]) => {
+                const playerCard = document.createElement('div');
+                playerCard.className = `player-card ${player.symbol === 'X' ? 'x-player' : 'o-player'} ${player.isHost ? 'host' : ''}`;
+                playerCard.innerHTML = `
+                    <img src="${player.avatar}" class="player-avatar">
+                    <div>
+                        <div class="player-name">${player.name}</div>
+                        <div class="player-symbol">${player.symbol}</div>
+                    </div>
+                `;
+                playerInfo.appendChild(playerCard);
+            });
+        }
+
+        function updateGameStatus(gameData) {
+            const statusElement = document.getElementById('game-status');
+            if (gameData.winner) {
+                statusElement.textContent = `${gameData.winner} wins!`;
+                statusElement.className = "game-status win";
+                gameActive = false;
+            } else if (gameData.status === 'draw') {
+                statusElement.textContent = "It's a draw!";
+                statusElement.className = "game-status draw";
+                gameActive = false;
+            } else {
+                statusElement.textContent = gameData.status === 'waiting' ? 
+                    "Waiting for players..." : 
+                    `Current turn: ${currentTurn}`;
+                statusElement.className = "game-status";
+            }
+        }
+
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.addEventListener('click', async () => {
+                if (!gameActive || currentTurn !== playerSymbol) return;
+
+                const index = cell.getAttribute('data-index');
+                const updates = {
+                    [`board/${index}`]: playerSymbol,
+                    currentPlayer: playerSymbol === 'X' ? 'O' : 'X'
+                };
+
+                try {
+                    await gameRef.update(updates);
+                } catch (error) {
+                    console.error('Error updating move:', error);
+                }
+            });
+        });
+
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            if (!isHost) return;
+            gameRef.update({
+                board: ['', '', '', '', '', '', '', '', ''],
+                currentPlayer: 'X',
+                status: 'playing',
+                winner: null
+            });
+        });
+
+        document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+        function toggleTheme() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+            document.getElementById('theme-toggle').innerHTML = isDark ? 
+                '<i class="fas fa-moon"></i>' : 
+                '<i class="fas fa-sun"></i>';
+        }
+
+        let isMuted = false;
+        document.getElementById('mic-button').addEventListener('click', () => {
+            isMuted = !isMuted;
+            const micButton = document.getElementById('mic-button');
+            micButton.classList.toggle('muted', isMuted);
+            micButton.querySelector('i').className = isMuted ? 
+                'fas fa-microphone-slash' : 
+                'fas fa-microphone';
+            console.log('Mic status:', isMuted ? 'Muted' : 'Active');
+        });
+
+        if (playerName) {
+            const playerRef = gameRef.child(`players/${Date.now()}`);
+            playerRef.set({
+                name: playerName,
+                symbol: isHost ? 'X' : 'O',
+                avatar: `https://i.pravatar.cc/150?u=${playerName}`,
+                isHost: !!isHost
+            });
+
+            playerSymbol = isHost ? 'X' : 'O';
+        }
+    </script>
+</body>
+</html>

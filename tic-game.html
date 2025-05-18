@@ -414,6 +414,40 @@
             font-size: 20px;
         }
         
+        .host-controls {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .kick-btn {
+            padding: 4px 8px;
+            border-radius: 5px;
+            background-color: #ff475722;
+            color: var(--primary);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .kick-btn:hover {
+            background-color: #ff475733;
+        }
+        
+        .player-stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .stat-item {
+            background-color: var(--input-bg);
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+        
         @media (max-width: 768px) {
             .game-title {
                 font-size: 28px;
@@ -556,6 +590,13 @@
                 </div>
             </div>
         </div>
+
+        <div class="host-controls" id="host-controls" style="display: none;">
+            <h3 class="sidebar-title"><i class="fas fa-crown"></i> Host Controls</h3>
+            <div class="player-list" id="player-management">
+                <!-- Players will be listed here with kick buttons -->
+            </div>
+        </div>
     </div>
 
     <div class="floating-mic" id="mic-button">
@@ -568,10 +609,10 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const roomId = urlParams.get('room');
-        const isHost = urlParams.has('host');
         const playerName = urlParams.get('player');
+        const isHost = urlParams.has('host');
         let playerSymbol = 'X';
-        let currentTurn = 'X';
+        let currentPlayerName = '';
         let gameActive = false;
 
         firebase.initializeApp(firebaseConfig);
@@ -586,10 +627,23 @@
                 return;
             }
 
+            // Update host controls visibility
+            document.getElementById('host-controls').style.display = isHost ? 'block' : 'none';
+
+            // Update player management
+            updatePlayerManagement(gameData);
+            
+            // Update game board
             updateBoard(gameData.board);
-            currentTurn = gameData.currentPlayer;
+            
+            // Update current player
+            currentPlayerName = gameData.currentPlayers[gameData.currentPlayer === 'X' ? 0 : 1];
             gameActive = gameData.status === 'playing';
+            
+            // Update players
             updatePlayers(gameData.players);
+            
+            // Update game status
             updateGameStatus(gameData);
         });
 
@@ -605,23 +659,89 @@
             const playerInfo = document.getElementById('player-info');
             playerInfo.innerHTML = '';
             
-            Object.entries(players).forEach(([id, player]) => {
+            Object.entries(players).forEach(([name, player]) => {
                 const playerCard = document.createElement('div');
-                playerCard.className = `player-card ${player.symbol === 'X' ? 'x-player' : 'o-player'} ${player.isHost ? 'host' : ''}`;
+                playerCard.className = `player-card ${player.symbol === 'X' ? 'x-player' : 'o-player'} 
+                    ${name === currentPlayerName ? 'active' : ''}`;
                 playerCard.innerHTML = `
                     <img src="${player.avatar}" class="player-avatar">
                     <div>
-                        <div class="player-name">${player.name}</div>
+                        <div class="player-name">${name}</div>
                         <div class="player-symbol">${player.symbol}</div>
+                        <div class="player-stats">
+                            <div class="stat-item">W: ${player.wins}</div>
+                            <div class="stat-item">L: ${player.losses}</div>
+                        </div>
                     </div>
                 `;
                 playerInfo.appendChild(playerCard);
             });
         }
 
+        function updatePlayerManagement(gameData) {
+            const playerManagement = document.getElementById('player-management');
+            playerManagement.innerHTML = '';
+            
+            Object.entries(gameData.players).forEach(([name, player]) => {
+                const playerElement = document.createElement('div');
+                playerElement.className = 'participant-item';
+                playerElement.innerHTML = `
+                    <div class="participant-info">
+                        <span>${name}</span>
+                        <div class="player-stats">
+                            <div class="stat-item">W: ${player.wins}</div>
+                            <div class="stat-item">L: ${player.losses}</div>
+                        </div>
+                    </div>
+                    ${isHost && name !== gameData.host ? 
+                        `<button class="kick-btn" data-player="${name}">Kick</button>` : ''}
+                `;
+                playerManagement.appendChild(playerElement);
+            });
+
+            document.querySelectorAll('.kick-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const playerToKick = btn.dataset.player;
+                    gameRef.child(`players/${playerToKick}`).remove();
+                });
+            });
+        }
+
         function updateGameStatus(gameData) {
             const statusElement = document.getElementById('game-status');
             if (gameData.winner) {
+                // Update stats
+                const winnerRef = gameRef.child(`players/${gameData.winner}`);
+                winnerRef.child('wins').transaction(wins => (wins || 0) + 1);
+                
+                gameData.currentPlayers.forEach(player => {
+                    if (player !== gameData.winner) {
+                        const loserRef = gameRef.child(`players/${player}`);
+                        loserRef.child('losses').transaction(losses => (losses || 0) + 1);
+                    }
+                });
+
+                // Rotate players
+                if (gameData.waitingPlayers.length > 0) {
+                    const newPlayer = gameData.waitingPlayers[0];
+                    const updates = {
+                        currentPlayers: [gameData.winner, newPlayer],
+                        waitingPlayers: gameData.waitingPlayers.slice(1),
+                        status: 'playing',
+                        winner: null,
+                        board: ['', '', '', '', '', '', '', '', ''],
+                        currentPlayer: 'X'
+                    };
+                    gameRef.update(updates);
+                } else {
+                    gameRef.update({
+                        status: 'waiting',
+                        winner: null,
+                        board: ['', '', '', '', '', '', '', '', ''],
+                        currentPlayer: 'X'
+                    });
+                }
+                
                 statusElement.textContent = `${gameData.winner} wins!`;
                 statusElement.className = "game-status win";
                 gameActive = false;
@@ -632,19 +752,22 @@
             } else {
                 statusElement.textContent = gameData.status === 'waiting' ? 
                     "Waiting for players..." : 
-                    `Current turn: ${currentTurn}`;
+                    `${currentPlayerName}'s turn (${gameData.currentPlayer})`;
                 statusElement.className = "game-status";
             }
         }
 
         document.querySelectorAll('.cell').forEach(cell => {
             cell.addEventListener('click', async () => {
-                if (!gameActive || currentTurn !== playerSymbol) return;
+                if (!gameActive || 
+                    !currentPlayerName || 
+                    currentPlayerName !== playerName ||
+                    !isHost && gameData.currentPlayer !== playerSymbol) return;
 
                 const index = cell.getAttribute('data-index');
                 const updates = {
-                    [`board/${index}`]: playerSymbol,
-                    currentPlayer: playerSymbol === 'X' ? 'O' : 'X'
+                    [`board/${index}`]: gameData.currentPlayer,
+                    currentPlayer: gameData.currentPlayer === 'X' ? 'O' : 'X'
                 };
 
                 try {
@@ -685,16 +808,34 @@
             console.log('Mic status:', isMuted ? 'Muted' : 'Active');
         });
 
+        // Player join handler
         if (playerName) {
-            const playerRef = gameRef.child(`players/${Date.now()}`);
-            playerRef.set({
-                name: playerName,
-                symbol: isHost ? 'X' : 'O',
-                avatar: `https://i.pravatar.cc/150?u=${playerName}`,
-                isHost: !!isHost
-            });
+            gameRef.transaction(gameData => {
+                if (!gameData) return;
+                
+                if (Object.keys(gameData.players).length >= 4) {
+                    alert('Room is full!');
+                    return;
+                }
 
-            playerSymbol = isHost ? 'X' : 'O';
+                if (!gameData.players[playerName]) {
+                    gameData.players[playerName] = {
+                        name: playerName,
+                        symbol: 'O',
+                        avatar: `https://i.pravatar.cc/150?u=${playerName}`,
+                        isHost: false,
+                        wins: 0,
+                        losses: 0
+                    };
+
+                    if (gameData.currentPlayers.length < 2) {
+                        gameData.currentPlayers.push(playerName);
+                    } else {
+                        gameData.waitingPlayers.push(playerName);
+                    }
+                }
+                return gameData;
+            });
         }
     </script>
 </body>

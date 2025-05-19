@@ -513,7 +513,6 @@
         <div class="game-container">
             <div class="game-header">
                 <h1 class="game-title" id="game-title">Tic Tac Toe</h1>
-                <p class="game-description" id="game-description"></p>
             </div>
             
             <div class="player-info" id="player-info"></div>
@@ -605,8 +604,8 @@
                     if (!currentData) {
                         return {
                             players: {},
-                            currentPlayers: [],
-                            waitingPlayers: [],
+                            currentPlayers: {},
+                            waitingPlayers: {},
                             board: Array(9).fill(''),
                             status: 'waiting',
                             host: '',
@@ -619,8 +618,8 @@
                     }
 
                     currentData.players = currentData.players || {};
-                    currentData.currentPlayers = currentData.currentPlayers || [];
-                    currentData.waitingPlayers = currentData.waitingPlayers || [];
+                    currentData.currentPlayers = currentData.currentPlayers || {};
+                    currentData.waitingPlayers = currentData.waitingPlayers || {};
                     currentData.board = currentData.board || Array(9).fill('');
 
                     if (!currentData.players[playerName]) {
@@ -637,13 +636,13 @@
 
                         if (isFirstPlayer) {
                             currentData.host = playerName;
-                            currentData.currentPlayers = [playerName];
+                            currentData.currentPlayers = { [playerName]: true };
                             currentData.status = 'waiting';
-                        } else if (currentData.currentPlayers.length < 2) {
-                            currentData.currentPlayers.push(playerName);
+                        } else if (Object.keys(currentData.currentPlayers).length < 2) {
+                            currentData.currentPlayers[playerName] = true;
                             currentData.status = 'playing';
                         } else {
-                            currentData.waitingPlayers.push(playerName);
+                            currentData.waitingPlayers[playerName] = true;
                         }
                     }
                     return currentData;
@@ -687,8 +686,8 @@
             playerInfo.innerHTML = '';
             
             const allPlayers = [
-                ...gameData.currentPlayers,
-                ...gameData.waitingPlayers
+                ...Object.keys(gameData.currentPlayers),
+                ...Object.keys(gameData.waitingPlayers)
             ];
 
             allPlayers.forEach(playerId => {
@@ -696,7 +695,7 @@
                 if (!player) return;
 
                 const isCurrentTurn = gameData.currentPlayer === player.symbol;
-                const isActive = gameData.currentPlayers.includes(playerId);
+                const isActive = gameData.currentPlayers[playerId];
 
                 const playerCard = document.createElement('div');
                 playerCard.className = `player-card 
@@ -744,12 +743,18 @@
                 btn.addEventListener('click', () => {
                     const playerToKick = btn.dataset.player;
                     gameRef.child(`players/${playerToKick}`).remove();
-                    gameRef.child('currentPlayers').transaction(current => 
-                        current.filter(p => p !== playerToKick)
-                    );
-                    gameRef.child('waitingPlayers').transaction(waiting => 
-                        waiting.filter(p => p !== playerToKick)
-                    );
+                    gameRef.child('currentPlayers').transaction(current => {
+                        if (current) {
+                            delete current[playerToKick];
+                        }
+                        return current;
+                    });
+                    gameRef.child('waitingPlayers').transaction(waiting => {
+                        if (waiting) {
+                            delete waiting[playerToKick];
+                        }
+                        return waiting;
+                    });
                 });
             });
         }
@@ -763,13 +768,17 @@
                 statusElement.textContent = "It's a draw!";
                 statusElement.className = "game-status draw";
             } else {
-                const currentPlayer = gameData.currentPlayers.find(
-                    p => gameData.players[p].symbol === gameData.currentPlayer
-                );
-                statusElement.textContent = gameData.status === 'waiting' 
-                    ? "Waiting for players..." 
-                    : `${currentPlayer}'s turn (${gameData.currentPlayer})`;
-                statusElement.className = "game-status";
+                const currentPlayers = Object.keys(gameData.currentPlayers);
+                if (currentPlayers.length >= 2) {
+                    const currentPlayer = currentPlayers.find(
+                        p => gameData.players[p].symbol === gameData.currentPlayer
+                    );
+                    statusElement.textContent = `${currentPlayer}'s turn (${gameData.currentPlayer})`;
+                    statusElement.className = "game-status";
+                } else {
+                    statusElement.textContent = "Waiting for players...";
+                    statusElement.className = "game-status";
+                }
             }
         }
 
@@ -814,7 +823,7 @@
             cell.addEventListener('click', async () => {
                 if (!currentGameData || 
                     currentGameData.status !== 'playing' ||
-                    !currentGameData.currentPlayers.includes(playerName)) return;
+                    !currentGameData.currentPlayers[playerName]) return;
 
                 const index = cell.getAttribute('data-index');
                 const isPlayersTurn = currentGameData.players[playerName]?.symbol === currentGameData.currentPlayer;

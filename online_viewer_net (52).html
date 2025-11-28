@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Create Watch Party</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+    input, button { margin: 5px 0; padding: 8px; width: 300px; }
+    #output { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>Create a Watch Party</h2>
+
+  <input type="text" id="videoLink" placeholder="Paste YouTube link" required><br>
+  <input type="datetime-local" id="startTime" required><br>
+  <button onclick="createRoom()">Create Room</button>
+
+  <div id="output"></div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
+
+  <script>
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    async function createRoom() {
+      const videoLink = document.getElementById("videoLink").value.trim();
+      const startTime = document.getElementById("startTime").value;
+      const output = document.getElementById("output");
+
+      if (!videoLink || !startTime) {
+        alert("Please fill all fields");
+        return;
+      }
+
+      try {
+        // Create new room in Firebase
+        const roomRef = db.ref('rooms').push();
+        const roomId = roomRef.key;
+
+        await roomRef.set({
+          videoLink: videoLink,
+          scheduledStartTime: startTime,  // optional: used later if you want a countdown
+          status: "pause",
+          currentTime: 0,
+          host: true
+        });
+
+        // Show shareable links
+        output.innerHTML = `
+          <p>Room created successfully!</p>
+          <p><strong>Host link:</strong> <a href="room.html?room=${roomId}&host=true" target="_blank">room.html?room=${roomId}&host=true</a></p>
+          <p><strong>Viewer link:</strong> <a href="room.html?room=${roomId}" target="_blank">room.html?room=${roomId}</a></p>
+        `;
+      } catch (error) {
+        console.error(error);
+        output.textContent = "Error creating room: " + error.message;
+      }
+    }
+  </script>
+</body>
+</html>

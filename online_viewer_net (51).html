@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Watch Party Room</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+    #player { margin-bottom: 20px; }
+    #status { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Watch Party</h2>
+  <div id="player"></div>
+  <p id="status">Waiting for host...</p>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
+
+  <!-- YouTube IFrame API -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+
+  <script>
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Get URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomId = urlParams.get('room');
+    const isHost = urlParams.get('host') === 'true';
+    const roomRef = db.ref('rooms/' + roomId);
+
+    let player;
+    let ready = false;
+
+    // Load YouTube API
+    function onYouTubeIframeAPIReady() {
+      roomRef.once('value').then(snapshot => {
+        const room = snapshot.val();
+        if (!room || !room.videoLink) {
+          alert("Invalid room or video link.");
+          return;
+        }
+
+        const videoId = getYouTubeID(room.videoLink);
+
+        player = new YT.Player('player', {
+          height: '360',
+          width: '640',
+          videoId: videoId,
+          playerVars: {
+            rel: 0,
+            modestbranding: 1
+          },
+          events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange
+          }
+        });
+      });
+    }
+
+    // Extract YouTube ID
+    function getYouTubeID(url) {
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+      const match = url.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : url;
+    }
+
+    function onPlayerReady(event) {
+      ready = true;
+      if (!isHost) {
+        // If viewer, start listening to host
+        roomRef.on('value', snapshot => {
+          const data = snapshot.val();
+          if (!data) return;
+
+          // Sync only if player exists and host controls
+          if (player && typeof data.currentTime === 'number') {
+            const playerTime = player.getCurrentTime();
+            const diff = Math.abs(playerTime - data.currentTime);
+
+            if (diff > 0.5) {
+              player.seekTo(data.currentTime, true);
+            }
+
+            if (data.status === 'play' && player.getPlayerState() !== YT.PlayerState.PLAYING) {
+              player.playVideo();
+            } else if (data.status === 'pause' && player.getPlayerState() !== YT.PlayerState.PAUSED) {
+              player.pauseVideo();
+            }
+          }
+        });
+      }
+    }
+
+    function onPlayerStateChange(event) {
+      if (!isHost || !ready) return;
+
+      let status;
+      if (event.data === YT.PlayerState.PLAYING) status = 'play';
+      else if (event.data === YT.PlayerState.PAUSED) status = 'pause';
+      else return; // ignore other states
+
+      // Update Firebase in realtime
+      roomRef.update({
+        status: status,
+        currentTime: player.getCurrentTime()
+      });
+    }
+
+    // Optional: continuously push current time every second for better sync
+    if (isHost) {
+      setInterval(() => {
+        if (player && player.getPlayerState() === YT.PlayerState.PLAYING) {
+          roomRef.update({ currentTime: player.getCurrentTime() });
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+</html>

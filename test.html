@@ -26,7 +26,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Get URL params
     const urlParams = new URLSearchParams(window.location.search);
     const roomId = urlParams.get('room');
     const isHost = urlParams.get('host') === 'true';
@@ -35,7 +34,6 @@
     let player;
     let ready = false;
 
-    // Load YouTube API
     function onYouTubeIframeAPIReady() {
       roomRef.once('value').then(snapshot => {
         const room = snapshot.val();
@@ -50,10 +48,7 @@
           height: '360',
           width: '640',
           videoId: videoId,
-          playerVars: {
-            rel: 0,
-            modestbranding: 1
-          },
+          playerVars: { rel: 0, modestbranding: 1 },
           events: {
             'onReady': onPlayerReady,
             'onStateChange': onPlayerStateChange
@@ -62,7 +57,6 @@
       });
     }
 
-    // Extract YouTube ID
     function getYouTubeID(url) {
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
       const match = url.match(regExp);
@@ -72,25 +66,19 @@
     function onPlayerReady(event) {
       ready = true;
       if (!isHost) {
-        // If viewer, start listening to host
         roomRef.on('value', snapshot => {
           const data = snapshot.val();
-          if (!data) return;
+          if (!data || !player) return;
 
-          // Sync only if player exists and host controls
-          if (player && typeof data.currentTime === 'number') {
-            const playerTime = player.getCurrentTime();
-            const diff = Math.abs(playerTime - data.currentTime);
+          const playerTime = player.getCurrentTime();
+          const diff = Math.abs(playerTime - data.currentTime);
 
-            if (diff > 0.5) {
-              player.seekTo(data.currentTime, true);
-            }
+          if (diff > 0.5) player.seekTo(data.currentTime, true);
 
-            if (data.status === 'play' && player.getPlayerState() !== YT.PlayerState.PLAYING) {
-              player.playVideo();
-            } else if (data.status === 'pause' && player.getPlayerState() !== YT.PlayerState.PAUSED) {
-              player.pauseVideo();
-            }
+          if (data.status === 'play' && player.getPlayerState() !== YT.PlayerState.PLAYING) {
+            player.playVideo();
+          } else if (data.status === 'pause' && player.getPlayerState() !== YT.PlayerState.PAUSED) {
+            player.pauseVideo();
           }
         });
       }
@@ -102,16 +90,14 @@
       let status;
       if (event.data === YT.PlayerState.PLAYING) status = 'play';
       else if (event.data === YT.PlayerState.PAUSED) status = 'pause';
-      else return; // ignore other states
+      else return;
 
-      // Update Firebase in realtime
       roomRef.update({
         status: status,
         currentTime: player.getCurrentTime()
       });
     }
 
-    // Optional: continuously push current time every second for better sync
     if (isHost) {
       setInterval(() => {
         if (player && player.getPlayerState() === YT.PlayerState.PLAYING) {

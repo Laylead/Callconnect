@@ -1,513 +1,905 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <title>Watch Party — Enhanced Layout</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watch Party | CallConnect</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
-            --bg: #020617;
-            --panel: #0f172a;
-            --accent: #4f46e5;
-            --text-main: #e5e7eb;
-            --text-soft: #9ca3af;
+            --primary: #ff4757;
+            --secondary: #57606f;
+            --light: #f1f2f6;
+            --dark: #2f3542;
+            --success: #2ed573;
+            --bg-color: #f5f5f5;
+            --text-color: #2f3542;
+            --card-bg: white;
+            --sidebar-bg: white;
+            --nav-bg: white;
+            --input-bg: white;
+            --video-bg: #1a1a1a;
         }
 
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --text-color: #f1f2f6;
+            --card-bg: #2d3436;
+            --sidebar-bg: #2d3436;
+            --nav-bg: #2d3436;
+            --input-bg: #3d4547;
+            --secondary: #a4b0be;
+            --video-bg: #000;
+        }
+        
         * {
-            box-sizing: border-box;
-        }
-
-        html, body {
-            height: 100%;
             margin: 0;
-            font-family: Inter, system-ui, Segoe UI, Arial;
-            color: var(--text-main);
-            background: radial-gradient(circle at top left, #1d4ed8 0, #020617 35%, #000 100%);
-            overflow: hidden;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        /* Main Layout */
-        .app-container {
-            display: flex;
-            height: 100vh;
-            gap: 12px;
-            padding: 12px;
-        }
-
-        /* Video Player Section (75%) */
-        #video-section {
-            flex: 3;
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            min-width: 0;
+            transition: background-color 0.3s, color 0.3s;
         }
-
-        #player-container {
-            position: relative;
-            border-radius: 12px;
-            overflow: hidden;
-            background: #000;
+        
+        .container {
             flex: 1;
-            min-height: 0;
-        }
-
-        video, #ytPlayerIframe {
+            display: flex;
+            flex-direction: column;
+            max-width: 1400px;
+            margin: 0 auto;
             width: 100%;
-            height: 100%;
-            display: block;
-            background: #000;
-            object-fit: contain;
+            padding: 20px;
         }
-
-        #status {
-            margin-top: 8px;
-            font-size: 13px;
-            color: #a5b4fc;
-        }
-
-        /* Controls Section (25%) */
-        #controls-section {
-            flex: 1;
-            min-width: 300px;
-            max-width: 400px;
+        
+        .header {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-            overflow-y: auto;
-            padding-right: 4px;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 71, 87, 0.2);
         }
-
-        /* Top Bar */
-        #topbar {
+        
+        .logo {
             display: flex;
             align-items: center;
-            padding: 10px 14px;
             gap: 10px;
-            background: linear-gradient(to right, rgba(15,23,42,0.9), rgba(15,23,42,0.7));
-            backdrop-filter: blur(8px);
-            border-bottom: 1px solid rgba(148,163,184,0.12);
-            z-index: 120;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            text-decoration: none;
         }
-
-        #appTitle {
-            font-weight: 700;
-            font-size: 16px;
+        
+        .logo i {
+            font-size: 28px;
         }
-
-        #roomInfo {
-            font-size: 12px;
-            color: var(--text-soft);
-        }
-
-        .top-right {
-            margin-left: auto;
+        
+        .back-btn {
             display: flex;
             align-items: center;
             gap: 8px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: all 0.3s;
         }
-
-        /* Buttons */
-        .btn {
-            padding: 7px 10px;
-            border-radius: 999px;
+        
+        .back-btn:hover {
+            background-color: rgba(255, 71, 87, 0.1);
+        }
+        
+        .theme-toggle {
+            background: none;
             border: none;
-            font-size: 12px;
+            color: var(--text-color);
+            font-size: 20px;
             cursor: pointer;
-            background: var(--accent);
-            color: #fff;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-        }
-
-        .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-        }
-
-        .btn.grey {
-            background: rgba(15,23,42,0.9);
-            color: var(--text-main);
-            border: 1px solid rgba(148,163,184,0.18);
-        }
-
-        .btn.small {
-            padding: 4px 8px;
-            font-size: 11px;
-        }
-
-        .emoji-btn {
-            background: rgba(15,23,42,0.9);
-            border: 1px solid rgba(148,163,184,0.18);
-        }
-
-        /* Panels */
-        .panel {
-            background: rgba(15,23,42,0.92);
-            border-radius: 12px;
-            padding: 12px;
-            border: 1px solid rgba(148,163,184,0.08);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .panel-header {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-soft);
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .panel-body {
-            flex: 1;
-            overflow: auto;
-            font-size: 12px;
-        }
-
-        /* Controls Grid */
-        #controls-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 8px;
-        }
-
-        /* Chat */
-        #chatMessages {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .chat-msg {
-            padding: 8px;
-            border-radius: 10px;
-            background: rgba(2,6,23,0.6);
-            border: 1px solid rgba(148,163,184,0.06);
-        }
-
-        .chat-meta {
-            font-size: 11px;
-            color: var(--text-soft);
-            margin-bottom: 6px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .chat-user {
-            font-weight: 600;
-        }
-
-        .chat-time {
-            opacity: 0.7;
-        }
-
-        /* Input Row */
-        .input-row {
-            display: flex;
-            gap: 6px;
-            margin-top: 8px;
-        }
-
-        input {
-            flex: 1;
-            padding: 8px;
-            border-radius: 999px;
-            border: 1px solid rgba(148,163,184,0.08);
-            background: rgba(2,6,23,0.6);
-            color: var(--text-main);
-        }
-
-        /* Drawing Canvas */
-        canvas#drawingCanvas {
-            position: absolute;
-            inset: 0;
-            z-index: 45;
-            pointer-events: none;
-        }
-
-        /* Overlay for viewers */
-        #overlay-block {
-            position: absolute;
-            inset: 0;
-            z-index: 40;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(0,0,0,0.18);
-            backdrop-filter: blur(2px);
-            pointer-events: auto;
+            border-radius: 50%;
+            transition: all 0.3s;
         }
-
+        
+        .theme-toggle:hover {
+            background-color: rgba(255, 71, 87, 0.1);
+        }
+        
+        .watch-party-container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 25px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 992px) {
+            .watch-party-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .video-container {
+            background-color: var(--video-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            aspect-ratio: 16/9;
+        }
+        
+        #player-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        #html5video, #ytContainer {
+            width: 100%;
+            height: 100%;
+        }
+        
+        #drawingCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        #overlay-block {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+        }
+        
         #overlay-block.hidden {
             display: none;
         }
-
-        #overlay-block .hint {
-            background: rgba(15,23,42,0.9);
-            padding: 8px 12px;
-            border-radius: 12px;
-            border: 1px solid rgba(148,163,184,0.18);
-            font-size: 13px;
-            color: var(--text-soft);
+        
+        .overlay-hint {
+            background: rgba(255,255,255,0.9);
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: #333;
+            font-weight: 500;
         }
-
-        /* Reactions */
-        #reactions {
+        
+        .custom-controls {
             position: absolute;
-            right: 12px;
-            top: 12px;
-            z-index: 60;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 15px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 30;
+        }
+        
+        .video-container:hover .custom-controls {
+            opacity: 1;
+        }
+        
+        .control-btn-lg {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .control-btn-lg:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .skip-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .floating-controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            align-items: flex-end;
+            gap: 15px;
+            z-index: 1000;
         }
-
-        .reaction-bubble {
-            background: rgba(15,23,42,0.98);
-            padding: 6px 8px;
-            border-radius: 18px;
-            box-shadow: 0 8px 18px rgba(0,0,0,0.5);
+        
+        .floating-mic {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            border: none;
+            color: white;
+            font-size: 24px;
+        }
+        
+        .floating-mic.talking {
+            background: #ff6b81;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 107, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 107, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 107, 129, 0); }
+        }
+        
+        .emoji-float {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .emoji-btn-float {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+        
+        .emoji-btn-float:hover {
+            transform: scale(1.1);
+        }
+        
+        .party-sidebar {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 71, 87, 0.1);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+        
+        .sidebar-title {
             font-size: 18px;
-            animation: floatUp 3s ease forwards;
+            margin-bottom: 15px;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-
+        
+        .sidebar-title i {
+            color: var(--primary);
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .control-btn {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 71, 87, 0.2);
+            background: var(--input-bg);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 71, 87, 0.1);
+            border-color: var(--primary);
+        }
+        
+        .control-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .voice-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .voice-btn {
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .hold-talk-btn {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .hold-talk-btn:hover {
+            background-color: #ff6b81;
+        }
+        
+        .voice-status {
+            font-size: 14px;
+            color: var(--secondary);
+            text-align: center;
+            padding: 10px;
+            background: var(--input-bg);
+            border-radius: 8px;
+        }
+        
+        .chat-messages {
+            height: 250px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: var(--input-bg);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .message {
+            display: flex;
+            gap: 10px;
+            max-width: 100%;
+        }
+        
+        .message.self {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .message-content {
+            padding: 10px 15px;
+            border-radius: 18px;
+            background-color: rgba(255, 71, 87, 0.1);
+            font-size: 14px;
+            line-height: 1.4;
+            max-width: 80%;
+        }
+        
+        .message.self .message-content {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .message-meta {
+            font-size: 11px;
+            color: var(--secondary);
+            margin-top: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        #chat-input {
+            flex: 1;
+            padding: 12px 15px;
+            border-radius: 25px;
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        #chat-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.2);
+        }
+        
+        .send-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .send-btn:hover {
+            background-color: #ff6b81;
+            transform: scale(1.05);
+        }
+        
+        .party-info {
+            background-color: var(--input-bg);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .party-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+        
+        .party-host {
+            font-size: 14px;
+            color: var(--secondary);
+            margin-bottom: 15px;
+        }
+        
+        .party-meta {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .party-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .stat-value {
+            font-weight: 600;
+            font-size: 18px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--secondary);
+        }
+        
+        .invite-section {
+            margin-top: 20px;
+        }
+        
+        .invite-link-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        #invite-link {
+            flex: 1;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .copy-btn {
+            padding: 10px 15px;
+            border-radius: 8px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .copy-btn:hover {
+            background-color: #ff6b81;
+        }
+        
+        .copy-btn.copied {
+            background-color: var(--success);
+        }
+        
+        .reactions-container {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .reaction-btn {
+            padding: 8px 12px;
+            border-radius: 20px;
+            background: var(--input-bg);
+            border: 1px solid rgba(255, 71, 87, 0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+        
+        .reaction-btn:hover {
+            background: rgba(255, 71, 87, 0.1);
+            transform: scale(1.1);
+        }
+        
+        #reactions {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 40;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .reaction-bubble {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 20px;
+            animation: floatUp 3s ease forwards;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
         @keyframes floatUp {
             0% { transform: translateY(0); opacity: 1; }
             80% { opacity: 1; }
             100% { transform: translateY(-60px); opacity: 0; }
         }
-
-        /* Floating Controls */
-        .float-controls {
-            position: absolute;
-            z-index: 110;
-            right: 16px;
-            bottom: 18px;
-            display: none;
-            flex-direction: column;
-            gap: 8px;
-            align-items: flex-end;
-            pointer-events: none;
+        
+        .interactive-panel {
+            background: var(--input-bg);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
         }
-
-        .float-controls .btn, .float-controls .emoji-btn, .float-controls .talk-btn { 
-            pointer-events: auto; 
+        
+        .interactive-title {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: var(--primary);
         }
-
-        .talk-btn {
-            width: 56px;
-            height: 56px;
-            border-radius: 999px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            background: linear-gradient(180deg, var(--accent), #3b3bff);
-            box-shadow: 0 10px 30px rgba(79,70,229,0.25);
-            border: none;
-            color: white;
+        
+        .poll-option, .predict-option {
+            padding: 8px 12px;
+            background: var(--card-bg);
+            border-radius: 6px;
+            margin: 5px 0;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s;
         }
-
-        .talk-btn.talking {
-            background: linear-gradient(180deg, #ef4444, #dc2626);
-            animation: pulse 1.5s infinite;
+        
+        .poll-option:hover, .predict-option:hover {
+            background: rgba(255, 71, 87, 0.1);
         }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        
+        @media (max-width: 768px) {
+            .watch-party-container {
+                gap: 15px;
+            }
+            
+            .custom-controls {
+                opacity: 1;
+                padding: 10px;
+            }
+            
+            .control-btn-lg {
+                font-size: 20px;
+                width: 40px;
+                height: 40px;
+            }
+            
+            .skip-btn {
+                font-size: 14px;
+            }
+            
+            .floating-controls {
+                bottom: 20px;
+                right: 20px;
+            }
+            
+            .floating-mic {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+            
+            .emoji-btn-float {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
         }
-
-        .emoji-float {
-            display: flex;
-            gap: 8px;
-        }
-
-        .emoji-float .emoji-btn {
-            padding: 8px 10px;
-            font-size: 18px;
-            border-radius: 12px;
-        }
-
-        /* Show float controls only when fullscreen */
-        :fullscreen .float-controls,
-        :-webkit-full-screen .float-controls,
-        :-ms-fullscreen .float-controls {
-            display: flex;
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        /* Responsive */
-        @media (max-width: 900px) {
-            .app-container {
+        
+        @media (max-width: 480px) {
+            .header {
                 flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
             }
             
-            #controls-section {
-                min-width: 100%;
-                max-width: 100%;
-                max-height: 40vh;
+            .header-actions {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
             }
             
-            .float-controls {
-                right: 10px;
-                bottom: 12px;
+            .video-container {
+                border-radius: 0;
+                margin-left: -20px;
+                margin-right: -20px;
+                width: calc(100% + 40px);
             }
-        }
-
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(15,23,42,0.5);
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(148,163,184,0.3);
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(148,163,184,0.5);
+            
+            .party-sidebar {
+                border-radius: 0;
+                margin-left: -20px;
+                margin-right: -20px;
+                width: calc(100% + 40px);
+                border-left: none;
+                border-right: none;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Top Bar -->
-    <div id="topbar">
-        <div>
-            <div id="appTitle">Watch Party</div>
-            <div id="roomInfo"></div>
+    <div class="container">
+        <div class="header">
+            <a href="#" class="logo">
+                <i class="fas fa-film"></i>
+                Watch Party
+            </a>
+            <div class="header-actions">
+                <button class="theme-toggle" id="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <a href="#" class="back-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Home
+                </a>
+            </div>
         </div>
         
-        <div class="top-right">
-            <button id="playPauseBtn" class="btn small">▶️ Play</button>
-            <button id="syncBtn" class="btn small grey">🔄 Sync</button>
-            
-            <div class="emoji-panel">
-                <button class="btn small emoji-btn" data-emoji="😂">😂</button>
-                <button class="btn small emoji-btn" data-emoji="😱">😱</button>
-                <button class="btn small emoji-btn" data-emoji="🤨">🤨</button>
-                <button class="btn small emoji-btn" data-emoji="👏">👏</button>
-            </div>
-            
-            <button id="fullscreenBtn" class="btn small grey">⛶ Fullscreen</button>
-        </div>
-    </div>
-
-    <!-- Main App Container -->
-    <div class="app-container">
-        <!-- Video Section (75%) -->
-        <div id="video-section">
-            <div id="player-container">
-                <video id="html5video" playsinline preload="metadata"></video>
-                <div id="ytContainer" style="display:none;width:100%;height:100%">
-                    <div id="ytPlayerIframe"></div>
-                </div>
-                <canvas id="drawingCanvas"></canvas>
-                
-                <div id="overlay-block" class="hidden">
-                    <div class="hint">You're viewing — host controls playback</div>
-                </div>
-                
-                <div id="reactions"></div>
-                
-                <!-- Floating controls (ONLY visible in fullscreen) -->
-                <div class="float-controls" id="floatControls" aria-hidden="true">
-                    <div class="emoji-float">
-                        <button class="emoji-btn" data-emoji="😂">😂</button>
-                        <button class="emoji-btn" data-emoji="👏">👏</button>
-                        <button class="emoji-btn" data-emoji="🔥">🔥</button>
-                        <button class="emoji-btn" data-emoji="❤️">❤️</button>
+        <div class="watch-party-container">
+            <div class="video-container">
+                <div id="player-container">
+                    <video id="html5video" playsinline preload="metadata"></video>
+                    <div id="ytContainer" style="display:none;width:100%;height:100%">
+                        <div id="ytPlayerIframe"></div>
                     </div>
-                    <button id="talkFloatingBtn" class="talk-btn" title="Hold to talk">🎙</button>
+                    <canvas id="drawingCanvas"></canvas>
+                    <div id="overlay-block" class="hidden">
+                        <div class="overlay-hint">You're viewing — host controls playback</div>
+                    </div>
+                    <div id="reactions"></div>
+                </div>
+                
+                <div class="custom-controls">
+                    <button class="control-btn-lg" id="custom-play-pause">
+                        <i class="fas fa-pause"></i>
+                    </button>
+                    <button class="skip-btn" id="skip-back">
+                        <i class="fas fa-backward"></i> 10s
+                    </button>
+                    <button class="skip-btn" id="skip-forward">
+                        10s <i class="fas fa-forward"></i>
+                    </button>
+                    <button class="control-btn-lg" id="custom-fullscreen">
+                        <i class="fas fa-expand"></i>
+                    </button>
                 </div>
             </div>
             
-            <div id="status">Connecting...</div>
-        </div>
-        
-        <!-- Controls Section (25%) -->
-        <div id="controls-section">
-            <!-- Main Controls -->
-            <div class="panel">
-                <div class="panel-header">
-                    <span>Playback Controls</span>
-                    <label class="small">Speed:
-                        <select id="speedSel">
+            <div class="party-sidebar">
+                <div class="party-info">
+                    <h2 class="party-title" id="party-title">Watch Party</h2>
+                    <p class="party-host">Room: <strong id="room-info">Loading...</strong></p>
+                    
+                    <div class="party-meta">
+                        <div class="party-stat">
+                            <div class="stat-value" id="participant-count">1</div>
+                            <div class="stat-label">Participants</div>
+                        </div>
+                        <div class="party-stat">
+                            <div class="stat-value" id="status-display">Loading</div>
+                            <div class="stat-label">Status</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-sliders-h"></i> Controls</h3>
+                    <div class="controls-grid">
+                        <button id="pauseDiscussBtn" class="control-btn">
+                            <i class="fas fa-pause"></i> Pause & Discuss
+                        </button>
+                        <button id="toggleDrawBtn" class="control-btn">
+                            <i class="fas fa-pencil-alt"></i> Draw
+                        </button>
+                        <button id="clearDrawBtn" class="control-btn">
+                            <i class="fas fa-eraser"></i> Clear Draw
+                        </button>
+                        <button id="spotlightBtn" class="control-btn">
+                            <i class="fas fa-lightbulb"></i> Spotlight
+                        </button>
+                        <button id="focusBtn" class="control-btn">
+                            <i class="fas fa-crosshairs"></i> Focus Mode
+                        </button>
+                        <button id="syncBtn" class="control-btn">
+                            <i class="fas fa-sync"></i> Sync
+                        </button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                        <span style="font-size: 14px;">Speed:</span>
+                        <select id="speedSel" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid rgba(255, 71, 87, 0.3); background: var(--input-bg); color: var(--text-color);">
                             <option value="0.5">0.5x</option>
                             <option value="0.75">0.75x</option>
                             <option value="1" selected>1x</option>
                             <option value="1.25">1.25x</option>
                             <option value="1.5">1.5x</option>
                         </select>
-                    </label>
-                </div>
-                <div id="controls-grid">
-                    <button id="pauseDiscussBtn" class="btn grey">Pause & Discuss</button>
-                    <button id="toggleDrawBtn" class="btn grey">Draw</button>
-                    <button id="clearDrawBtn" class="btn grey">Clear Draw</button>
-                    <button id="spotlightBtn" class="btn grey">Spotlight</button>
-                    <button id="focusBtn" class="btn grey">Focus Mode</button>
-                </div>
-            </div>
-            
-            <!-- Voice Controls -->
-            <div class="panel">
-                <div class="panel-header"><span>Voice Talk</span></div>
-                <div class="panel-body">
-                    <button id="holdTalkBtn" class="btn grey">Hold to Talk</button>
-                    <div id="voiceStatus" style="margin-top: 8px;">Voice ready</div>
-                </div>
-            </div>
-            
-            <!-- Chat -->
-            <div class="panel" style="flex: 1; min-height: 0;">
-                <div class="panel-header">
-                    <span>Party Chat</span>
-                    <button id="clearChatBtn" class="btn small grey">Clear</button>
-                </div>
-                <div class="panel-body" id="chatScroll">
-                    <div id="chatMessages"></div>
-                </div>
-                <div class="input-row">
-                    <input id="chatInput" placeholder="Type a message..." />
-                    <button id="chatSendBtn" class="btn small">Send</button>
-                </div>
-            </div>
-            
-            <!-- Interactive Features -->
-            <div class="panel">
-                <div class="panel-header">
-                    <span>Interactive</span>
-                    <div style="display: flex; gap: 6px;">
-                        <button id="predictBtn" class="btn small">Predict</button>
-                        <button id="openPoll" class="btn small">Poll</button>
                     </div>
                 </div>
-                <div class="panel-body">
-                    <div id="predict-panel"></div>
-                    <div id="poll-panel"></div>
+                
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-comments"></i> Chat</h3>
+                    <div class="chat-messages" id="chatMessages">
+                        <!-- Chat messages will be added here -->
+                    </div>
+                    
+                    <div class="chat-input-container">
+                        <input type="text" id="chatInput" placeholder="Type your message...">
+                        <button class="send-btn" id="chatSendBtn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-microphone"></i> Voice Talk</h3>
+                    <div class="voice-controls">
+                        <button id="holdTalkBtn" class="voice-btn hold-talk-btn">
+                            <i class="fas fa-microphone"></i> Hold to Talk
+                        </button>
+                        <div id="voiceStatus" class="voice-status">Initializing voice...</div>
+                    </div>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-bolt"></i> Reactions</h3>
+                    <div class="reactions-container">
+                        <button class="reaction-btn" data-emoji="😂">😂</button>
+                        <button class="reaction-btn" data-emoji="😱">😱</button>
+                        <button class="reaction-btn" data-emoji="🤨">🤨</button>
+                        <button class="reaction-btn" data-emoji="👏">👏</button>
+                        <button class="reaction-btn" data-emoji="🔥">🔥</button>
+                        <button class="reaction-btn" data-emoji="❤️">❤️</button>
+                    </div>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-poll"></i> Interactive</h3>
+                    <div class="interactive-panel">
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <button id="predictBtn" class="control-btn" style="flex: 1;">
+                                <i class="fas fa-crystal-ball"></i> Predict
+                            </button>
+                            <button id="openPoll" class="control-btn" style="flex: 1;">
+                                <i class="fas fa-chart-bar"></i> Poll
+                            </button>
+                        </div>
+                        <div id="predict-panel"></div>
+                        <div id="poll-panel"></div>
+                    </div>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title"><i class="fas fa-user-plus"></i> Invite Friends</h3>
+                    <div class="invite-link-container">
+                        <input type="text" id="invite-link" class="form-input" readonly>
+                        <button class="copy-btn" id="copy-btn">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Firebase + Agora + YouTube -->
+    <div class="floating-controls">
+        <div class="emoji-float">
+            <button class="emoji-btn-float" data-emoji="😂">😂</button>
+            <button class="emoji-btn-float" data-emoji="👏">👏</button>
+            <button class="emoji-btn-float" data-emoji="🔥">🔥</button>
+        </div>
+        <button class="floating-mic" id="talkFloatingBtn">
+            <i class="fas fa-microphone"></i>
+        </button>
+    </div>
+
+    <!-- External scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -517,13 +909,12 @@
     <script src="https://www.youtube.com/iframe_api"></script>
 
     <script>
-        // --- Initialize Firebase ---
+        // --- Basic init & DOM refs ---
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
         auth.signInAnonymously().catch(console.warn);
 
-        // --- Get URL Parameters ---
         const params = new URLSearchParams(location.search);
         const roomId = params.get('room');
         const isHost = params.get('host') === 'true';
@@ -533,7 +924,6 @@
             throw new Error('Missing roomId');
         }
 
-        // --- Firebase References ---
         const roomRef = db.ref('rooms/' + roomId);
         const drawRef = roomRef.child('drawing');
         const reactionsRef = roomRef.child('reactions');
@@ -541,37 +931,33 @@
         const predictRef = roomRef.child('predicts');
         const pollsRef = roomRef.child('polls');
 
-        // --- DOM References ---
+        // DOM elements
         const html5video = document.getElementById('html5video');
         const ytContainer = document.getElementById('ytContainer');
         const overlayBlock = document.getElementById('overlay-block');
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
         const reactionsBox = document.getElementById('reactions');
-        const statusEl = document.getElementById('status');
-        const roomInfo = document.getElementById('roomInfo');
+        const roomInfo = document.getElementById('room-info');
+        const statusDisplay = document.getElementById('status-display');
+
+        // Control elements
         const speedSel = document.getElementById('speedSel');
         const pauseDiscussBtn = document.getElementById('pauseDiscussBtn');
         const toggleDrawBtn = document.getElementById('toggleDrawBtn');
         const clearDrawBtn = document.getElementById('clearDrawBtn');
         const spotlightBtn = document.getElementById('spotlightBtn');
         const focusBtn = document.getElementById('focusBtn');
-        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const syncBtn = document.getElementById('syncBtn');
         const holdTalkBtn = document.getElementById('holdTalkBtn');
         const talkFloatingBtn = document.getElementById('talkFloatingBtn');
         const voiceStatus = document.getElementById('voiceStatus');
         const chatMessages = document.getElementById('chatMessages');
         const chatInput = document.getElementById('chatInput');
         const chatSendBtn = document.getElementById('chatSendBtn');
-        const chatScroll = document.getElementById('chatScroll');
-        const floatControls = document.getElementById('floatControls');
-        const playPauseBtn = document.getElementById('playPauseBtn');
-        const syncBtn = document.getElementById('syncBtn');
-        const clearChatBtn = document.getElementById('clearChatBtn');
         const predictBtn = document.getElementById('predictBtn');
         const openPoll = document.getElementById('openPoll');
 
-        // --- App State ---
         let ready = false;
         let usingYT = false;
         let ytPlayer = null;
@@ -579,750 +965,744 @@
         let drawing = false;
         let lastPos = null;
         let discussionOpen = false;
+
+        // keep normalized strokes in memory so we can redraw on resize
         let strokes = [];
+
+        // Agora wrapper holder
         let agoraSession = null;
         let agoraLocalMicOn = false;
 
-        // --- Utility Functions ---
-        function setStatus(text) {
-            statusEl.textContent = text;
+        function setStatus(text) { 
+            statusDisplay.textContent = text; 
         }
 
-        function setVoiceStatus(text) {
-            voiceStatus.textContent = text;
-            console.log('[VoiceStatus]', text);
+        function setVoiceStatus(text) { 
+            voiceStatus.textContent = text; 
+            console.log('[VoiceStatus]', text); 
         }
 
-        // --- Canvas Sizing ---
-        function fitCanvas() {
+        // --- canvas sizing (supports high DPI) ---
+        function fitCanvas(){
             const rect = document.getElementById('player-container').getBoundingClientRect();
             const dpr = Math.max(1, window.devicePixelRatio || 1);
             canvas.style.width = rect.width + 'px';
             canvas.style.height = rect.height + 'px';
             canvas.width = Math.round(rect.width * dpr);
             canvas.height = Math.round(rect.height * dpr);
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.setTransform(dpr,0,0,dpr,0,0);
             redrawAllStrokes();
         }
-
         window.addEventListener('resize', fitCanvas);
         window.addEventListener('load', fitCanvas);
 
-        // --- YouTube Helpers ---
-        function isYouTubeLink(url) {
-            if (!url) return false;
-            return /youtube\.com|youtu\.be|youtube-nocookie\.com/i.test(url);
+        // --- YouTube helpers ---
+        function isYouTubeLink(url){ 
+            if(!url) return false; 
+            return /youtube\.com|youtu\.be|youtube-nocookie\.com/i.test(url); 
         }
 
-        function extractYoutubeID(url) {
-            if (!url) return null;
+        function extractYoutubeID(url){ 
+            if(!url) return null; 
             try {
-                const u = new URL(url);
-                if (u.hostname.includes('youtube.com') || u.hostname.includes('youtube-nocookie.com')) {
-                    const v = u.searchParams.get('v');
-                    if (v) return v;
-                    const parts = u.pathname.split('/');
-                    if (parts.includes('embed') && parts[parts.length - 1]) return parts[parts.length - 1];
-                }
-                if (u.hostname.includes('youtu.be')) {
-                    const parts = u.pathname.split('/');
-                    if (parts[1]) return parts[1];
-                }
-            } catch(e) {}
-            const m = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?&]+)/);
-            return m && m[1] ? m[1] : null;
+                const u = new URL(url); 
+                if(u.hostname.includes('youtube.com') || u.hostname.includes('youtube-nocookie.com')) {
+                    const v = u.searchParams.get('v'); 
+                    if(v) return v; 
+                    const parts = u.pathname.split('/'); 
+                    if(parts.includes('embed') && parts[parts.length-1]) return parts[parts.length-1];
+                } 
+                if(u.hostname.includes('youtu.be')) {
+                    const parts = u.pathname.split('/'); 
+                    if(parts[1]) return parts[1];
+                } 
+            } catch(e) {} 
+            const m = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?&]+)/); 
+            return m && m[1] ? m[1] : null; 
         }
 
-        function createYouTubePlayer(id, controls) {
+        function createYouTubePlayer(id, controls){
             ytContainer.style.display = 'block';
             html5video.style.display = 'none';
             window._pendingYTCreate = window._pendingYTCreate || [];
-            window._pendingYTCreate.push({id, controls});
-            
-            if (window.YT && window.YT.Player && typeof window.onYouTubeIframeAPIReady === 'function') {
+            window._pendingYTCreate.push({id,controls});
+            if(window.YT && window.YT.Player && typeof window.onYouTubeIframeAPIReady === 'function'){
                 window.onYouTubeIframeAPIReady();
             }
         }
 
-        window.onYouTubeIframeAPIReady = function() {
+        // ensure single global callback
+        window.onYouTubeIframeAPIReady = function(){
             const list = window._pendingYTCreate || [];
-            while (list.length) {
+            while(list.length){
                 const item = list.shift();
-                if (ytPlayer) {
-                    try {
-                        ytPlayer.destroy();
-                    } catch(e) {}
-                }
-                ytPlayer = new YT.Player('ytPlayerIframe', {
-                    videoId: item.id,
-                    playerVars: { rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3, controls: item.controls ? 1 : 0 },
-                    events: {
-                        onReady: () => {
-                            ready = true;
-                            fitCanvas();
-                            if (isHost) hostStart();
-                            else viewerStart();
-                        },
-                        onStateChange: (e) => {
-                            if (!isHost || !ytPlayer) return;
-                            const t = ytPlayer.getCurrentTime();
-                            if (e.data === YT.PlayerState.PLAYING) pushRoomState('play', t);
-                            if (e.data === YT.PlayerState.PAUSED) pushRoomState('pause', t);
-                        }
+                if(ytPlayer){ try{ ytPlayer.destroy(); }catch(e){} }
+                ytPlayer = new YT.Player('ytPlayerIframe',{
+                    videoId:item.id,
+                    playerVars:{rel:0,modestbranding:1,playsinline:1,iv_load_policy:3,controls: item.controls?1:0},
+                    events:{
+                        onReady:()=>{ready=true;fitCanvas();if(isHost) hostStart();else viewerStart();},
+                        onStateChange:(e)=>{ if(!isHost || !ytPlayer) return; const t = ytPlayer.getCurrentTime(); if(e.data===YT.PlayerState.PLAYING) pushRoomState('play',t); if(e.data===YT.PlayerState.PAUSED) pushRoomState('pause',t); }
                     }
                 });
             }
-        };
-
-        function playerGetTime() {
-            try {
-                return usingYT && ytPlayer ? ytPlayer.getCurrentTime() : (html5video.currentTime || 0);
-            } catch(e) {
-                return 0;
-            }
         }
 
-        function playerSeek(t) {
-            try {
-                if (usingYT && ytPlayer) ytPlayer.seekTo(t, true);
-                else html5video.currentTime = t;
-            } catch(e) {}
+        function playerGetTime(){ 
+            try{ 
+                return usingYT && ytPlayer ? ytPlayer.getCurrentTime() : (html5video.currentTime || 0); 
+            } catch(e) { return 0; } 
         }
 
-        function playerPlay() {
-            try {
-                if (usingYT && ytPlayer) return ytPlayer.playVideo();
-                else return html5video.play();
-            } catch(e) {}
+        function playerSeek(t){ 
+            try{ 
+                if(usingYT && ytPlayer) ytPlayer.seekTo(t,true); 
+                else html5video.currentTime = t; 
+            } catch(e) {} 
         }
 
-        function playerPause() {
-            try {
-                if (usingYT && ytPlayer) return ytPlayer.pauseVideo();
-                else return html5video.pause();
-            } catch(e) {}
+        function playerPlay(){ 
+            try{ 
+                if(usingYT && ytPlayer) return ytPlayer.playVideo(); 
+                else return html5video.play(); 
+            } catch(e) {} 
         }
 
-        function playerIsPlaying() {
-            try {
-                if (usingYT && ytPlayer && ytPlayer.getPlayerState) 
-                    return ytPlayer.getPlayerState() === YT.PlayerState.PLAYING;
-                return (!html5video.paused && !html5video.seeking);
-            } catch(e) {
-                return false;
-            }
+        function playerPause(){ 
+            try{ 
+                if(usingYT && ytPlayer) return ytPlayer.pauseVideo(); 
+                else return html5video.pause(); 
+            } catch(e) {} 
         }
 
-        function playerSetRate(r) {
-            try {
-                if (usingYT && ytPlayer && ytPlayer.setPlaybackRate) ytPlayer.setPlaybackRate(r);
-                else html5video.playbackRate = r;
-            } catch(e) {}
+        function playerIsPlaying(){ 
+            try{ 
+                if(usingYT && ytPlayer && ytPlayer.getPlayerState) 
+                    return ytPlayer.getPlayerState() === YT.PlayerState.PLAYING; 
+                return (!html5video.paused && !html5video.seeking); 
+            } catch(e) { return false; } 
         }
 
-        // --- Load Room ---
-        roomRef.once('value').then(snap => {
+        function playerSetRate(r){ 
+            try{ 
+                if(usingYT && ytPlayer && ytPlayer.setPlaybackRate) ytPlayer.setPlaybackRate(r); 
+                else html5video.playbackRate = r; 
+            } catch(e) {} 
+        }
+
+        // --- load room ---
+        roomRef.once('value').then(snap=>{
             const data = snap.val();
-            if (!data) {
-                alert('Room not found');
-                return;
-            }
-            if (!data.videoLink) {
-                alert('No video link configured for room');
-                return;
-            }
-            
-            roomInfo.textContent = `Room: ${roomId}${isHost ? ' • Host' : ' • Viewer'}`;
+            if(!data){alert('Room not found');return}
+            if(!data.videoLink){alert('No video link configured for room');return}
+            roomInfo.textContent = `${roomId}${isHost? ' • Host':' • Viewer'}`;
             const link = data.videoLink;
-            
-            if (isYouTubeLink(link)) {
-                usingYT = true;
+            if(isYouTubeLink(link)){
+                usingYT = true; 
                 const id = extractYoutubeID(link);
                 createYouTubePlayer(id, isHost);
             } else {
-                usingYT = false;
-                ytContainer.style.display = 'none';
+                usingYT = false; 
+                ytContainer.style.display = 'none'; 
                 html5video.style.display = 'block';
-                html5video.src = link;
+                html5video.src = link; 
                 html5video.crossOrigin = 'anonymous';
                 html5video.preload = 'auto';
                 html5video.controls = !!isHost;
-                
-                html5video.addEventListener('loadedmetadata', () => {
-                    ready = true;
-                    fitCanvas();
-                    if (isHost) hostStart();
-                    else viewerStart();
-                });
+                html5video.addEventListener('loadedmetadata', ()=>{ready=true;fitCanvas(); if(isHost) hostStart(); else viewerStart();});
+            }
+
+            if(!isHost){ 
+                overlayBlock.classList.remove('hidden'); 
+                overlayBlock.querySelector('.overlay-hint').textContent = 'Waiting for host — controls disabled for viewers'; 
             }
             
-            if (!isHost) {
-                overlayBlock.classList.remove('hidden');
-                overlayBlock.querySelector('.hint').textContent = 'Waiting for host — controls disabled for viewers';
-            }
-        }).catch(err => {
-            console.error(err);
-            setStatus('Error loading room');
-        });
+            // Set invite link
+            document.getElementById('invite-link').value = window.location.href;
+        }).catch(err=>{console.error(err);setStatus('Error loading room')});
 
-        // --- Host State Push ---
-        function pushRoomState(status, time) {
-            try {
+        // --- host state push ---
+        function pushRoomState(status, time){
+            try{ 
                 roomRef.update({
                     status,
                     currentTime: time,
                     updatedAt: firebase.database.ServerValue.TIMESTAMP
-                });
-            } catch(e) {
-                console.warn(e);
-            }
+                }); 
+            } catch(e) { console.warn(e); }
         }
 
-        // --- Host Start ---
-        function hostStart() {
-            setStatus('Host — you control playback');
-            
-            try {
-                roomRef.update({
-                    status: playerIsPlaying() ? 'play' : 'pause',
-                    currentTime: playerGetTime(),
-                    updatedAt: firebase.database.ServerValue.TIMESTAMP
-                });
-            } catch(e) {}
-            
-            // Play/Pause button
-            playPauseBtn.addEventListener('click', () => {
-                if (playerIsPlaying()) {
-                    playerPause();
-                    playPauseBtn.innerHTML = '▶️ Play';
-                } else {
-                    playerPlay();
-                    playPauseBtn.innerHTML = '⏸ Pause';
-                }
-            });
-            
-            // Host controls
-            pauseDiscussBtn.addEventListener('click', () => {
-                playerPause();
-                playPauseBtn.innerHTML = '▶️ Play';
-                roomRef.update({ status: 'pause', discussionOpen: true });
-            });
-            
-            toggleDrawBtn.addEventListener('click', () => {
-                drawingEnabled = !drawingEnabled;
-                toggleDrawBtn.textContent = drawingEnabled ? 'Drawing ON' : 'Draw';
-                roomRef.update({ drawingEnabled });
-            });
-            
-            clearDrawBtn.addEventListener('click', () => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                drawRef.remove().catch(() => {});
-                strokes = [];
-            });
-            
-            spotlightBtn.addEventListener('click', () => {
-                roomRef.child('hostPowers').update({ spotlight: true });
-                setTimeout(() => roomRef.child('hostPowers').update({ spotlight: false }), 5000);
-            });
-            
-            focusBtn.addEventListener('click', () => {
-                document.body.classList.toggle('focus-mode');
-            });
-            
-            speedSel.addEventListener('change', e => {
-                const sp = Number(e.target.value || 1);
-                playerSetRate(sp);
-                roomRef.child('hostPowers').update({ speed: sp });
-            });
-            
-            fullscreenBtn.addEventListener('click', () => {
-                const container = document.getElementById('player-container');
-                if (container.requestFullscreen) container.requestFullscreen();
-            });
-            
-            if (!usingYT) {
-                html5video.addEventListener('play', () => {
-                    pushRoomState('play', playerGetTime());
-                    playPauseBtn.innerHTML = '⏸ Pause';
-                });
-                
-                html5video.addEventListener('pause', () => {
-                    pushRoomState('pause', playerGetTime());
-                    playPauseBtn.innerHTML = '▶️ Play';
-                });
-                
-                html5video.addEventListener('seeked', () => {
-                    pushRoomState(playerIsPlaying() ? 'play' : 'pause', playerGetTime());
-                });
-            }
-            
-            predictBtn.addEventListener('click', () => {
-                const q = prompt('Enter prediction question');
-                if (!q) return;
-                const id = predictRef.push().key;
-                predictRef.child(id).set({
-                    question: q,
-                    createdAt: firebase.database.ServerValue.TIMESTAMP,
-                    options: {},
-                    closed: false
-                });
-            });
-            
-            openPoll.addEventListener('click', () => {
-                const q = prompt('Poll question');
-                if (!q) return;
-                const id = pollsRef.push().key;
-                pollsRef.child(id).set({
-                    q,
-                    options: {},
-                    createdAt: firebase.database.ServerValue.TIMESTAMP
-                });
-            });
-        }
-
-        // --- Viewer Start ---
-        function viewerStart() {
-            setStatus('Viewer — following host');
-            
-            // Sync button for viewers
-            syncBtn.addEventListener('click', () => {
-                roomRef.once('value').then(snap => {
-                    const data = snap.val() || {};
-                    const hostTime = data.currentTime || 0;
-                    hardSeekTo(hostTime);
-                    setStatus('Synced to host');
-                });
-            });
-            
-            roomRef.on('value', snap => {
-                const data = snap.val();
-                if (!ready || !data) return;
-                
-                discussionOpen = !!data.discussionOpen;
-                if (discussionOpen) setStatus('Discussion — host paused to talk');
-                else setStatus('Watching — synced to host');
-                
-                if (data.hostPowers && typeof data.hostPowers.speed !== 'undefined') {
-                    try {
-                        playerSetRate(Number(data.hostPowers.speed));
-                    } catch(e) {}
-                }
-                
-                const hostTime = data.currentTime || 0;
-                const hostEffective = computeHostEffectiveTime(hostTime, data.updatedAt || Date.now());
-                let localT = 0;
-                
-                try {
-                    localT = playerGetTime();
-                } catch(e) {}
-                
-                const diff = hostEffective - localT;
-                const nowMs = Date.now();
-                
-                if (nowMs - lastViewerAdjustMs >= VIEWER_ADJUST_THROTTLE_MS) {
-                    lastViewerAdjustMs = nowMs;
-                    
-                    // Only hard seek for large drift (>2s)
-                    if (Math.abs(diff) > 2.0) {
-                        hardSeekTo(hostEffective);
-                        applyPlaybackRateForAll(1);
-                    } else if (Math.abs(diff) > 0.45) {
-                        const nudge = computeNudgeRate(diff);
-                        applyPlaybackRateForAll(nudge);
-                        try {
-                            const newT = localT + diff * 0.18;
-                            playerSeek(newT);
-                        } catch(e) {}
-                    } else {
-                        applyPlaybackRateForAll(1);
-                        if (Math.abs(diff) > 0.06) {
-                            try {
-                                playerSeek(localT + diff * 0.08);
-                            } catch(e) {}
-                        }
-                    }
-                }
-                
-                // Apply play/pause immediately
-                if (data.status === 'play') {
-                    overlayBlock.classList.add('hidden');
-                    try {
-                        playerPlay();
-                        playPauseBtn.innerHTML = '⏸ Pause';
-                    } catch(e) {}
-                } else {
-                    if (!discussionOpen) overlayBlock.classList.remove('hidden');
-                    try {
-                        playerPause();
-                        playPauseBtn.innerHTML = '▶️ Play';
-                    } catch(e) {}
-                }
-            });
-            
-            // Protect viewer from local control attempts
-            html5video.addEventListener('seeking', () => {
-                roomRef.once('value').then(snap => {
-                    const d = snap.val() || {};
-                    const hostTime = d.currentTime || 0;
-                    playerSeek(hostTime);
-                }).catch(() => {});
-            });
-        }
-
-        // --- Sync Logic ---
-        let hostIntervalHandle = null;
-        let lastHostUpdateMs = 0;
+        // --- sync logic ---
+        let hostIntervalHandle = null; 
+        let lastHostUpdateMs = 0; 
         let lastHardSeekMs = 0;
+        let lastViewerAdjustMs = 0;
+        
         const HARD_SEEK_COOLDOWN_MS = 2000;
         const HOST_UPDATE_INTERVAL_MS = 700;
         const VIEWER_ADJUST_THROTTLE_MS = 400;
-        let lastViewerAdjustMs = 0;
 
-        function computeHostEffectiveTime(hostTime, updatedAtMs) {
-            const now = Date.now();
-            const lagMs = Math.max(0, now - (updatedAtMs || now));
-            return hostTime + (lagMs / 1000);
+        function computeHostEffectiveTime(hostTime, updatedAtMs){ 
+            const now = Date.now(); 
+            const lagMs = Math.max(0, now - (updatedAtMs || now)); 
+            return hostTime + (lagMs/1000); 
+        }
+        
+        function computeNudgeRate(diffSeconds){ 
+            const maxNudge=0.04; 
+            const sensitivity=0.2; 
+            const rate=1+Math.max(-maxNudge,Math.min(maxNudge,diffSeconds*sensitivity)); 
+            return rate; 
+        }
+        
+        function applyPlaybackRateForAll(rate){ 
+            try{ playerSetRate(rate); } catch(e) {} 
+        }
+        
+        function hardSeekTo(timeSec){ 
+            const now=Date.now(); 
+            if(now - lastHardSeekMs < HARD_SEEK_COOLDOWN_MS) return; 
+            lastHardSeekMs=now; 
+            try{ playerSeek(timeSec); } catch(e) {} 
         }
 
-        function computeNudgeRate(diffSeconds) {
-            const maxNudge = 0.04;
-            const sensitivity = 0.2;
-            const rate = 1 + Math.max(-maxNudge, Math.min(maxNudge, diffSeconds * sensitivity));
-            return rate;
-        }
-
-        function applyPlaybackRateForAll(rate) {
-            try {
-                playerSetRate(rate);
+        // --- host start ---
+        function hostStart(){ 
+            setStatus('Host — you control playback');
+            try{ 
+                roomRef.update({
+                    status: playerIsPlaying()? 'play':'pause', 
+                    currentTime: playerGetTime(), 
+                    updatedAt: firebase.database.ServerValue.TIMESTAMP
+                }); 
             } catch(e) {}
-        }
 
-        function hardSeekTo(timeSec) {
-            const now = Date.now();
-            if (now - lastHardSeekMs < HARD_SEEK_COOLDOWN_MS) return;
-            lastHardSeekMs = now;
-            try {
-                playerSeek(timeSec);
-            } catch(e) {}
-        }
+            hostIntervalHandle = setInterval(()=>{ 
+                if(!ready) return; 
+                try{ 
+                    if(playerIsPlaying()){ 
+                        const nowMs = Date.now(); 
+                        if(nowMs - lastHostUpdateMs >= HOST_UPDATE_INTERVAL_MS){ 
+                            lastHostUpdateMs = nowMs; 
+                            roomRef.update({
+                                currentTime: playerGetTime(), 
+                                updatedAt: firebase.database.ServerValue.TIMESTAMP
+                            }); 
+                        } 
+                    } 
+                } catch(e) {} 
+            }, HOST_UPDATE_INTERVAL_MS);
 
-        // --- Drawing Functions ---
-        function enableDrawing() {
-            canvas.style.pointerEvents = 'auto';
-            canvas.addEventListener('mousedown', onDown);
-            canvas.addEventListener('mousemove', onMove);
-            canvas.addEventListener('mouseup', onUp);
-            canvas.addEventListener('mouseleave', onUp);
-            canvas.addEventListener('touchstart', onDown, { passive: false });
-            canvas.addEventListener('touchmove', onMove, { passive: false });
-            canvas.addEventListener('touchend', onUp);
-        }
+            // Custom controls
+            document.getElementById('custom-play-pause').addEventListener('click', ()=>{
+                if(playerIsPlaying()) {
+                    playerPause();
+                    pushRoomState('pause', playerGetTime());
+                } else {
+                    playerPlay();
+                    pushRoomState('play', playerGetTime());
+                }
+            });
 
-        function disableDrawing() {
-            canvas.style.pointerEvents = 'none';
-            canvas.removeEventListener('mousedown', onDown);
-            canvas.removeEventListener('mousemove', onMove);
-            canvas.removeEventListener('mouseup', onUp);
-            canvas.removeEventListener('mouseleave', onUp);
-            canvas.removeEventListener('touchstart', onDown);
-            canvas.removeEventListener('touchmove', onMove);
-            canvas.removeEventListener('touchend', onUp);
-        }
+            document.getElementById('skip-back').addEventListener('click', ()=>{
+                playerSeek(playerGetTime() - 10);
+                if(isHost) pushRoomState(playerIsPlaying()? 'play':'pause', playerGetTime());
+            });
 
-        function getCanvasPos(e) {
-            const r = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: (clientX - r.left),
-                y: (clientY - r.top)
-            };
-        }
+            document.getElementById('skip-forward').addEventListener('click', ()=>{
+                playerSeek(playerGetTime() + 10);
+                if(isHost) pushRoomState(playerIsPlaying()? 'play':'pause', playerGetTime());
+            });
 
-        function onDown(e) {
-            if (!isHost || !drawingEnabled) return;
-            e.preventDefault();
-            drawing = true;
-            lastPos = getCanvasPos(e);
-        }
+            document.getElementById('custom-fullscreen').addEventListener('click', ()=>{
+                const container = document.querySelector('.video-container');
+                if(container.requestFullscreen) container.requestFullscreen();
+            });
 
-        function onMove(e) {
-            if (!drawing || !isHost || !drawingEnabled) return;
-            e.preventDefault();
-            const pos = getCanvasPos(e);
-            const color = '#fbbf24';
-            const thickness = 3;
+            // Host controls
+            pauseDiscussBtn.addEventListener('click', ()=>{ 
+                playerPause(); 
+                roomRef.update({status:'pause',discussionOpen:true}); 
+            });
             
-            ctx.strokeStyle = color;
-            ctx.lineWidth = thickness;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(lastPos.x, lastPos.y);
-            ctx.lineTo(pos.x, pos.y);
-            ctx.stroke();
+            toggleDrawBtn.addEventListener('click', ()=>{ 
+                drawingEnabled = !drawingEnabled; 
+                toggleDrawBtn.innerHTML = drawingEnabled ? 
+                    '<i class="fas fa-pencil-alt"></i> Drawing ON' : 
+                    '<i class="fas fa-pencil-alt"></i> Draw'; 
+                toggleDrawBtn.classList.toggle('active', drawingEnabled);
+                roomRef.update({drawingEnabled}); 
+            });
             
-            try {
-                drawRef.push({
-                    lx: lastPos.x / canvas.clientWidth,
-                    ly: lastPos.y / canvas.clientHeight,
-                    x: pos.x / canvas.clientWidth,
-                    y: pos.y / canvas.clientHeight,
-                    color,
-                    thickness
+            clearDrawBtn.addEventListener('click', ()=>{ 
+                ctx.clearRect(0,0,canvas.width,canvas.height); 
+                drawRef.remove().catch(()=>{}); 
+                strokes=[]; 
+            });
+            
+            spotlightBtn.addEventListener('click', ()=>{ 
+                roomRef.child('hostPowers').update({spotlight:true}); 
+                setTimeout(()=>roomRef.child('hostPowers').update({spotlight:false}),5000); 
+            });
+            
+            focusBtn.addEventListener('click', ()=>{ 
+                roomRef.child('hostPowers').update({focusMode:true}); 
+                setTimeout(()=>roomRef.child('hostPowers').update({focusMode:false}),5000); 
+            });
+            
+            syncBtn.addEventListener('click', ()=>{
+                roomRef.update({
+                    currentTime: playerGetTime(),
+                    updatedAt: firebase.database.ServerValue.TIMESTAMP
                 });
-            } catch(e) {}
+            });
             
-            lastPos = pos;
+            speedSel.addEventListener('change', e=>{ 
+                const sp = Number(e.target.value||1); 
+                playerSetRate(sp); 
+                roomRef.child('hostPowers').update({speed:sp}); 
+            });
+
+            if(!usingYT){
+                html5video.addEventListener('play', ()=> pushRoomState('play',playerGetTime()));
+                html5video.addEventListener('pause', ()=> pushRoomState('pause',playerGetTime()));
+                html5video.addEventListener('seeked', ()=> pushRoomState(playerIsPlaying()? 'play':'pause', playerGetTime()));
+            }
+            
+            predictBtn.addEventListener('click', ()=>{ 
+                const q = prompt('Enter prediction question'); 
+                if(!q) return; 
+                const id = predictRef.push().key; 
+                predictRef.child(id).set({
+                    question:q,
+                    createdAt:firebase.database.ServerValue.TIMESTAMP,
+                    options:{},
+                    closed:false
+                }); 
+            });
+            
+            openPoll.addEventListener('click', ()=>{ 
+                const q=prompt('Poll question'); 
+                if(!q) return; 
+                const id = pollsRef.push().key; 
+                pollsRef.child(id).set({
+                    q,
+                    options:{},
+                    createdAt:firebase.database.ServerValue.TIMESTAMP
+                }); 
+            });
         }
 
-        function onUp() {
-            drawing = false;
-            lastPos = null;
+        // --- viewer start ---
+        function viewerStart(){ 
+            setStatus('Viewer — following host');
+
+            let bufferRecoveryTimer = null;
+            function onBuffering(){
+                if(bufferRecoveryTimer) return;
+                bufferRecoveryTimer = setTimeout(()=>{
+                    roomRef.once('value').then(snap=>{
+                        const data = snap.val()||{};
+                        const hostTime = data.currentTime||0;
+                        const eff = computeHostEffectiveTime(hostTime,data.updatedAt||Date.now());
+                        try{
+                            playerPause();
+                            playerSeek(Math.max(0, eff - 0.2));
+                            playerPlay().catch(()=>{});
+                        }catch(e){}
+                    }).catch(()=>{});
+                    bufferRecoveryTimer = null;
+                }, 700);
+            }
+
+            if(!usingYT){ 
+                html5video.addEventListener('waiting', onBuffering); 
+                html5video.addEventListener('stalled', onBuffering); 
+            }
+
+            roomRef.on('value', snap=>{
+                const data = snap.val();
+                if(!ready || !data) return;
+                discussionOpen = !!data.discussionOpen;
+                if(discussionOpen) setStatus('Discussion — host paused to talk'); 
+                else setStatus('Watching — synced to host');
+
+                if(data.hostPowers && typeof data.hostPowers.speed !== 'undefined'){ 
+                    try{ playerSetRate(Number(data.hostPowers.speed)); } catch(e) {} 
+                }
+
+                const hostTime = data.currentTime || 0;
+                const hostEffective = computeHostEffectiveTime(hostTime, data.updatedAt || Date.now());
+
+                let localT = 0; 
+                try{ localT = playerGetTime(); } catch(e) {}
+                const diff = hostEffective - localT;
+                const nowMs = Date.now();
+                if(nowMs - lastViewerAdjustMs >= VIEWER_ADJUST_THROTTLE_MS){
+                    lastViewerAdjustMs = nowMs;
+                    if(Math.abs(diff) > 2.0){
+                        hardSeekTo(hostEffective);
+                        applyPlaybackRateForAll(1);
+                    } else if(Math.abs(diff) > 0.45){
+                        const nudge = computeNudgeRate(diff);
+                        applyPlaybackRateForAll(nudge);
+                        try{ const newT = localT + diff * 0.18; playerSeek(newT); } catch(e) {}
+                    } else {
+                        applyPlaybackRateForAll(1);
+                        if(Math.abs(diff) > 0.06){
+                            try{ playerSeek(localT + diff * 0.08); } catch(e) {} 
+                        }
+                    }
+                }
+
+                if(data.status === 'play'){
+                    overlayBlock.classList.add('hidden');
+                    try{ playerPlay(); } catch(e) {}
+                } else {
+                    if(!discussionOpen) overlayBlock.classList.remove('hidden');
+                    try{ playerPause(); } catch(e) {}
+                }
+            });
+
+            html5video.addEventListener('seeking', ()=>{
+                roomRef.once('value').then(snap=>{
+                    const d = snap.val()||{};
+                    const hostTime = d.currentTime||0;
+                    playerSeek(hostTime);
+                }).catch(()=>{});
+            });
+
+            let stallCount = 0;
+            if(!usingYT){
+                html5video.addEventListener('waiting', ()=>{ 
+                    stallCount++; 
+                    if(stallCount >= 3){
+                        roomRef.once('value').then(snap=>{
+                            const data = snap.val()||{};
+                            const eff = computeHostEffectiveTime(data.currentTime||0, data.updatedAt||Date.now());
+                            try{
+                                playerPause();
+                                playerSeek(Math.max(0, eff - 0.2));
+                                setTimeout(()=>{ playerPlay().catch(()=>{}); }, 500);
+                                stallCount = 0;
+                            }catch(e){}
+                        }).catch(()=>{});
+                    }
+                });
+                html5video.addEventListener('playing', ()=>{ stallCount = 0; });
+            }
+
+            // Sync button for viewers
+            syncBtn.addEventListener('click', ()=>{
+                roomRef.once('value').then(snap=>{
+                    const data = snap.val()||{};
+                    const hostTime = data.currentTime||0;
+                    hardSeekTo(hostTime);
+                });
+            });
         }
 
-        drawRef.on('value', snap => {
+        // ------------- DRAWING -------------
+        function enableDrawing(){ 
+            canvas.style.pointerEvents = 'auto'; 
+            canvas.addEventListener('mousedown', onDown); 
+            canvas.addEventListener('mousemove', onMove); 
+            canvas.addEventListener('mouseup', onUp); 
+            canvas.addEventListener('mouseleave', onUp); 
+            canvas.addEventListener('touchstart', onDown,{passive:false}); 
+            canvas.addEventListener('touchmove', onMove,{passive:false}); 
+            canvas.addEventListener('touchend', onUp); 
+        }
+        
+        function disableDrawing(){ 
+            canvas.style.pointerEvents = 'none'; 
+            canvas.removeEventListener('mousedown', onDown); 
+            canvas.removeEventListener('mousemove', onMove); 
+            canvas.removeEventListener('mouseup', onUp); 
+            canvas.removeEventListener('mouseleave', onUp); 
+            canvas.removeEventListener('touchstart', onDown); 
+            canvas.removeEventListener('touchmove', onMove); 
+            canvas.removeEventListener('touchend', onUp); 
+        }
+        
+        function getCanvasPos(e){ 
+            const r = canvas.getBoundingClientRect(); 
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX; 
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY; 
+            return {
+                x: (clientX - r.left), 
+                y: (clientY - r.top)
+            }; 
+        }
+        
+        function onDown(e){ 
+            if(!isHost || !drawingEnabled) return; 
+            e.preventDefault(); 
+            drawing=true; 
+            lastPos = getCanvasPos(e); 
+        }
+        
+        function onMove(e){ 
+            if(!drawing || !isHost || !drawingEnabled) return; 
+            e.preventDefault(); 
+            const pos = getCanvasPos(e); 
+            const color = '#fbbf24'; 
+            const thickness = 3; 
+            ctx.strokeStyle = color; 
+            ctx.lineWidth = thickness; 
+            ctx.lineCap = 'round'; 
+            ctx.beginPath(); 
+            ctx.moveTo(lastPos.x,lastPos.y); 
+            ctx.lineTo(pos.x,pos.y); 
+            ctx.stroke(); 
+            try{ 
+                drawRef.push({
+                    lx: lastPos.x / canvas.clientWidth, 
+                    ly: lastPos.y / canvas.clientHeight, 
+                    x: pos.x / canvas.clientWidth, 
+                    y: pos.y / canvas.clientHeight, 
+                    color, 
+                    thickness
+                }); 
+            } catch(e) {} 
+            lastPos = pos; 
+        }
+        
+        function onUp(){ 
+            drawing=false; 
+            lastPos=null; 
+        }
+
+        drawRef.on('value', snap=>{
             const val = snap.val() || {};
             strokes = [];
-            Object.keys(val).forEach(k => {
-                const s = val[k];
-                s._id = k;
-                strokes.push(s);
-            });
+            Object.keys(val).forEach(k=>{ const s = val[k]; s._id = k; strokes.push(s); });
             redrawAllStrokes();
         });
 
-        function redrawAllStrokes() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const w = canvas.clientWidth, h = canvas.clientHeight;
-            strokes.forEach(st => {
-                try {
-                    ctx.strokeStyle = st.color || '#fbbf24';
-                    ctx.lineWidth = st.thickness || 3;
-                    ctx.lineCap = 'round';
-                    ctx.beginPath();
-                    ctx.moveTo(st.lx * w, st.ly * h);
-                    ctx.lineTo(st.x * w, st.y * h);
-                    ctx.stroke();
-                } catch(e) {}
-            });
+        function redrawAllStrokes(){ 
+            ctx.clearRect(0,0,canvas.width,canvas.height); 
+            const w = canvas.clientWidth, h = canvas.clientHeight; 
+            strokes.forEach(st=>{ 
+                try{ 
+                    ctx.strokeStyle = st.color || '#fbbf24'; 
+                    ctx.lineWidth = st.thickness || 3; 
+                    ctx.lineCap='round'; 
+                    ctx.beginPath(); 
+                    ctx.moveTo(st.lx*w, st.ly*h); 
+                    ctx.lineTo(st.x*w, st.y*h); 
+                    ctx.stroke(); 
+                } catch(e) {} 
+            }); 
         }
 
-        roomRef.child('drawingEnabled').on('value', s => {
-            const on = !!s.val();
-            drawingEnabled = on;
-            if (on && isHost) enableDrawing();
-            else disableDrawing();
-            toggleDrawBtn.textContent = (on ? 'Drawing ON' : 'Draw');
+        roomRef.child('drawingEnabled').on('value', s=>{ 
+            const on = !!s.val(); 
+            drawingEnabled = on; 
+            if(on && isHost) enableDrawing(); 
+            else disableDrawing(); 
+            toggleDrawBtn.innerHTML = on ? 
+                '<i class="fas fa-pencil-alt"></i> Drawing ON' : 
+                '<i class="fas fa-pencil-alt"></i> Draw'; 
+            toggleDrawBtn.classList.toggle('active', on);
         });
 
-        // --- Reactions ---
-        function showReactionBubble(emoji) {
-            const el = document.createElement('div');
-            el.className = 'reaction-bubble';
-            el.textContent = emoji;
-            reactionsBox.appendChild(el);
-            setTimeout(() => el.remove(), 3000);
+        // --- reactions ---
+        function showReactionBubble(emoji){ 
+            const el = document.createElement('div'); 
+            el.className='reaction-bubble'; 
+            el.textContent = emoji; 
+            reactionsBox.appendChild(el); 
+            setTimeout(()=>el.remove(),3000); 
         }
-
-        function emitReaction(emoji) {
+        
+        function emitReaction(emoji){ 
             reactionsRef.push({
                 emoji,
                 at: firebase.database.ServerValue.TIMESTAMP
-            });
+            }); 
         }
-
-        document.querySelectorAll('.emoji-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const emoji = btn.getAttribute('data-emoji') || btn.textContent;
-                emitReaction(emoji);
+        
+        document.querySelectorAll('.reaction-btn, .emoji-btn-float').forEach(btn=>{
+            btn.addEventListener('click', ()=>{ 
+                const emoji = btn.getAttribute('data-emoji') || btn.textContent; 
+                emitReaction(emoji); 
             });
         });
-
-        reactionsRef.on('child_added', snap => {
-            const v = snap.val() || {};
-            if (v.emoji) showReactionBubble(v.emoji);
+        
+        reactionsRef.on('child_added', snap=>{ 
+            const v = snap.val()||{}; 
+            if(v.emoji) showReactionBubble(v.emoji); 
         });
 
-        // --- Chat Functions ---
-        function appendChatMessage(msg) {
-            const div = document.createElement('div');
-            div.className = 'chat-msg';
+        // --- chat ---
+        function appendChatMessage(msg){ 
+            const div = document.createElement('div'); 
+            div.className = `message ${msg.userLabel === 'Host' ? 'self' : ''}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = msg.userLabel === 'Host' ? 'H' : 'V';
+            
+            const content = document.createElement('div');
+            content.className = 'message-content';
             
             const meta = document.createElement('div');
-            meta.className = 'chat-meta';
+            meta.className = 'message-meta';
             
-            const user = document.createElement('span');
-            user.className = 'chat-user';
-            user.textContent = msg.userLabel || 'Guest';
-            
-            const time = document.createElement('span');
-            time.className = 'chat-time';
             const date = msg.at ? new Date(msg.at) : new Date();
-            time.textContent = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const timeStr = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             
-            meta.appendChild(user);
-            meta.appendChild(time);
+            meta.innerHTML = `
+                <span>${msg.userLabel||'Guest'}</span>
+                <span>${timeStr}</span>
+            `;
             
             const body = document.createElement('div');
-            body.textContent = msg.text;
+            body.textContent = msg.text; 
             
-            div.appendChild(meta);
-            div.appendChild(body);
-            chatMessages.appendChild(div);
+            content.appendChild(body);
+            content.appendChild(meta);
             
-            // Auto-scroll to bottom
-            chatScroll.scrollTop = chatScroll.scrollHeight;
+            div.appendChild(avatar);
+            div.appendChild(content);
+            chatMessages.appendChild(div); 
+            
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
-
-        chatRef.limitToLast(150).on('child_added', snap => {
-            const msg = snap.val();
-            if (!msg) return;
-            appendChatMessage(msg);
+        
+        chatRef.limitToLast(150).on('child_added', snap=>{ 
+            const msg = snap.val(); 
+            if(!msg) return; 
+            appendChatMessage(msg); 
         });
-
-        function sendChat() {
-            const text = (chatInput.value || '').trim().slice(0, 1000);
-            if (!text) return;
-            const uid = (auth.currentUser && auth.currentUser.uid) || 'anon';
+        
+        function sendChat(){ 
+            const text = (chatInput.value||'').trim().slice(0,1000); 
+            if(!text) return; 
+            const uid = (auth.currentUser && auth.currentUser.uid) || 'anon'; 
             chatRef.push({
                 text,
                 uid,
                 userLabel: isHost ? 'Host' : 'Viewer',
                 at: firebase.database.ServerValue.TIMESTAMP
-            });
-            chatInput.value = '';
+            }); 
+            chatInput.value=''; 
         }
-
-        chatSendBtn.addEventListener('click', sendChat);
-        chatInput.addEventListener('keydown', e => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                sendChat();
-            }
+        
+        chatSendBtn.addEventListener('click', sendChat); 
+        chatInput.addEventListener('keydown', (e)=>{ 
+            if(e.key==='Enter'){ 
+                e.preventDefault(); 
+                sendChat(); 
+            } 
         });
 
-        clearChatBtn.addEventListener('click', () => {
-            if (confirm('Clear all chat messages?')) {
-                chatRef.remove().catch(console.warn);
-            }
-        });
-
-        // --- Predicts & Polls ---
-        function renderPredicts(data) {
-            const out = document.getElementById('predict-panel');
-            out.innerHTML = '<strong>Predictions</strong><br/>';
-            Object.keys(data || {}).forEach(id => {
-                const p = data[id];
-                const el = document.createElement('div');
-                el.style.marginBottom = '6px';
-                el.innerHTML = `<div><strong>${p.question}</strong></div>`;
-                const btn = document.createElement('button');
-                btn.textContent = 'Answer';
-                btn.className = 'btn small grey';
-                btn.onclick = () => {
-                    const ans = prompt('Your answer');
-                    if (!ans) return;
+        // --- predicts & polls ---
+        function renderPredicts(data){ 
+            const out = document.getElementById('predict-panel'); 
+            out.innerHTML = '<div class="interactive-title">Predictions</div>'; 
+            Object.keys(data||{}).forEach(id=>{ 
+                const p = data[id]; 
+                const el = document.createElement('div'); 
+                el.className = 'predict-option';
+                el.innerHTML = `
+                    <div><strong>${p.question}</strong></div>
+                    <button class="control-btn" style="margin-top: 5px; font-size: 12px; padding: 5px 10px;">
+                        Answer
+                    </button>
+                `;
+                el.querySelector('button').onclick = ()=>{ 
+                    const ans = prompt('Your answer'); 
+                    if(!ans) return; 
                     predictRef.child(id).child('options').push({
-                        answer: ans,
-                        at: firebase.database.ServerValue.TIMESTAMP
-                    });
+                        answer:ans,
+                        at:firebase.database.ServerValue.TIMESTAMP
+                    }); 
                 };
-                el.appendChild(btn);
-                out.appendChild(el);
-            });
+                out.appendChild(el); 
+            }); 
         }
-
-        function renderPolls(data) {
-            const out = document.getElementById('poll-panel');
-            out.innerHTML = '<strong>Polls</strong><br/>';
-            Object.keys(data || {}).forEach(id => {
-                const p = data[id];
-                const el = document.createElement('div');
-                el.style.marginBottom = '6px';
-                el.innerHTML = `<div><strong>${p.q}</strong></div>`;
-                const btn = document.createElement('button');
-                btn.textContent = 'Vote';
-                btn.className = 'btn small grey';
-                btn.onclick = () => {
-                    const opt = prompt('Enter your vote');
-                    if (!opt) return;
+        
+        function renderPolls(data){ 
+            const out = document.getElementById('poll-panel'); 
+            out.innerHTML = '<div class="interactive-title">Polls</div>'; 
+            Object.keys(data||{}).forEach(id=>{ 
+                const p=data[id]; 
+                const el=document.createElement('div'); 
+                el.className = 'poll-option';
+                el.innerHTML = `
+                    <div><strong>${p.q}</strong></div>
+                    <button class="control-btn" style="margin-top: 5px; font-size: 12px; padding: 5px 10px;">
+                        Vote
+                    </button>
+                `;
+                el.querySelector('button').onclick = ()=>{ 
+                    const opt=prompt('Enter your vote'); 
+                    if(!opt) return; 
                     pollsRef.child(id).child('options').push({
-                        label: opt,
-                        at: firebase.database.ServerValue.TIMESTAMP
-                    });
+                        label:opt,
+                        at:firebase.database.ServerValue.TIMESTAMP
+                    }); 
                 };
-                el.appendChild(btn);
-                out.appendChild(el);
-            });
+                out.appendChild(el); 
+            }); 
         }
+        
+        predictRef.on('value', s=>renderPredicts(s.val()||{})); 
+        pollsRef.on('value', s=>renderPolls(s.val()||{}));
 
-        predictRef.on('value', s => renderPredicts(s.val() || {}));
-        pollsRef.on('value', s => renderPolls(s.val() || {}));
-
-        // --- Voice (Agora) Integration ---
+        // --- voice (agora) integration ---
         function tryAttachAgoraSession(session) {
-            if (!session) return false;
+            if(!session) return false;
             agoraSession = session;
             console.log('agora session attached', session);
-            
             try {
-                if (typeof session.on === 'function') {
+                if(typeof session.on === 'function') {
                     session.on('user-published', (uid, mediaType) => {
                         console.log('agora user-published', uid, mediaType);
                         setVoiceStatus('Remote user published: ' + uid);
-                        
-                        if (typeof session.subscribe === 'function') {
+                        if(typeof session.subscribe === 'function') {
                             session.subscribe(uid, mediaType).then(remoteTrack => {
-                                if (mediaType === 'audio' && remoteTrack && typeof remoteTrack.play === 'function') {
+                                if(mediaType === 'audio' && remoteTrack && typeof remoteTrack.play === 'function') {
                                     const audio = document.createElement('audio');
                                     audio.autoplay = true;
                                     audio.playsInline = true;
                                     audio.controls = false;
                                     audio.style.display = 'none';
                                     document.body.appendChild(audio);
-                                    
                                     try {
-                                        if (typeof remoteTrack.play === 'function') {
+                                        if(typeof remoteTrack.play === 'function') {
                                             remoteTrack.play(audio);
-                                        } else if (typeof remoteTrack.playable === 'function') {
-                                            remoteTrack.playable(audio);
-                                        } else if (remoteTrack.track) {
+                                        } else if(remoteTrack.track) {
                                             const stream = new MediaStream([remoteTrack.track]);
                                             audio.srcObject = stream;
-                                            audio.play().catch(() => {});
+                                            audio.play().catch(()=>{});
                                         }
-                                    } catch(e) {
-                                        console.warn('could not auto-play remote track', e);
-                                    }
+                                    } catch(e){ console.warn('could not auto-play remote track', e); }
                                 }
-                            }).catch(() => {});
+                            }).catch(()=>{});
                         }
                     });
                 }
-            } catch(e) {
-                console.warn('attachAgoraSession hook failed', e);
-            }
-            
+            } catch(e){ console.warn('attachAgoraSession hook failed', e); }
             return true;
         }
 
         auth.onAuthStateChanged(async user => {
-            if (!user) return;
+            if(!user) return;
             setVoiceStatus('Initializing voice...');
-            
             try {
-                if (typeof initAgoraVoice === 'function') {
+                if(typeof initAgoraVoice === 'function') {
                     const maybePromise = initAgoraVoice({ firebase, auth, roomId, isHost, holdTalkBtn, voiceStatus });
-                    const session = (maybePromise && typeof maybePromise.then === 'function') ? 
-                        await maybePromise : maybePromise;
-                    
-                    if (tryAttachAgoraSession(session)) {
+                    const session = (maybePromise && typeof maybePromise.then === 'function') ? await maybePromise : maybePromise;
+                    if(tryAttachAgoraSession(session)) {
                         setVoiceStatus('Voice ready');
                     } else {
                         setVoiceStatus('Voice initialized (no session object returned).');
-                        if (window.AgoraVoiceSession) tryAttachAgoraSession(window.AgoraVoiceSession);
+                        if(window.AgoraVoiceSession) tryAttachAgoraSession(window.AgoraVoiceSession);
                     }
-                } else if (window.AgoraVoiceSession) {
+                } else if(window.AgoraVoiceSession) {
                     tryAttachAgoraSession(window.AgoraVoiceSession);
                     setVoiceStatus('Voice ready via global AgoraVoiceSession');
                 } else {
@@ -1335,167 +1715,141 @@
             }
         });
 
-        // PTT Functions
+        // helper: attempt to publish/unpublish mic
         async function startLocalMic() {
             try {
-                if (agoraSession) {
-                    if (typeof agoraSession.publishLocalAudio === 'function') {
-                        await agoraSession.publishLocalAudio();
-                        agoraLocalMicOn = true;
-                        return true;
-                    }
-                    if (typeof agoraSession.startLocalAudio === 'function') {
-                        await agoraSession.startLocalAudio();
-                        agoraLocalMicOn = true;
-                        return true;
-                    }
-                    if (typeof agoraSession.unmuteLocalAudio === 'function') {
-                        await agoraSession.unmuteLocalAudio();
-                        agoraLocalMicOn = true;
-                        return true;
-                    }
-                    if (typeof agoraSession.publish === 'function') {
-                        await agoraSession.publish('audio').catch(() => {});
-                        agoraLocalMicOn = true;
-                        return true;
-                    }
+                if(agoraSession) {
+                    if(typeof agoraSession.publishLocalAudio === 'function') { await agoraSession.publishLocalAudio(); agoraLocalMicOn = true; return true; }
+                    if(typeof agoraSession.startLocalAudio === 'function') { await agoraSession.startLocalAudio(); agoraLocalMicOn = true; return true; }
+                    if(typeof agoraSession.unmuteLocalAudio === 'function') { await agoraSession.unmuteLocalAudio(); agoraLocalMicOn = true; return true; }
+                    if(typeof agoraSession.publish === 'function') { await agoraSession.publish('audio').catch(()=>{}); agoraLocalMicOn = true; return true; }
                 }
-                
-                if (typeof window.startAgoraMic === 'function') {
-                    await window.startAgoraMic();
-                    agoraLocalMicOn = true;
-                    return true;
-                }
-            } catch(e) {
-                console.warn('startLocalMic error', e);
-            }
+                if(typeof window.startAgoraMic === 'function') { await window.startAgoraMic(); agoraLocalMicOn = true; return true; }
+            } catch(e){ console.warn('startLocalMic error', e); }
             return false;
         }
-
+        
         async function stopLocalMic() {
             try {
-                if (agoraSession) {
-                    if (typeof agoraSession.unpublishLocalAudio === 'function') {
-                        await agoraSession.unpublishLocalAudio();
-                        agoraLocalMicOn = false;
-                        return true;
-                    }
-                    if (typeof agoraSession.stopLocalAudio === 'function') {
-                        await agoraSession.stopLocalAudio();
-                        agoraLocalMicOn = false;
-                        return true;
-                    }
-                    if (typeof agoraSession.muteLocalAudio === 'function') {
-                        await agoraSession.muteLocalAudio();
-                        agoraLocalMicOn = false;
-                        return true;
-                    }
-                    if (typeof agoraSession.unpublish === 'function') {
-                        await agoraSession.unpublish('audio').catch(() => {});
-                        agoraLocalMicOn = false;
-                        return true;
-                    }
+                if(agoraSession) {
+                    if(typeof agoraSession.unpublishLocalAudio === 'function') { await agoraSession.unpublishLocalAudio(); agoraLocalMicOn = false; return true; }
+                    if(typeof agoraSession.stopLocalAudio === 'function') { await agoraSession.stopLocalAudio(); agoraLocalMicOn = false; return true; }
+                    if(typeof agoraSession.muteLocalAudio === 'function') { await agoraSession.muteLocalAudio(); agoraLocalMicOn = false; return true; }
+                    if(typeof agoraSession.unpublish === 'function') { await agoraSession.unpublish('audio').catch(()=>{}); agoraLocalMicOn = false; return true; }
                 }
-                
-                if (typeof window.stopAgoraMic === 'function') {
-                    await window.stopAgoraMic();
-                    agoraLocalMicOn = false;
-                    return true;
-                }
-            } catch(e) {
-                console.warn('stopLocalMic error', e);
-            }
+                if(typeof window.stopAgoraMic === 'function') { await window.stopAgoraMic(); agoraLocalMicOn = false; return true; }
+            } catch(e){ console.warn('stopLocalMic error', e); }
             return false;
         }
 
-        // Attach PTT handlers with visual feedback
+        // attach PTT handlers
         function attachPTTHandlers(elem) {
-            elem.addEventListener('mousedown', async (e) => {
-                e.preventDefault();
-                setVoiceStatus('Requesting mic...');
-                const ok = await startLocalMic();
-                if (ok) {
-                    setVoiceStatus('You are talking');
-                    talkFloatingBtn.classList.add('talking');
+            elem.addEventListener('mousedown', async (e) => { 
+                e.preventDefault(); 
+                setVoiceStatus('Requesting mic...'); 
+                const ok = await startLocalMic(); 
+                if(ok){ 
+                    setVoiceStatus('You are talking'); 
+                    elem.classList.add('talking');
+                } else { 
+                    setVoiceStatus('Mic failed — check permissions or agora.js'); 
+                } 
+            });
+            
+            elem.addEventListener('mouseup', async (e) => { 
+                e.preventDefault(); 
+                const ok = await stopLocalMic(); 
+                if(ok) {
+                    setVoiceStatus('Mic off'); 
+                    elem.classList.remove('talking');
                 } else {
-                    setVoiceStatus('Mic failed — check permissions or agora.js');
+                    setVoiceStatus('Mic stop failed'); 
                 }
             });
             
-            elem.addEventListener('mouseup', async (e) => {
-                e.preventDefault();
-                const ok = await stopLocalMic();
-                if (ok) {
-                    setVoiceStatus('Mic off');
-                    talkFloatingBtn.classList.remove('talking');
-                } else {
-                    setVoiceStatus('Mic stop failed');
-                }
-            });
+            elem.addEventListener('touchstart', async (e) => { 
+                e.preventDefault(); 
+                setVoiceStatus('Requesting mic...'); 
+                const ok = await startLocalMic(); 
+                if(ok){ 
+                    setVoiceStatus('You are talking'); 
+                    elem.classList.add('talking');
+                } else { 
+                    setVoiceStatus('Mic failed — check permissions or agora.js'); 
+                } 
+            }, {passive:false});
             
-            elem.addEventListener('touchstart', async (e) => {
-                e.preventDefault();
-                setVoiceStatus('Requesting mic...');
-                const ok = await startLocalMic();
-                if (ok) {
-                    setVoiceStatus('You are talking');
-                    talkFloatingBtn.classList.add('talking');
+            elem.addEventListener('touchend', async (e) => { 
+                e.preventDefault(); 
+                const ok = await stopLocalMic(); 
+                if(ok) {
+                    setVoiceStatus('Mic off'); 
+                    elem.classList.remove('talking');
                 } else {
-                    setVoiceStatus('Mic failed — check permissions or agora.js');
+                    setVoiceStatus('Mic stop failed'); 
                 }
-            }, { passive: false });
-            
-            elem.addEventListener('touchend', async (e) => {
-                e.preventDefault();
-                const ok = await stopLocalMic();
-                if (ok) {
-                    setVoiceStatus('Mic off');
-                    talkFloatingBtn.classList.remove('talking');
-                } else {
-                    setVoiceStatus('Mic stop failed');
-                }
-            }, { passive: false });
+            }, {passive:false});
         }
-
+        
         attachPTTHandlers(holdTalkBtn);
         attachPTTHandlers(talkFloatingBtn);
 
-        // --- Fullscreen Handling ---
-        function updateFloatVisibility() {
-            const fs = !!(document.fullscreenElement || document.webkitFullscreenElement || 
-                          document.mozFullScreenElement || document.msFullscreenElement);
-            floatControls.setAttribute('aria-hidden', fs ? 'false' : 'true');
+        // Update floating talk visual
+        function updateFloatingTalkVisual() {
+            if(agoraLocalMicOn) {
+                talkFloatingBtn.classList.add('talking');
+                talkFloatingBtn.title = 'Talking — release to stop';
+            } else {
+                talkFloatingBtn.classList.remove('talking');
+                talkFloatingBtn.title = 'Hold to talk';
+            }
         }
+        setInterval(updateFloatingTalkVisual, 300);
 
-        document.addEventListener('fullscreenchange', updateFloatVisibility);
-        document.addEventListener('webkitfullscreenchange', updateFloatVisibility);
-        document.addEventListener('mozfullscreenchange', updateFloatVisibility);
-        document.addEventListener('msfullscreenchange', updateFloatVisibility);
-        updateFloatVisibility();
-
-        // --- Protect viewers from interacting with native controls ---
-        if (!isHost) {
-            try {
-                html5video.controls = false;
-                overlayBlock.classList.remove('hidden');
-            } catch(e) {}
-        }
-
-        // Disable context menu on video for viewers
-        document.addEventListener('contextmenu', e => {
-            if (!isHost && e.target === html5video) e.preventDefault();
+        // --- Theme toggle ---
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+            document.getElementById('theme-toggle').innerHTML = isDark ? 
+                '<i class="fas fa-moon"></i>' : 
+                '<i class="fas fa-sun"></i>';
         });
 
-        // Stop agora mic when leaving
+        // --- Copy invite link ---
+        document.getElementById('copy-btn').addEventListener('click', () => {
+            const link = document.getElementById('invite-link');
+            link.select();
+            document.execCommand('copy');
+            
+            const copyBtn = document.getElementById('copy-btn');
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            copyBtn.classList.add('copied');
+            
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+                copyBtn.classList.remove('copied');
+            }, 2000);
+        });
+
+        // --- protect viewers from interacting with native controls ---
+        if(!isHost){ 
+            try{ 
+                html5video.controls = false; 
+                overlayBlock.classList.remove('hidden'); 
+            } catch(e) {} 
+        }
+
+        // stop agora mic when leaving
         window.addEventListener('beforeunload', async () => {
-            if (agoraLocalMicOn) await stopLocalMic().catch(() => {});
+            if(agoraLocalMicOn) await stopLocalMic().catch(()=>{});
         });
 
-        // Ensure fitCanvas is run once player sizes are known
+        // ensure fitCanvas is run once player sizes are known
         setTimeout(fitCanvas, 300);
 
-        // Small debug log
-        console.info('Enhanced Watch Party loaded. isHost=', isHost);
+        // small debug log
+        console.info('Watch Party loaded. isHost=', isHost);
     </script>
 </body>
 </html>

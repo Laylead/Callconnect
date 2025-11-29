@@ -1,430 +1,220 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <title>Watch Party — Stable Host Sync</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:#031428;color:#fff;padding:12px;display:flex;justify-content:center}
-    .container{width:100%;max-width:1300px;display:flex;gap:16px}
-    #left{flex:1}
-    #playerBox{position:relative;background:#000;border-radius:8px;overflow:hidden}
-    #playerIframe, #html5video{width:100%;height:calc(100vw * 9/16);max-height:720px;background:#000;display:block;border:0}
-    #html5video{display:none}
-    #canvas{position:absolute;left:0;top:0;z-index:40;pointer-events:none}
-    #overlay{position:absolute;left:0;top:0;right:0;bottom:0;z-index:45;display:none;cursor:not-allowed}
-    #controls{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
-    .btn{background:#1e90ff;border:none;color:#fff;padding:8px 12px;border-radius:8px;cursor:pointer}
-    .btn.grey{background:#6b7280}
-    #right{width:340px;min-width:260px;background:rgba(255,255,255,0.03);padding:12px;border-radius:8px}
-    .small{font-size:13px;color:#cbd5e1}
-    #playPrompt{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:60;background:rgba(0,0,0,0.6);padding:12px;border-radius:8px;display:none}
-  </style>
+<meta charset="UTF-8">
+<title>Watch Party Room</title>
+<style>
+  body { margin:0; font-family: Arial, sans-serif; background:#f6f8fb; overflow:hidden; }
+  #container { display:flex; height:100vh; }
+  #video-container { flex:3; position:relative; background:black; }
+  #video { width:100%; height:100%; background:black; }
+  #overlay-block { position:absolute; top:0; left:0; right:0; bottom:0; z-index:50; display:none; cursor:not-allowed; }
+  #drawingCanvas { position:absolute; top:0; left:0; width:100%; height:100%; z-index:55; pointer-events:none; }
+  #controls-panel { flex:1; padding:12px; overflow-y:auto; background:#fff; display:flex; flex-direction:column; gap:12px; }
+  .btn { padding:8px 12px; background:#2b6cdf; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+  .btn.grey { background:#666; }
+  .small { font-size:13px; color:#333; }
+  #micBtn { background:#ff5555; }
+  #status { font-weight:600; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <div id="left">
-      <div id="playerBox">
-        <div id="playerIframe"></div>
-        <video id="html5video" controls crossorigin playsinline></video>
-        <canvas id="canvas"></canvas>
-        <div id="overlay"></div>
-        <div id="playPrompt"><button id="enableSound" class="btn">Enable Sound & Play</button></div>
-      </div>
-
-      <div id="controls">
-        <button id="pauseDiscuss" class="btn grey">Pause & Discuss</button>
-        <button id="drawToggle" class="btn grey">Draw</button>
-        <button id="clearDraw" class="btn grey">Clear Drawing</button>
-        <button id="focus" class="btn grey">Focus (Mute)</button>
-        <label class="small">Speed:
-          <select id="speedSel"><option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option></select>
-        </label>
-        <button id="fullscreen" class="btn" style="margin-left:auto">Fullscreen</button>
-      </div>
-    </div>
-
-    <div id="right">
-      <div><strong>Room Features</strong></div>
-      <div style="margin-top:8px">
-        <button id="holdToTalkLocal" class="btn" style="background:#10b981">Hold to Talk</button>
-      </div>
-
-      <div style="margin-top:10px">
-        <div><strong>Predictions</strong></div>
-        <div id="predictPanel"></div>
-      </div>
-
-      <div style="margin-top:10px">
-        <div><strong>Polls</strong></div>
-        <div id="pollPanel"></div>
-      </div>
-
-      <div style="margin-top:10px">
-        <div><strong>Quick Reactions</strong></div>
-        <div style="margin-top:8px"><button class="btn grey" data-emoji="😂">😂</button> <button class="btn grey" data-emoji="😱">😱</button> <button class="btn grey" data-emoji="🤨">🤨</button></div>
-      </div>
-
-      <div style="margin-top:10px" class="small" id="status">Loading room...</div>
-    </div>
+<div id="container">
+  <div id="video-container">
+    <video id="video" controls crossorigin playsinline></video>
+    <canvas id="drawingCanvas"></canvas>
+    <div id="overlay-block"></div>
   </div>
+  <div id="controls-panel">
+    <div><strong>Watch Party Controls</strong></div>
+    <div id="status">Loading...</div>
+    <button id="playPauseHost" class="btn grey">Pause & Discuss</button>
+    <button id="toggleDraw" class="btn grey">Toggle Draw</button>
+    <button id="clearDraw" class="btn grey">Clear Drawing</button>
+    <button id="micBtn" class="btn">Talk</button>
+    <label>Speed:
+      <select id="speedSel">
+        <option value="0.5">0.5x</option>
+        <option value="0.75">0.75x</option>
+        <option value="1" selected>1x</option>
+        <option value="1.25">1.25x</option>
+        <option value="1.5">1.5x</option>
+      </select>
+    </label>
+    <button id="fullscreenBtn" class="btn grey">Fullscreen</button>
+    <div id="predict-panel"></div>
+    <div id="poll-panel"></div>
+  </div>
+</div>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="firebase-config.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
 
-  <!-- YouTube IFrame API -->
-  <script src="https://www.youtube.com/iframe_api"></script>
+<!-- Agora -->
+<script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.9.0.js"></script>
+<script src="agora.js"></script>
 
-  <!-- Agora SDK + agora.js -->
-  <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.9.0.js"></script>
-  <script src="agora.js"></script>
+<script>
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const auth = firebase.auth();
+auth.signInAnonymously().catch(console.warn);
 
-  <script>
-  // ---------- init ----------
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  const auth = firebase.auth();
-  auth.signInAnonymously().catch(()=>{});
+const params = new URLSearchParams(window.location.search);
+const roomId = params.get('room');
+const isHost = params.get('host') === 'true';
 
-  const params = new URLSearchParams(window.location.search);
-  const roomId = params.get('room');
-  const isHost = params.get('host') === 'true';
+const roomRef = db.ref('rooms/' + roomId);
+const drawRef = db.ref('rooms/' + roomId + '/drawing');
+const predictRef = db.ref('rooms/' + roomId + '/predicts');
+const pollsRef = db.ref('rooms/' + roomId + '/polls');
 
-  const roomRef = db.ref('rooms/' + roomId);
-  const drawRef = db.ref('rooms/' + roomId + '/drawing');
-  const predictsRef = db.ref('rooms/' + roomId + '/predicts');
-  const pollsRef = db.ref('rooms/' + roomId + '/polls');
-  const reactionsRef = db.ref('rooms/' + roomId + '/reactions');
+const video = document.getElementById('video');
+const overlay = document.getElementById('overlay-block');
+const canvas = document.getElementById('drawingCanvas');
+const ctx = canvas.getContext('2d');
 
-  const playerIframe = document.getElementById('playerIframe');
-  const html5video = document.getElementById('html5video');
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
-  const overlay = document.getElementById('overlay');
-  const playPrompt = document.getElementById('playPrompt');
-  const enableSound = document.getElementById('enableSound');
+let drawingEnabled = false;
+let drawing = false;
+let lastPos = null;
+let micOn = false;
 
-  const pauseDiscuss = document.getElementById('pauseDiscuss');
-  const drawToggle = document.getElementById('drawToggle');
-  const clearDraw = document.getElementById('clearDraw');
-  const holdToTalkLocal = document.getElementById('holdToTalkLocal');
-  const focusBtn = document.getElementById('focus');
-  const speedSel = document.getElementById('speedSel');
-  const fullscreenBtn = document.getElementById('fullscreen');
-  const statusEl = document.getElementById('status');
+// Fit canvas
+function fitCanvas() {
+  canvas.width = video.clientWidth;
+  canvas.height = video.clientHeight;
+}
+window.addEventListener('resize', fitCanvas);
 
-  // player vars
-  let usingYouTube = false;
-  let ytPlayer = null;
-  let isDrawing = false;
-  let drawEnabled = false;
-  let lastPos = null;
-  let periodicHostUpdater = null;
+// Load room + video
+roomRef.once('value').then(snap => {
+  const data = snap.val();
+  if (!data) { alert('Room not found'); return; }
+  video.src = data.videoLink;
+  fitCanvas();
+  setupParty();
+});
 
-  // helpers
-  function isYouTube(url){ return /youtube\.com|youtu\.be|youtube-nocookie/.test(url); }
-  function extractYTId(url){ const r = /^.*(?:v=|v\/|embed\/|youtu\.be\/)([^#&?]*).*/; const m = url.match(r); return (m && m[1] && m[1].length===11) ? m[1] : null; }
+function setupParty() {
+  video.addEventListener('loadedmetadata', () => {
+    if (isHost) setupHost();
+    else setupViewer();
+  });
+}
 
-  // unified player API
-  function playVideo(){ if(usingYouTube){ if(ytPlayer) ytPlayer.playVideo(); } else html5video.play().catch(()=>{}); }
-  function pauseVideo(){ if(usingYouTube){ if(ytPlayer) ytPlayer.pauseVideo(); } else html5video.pause(); }
-  function getTime(){ if(usingYouTube) return ytPlayer ? ytPlayer.getCurrentTime() : 0; return html5video.currentTime || 0; }
-  function seekTo(t){ if(usingYouTube){ if(ytPlayer) ytPlayer.seekTo(t, true); } else html5video.currentTime = t; }
-  function setRate(r){ if(usingYouTube){ if(ytPlayer) ytPlayer.setPlaybackRate(r);} else html5video.playbackRate = r; }
-
-  // load room
-  roomRef.once('value').then(snap => {
-    const data = snap.val();
-    if(!data){ alert('Room not found'); return; }
-    statusEl.textContent = isHost ? 'You are host' : 'Viewer';
-    const link = data.videoLink;
-    if(isYouTube(link)){
-      usingYouTube = true;
-      const vid = extractYTId(link) || link;
-      initYT(vid);
-    } else {
-      usingYouTube = false;
-      playerIframe.style.display = 'none';
-      html5video.style.display = 'block';
-      html5video.src = link;
-    }
-
-    fitCanvas();
-    window.addEventListener('resize', fitCanvas);
-
-    // init agora
-    auth.onAuthStateChanged(user => { if(user) initAgoraVoice(firebase, auth, roomId, isHost).catch(e=>console.warn(e)); });
-
-    // set up flows
-    if(isHost) hostSetup(); else viewerSetup();
-    drawingListeners();
-    controlListeners();
-    reactionButtons();
-    predictsRefListener();
-    pollsRefListener();
-  }).catch(err => { console.error(err); statusEl.textContent = 'Error loading room'; });
-
-  // YT init
-  function initYT(videoId){
-    ytPlayer = new YT.Player('playerIframe', {
-      height:'100%',
-      width:'100%',
-      videoId,
-      playerVars:{rel:0,modestbranding:1},
-      events:{
-        onReady: () => { /* nothing */ },
-        onStateChange: (e) => {
-          if(isHost){
-            if(e.data === YT.PlayerState.PLAYING) roomRef.update({ status:'play', currentTime: ytPlayer.getCurrentTime() });
-            if(e.data === YT.PlayerState.PAUSED) roomRef.update({ status:'pause', currentTime: ytPlayer.getCurrentTime() });
-          }
-        }
-      }
+// Host Controls
+function setupHost() {
+  document.getElementById('status').textContent = 'You are host';
+  const pushState = () => {
+    roomRef.update({
+      status: video.paused ? 'pause' : 'play',
+      currentTime: video.currentTime,
+      hostPowers: { speed: Number(document.getElementById('speedSel').value) }
     });
-  }
+  };
 
-  // host setup
-  function hostSetup(){
-    statusEl.textContent = 'Host — you control playback';
-    // HTML5 host events
-    if(!usingYouTube){
-      html5video.addEventListener('play', ()=> roomRef.update({ status:'play', currentTime: html5video.currentTime }));
-      html5video.addEventListener('pause', ()=> roomRef.update({ status:'pause', currentTime: html5video.currentTime }));
-      html5video.addEventListener('seeked', ()=> roomRef.update({ status: html5video.paused ? 'pause' : 'play', currentTime: html5video.currentTime }));
-    }
+  video.addEventListener('play', pushState);
+  video.addEventListener('pause', pushState);
+  video.addEventListener('seeked', pushState);
 
-    // frequent host updates while playing (authoritative)
-    periodicHostUpdater = setInterval(() => {
-      try {
-        // only update when playing to reduce writes
-        const isPlaying = usingYouTube ? (ytPlayer && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) : (!html5video.paused);
-        if(isPlaying){
-          const t = getTime();
-          roomRef.update({ currentTime: t });
-        }
-      } catch(e){}
-    }, 400);
-  }
+  setInterval(() => {
+    if (!video.paused) roomRef.update({ currentTime: video.currentTime });
+  }, 500);
 
-  // viewer setup
-  function viewerSetup(){
-    statusEl.textContent = 'Viewer — following host';
-    let lastAppliedHostTime = 0;
-
-    roomRef.on('value', snap => {
-      const data = snap.val();
-      if(!data) return;
-      const hostTime = data.currentTime || 0;
-      const hostState = data.status || 'pause';
-      const speed = data.hostPowers && data.hostPowers.speed ? Number(data.hostPowers.speed) : 1;
-
-      // if large difference -> hard seek
-      const localT = getTime();
-      const diff = hostTime - localT;
-
-      if(Math.abs(diff) > 1.5){
-        seekTo(hostTime);
-      } else if(Math.abs(diff) > 0.08){
-        // small correction: nudge via seek fractionally to avoid chase
-        try { seekTo(localT + diff * 0.25); } catch(e){}
-      }
-
-      // apply state
-      if(hostState === 'play'){
-        // to avoid autoplay block, attempt to play muted then unmute when user interacts
-        if(usingYouTube){
-          try { ytPlayer.playVideo(); } catch(e){}
-        } else {
-          html5video.muted = true;
-          html5video.play().catch(()=> showEnablePrompt());
-          // try to unmute after a short user interaction
-          const unmute = () => { try{ html5video.muted = false; } catch(e){} window.removeEventListener('click', unmute); };
-          window.addEventListener('click', unmute);
-        }
-      } else {
-        if(usingYouTube){
-          try { ytPlayer.pauseVideo(); } catch(e){}
-        } else {
-          html5video.pause();
-        }
-      }
-
-      // playback rate apply
-      setRate(speed);
-    });
-  }
-
-  // drawing listeners and rendering
-  function drawingListeners(){
-    // host pushes strokes to drawRef; viewers listen
-    drawRef.on('child_added', snap => {
-      const s = snap.val();
-      if(!s) return;
-      ctx.strokeStyle = s.color || '#ff0';
-      ctx.lineWidth = s.thickness || 3;
-      ctx.beginPath();
-      ctx.moveTo(s.lx * canvas.width, s.ly * canvas.height);
-      ctx.lineTo(s.x * canvas.width, s.y * canvas.height);
-      ctx.stroke();
-    });
-
-    // clear drawing flag
-    roomRef.child('clearDrawing').on('value', snap => {
-      if(snap.val()){
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        roomRef.child('clearDrawing').remove().catch(()=>{});
-      }
-    });
-  }
-
-  // control listeners (buttons)
-  function controlListeners(){
-    pauseDiscuss.addEventListener('click', () => {
-      pauseVideo();
-      roomRef.update({ status:'pause', discussionOpen:true });
-    });
-
-    drawToggle.addEventListener('click', () => {
-      drawEnabled = !drawEnabled;
-      if(drawEnabled && isHost){
-        canvas.style.pointerEvents = 'auto';
-        canvas.addEventListener('mousedown', onDown);
-        canvas.addEventListener('mousemove', onMove);
-        canvas.addEventListener('mouseup', onUp);
-        drawToggle.textContent = 'Drawing ON';
-      } else {
-        canvas.style.pointerEvents = 'none';
-        canvas.removeEventListener('mousedown', onDown);
-        canvas.removeEventListener('mousemove', onMove);
-        canvas.removeEventListener('mouseup', onUp);
-        drawToggle.textContent = 'Draw';
-      }
-    });
-
-    clearDraw.addEventListener('click', () => {
-      // host clears
-      if(isHost) {
-        roomRef.child('clearDrawing').set(true);
-        drawRef.remove().catch(()=>{});
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-      }
-    });
-
-    speedSel.addEventListener('change', () => {
-      const v = Number(speedSel.value || 1);
-      setRate(v);
-      if(isHost) roomRef.child('hostPowers').set({ speed: v });
-    });
-
-    fullscreenBtn.addEventListener('click', () => {
-      const el = document.getElementById('playerBox');
-      if(!document.fullscreenElement) el.requestFullscreen().catch(()=>{});
-      else document.exitFullscreen().catch(()=>{});
-    });
-
-    // hold-to-talk mapped to agora.js functions
-    holdToTalkLocal.addEventListener('mousedown', () => { if(window.startWhisper) window.startWhisper(); });
-    holdToTalkLocal.addEventListener('mouseup', () => { if(window.stopWhisper) window.stopWhisper(); });
-    holdToTalkLocal.addEventListener('touchstart', () => { if(window.startWhisper) window.startWhisper(); });
-    holdToTalkLocal.addEventListener('touchend', () => { if(window.stopWhisper) window.stopWhisper(); });
-
-    // quick reactions
-    document.querySelectorAll('#right button[data-emoji]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const emoji = btn.getAttribute('data-emoji');
-        reactionsRef.push({ emoji, at: firebase.database.ServerValue.TIMESTAMP });
-      });
-    });
-
-    enableSound.addEventListener('click', () => {
-      // unmute html5 and try play
-      try { html5video.muted = false; html5video.play().catch(()=>{}); }
-      catch(e){}
-      playPrompt.style.display = 'none';
-    });
-  }
-
-  // drawing handlers
-  function onDown(e){
-    if(!isHost) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    lastPos = { x, y };
-  }
-  function onMove(e){
-    if(!isHost || !lastPos) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    ctx.strokeStyle = '#ff0';
-    ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(lastPos.x, lastPos.y); ctx.lineTo(x, y); ctx.stroke();
-    drawRef.push({ lx: lastPos.x / canvas.width, ly: lastPos.y / canvas.height, x: x / canvas.width, y: y / canvas.height, color: '#ff0', thickness: 3, at: firebase.database.ServerValue.TIMESTAMP });
-    lastPos = { x, y };
-  }
-  function onUp(){ lastPos = null; }
-
-  // reactions display
-  reactionsRef.on('child_added', snap => {
-    const v = snap.val();
-    if(!v) return;
-    const el = document.createElement('div'); el.textContent = v.emoji; el.style.position='absolute'; el.style.right='12px'; el.style.top='12px'; el.style.background='#fff'; el.style.color='#000'; el.style.padding='6px'; el.style.borderRadius='20px';
-    document.getElementById('playerBox').appendChild(el);
-    setTimeout(()=> el.style.transform='translateY(-40px)', 10);
-    setTimeout(()=> el.remove(), 2800);
+  document.getElementById('playPauseHost').addEventListener('click', () => {
+    video.pause();
+    roomRef.update({ status: 'pause', discussionOpen: true });
   });
 
-  // predicts & polls listeners and UI
-  function predictsRefListener(){
-    predictsRef.on('value', snap => {
-      const data = snap.val() || {};
-      const out = document.getElementById('predictPanel'); out.innerHTML = '';
-      Object.keys(data).forEach(k=>{
-        const p = data[k];
-        const div = document.createElement('div'); div.style.marginTop='8px';
-        div.innerHTML = `<strong>${p.question}</strong> `;
-        const btn = document.createElement('button'); btn.className='btn grey'; btn.textContent='Answer';
-        btn.onclick = ()=> { const ans = prompt('Your answer'); if(!ans) return; predictsRef.child(k).child('options').push({ uid: auth.currentUser?.uid||'anon', answer: ans, at: firebase.database.ServerValue.TIMESTAMP }); };
-        div.appendChild(btn);
-        out.appendChild(div);
-      });
-    });
-  }
-  function pollsRefListener(){
-    pollsRef.on('value', snap => {
-      const data = snap.val() || {};
-      const out = document.getElementById('pollPanel'); out.innerHTML = '';
-      Object.keys(data).forEach(k=>{
-        const p = data[k];
-        const div = document.createElement('div'); div.style.marginTop='8px';
-        div.innerHTML = `<strong>${p.q}</strong> `;
-        const btn = document.createElement('button'); btn.className='btn grey'; btn.textContent='Vote';
-        btn.onclick = ()=> { const v = prompt('Vote'); if(!v) return; pollsRef.child(k).child('options').push({ uid: auth.currentUser?.uid||'anon', label: v, at: firebase.database.ServerValue.TIMESTAMP }); };
-        div.appendChild(btn);
-        out.appendChild(div);
-      });
-    });
-  }
+  document.getElementById('toggleDraw').addEventListener('click', () => {
+    drawingEnabled = !drawingEnabled;
+    roomRef.update({ drawingEnabled });
+  });
 
-  // fit canvas over player
-  function fitCanvas(){
-    const rect = usingYouTube ? document.getElementById('playerIframe').getBoundingClientRect() : html5video.getBoundingClientRect();
-    canvas.width = rect.width; canvas.height = rect.height;
-    canvas.style.left = rect.left + 'px'; canvas.style.top = rect.top + 'px';
-  }
-  window.addEventListener('resize', fitCanvas);
+  document.getElementById('clearDraw').addEventListener('click', () => {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawRef.remove();
+  });
 
-  // small helpers
-  function showEnablePrompt(){ playPrompt.style.display = 'block'; }
-  function setRate(v){ try{ if(usingYouTube && ytPlayer) ytPlayer.setPlaybackRate(v); else html5video.playbackRate = v; } catch(e){} }
+  document.getElementById('speedSel').addEventListener('change', e => {
+    video.playbackRate = Number(e.target.value);
+    roomRef.update({ hostPowers: { speed: Number(e.target.value) }});
+  });
 
-  // expose helpers for debug
-  window.__WP = { roomRef, drawRef, reactionsRef, predictsRef, pollsRef };
+  document.getElementById('fullscreenBtn').addEventListener('click', () => {
+    if (video.requestFullscreen) video.requestFullscreen();
+    else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
+  });
+}
 
-  </script>
+// Viewer Sync
+function setupViewer() {
+  document.getElementById('status').textContent = 'Viewer — synced to host';
+  roomRef.on('value', snap => {
+    const data = snap.val();
+    if (!data) return;
+    if (data.status==='play' && video.paused) {
+      video.play().catch(()=>{});
+    } else if (data.status==='pause' && !video.paused) {
+      video.pause();
+    }
+
+    const diff = (data.currentTime||0) - video.currentTime;
+    if (Math.abs(diff)>1.5) video.currentTime = data.currentTime;
+    else if (Math.abs(diff)>0.05) video.currentTime += diff*0.2;
+
+    if (data.drawingEnabled) enableDrawing();
+    else disableDrawing();
+  });
+
+  drawRef.on('child_added', snap => {
+    const s = snap.val();
+    ctx.strokeStyle = s.color; ctx.lineWidth=s.thickness;
+    ctx.beginPath();
+    ctx.moveTo(s.lx*canvas.width, s.ly*canvas.height);
+    ctx.lineTo(s.x*canvas.width, s.y*canvas.height);
+    ctx.stroke();
+  });
+}
+
+// Drawing
+function enableDrawing() {
+  canvas.style.pointerEvents = 'auto';
+  canvas.addEventListener('mousedown', onDown);
+  canvas.addEventListener('mousemove', onMove);
+  canvas.addEventListener('mouseup', onUp);
+}
+function disableDrawing() {
+  canvas.style.pointerEvents = 'none';
+  canvas.removeEventListener('mousedown', onDown);
+  canvas.removeEventListener('mousemove', onMove);
+  canvas.removeEventListener('mouseup', onUp);
+}
+function onDown(e) { drawing=true; lastPos=getPos(e); }
+function onMove(e){ if(!drawing) return; const p=getPos(e); drawLine(lastPos,p); lastPos=p; }
+function onUp(){ drawing=false; lastPos=null; }
+function getPos(e){ const r=canvas.getBoundingClientRect(); return { x:(e.clientX||e.touches[0].clientX)-r.left, y:(e.clientY||e.touches[0].clientY)-r.top }; }
+function drawLine(from,to){
+  ctx.strokeStyle='#ff0'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(from.x,from.y); ctx.lineTo(to.x,to.y); ctx.stroke();
+  drawRef.push({ lx: from.x/canvas.width, ly: from.y/canvas.height, x: to.x/canvas.width, y: to.y/canvas.height, color:'#ff0', thickness:3 });
+}
+
+// Mic toggle
+const micBtn = document.getElementById('micBtn');
+micBtn.addEventListener('click', () => {
+  micOn = !micOn;
+  micBtn.style.background = micOn?'#0f0':'#ff5555';
+  toggleMic(micOn);
+});
+
+// Init Agora Voice
+auth.onAuthStateChanged(user=>{
+  if(user) initAgoraVoice(firebase, auth, roomId, isHost);
+});
+
+</script>
 </body>
 </html>

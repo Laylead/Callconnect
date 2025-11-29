@@ -1,76 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Create Watch Party (HTML5)</title>
+  <meta charset="utf-8"/>
+  <title>Create Watch Party (HTML5 / YouTube)</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f7f7fb; }
-    input, button { margin: 6px 0; padding: 8px; width: 360px; }
-    label { display:block; margin-top:10px; }
-    #output { margin-top: 18px; }
+    body{font-family:Arial;padding:20px;background:#f7f7fb}
+    input,button{display:block;margin:8px 0;padding:8px;width:420px}
+    #output{margin-top:12px}
   </style>
 </head>
 <body>
-  <h2>Create Watch Party (HTML5)</h2>
-
-  <label>Direct video link (MP4/HLS):</label>
-  <input type="text" id="videoLink" placeholder="https://example.com/video.mp4">
-
-  <label>Scheduled start time:</label>
-  <input type="datetime-local" id="startTime">
-
-  <label>Room name (optional):</label>
-  <input type="text" id="roomName" placeholder="My watch party">
-
+  <h2>Create Watch Party</h2>
+  <input id="videoLink" type="text" placeholder="Paste YouTube or direct MP4/HLS link">
+  <input id="startTime" type="datetime-local">
+  <input id="roomName" type="text" placeholder="Optional room name">
   <button onclick="createRoom()">Create Room</button>
-
   <div id="output"></div>
 
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="firebase-config.js"></script>
-
   <script>
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    async function createRoom() {
-      const videoLink = document.getElementById('videoLink').value.trim();
+    function normalizeLink(raw){
+      if(!raw) return '';
+      raw = raw.trim();
+      // If it's a youtube watch url, keep it (we'll parse inside test.html)
+      // If it's just a youtube id (11 chars), convert to youtube watch url
+      if(/^[A-Za-z0-9_-]{11}$/.test(raw)) return 'https://www.youtube.com/watch?v='+raw;
+      return raw;
+    }
+
+    async function createRoom(){
+      const raw = document.getElementById('videoLink').value.trim();
+      const videoLink = normalizeLink(raw);
       const startTime = document.getElementById('startTime').value;
       const roomName = document.getElementById('roomName').value.trim();
-      const output = document.getElementById('output');
+      const out = document.getElementById('output');
 
-      if (!videoLink || !startTime) {
-        alert('Please fill video link and start time');
-        return;
-      }
+      if(!videoLink || !startTime){ alert('Please provide video link and start time'); return; }
 
-      try {
+      try{
         const roomRef = db.ref('rooms').push();
         const roomId = roomRef.key;
-
-        const payload = {
+        await roomRef.set({
           videoLink,
           scheduledStartTime: startTime,
           createdAt: firebase.database.ServerValue.TIMESTAMP,
           status: 'pause',
           currentTime: 0,
           host: true,
-          meta: { name: roomName || '', type: 'html5' },
-          hostPowers: { lockedMic: false, focusMode: false, speed: 1 }
-        };
+          meta:{name: roomName||'', type: 'auto'}
+        });
 
-        await roomRef.set(payload);
-
-        output.innerHTML = `
-          <p>Room created: <strong>${roomId}</strong></p>
-          <p><strong>Host link:</strong> <a href="test.html?room=${roomId}&host=true" target="_blank">test.html?room=${roomId}&host=true</a></p>
-          <p><strong>Viewer link:</strong> <a href="test.html?room=${roomId}" target="_blank">test.html?room=${roomId}</a></p>
-        `;
-      } catch (err) {
+        out.innerHTML = `<p>Room created: <b>${roomId}</b></p>
+          <p>Host: <a href="test.html?room=${roomId}&host=true" target="_blank">test.html?room=${roomId}&host=true</a></p>
+          <p>Viewer: <a href="test.html?room=${roomId}" target="_blank">test.html?room=${roomId}</a></p>`;
+      }catch(err){
         console.error(err);
-        output.textContent = 'Error: ' + err.message;
+        out.textContent = 'Error: '+err.message;
       }
     }
   </script>

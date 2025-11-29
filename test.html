@@ -1,117 +1,451 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8" />
   <title>Watch Party Room</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
-    #player-container { position: relative; width: 640px; height: 360px; margin-bottom: 20px; }
-    #player { width: 100%; height: 100%; }
-    #overlay { position: absolute; top:0; left:0; width:100%; height:100%; z-index:2; display:none; cursor:not-allowed; }
-    #status { font-weight: bold; }
+    body { font-family: Inter, Arial; padding: 18px; background: #f6f8fb; }
+    #topbar { display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+    .btn { padding:8px 12px; background:#2b6cdf; color:#fff; border-radius:6px; cursor:pointer; border:none; }
+    .btn.grey { background:#666; }
+    #player-container { position:relative; width: 900px; max-width:100%; margin-bottom:12px; background:black; }
+    video { width:100%; height:auto; display:block; background:black; }
+    #overlay-block { position:absolute; left:0; top:0; right:0; bottom:0; z-index:40; display:none; cursor:not-allowed; }
+    #drawingCanvas { position:absolute; left:0; top:0; right:0; bottom:0; z-index:45; pointer-events:none; }
+    #reactions { position: absolute; right: 12px; top: 12px; z-index:60; display:flex; flex-direction:column; gap:6px; }
+    .reaction-bubble { background: rgba(255,255,255,0.9); padding:6px 8px; border-radius:20px; box-shadow:0 2px 6px rgba(0,0,0,0.15); }
+    #controls { display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+    #sidebar { margin-top:10px; max-width:900px; }
+    #agora-controls { display:flex; gap:8px; align-items:center; }
+    .small { font-size:13px; color:#333; }
+    #status { margin-top:8px; font-weight:600; }
   </style>
 </head>
 <body>
-  <h2>Watch Party</h2>
-  <div id="player-container">
-    <div id="player"></div>
-    <div id="overlay"></div>
+  <div id="topbar">
+    <div><strong>Watch Party Room</strong></div>
+    <div id="roomInfo" class="small"></div>
+    <div id="agora-controls" style="margin-left:auto"></div>
   </div>
-  <p id="status">Waiting for host...</p>
 
-  <!-- Firebase SDKs -->
+  <div id="player-container">
+    <video id="video" controls crossorigin playsinline></video>
+    <div id="overlay-block"></div>
+    <canvas id="drawingCanvas"></canvas>
+    <div id="reactions"></div>
+  </div>
+
+  <div id="controls">
+    <button id="pauseDiscussBtn" class="btn grey">Pause & Discuss</button>
+    <button id="toggleDrawBtn" class="btn grey">Draw</button>
+    <button id="spotlightBtn" class="btn grey">Spotlight</button>
+    <button id="focusBtn" class="btn grey">Toggle Focus</button>
+    <label class="small">Speed:
+      <select id="speedSel">
+        <option value="0.5">0.5x</option>
+        <option value="0.75">0.75x</option>
+        <option value="1" selected>1x</option>
+        <option value="1.25">1.25x</option>
+        <option value="1.5">1.5x</option>
+      </select>
+    </label>
+
+    <div style="margin-left:8px; display:flex; gap:8px; align-items:center;">
+      <button id="predictBtn" class="btn">Play & Predict</button>
+      <button id="openPoll" class="btn">Quick Poll</button>
+    </div>
+  </div>
+
+  <div id="sidebar">
+    <div id="predict-panel"></div>
+    <div id="poll-panel"></div>
+    <div id="status">Loading...</div>
+  </div>
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="firebase-config.js"></script>
 
-  <!-- YouTube IFrame API -->
-  <script src="https://www.youtube.com/iframe_api"></script>
+  <!-- Agora Web SDK -->
+  <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.9.0.js"></script>
+
+  <!-- Externalized Agora logic -->
+  <script src="agora.js"></script>
 
   <script>
+    // firebase init
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const auth = firebase.auth();
+    auth.signInAnonymously().catch(console.warn);
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const roomId = urlParams.get('room');
-    const isHost = urlParams.get('host') === 'true';
+    // URL params
+    const params = new URLSearchParams(window.location.search);
+    const roomId = params.get('room');
+    const isHost = params.get('host') === 'true';
+
     const roomRef = db.ref('rooms/' + roomId);
+    const reactionsRef = db.ref('rooms/' + roomId + '/reactions');
+    const drawRef = db.ref('rooms/' + roomId + '/drawing');
+    const predictRef = db.ref('rooms/' + roomId + '/predicts');
+    const pollsRef = db.ref('rooms/' + roomId + '/polls');
 
-    const overlay = document.getElementById('overlay');
-    let player, ready = false;
+    // elements
+    const video = document.getElementById('video');
+    const overlayBlock = document.getElementById('overlay-block');
+    const canvas = document.getElementById('drawingCanvas');
+    const ctx = canvas.getContext('2d');
+    const reactionsBox = document.getElementById('reactions');
+    const statusEl = document.getElementById('status');
+    const roomInfo = document.getElementById('roomInfo');
 
-    function onYouTubeIframeAPIReady() {
-      roomRef.once('value').then(snapshot => {
-        const room = snapshot.val();
-        if (!room || !room.videoLink) {
-          alert("Invalid room or video link.");
-          return;
+    let ready = false;
+    let drawerEnabled = false;
+    let drawing = false;
+    let lastPos = null;
+
+    function fitCanvas() {
+      const rect = video.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      canvas.style.left = '0';
+      canvas.style.top = '0';
+    }
+    window.addEventListener('resize', fitCanvas);
+
+    // Load room + video
+    roomRef.once('value').then(snap => {
+      const data = snap.val();
+      if (!data) {
+        alert('Room not found');
+        return;
+      }
+      roomInfo.textContent = data.meta?.name || '';
+      video.src = data.videoLink;
+      statusEl.textContent = isHost ? 'You are host' : 'Viewer — waiting for host';
+      fitCanvas();
+      setupParty();
+    }).catch(err => {
+      console.error(err);
+      statusEl.textContent = 'Error loading room';
+    });
+
+    function setupParty() {
+      video.addEventListener('loadedmetadata', () => {
+        ready = true;
+        if (isHost) setupHostControls();
+        else setupViewerSync();
+      });
+    }
+
+    // HOST logic
+    function setupHostControls() {
+      statusEl.textContent = 'Host mode — your controls control everyone';
+
+      function pushState(status) {
+        roomRef.update({
+          status,
+          currentTime: video.currentTime,
+          hostPowers: { speed: Number(document.getElementById('speedSel').value) }
+        });
+      }
+
+      video.addEventListener('play', () => {
+        overlayBlock.style.display = 'none';
+        pushState('play');
+      });
+      video.addEventListener('pause', () => {
+        pushState('pause');
+      });
+      video.addEventListener('seeked', () => {
+        pushState(video.paused ? 'pause' : 'play');
+      });
+
+      setInterval(() => {
+        if (!ready) return;
+        if (!video.paused && !video.seeking) {
+          roomRef.update({ currentTime: video.currentTime });
         }
+      }, 500);
 
-        const videoId = getYouTubeID(room.videoLink);
+      document.getElementById('pauseDiscussBtn').addEventListener('click', () => {
+        video.pause();
+        roomRef.update({ status: 'pause', discussionOpen: true });
+      });
 
-        player = new YT.Player('player', {
-          height: '360',
-          width: '640',
-          videoId: videoId,
-          playerVars: { rel: 0, modestbranding: 1 },
-          events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange }
+      document.getElementById('toggleDrawBtn').addEventListener('click', () => {
+        drawerEnabled = !drawerEnabled;
+        document.getElementById('toggleDrawBtn').textContent = drawerEnabled ? 'Drawing ON' : 'Draw';
+        roomRef.update({ drawingEnabled: drawerEnabled });
+      });
+
+      document.getElementById('spotlightBtn').addEventListener('click', () => {
+        roomRef.update({ hostPowers: { spotlight: true }});
+        setTimeout(() => roomRef.update({ hostPowers: { spotlight: false }}), 5000);
+      });
+
+      document.getElementById('focusBtn').addEventListener('click', () => {
+        roomRef.update({ hostPowers: { focusMode: true }});
+        setTimeout(() => roomRef.update({ hostPowers: { focusMode: false }}), 5000);
+      });
+
+      document.getElementById('speedSel').addEventListener('change', (e) => {
+        const sp = Number(e.target.value || 1);
+        video.playbackRate = sp;
+        roomRef.update({ hostPowers: { speed: sp }});
+      });
+
+      document.getElementById('predictBtn').addEventListener('click', () => {
+        const question = prompt('Enter prediction question');
+        if (!question) return;
+        const id = predictRef.push().key;
+        predictRef.child(id).set({
+          question,
+          createdAt: firebase.database.ServerValue.TIMESTAMP,
+          options: {},
+          closed: false
+        });
+      });
+
+      document.getElementById('openPoll').addEventListener('click', () => {
+        const q = prompt('Poll question');
+        if (!q) return;
+        const id = pollsRef.push().key;
+        pollsRef.child(id).set({
+          q,
+          options: {},
+          createdAt: firebase.database.ServerValue.TIMESTAMP
         });
       });
     }
 
-    function getYouTubeID(url) {
-      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-      const match = url.match(regExp);
-      return (match && match[2].length === 11) ? match[2] : url;
+    // VIEWER logic
+    function setupViewerSync() {
+      statusEl.textContent = 'Viewer mode — following host';
+
+      roomRef.on('value', snap => {
+        const data = snap.val();
+        if (!data || !ready) return;
+
+        if (data.discussionOpen) {
+          statusEl.textContent = 'Discussion mode — host paused the movie';
+        } else {
+          statusEl.textContent = 'Watching — synced to host';
+        }
+
+        if (data.hostPowers?.speed) video.playbackRate = data.hostPowers.speed;
+
+        const hostTime = data.currentTime || 0;
+        const viewerTime = video.currentTime || 0;
+        const diff = hostTime - viewerTime;
+
+        if (Math.abs(diff) > 1.5) {
+          video.currentTime = hostTime;
+        } else if (Math.abs(diff) > 0.05) {
+          try { video.currentTime = viewerTime + diff * 0.2; } catch(e){}
+        }
+
+        if (data.status === 'play') {
+          overlayBlock.style.display = 'none';
+          if (video.paused) video.play().catch(()=>{});
+        } else {
+          overlayBlock.style.display = 'block';
+          if (!video.paused) video.pause();
+        }
+      });
+
+      drawRef.on('child_added', snap => {
+        const stroke = snap.val();
+        if (!stroke) return;
+        ctx.strokeStyle = stroke.color;
+        ctx.lineWidth = stroke.thickness;
+        ctx.beginPath();
+        ctx.moveTo(stroke.lx * canvas.width, stroke.ly * canvas.height);
+        ctx.lineTo(stroke.x * canvas.width, stroke.y * canvas.height);
+        ctx.stroke();
+      });
+
+      reactionsRef.on('child_added', snap => {
+        const { emoji } = snap.val() || {};
+        if (emoji) showReactionBubble(emoji);
+      });
+
+      predictRef.on('value', s => {
+        const data = s.val() || {};
+        renderPredicts(data);
+      });
+      pollsRef.on('value', s => {
+        const data = s.val() || {};
+        renderPolls(data);
+      });
     }
 
-    function onPlayerReady(event) {
-      ready = true;
+    // DRAWING
+    function enableDrawing() {
+      canvas.style.pointerEvents = 'auto';
+      canvas.addEventListener('mousedown', onDown);
+      canvas.addEventListener('mousemove', onMove);
+      canvas.addEventListener('mouseup', onUp);
+      canvas.addEventListener('touchstart', onDown);
+      canvas.addEventListener('touchmove', onMove);
+      canvas.addEventListener('touchend', onUp);
+    }
+    function disableDrawing() {
+      canvas.style.pointerEvents = 'none';
+      canvas.removeEventListener('mousedown', onDown);
+      canvas.removeEventListener('mousemove', onMove);
+      canvas.removeEventListener('mouseup', onUp);
+      canvas.removeEventListener('touchstart', onDown);
+      canvas.removeEventListener('touchmove', onMove);
+      canvas.removeEventListener('touchend', onUp);
+    }
 
-      if (!isHost) {
-        // Viewer sync
-        roomRef.on('value', snapshot => {
-          const data = snapshot.val();
-          if (!data || !player) return;
+    function onDown(e) {
+      if (!isHost) return;
+      drawing = true;
+      const r = canvas.getBoundingClientRect();
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+      lastPos = { x, y };
+    }
+    function onMove(e) {
+      if (!drawing || !isHost) return;
+      const r = canvas.getBoundingClientRect();
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+      ctx.strokeStyle = '#ff0';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(lastPos.x, lastPos.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      drawRef.push({
+        lx: lastPos.x / canvas.width,
+        ly: lastPos.y / canvas.height,
+        x: x / canvas.width,
+        y: y / canvas.height,
+        color: '#ff0',
+        thickness: 3
+      });
+      lastPos = { x, y };
+    }
+    function onUp() {
+      drawing = false;
+      lastPos = null;
+    }
 
-          const playerTime = player.getCurrentTime();
-          const diff = Math.abs(playerTime - data.currentTime);
+    roomRef.child('drawingEnabled').on('value', s => {
+      const on = !!s.val();
+      if (isHost && on) enableDrawing();
+      else disableDrawing();
+    });
 
-          // Seek only if difference > 1.5s
-          if (diff > 1.5) player.seekTo(data.currentTime, true);
+    // REACTIONS (manual only)
+    function showReactionBubble(emoji) {
+      const el = document.createElement('div');
+      el.className = 'reaction-bubble';
+      el.textContent = emoji;
+      reactionsBox.appendChild(el);
+      setTimeout(() => { el.style.transform = 'translateY(-40px)'; }, 20);
+      setTimeout(() => { el.remove(); }, 3500);
+    }
 
-          // Play/pause
-          if (data.status === 'play') {
-            overlay.style.display = 'none';
-            if (player.getPlayerState() !== YT.PlayerState.PLAYING) player.playVideo();
-          } else if (data.status === 'pause') {
-            overlay.style.display = 'block';
-            if (player.getPlayerState() !== YT.PlayerState.PAUSED) player.pauseVideo();
-          }
-        });
+    function emitReaction(emoji) {
+      reactionsRef.push({
+        emoji,
+        at: firebase.database.ServerValue.TIMESTAMP
+      });
+    }
+
+    // PREDICTIONS + POLLS
+    function renderPredicts(data) {
+      const out = document.getElementById('predict-panel');
+      out.innerHTML = '<h4>Predictions</h4>';
+      for (const id in data) {
+        const p = data[id];
+        const el = document.createElement('div');
+        el.innerHTML = `<div><strong>${p.question}</strong></div>`;
+        const btn = document.createElement('button');
+        btn.textContent = 'Answer';
+        btn.className = 'btn grey';
+        btn.onclick = () => {
+          const ans = prompt('Your answer');
+          if (!ans) return;
+          predictRef.child(id).child('options').push({
+            answer: ans,
+            at: firebase.database.ServerValue.TIMESTAMP
+          });
+        };
+        el.appendChild(btn);
+        out.appendChild(el);
       }
     }
 
-    function onPlayerStateChange(event) {
-      if (!isHost || !ready) return;
-
-      let status;
-      if (event.data === YT.PlayerState.PLAYING) status = 'play';
-      else if (event.data === YT.PlayerState.PAUSED) status = 'pause';
-      else return;
-
-      // Update host status and currentTime in realtime
-      roomRef.update({ status: status, currentTime: player.getCurrentTime() });
+    function renderPolls(data) {
+      const out = document.getElementById('poll-panel');
+      out.innerHTML = '<h4>Polls</h4>';
+      for (const id in data) {
+        const p = data[id];
+        const el = document.createElement('div');
+        el.innerHTML = `<div><strong>${p.q}</strong></div>`;
+        const btn = document.createElement('button');
+        btn.textContent = 'Vote';
+        btn.className = 'btn grey';
+        btn.onclick = () => {
+          const opt = prompt('Enter your vote');
+          if (!opt) return;
+          pollsRef.child(id).child('options').push({
+            label: opt,
+            at: firebase.database.ServerValue.TIMESTAMP
+          });
+        };
+        el.appendChild(btn);
+        out.appendChild(el);
+      }
     }
 
-    // Host periodically updates currentTime for smooth syncing
-    if (isHost) {
-      setInterval(() => {
-        if (player && player.getPlayerState() === YT.PlayerState.PLAYING) {
-          roomRef.update({ currentTime: player.getCurrentTime() });
-        }
-      }, 1000);
-    }
+    // Prevent viewer interference
+    video.addEventListener('play', () => {
+      if (!isHost) {
+        roomRef.once('value').then(s => {
+          const data = s.val();
+          if (data && data.status === 'pause') video.pause();
+        });
+      }
+    });
+
+    video.addEventListener('seeking', () => {
+      if (!isHost) {
+        roomRef.once('value').then(s => {
+          const hostTime = (s.val() && s.val().currentTime) || 0;
+          video.currentTime = hostTime;
+        });
+      }
+    });
+
+    // Quick manual reaction buttons
+    const quickEmojis = ['😂','😱','🤨','👏'];
+    quickEmojis.forEach(e => {
+      const b = document.createElement('button');
+      b.textContent = e;
+      b.style.marginRight = '6px';
+      b.className = 'btn grey';
+      b.onclick = () => emitReaction(e);
+      document.getElementById('topbar').appendChild(b);
+    });
+
+    // Initialize Agora voice after auth is ready
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        // function is defined in agora.js
+        initAgoraVoice(firebase, auth, roomId, isHost);
+      }
+    });
+
+    // export helpers if you need them in console
+    window.__WP = { emitReaction, roomRef, drawRef, reactionsRef };
   </script>
 </body>
 </html>

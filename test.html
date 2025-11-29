@@ -10,6 +10,7 @@ body { margin:0; font-family: Arial, sans-serif; background:#f6f8fb; overflow:hi
 #video { width:100%; height:100%; background:black; }
 #overlay-block { position:absolute; top:0; left:0; right:0; bottom:0; z-index:50; display:none; cursor:not-allowed; }
 #drawingCanvas { position:absolute; top:0; left:0; width:100%; height:100%; z-index:55; pointer-events:none; }
+#reactions { position:absolute; top:12px; right:12px; z-index:60; display:flex; flex-direction:column; }
 #controls-panel { flex:1; padding:12px; overflow-y:auto; background:#fff; display:flex; flex-direction:column; gap:12px; }
 .btn { padding:8px 12px; background:#2b6cdf; color:#fff; border:none; border-radius:6px; cursor:pointer; }
 .btn.grey { background:#666; }
@@ -17,6 +18,12 @@ body { margin:0; font-family: Arial, sans-serif; background:#f6f8fb; overflow:hi
 #micBtn { background:#ff5555; }
 #status { font-weight:600; }
 .reaction-bubble { background: rgba(255,255,255,0.9); padding:6px 8px; border-radius:20px; box-shadow:0 2px 6px rgba(0,0,0,0.15); margin-bottom:4px; }
+#chat-panel { display:flex; flex-direction:column; gap:6px; border-top:1px solid #ccc; padding-top:6px; max-height:250px; overflow-y:auto; }
+#chat-messages { flex:1; overflow-y:auto; }
+.chat-message { padding:4px 6px; background:#e6e6e6; border-radius:4px; margin-bottom:4px; }
+.chat-message.reply { background:#d0e6ff; margin-left:12px; }
+#chat-input { display:flex; gap:4px; }
+#chat-input input { flex:1; padding:6px; border-radius:4px; border:1px solid #ccc; }
 </style>
 </head>
 <body>
@@ -25,7 +32,7 @@ body { margin:0; font-family: Arial, sans-serif; background:#f6f8fb; overflow:hi
     <video id="video" controls crossorigin playsinline></video>
     <canvas id="drawingCanvas"></canvas>
     <div id="overlay-block"></div>
-    <div id="reactions" style="position:absolute; top:12px; right:12px; z-index:60; display:flex; flex-direction:column;"></div>
+    <div id="reactions"></div>
   </div>
   <div id="controls-panel">
     <div><strong>Watch Party Controls</strong></div>
@@ -50,6 +57,15 @@ body { margin:0; font-family: Arial, sans-serif; background:#f6f8fb; overflow:hi
     <button id="fullscreenBtn" class="btn grey">Fullscreen</button>
     <div id="predict-panel"></div>
     <div id="poll-panel"></div>
+
+    <!-- Chat -->
+    <div id="chat-panel">
+      <div id="chat-messages"></div>
+      <div id="chat-input">
+        <input id="chatMessage" placeholder="Type a message"/>
+        <button id="sendChatBtn" class="btn grey">Send</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -78,22 +94,22 @@ const drawRef = db.ref('rooms/' + roomId + '/drawing');
 const reactionsRef = db.ref('rooms/' + roomId + '/reactions');
 const predictRef = db.ref('rooms/' + roomId + '/predicts');
 const pollsRef = db.ref('rooms/' + roomId + '/polls');
+const chatRef = db.ref('rooms/' + roomId + '/chat');
 
 const video = document.getElementById('video');
 const overlay = document.getElementById('overlay-block');
 const canvas = document.getElementById('drawingCanvas');
 const ctx = canvas.getContext('2d');
 const reactionsBox = document.getElementById('reactions');
+const chatMessages = document.getElementById('chat-messages');
+const chatInput = document.getElementById('chatMessage');
+const sendChatBtn = document.getElementById('sendChatBtn');
 
-let drawingEnabled = false;
-let drawing = false;
-let lastPos = null;
-let micOn = false;
+let drawingEnabled=false,drawing=false,lastPos=null,micOn=false;
 
 function fitCanvas(){ canvas.width=video.clientWidth; canvas.height=video.clientHeight; }
 window.addEventListener('resize', fitCanvas);
 
-// Load room
 roomRef.once('value').then(snap=>{
   const data=snap.val();
   if(!data){ alert('Room not found'); return; }
@@ -109,12 +125,10 @@ function setupParty(){
   });
 }
 
-// Host
+// HOST
 function setupHost(){
   document.getElementById('status').textContent='You are host';
-  const pushState=()=>{
-    roomRef.update({status:video.paused?'pause':'play',currentTime:video.currentTime,hostPowers:{speed:Number(document.getElementById('speedSel').value)}});
-  };
+  const pushState=()=>roomRef.update({status:video.paused?'pause':'play',currentTime:video.currentTime,hostPowers:{speed:Number(document.getElementById('speedSel').value)}});
   video.addEventListener('play', pushState);
   video.addEventListener('pause', pushState);
   video.addEventListener('seeked', pushState);
@@ -166,14 +180,22 @@ function setupHost(){
     const id=pollsRef.push().key;
     pollsRef.child(id).set({q,options:{},createdAt:firebase.database.ServerValue.TIMESTAMP});
   });
+
+  // Chat send
+  sendChatBtn.addEventListener('click', sendChat);
+  chatInput.addEventListener('keypress', e=>{ if(e.key==='Enter') sendChat(); });
+  function sendChat(){
+    const msg=chatInput.value.trim(); if(!msg)return;
+    chatRef.push({uid:auth.currentUser.uid,text:msg,at:firebase.database.ServerValue.TIMESTAMP});
+    chatInput.value='';
+  }
 }
 
-// Viewer
+// VIEWER
 function setupViewer(){
   document.getElementById('status').textContent='Viewer — synced to host';
   roomRef.on('value', snap=>{
     const data=snap.val(); if(!data) return;
-
     if(data.status==='play' && video.paused) video.play().catch(()=>{});
     else if(data.status==='pause' && !video.paused) video.pause();
 
@@ -200,6 +222,11 @@ function setupViewer(){
 
   predictRef.on('value', s=>renderPredicts(s.val()||{}));
   pollsRef.on('value', s=>renderPolls(s.val()||{}));
+  chatRef.on('child_added', snap=>{
+    const {text,uid}=snap.val();
+    const el=document.createElement('div'); el.className='chat-message'; el.textContent=text;
+    chatMessages.appendChild(el); chatMessages.scrollTop=chatMessages.scrollHeight;
+  });
 }
 
 // Drawing

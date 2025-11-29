@@ -1,24 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Create Watch Party</title>
+  <meta charset="UTF-8" />
+  <title>Create Watch Party (HTML5)</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
-    input, button { margin: 5px 0; padding: 8px; width: 300px; }
-    #output { margin-top: 20px; }
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f7f7fb; }
+    input, button { margin: 6px 0; padding: 8px; width: 360px; }
+    label { display:block; margin-top:10px; }
+    #output { margin-top: 18px; }
   </style>
 </head>
 <body>
-  <h2>Create a Watch Party</h2>
+  <h2>Create Watch Party (HTML5)</h2>
 
-  <input type="text" id="videoLink" placeholder="Paste YouTube link" required><br>
-  <input type="datetime-local" id="startTime" required><br>
+  <label>Direct video link (MP4/HLS):</label>
+  <input type="text" id="videoLink" placeholder="https://example.com/video.mp4">
+
+  <label>Scheduled start time:</label>
+  <input type="datetime-local" id="startTime">
+
+  <label>Room name (optional):</label>
+  <input type="text" id="roomName" placeholder="My watch party">
+
   <button onclick="createRoom()">Create Room</button>
 
   <div id="output"></div>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="firebase-config.js"></script>
@@ -28,12 +36,13 @@
     const db = firebase.database();
 
     async function createRoom() {
-      const videoLink = document.getElementById("videoLink").value.trim();
-      const startTime = document.getElementById("startTime").value;
-      const output = document.getElementById("output");
+      const videoLink = document.getElementById('videoLink').value.trim();
+      const startTime = document.getElementById('startTime').value;
+      const roomName = document.getElementById('roomName').value.trim();
+      const output = document.getElementById('output');
 
       if (!videoLink || !startTime) {
-        alert("Please fill all fields");
+        alert('Please fill video link and start time');
         return;
       }
 
@@ -41,22 +50,27 @@
         const roomRef = db.ref('rooms').push();
         const roomId = roomRef.key;
 
-        await roomRef.set({
-          videoLink: videoLink,
+        const payload = {
+          videoLink,
           scheduledStartTime: startTime,
-          status: "pause",
+          createdAt: firebase.database.ServerValue.TIMESTAMP,
+          status: 'pause',
           currentTime: 0,
-          host: true
-        });
+          host: true,
+          meta: { name: roomName || '', type: 'html5' },
+          hostPowers: { lockedMic: false, focusMode: false, speed: 1 }
+        };
+
+        await roomRef.set(payload);
 
         output.innerHTML = `
-          <p>Room created successfully!</p>
+          <p>Room created: <strong>${roomId}</strong></p>
           <p><strong>Host link:</strong> <a href="test.html?room=${roomId}&host=true" target="_blank">test.html?room=${roomId}&host=true</a></p>
           <p><strong>Viewer link:</strong> <a href="test.html?room=${roomId}" target="_blank">test.html?room=${roomId}</a></p>
         `;
-      } catch (error) {
-        console.error(error);
-        output.textContent = "Error creating room: " + error.message;
+      } catch (err) {
+        console.error(err);
+        output.textContent = 'Error: ' + err.message;
       }
     }
   </script>

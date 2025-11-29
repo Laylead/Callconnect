@@ -1,650 +1,1834 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Watch Party Room — Improved</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    :root{--bg:#020617;--panel:#0f172a;--accent:#4f46e5;--text-main:#e5e7eb;--text-soft:#9ca3af}
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Arial;color:var(--text-main);background:radial-gradient(circle at top left,#1d4ed8 0,#020617 35%,#000 100%)}
-    #topbar{display:flex;align-items:center;padding:10px 14px;gap:10px;background:linear-gradient(to right,rgba(15,23,42,0.9),rgba(15,23,42,0.7));backdrop-filter:blur(8px);border-bottom:1px solid rgba(148,163,184,0.12);z-index:120}
-    #appTitle{font-weight:700;font-size:16px}
-    #roomInfo{font-size:12px;color:var(--text-soft)}
-    .top-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-    .btn{padding:7px 10px;border-radius:999px;border:none;font-size:12px;cursor:pointer;background:var(--accent);color:#fff;display:inline-flex;align-items:center;gap:6px}
-    .btn.grey{background:rgba(15,23,42,0.9);color:var(--text-main);border:1px solid rgba(148,163,184,0.18)}
-    .btn.small{padding:4px 8px;font-size:11px}
-    .emoji-btn{background:rgba(15,23,42,0.9);border:1px solid rgba(148,163,184,0.18)}
+<meta charset="utf-8" />
+<title>Watch Party Room — Enhanced</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+:root {
+  --bg: #020617;
+  --panel: #0f172a;
+  --accent: #4f46e5;
+  --text-main: #e5e7eb;
+  --text-soft: #9ca3af;
+}
 
-    .wrap{display:flex;gap:10px;padding:10px;flex:1;min-height:0}
-    #left{flex:3;min-width:55%;display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(15,23,42,0.8),rgba(15,23,42,0.95));border-radius:14px;padding:10px;box-shadow:0 20px 40px rgba(0,0,0,0.5);position:relative;min-height:0}
-    #right{flex:2;min-width:40%;display:flex;flex-direction:column;gap:10px;min-height:0;overflow:auto;max-height:calc(100vh - 96px);position:relative}
+* {
+  box-sizing: border-box;
+}
 
-    #player-container{position:relative;border-radius:12px;overflow:hidden;background:#000;flex:1;min-height:240px}
-    video, #ytPlayerIframe{width:100%;height:100%;display:block;background:#000;object-fit:contain}
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: Inter, system-ui, Segoe UI, Arial;
+  color: var(--text-main);
+  background: radial-gradient(circle at top left, #1d4ed8 0, #020617 35%, #000 100%);
+  overflow: hidden;
+}
 
-    /* overlay that blocks viewer controls when host paused */
-    #overlay-block{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.18);backdrop-filter:blur(2px);pointer-events:auto}
-    #overlay-block.hidden{display:none}
-    #overlay-block .hint{background:rgba(15,23,42,0.9);padding:8px 12px;border-radius:12px;border:1px solid rgba(148,163,184,0.18);font-size:13px;color:var(--text-soft)}
+/* Top Bar */
+#topbar {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  gap: 10px;
+  background: linear-gradient(to right, rgba(15,23,42,0.9), rgba(15,23,42,0.7));
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(148,163,184,0.12);
+  z-index: 120;
+  position: relative;
+}
 
-    canvas#drawingCanvas{position:absolute;inset:0;z-index:45;pointer-events:none}
+#appTitle {
+  font-weight: 700;
+  font-size: 16px;
+}
 
-    #reactions{position:absolute;right:12px;top:12px;z-index:60;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
-    .reaction-bubble{background:rgba(15,23,42,0.98);padding:6px 8px;border-radius:18px;box-shadow:0 8px 18px rgba(0,0,0,0.5);font-size:18px;animation:floatUp 3s ease forwards}
-    @keyframes floatUp{0%{transform:translateY(0);opacity:1}80%{opacity:1}100%{transform:translateY(-60px);opacity:0}}
+#roomInfo {
+  font-size: 12px;
+  color: var(--text-soft);
+}
 
-    .panel{background:rgba(15,23,42,0.92);border-radius:12px;padding:8px;border:1px solid rgba(148,163,184,0.08);display:flex;flex-direction:column}
-    .panel-header{font-size:12px;font-weight:600;color:var(--text-soft);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
-    .panel-body{flex:1;overflow:auto;font-size:12px}
+.top-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-    #controls-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-    select{background:rgba(15,23,42,0.9);color:var(--text-main);border-radius:999px;border:1px solid rgba(148,163,184,0.2);padding:6px 8px;font-size:12px}
-    label.small{font-size:11px;color:var(--text-soft);display:flex;align-items:center;gap:6px}
+.btn {
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  background: var(--accent);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
 
-    #chatMessages{display:flex;flex-direction:column;gap:8px}
-    .chat-msg{padding:8px;border-radius:10px;background:rgba(2,6,23,0.6);border:1px solid rgba(148,163,184,0.06)}
-    .chat-meta{font-size:11px;color:var(--text-soft);margin-bottom:6px}
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
 
-    /* Floating controls: ONLY shown in fullscreen (via :fullscreen) */
-    .float-controls {
-      position: absolute;
-      z-index: 110;
-      right: 16px;
-      bottom: 18px;
-      display:none;         /* default hidden */
-      flex-direction:column;
-      gap:8px;
-      align-items:flex-end;
-      pointer-events:none;
-    }
-    .float-controls .btn, .float-controls .emoji-btn, .float-controls .talk-btn { pointer-events: auto; }
-    .talk-btn {
-      width:56px;height:56px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:20px;background:linear-gradient(180deg,var(--accent),#3b3bff);box-shadow:0 10px 30px rgba(79,70,229,0.25);border:none;color:white;cursor:pointer;
-    }
-    .emoji-float { display:flex;gap:8px; }
-    .emoji-float .emoji-btn { padding:8px 10px; font-size:18px; border-radius:12px; }
+.btn.grey {
+  background: rgba(15,23,42,0.9);
+  color: var(--text-main);
+  border: 1px solid rgba(148,163,184,0.18);
+}
 
-    /* show float controls only when fullscreen */
-    :fullscreen .float-controls,
-    :-webkit-full-screen .float-controls,
-    :-ms-fullscreen .float-controls {
-      display:flex;
-      opacity: 1;
-      pointer-events: auto;
-    }
+.btn.small {
+  padding: 4px 8px;
+  font-size: 11px;
+}
 
-    /* Responsive: landscape small screens: make right controls scroll independent */
-    @media (orientation: landscape) and (max-height: 420px) {
-      .wrap { gap:8px; padding:6px; }
-      #right { position: absolute; right: 8px; top: 76px; width: 36%; max-height: calc(100vh - 92px); overflow-y: auto; background: transparent; padding: 6px; }
-      #left { margin-right: 40%; }
-    }
+.emoji-btn {
+  background: rgba(15,23,42,0.9);
+  border: 1px solid rgba(148,163,184,0.18);
+}
 
-    @media (max-width:900px){
-      .wrap{flex-direction:column;padding:6px;gap:8px}
-      #left{min-width:100%}
-      #right{min-width:100%;max-height:40vh;overflow:auto;position:relative}
-      .float-controls{right:10px;bottom:12px}
-      #topbar{padding:8px}
-    }
-  </style>
+/* Dropdown for controls */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background: rgba(15,23,42,0.98);
+  min-width: 200px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  border: 1px solid rgba(148,163,184,0.18);
+  z-index: 1000;
+  padding: 12px;
+  margin-top: 8px;
+  backdrop-filter: blur(12px);
+}
+
+.dropdown-content.show {
+  display: block;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-section {
+  margin-bottom: 12px;
+}
+
+.dropdown-section:last-child {
+  margin-bottom: 0;
+}
+
+.dropdown-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-soft);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dropdown-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+/* Main Layout */
+.wrap {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  flex: 1;
+  min-height: 0;
+  height: calc(100vh - 96px);
+}
+
+#left {
+  flex: 3;
+  min-width: 55%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, rgba(15,23,42,0.8), rgba(15,23,42,0.95));
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  position: relative;
+  min-height: 0;
+}
+
+#right {
+  flex: 2;
+  min-width: 40%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  overflow: auto;
+  max-height: calc(100vh - 96px);
+  position: relative;
+}
+
+/* Player */
+#player-container {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  flex: 1;
+  min-height: 240px;
+}
+
+video, #ytPlayerIframe {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: #000;
+  object-fit: contain;
+}
+
+/* Overlay for viewers */
+#overlay-block {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.18);
+  backdrop-filter: blur(2px);
+  pointer-events: auto;
+}
+
+#overlay-block.hidden {
+  display: none;
+}
+
+#overlay-block .hint {
+  background: rgba(15,23,42,0.9);
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,0.18);
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+/* Drawing canvas */
+canvas#drawingCanvas {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+}
+
+/* Reactions */
+#reactions {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.reaction-bubble {
+  background: rgba(15,23,42,0.98);
+  padding: 6px 8px;
+  border-radius: 18px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.5);
+  font-size: 18px;
+  animation: floatUp 3s ease forwards;
+}
+
+@keyframes floatUp {
+  0% { transform: translateY(0); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(-60px); opacity: 0; }
+}
+
+/* Panels */
+.panel {
+  background: rgba(15,23,42,0.92);
+  border-radius: 12px;
+  padding: 8px;
+  border: 1px solid rgba(148,163,184,0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-soft);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-body {
+  flex: 1;
+  overflow: auto;
+  font-size: 12px;
+}
+
+/* Chat improvements */
+#chatMessages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chat-msg {
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(2,6,23,0.6);
+  border: 1px solid rgba(148,163,184,0.06);
+  animation: fadeIn 0.3s ease;
+}
+
+.chat-meta {
+  font-size: 11px;
+  color: var(--text-soft);
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.chat-user {
+  font-weight: 600;
+}
+
+.chat-time {
+  opacity: 0.7;
+}
+
+/* Floating controls - ONLY shown in fullscreen */
+.float-controls {
+  position: absolute;
+  z-index: 110;
+  right: 16px;
+  bottom: 18px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+.float-controls .btn, .float-controls .emoji-btn, .float-controls .talk-btn { 
+  pointer-events: auto; 
+}
+
+.talk-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: linear-gradient(180deg, var(--accent), #3b3bff);
+  box-shadow: 0 10px 30px rgba(79,70,229,0.25);
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.talk-btn.talking {
+  background: linear-gradient(180deg, #ef4444, #dc2626);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.emoji-float {
+  display: flex;
+  gap: 8px;
+}
+
+.emoji-float .emoji-btn {
+  padding: 8px 10px;
+  font-size: 18px;
+  border-radius: 12px;
+}
+
+/* Show float controls only when fullscreen */
+:fullscreen .float-controls,
+:-webkit-full-screen .float-controls,
+:-ms-fullscreen .float-controls {
+  display: flex;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Mobile Landscape */
+@media (orientation: landscape) and (max-height: 420px) {
+  .wrap {
+    gap: 8px;
+    padding: 6px;
+  }
+  
+  #right {
+    position: absolute;
+    right: 8px;
+    top: 76px;
+    width: 36%;
+    max-height: calc(100vh - 92px);
+    overflow-y: auto;
+    background: transparent;
+    padding: 6px;
+  }
+  
+  #left {
+    margin-right: 40%;
+  }
+}
+
+/* Mobile Portrait */
+@media (max-width: 900px) {
+  .wrap {
+    flex-direction: column;
+    padding: 6px;
+    gap: 8px;
+  }
+  
+  #left {
+    min-width: 100%;
+    flex: 2;
+  }
+  
+  #right {
+    min-width: 100%;
+    max-height: 40vh;
+    overflow: auto;
+    position: relative;
+  }
+  
+  .float-controls {
+    right: 10px;
+    bottom: 12px;
+  }
+  
+  #topbar {
+    padding: 8px;
+  }
+  
+  .dropdown-content {
+    position: fixed;
+    top: 50px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+  }
+}
+
+/* Chat popup for fullscreen */
+.chat-popup {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  width: 300px;
+  height: 400px;
+  background: rgba(15,23,42,0.95);
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,0.18);
+  z-index: 120;
+  display: none;
+  flex-direction: column;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+}
+
+.chat-popup.show {
+  display: flex;
+}
+
+.chat-popup-header {
+  padding: 12px;
+  border-bottom: 1px solid rgba(148,163,184,0.12);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chat-popup-body {
+  flex: 1;
+  overflow: auto;
+  padding: 8px;
+}
+
+.chat-popup-footer {
+  padding: 8px;
+  border-top: 1px solid rgba(148,163,184,0.12);
+  display: flex;
+  gap: 6px;
+}
+
+.chat-popup-footer input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(148,163,184,0.08);
+  background: rgba(2,6,23,0.6);
+  color: var(--text-main);
+}
+
+/* Focus mode - hides controls */
+.focus-mode #right,
+.focus-mode #topbar .top-right,
+.focus-mode .dropdown {
+  opacity: 0.1;
+  transition: opacity 0.3s ease;
+}
+
+.focus-mode #right:hover,
+.focus-mode #topbar .top-right:hover,
+.focus-mode .dropdown:hover {
+  opacity: 1;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15,23,42,0.5);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148,163,184,0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148,163,184,0.5);
+}
+</style>
 </head>
 <body>
-  <div id="topbar">
-    <div>
-      <div id="appTitle">Watch Party</div>
-      <div id="roomInfo"></div>
-    </div>
-    <div class="top-right" id="topRightControls">
+<div id="topbar">
+  <div>
+    <div id="appTitle">Watch Party</div>
+    <div id="roomInfo"></div>
+  </div>
+  
+  <div class="top-right">
+    <!-- Main controls always visible -->
+    <button id="playPauseBtn" class="btn small">▶️ Play</button>
+    <button id="syncBtn" class="btn small grey">🔄 Sync</button>
+    
+    <div class="emoji-panel">
       <button class="btn small emoji-btn" data-emoji="😂">😂</button>
       <button class="btn small emoji-btn" data-emoji="😱">😱</button>
       <button class="btn small emoji-btn" data-emoji="🤨">🤨</button>
       <button class="btn small emoji-btn" data-emoji="👏">👏</button>
     </div>
-  </div>
-
-  <div class="wrap">
-    <div id="left">
-      <div id="player-container">
-        <video id="html5video" playsinline preload="metadata"></video>
-        <div id="ytContainer" style="display:none;width:100%;height:100%"><div id="ytPlayerIframe"></div></div>
-        <canvas id="drawingCanvas"></canvas>
-        <div id="overlay-block" class="hidden"><div class="hint">You're viewing — host controls playback</div></div>
-        <div id="reactions"></div>
-
-        <!-- Floating controls (ONLY visible in fullscreen) -->
-        <div class="float-controls" id="floatControls" aria-hidden="true">
-          <div class="emoji-float">
-            <button class="emoji-btn" data-emoji="😂">😂</button>
-            <button class="emoji-btn" data-emoji="👏">👏</button>
-            <button class="emoji-btn" data-emoji="🔥">🔥</button>
+    
+    <button id="chatToggleBtn" class="btn small">💬 Chat</button>
+    <button id="talkBtn" class="btn small">🎙 Talk</button>
+    
+    <!-- Dropdown for additional controls -->
+    <div class="dropdown">
+      <button id="menuToggle" class="btn small">⚙️ Menu</button>
+      <div class="dropdown-content" id="dropdownMenu">
+        <div class="dropdown-section">
+          <div class="dropdown-section-title">Playback</div>
+          <div class="dropdown-grid">
+            <button id="pauseDiscussBtn" class="btn small grey">Pause & Discuss</button>
+            <label class="small">Speed:
+              <select id="speedSel">
+                <option value="0.5">0.5x</option>
+                <option value="0.75">0.75x</option>
+                <option value="1" selected>1x</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+              </select>
+            </label>
           </div>
-          <button id="talkFloatingBtn" class="talk-btn" title="Hold to talk">🎙</button>
         </div>
-      </div>
-      <div id="status" style="margin-top:8px;font-size:13px;color:#a5b4fc"></div>
-    </div>
-
-    <div id="right">
-      <div class="panel" style="flex:0 0 auto">
-        <div class="panel-header">
-          <span>Main Controls</span>
-          <label class="small">Speed:
-            <select id="speedSel">
-              <option value="0.5">0.5x</option>
-              <option value="0.75">0.75x</option>
-              <option value="1" selected>1x</option>
-              <option value="1.25">1.25x</option>
-              <option value="1.5">1.5x</option>
-            </select>
-          </label>
+        
+        <div class="dropdown-section">
+          <div class="dropdown-section-title">Tools</div>
+          <div class="dropdown-grid">
+            <button id="toggleDrawBtn" class="btn small grey">Draw</button>
+            <button id="clearDrawBtn" class="btn small grey">Clear Draw</button>
+            <button id="spotlightBtn" class="btn small grey">Spotlight</button>
+            <button id="focusBtn" class="btn small grey">Focus Mode</button>
+            <button id="fullscreenBtn" class="btn small grey">Fullscreen</button>
+          </div>
         </div>
-        <div id="controls-grid">
-          <button id="pauseDiscussBtn" class="btn grey">Pause & Discuss</button>
-          <button id="toggleDrawBtn" class="btn grey">Draw</button>
-          <button id="clearDrawBtn" class="btn grey">Clear Draw</button>
-          <button id="spotlightBtn" class="btn grey">Spotlight</button>
-          <button id="focusBtn" class="btn grey">Focus Mode</button>
-          <button id="fullscreenBtn" class="btn grey">Fullscreen</button>
+        
+        <div class="dropdown-section">
+          <div class="dropdown-section-title">Interactive</div>
+          <div class="dropdown-grid">
+            <button id="predictBtn" class="btn small grey">Play & Predict</button>
+            <button id="openPoll" class="btn small grey">Quick Poll</button>
+          </div>
         </div>
-      </div>
-
-      <div class="panel" style="flex:0 0 auto">
-        <div class="panel-header"><span>Voice Talk</span></div>
-        <div class="panel-body" style="display:flex;flex-direction:column;gap:6px">
-          <button id="holdTalkBtn" class="btn grey">Hold to Talk</button>
-          <div id="voiceStatus">Initializing voice...</div>
-        </div>
-      </div>
-
-      <div class="panel" style="flex:1;min-height:0;display:flex;flex-direction:column">
-        <div class="panel-header"><span>Party Chat</span></div>
-        <div class="panel-body" id="chatScroll" style="padding:6px;min-height:80px;overflow:auto">
-          <div id="chatMessages"></div>
-        </div>
-        <div id="chatInputRow" style="display:flex;gap:6px;margin-top:8px">
-          <input id="chatInput" placeholder="Type a message..." style="flex:1;padding:8px;border-radius:999px;border:1px solid rgba(148,163,184,0.08);background:rgba(2,6,23,0.6);color:var(--text-main)" />
-          <button id="chatSendBtn" class="btn small">Send</button>
-        </div>
-      </div>
-
-      <div class="panel" style="flex:1;min-height:0">
-        <div class="panel-header"><span>Interactive</span>
-          <div style="display:flex;gap:6px"><button id="predictBtn" class="btn small">Play & Predict</button><button id="openPoll" class="btn small">Quick Poll</button></div>
-        </div>
-        <div class="panel-body" style="min-height:80px">
-          <div id="predict-panel"></div>
-          <div id="poll-panel"></div>
+        
+        <div class="dropdown-section">
+          <div class="dropdown-section-title">Video</div>
+          <div>
+            <button id="changeVideoBtn" class="btn small grey" style="width:100%">Change Video</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Firebase + Agora + YouTube (same external scripts expected) -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="firebase-config.js"></script>
-  <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.9.0.js"></script>
-  <script src="agora.js"></script>
-  <script src="https://www.youtube.com/iframe_api"></script>
+<div class="wrap">
+  <div id="left">
+    <div id="player-container">
+      <video id="html5video" playsinline preload="metadata"></video>
+      <div id="ytContainer" style="display:none;width:100%;height:100%"><div id="ytPlayerIframe"></div></div>
+      <canvas id="drawingCanvas"></canvas>
+      
+      <div id="overlay-block" class="hidden">
+        <div class="hint">You're viewing — host controls playback</div>
+      </div>
+      
+      <div id="reactions"></div>
+      
+      <!-- Floating controls (ONLY visible in fullscreen) -->
+      <div class="float-controls" id="floatControls" aria-hidden="true">
+        <div class="emoji-float">
+          <button class="emoji-btn" data-emoji="😂">😂</button>
+          <button class="emoji-btn" data-emoji="👏">👏</button>
+          <button class="emoji-btn" data-emoji="🔥">🔥</button>
+          <button class="emoji-btn" data-emoji="❤️">❤️</button>
+        </div>
+        <button id="talkFloatingBtn" class="talk-btn" title="Hold to talk">🎙</button>
+        <button id="chatFloatingBtn" class="btn">💬</button>
+      </div>
+    </div>
+    
+    <div id="status" style="margin-top:8px;font-size:13px;color:#a5b4fc"></div>
+  </div>
+  
+  <div id="right">
+    <div class="panel" style="flex:1;min-height:0;display:flex;flex-direction:column">
+      <div class="panel-header">
+        <span>Party Chat</span>
+        <button id="clearChatBtn" class="btn small grey">Clear</button>
+      </div>
+      <div class="panel-body" id="chatScroll" style="padding:6px;min-height:80px;overflow:auto">
+        <div id="chatMessages"></div>
+      </div>
+      <div id="chatInputRow" style="display:flex;gap:6px;margin-top:8px">
+        <input id="chatInput" placeholder="Type a message..." style="flex:1;padding:8px;border-radius:999px;border:1px solid rgba(148,163,184,0.08);background:rgba(2,6,23,0.6);color:var(--text-main)" />
+        <button id="chatSendBtn" class="btn small">Send</button>
+      </div>
+    </div>
+    
+    <div class="panel" style="flex:0 0 auto">
+      <div class="panel-header"><span>Voice Status</span></div>
+      <div class="panel-body" style="display:flex;flex-direction:column;gap:6px">
+        <button id="holdTalkBtn" class="btn grey">Hold to Talk</button>
+        <div id="voiceStatus">Voice ready</div>
+      </div>
+    </div>
+    
+    <div class="panel" style="flex:1;min-height:0">
+      <div class="panel-header"><span>Interactive</span></div>
+      <div class="panel-body" style="min-height:80px">
+        <div id="predict-panel"></div>
+        <div id="poll-panel"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
-  <script>
-    // --- Basic init & DOM refs ---
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const auth = firebase.auth();
-    auth.signInAnonymously().catch(console.warn);
+<!-- Chat popup for fullscreen -->
+<div class="chat-popup" id="chatPopup">
+  <div class="chat-popup-header">
+    <span>Party Chat</span>
+    <button id="closeChatPopup" class="btn small grey">✕</button>
+  </div>
+  <div class="chat-popup-body" id="chatPopupMessages">
+    <!-- Chat messages will be populated here -->
+  </div>
+  <div class="chat-popup-footer">
+    <input id="chatPopupInput" placeholder="Type a message..." />
+    <button id="chatPopupSend" class="btn small">Send</button>
+  </div>
+</div>
 
-    const params = new URLSearchParams(location.search);
-    const roomId = params.get('room');
-    const isHost = params.get('host') === 'true';
+<!-- Firebase + Agora + YouTube -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.9.0.js"></script>
+<script src="agora.js"></script>
+<script src="https://www.youtube.com/iframe_api"></script>
 
-    if (!roomId) {
-      alert('Missing room id in URL. Use ?room=ROOMID&host=true to create a room');
-      throw new Error('Missing roomId');
+<script>
+// --- Improved initialization ---
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const auth = firebase.auth();
+auth.signInAnonymously().catch(console.warn);
+
+const params = new URLSearchParams(location.search);
+const roomId = params.get('room');
+const isHost = params.get('host') === 'true';
+
+if (!roomId) {
+  alert('Missing room id in URL. Use ?room=ROOMID&host=true to create a room');
+  throw new Error('Missing roomId');
+}
+
+const roomRef = db.ref('rooms/' + roomId);
+const drawRef = roomRef.child('drawing');
+const reactionsRef = roomRef.child('reactions');
+const chatRef = roomRef.child('chat');
+const predictRef = roomRef.child('predicts');
+const pollsRef = roomRef.child('polls');
+
+// DOM references
+const html5video = document.getElementById('html5video');
+const ytContainer = document.getElementById('ytContainer');
+const overlayBlock = document.getElementById('overlay-block');
+const canvas = document.getElementById('drawingCanvas');
+const ctx = canvas.getContext('2d');
+const reactionsBox = document.getElementById('reactions');
+const statusEl = document.getElementById('status');
+const roomInfo = document.getElementById('roomInfo');
+const speedSel = document.getElementById('speedSel');
+const pauseDiscussBtn = document.getElementById('pauseDiscussBtn');
+const toggleDrawBtn = document.getElementById('toggleDrawBtn');
+const clearDrawBtn = document.getElementById('clearDrawBtn');
+const spotlightBtn = document.getElementById('spotlightBtn');
+const focusBtn = document.getElementById('focusBtn');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+const holdTalkBtn = document.getElementById('holdTalkBtn');
+const talkFloatingBtn = document.getElementById('talkFloatingBtn');
+const voiceStatus = document.getElementById('voiceStatus');
+const chatMessages = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+const chatSendBtn = document.getElementById('chatSendBtn');
+const chatScroll = document.getElementById('chatScroll');
+const floatControls = document.getElementById('floatControls');
+const playPauseBtn = document.getElementById('playPauseBtn');
+const syncBtn = document.getElementById('syncBtn');
+const chatToggleBtn = document.getElementById('chatToggleBtn');
+const talkBtn = document.getElementById('talkBtn');
+const menuToggle = document.getElementById('menuToggle');
+const dropdownMenu = document.getElementById('dropdownMenu');
+const changeVideoBtn = document.getElementById('changeVideoBtn');
+const clearChatBtn = document.getElementById('clearChatBtn');
+const chatPopup = document.getElementById('chatPopup');
+const closeChatPopup = document.getElementById('closeChatPopup');
+const chatPopupMessages = document.getElementById('chatPopupMessages');
+const chatPopupInput = document.getElementById('chatPopupInput');
+const chatPopupSend = document.getElementById('chatPopupSend');
+const chatFloatingBtn = document.getElementById('chatFloatingBtn');
+
+let ready = false;
+let usingYT = false;
+let ytPlayer = null;
+let drawingEnabled = false;
+let drawing = false;
+let lastPos = null;
+let discussionOpen = false;
+let strokes = [];
+let agoraSession = null;
+let agoraLocalMicOn = false;
+
+// --- Improved UI Controls ---
+
+// Dropdown menu toggle
+menuToggle.addEventListener('click', (e) => {
+  e.stopPropagation();
+  dropdownMenu.classList.toggle('show');
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', () => {
+  dropdownMenu.classList.remove('show');
+});
+
+// Play/Pause button
+playPauseBtn.addEventListener('click', () => {
+  if (isHost) {
+    if (playerIsPlaying()) {
+      playerPause();
+      playPauseBtn.innerHTML = '▶️ Play';
+    } else {
+      playerPlay();
+      playPauseBtn.innerHTML = '⏸ Pause';
     }
+  }
+});
 
-    const roomRef = db.ref('rooms/' + roomId);
-    const drawRef = roomRef.child('drawing');
-    const reactionsRef = roomRef.child('reactions');
-    const chatRef = roomRef.child('chat');
-    const predictRef = roomRef.child('predicts');
-    const pollsRef = roomRef.child('polls');
-
-    const html5video = document.getElementById('html5video');
-    const ytContainer = document.getElementById('ytContainer');
-    const overlayBlock = document.getElementById('overlay-block');
-    const canvas = document.getElementById('drawingCanvas');
-    const ctx = canvas.getContext('2d');
-    const reactionsBox = document.getElementById('reactions');
-    const statusEl = document.getElementById('status');
-    const roomInfo = document.getElementById('roomInfo');
-
-    const speedSel = document.getElementById('speedSel');
-    const pauseDiscussBtn = document.getElementById('pauseDiscussBtn');
-    const toggleDrawBtn = document.getElementById('toggleDrawBtn');
-    const clearDrawBtn = document.getElementById('clearDrawBtn');
-    const spotlightBtn = document.getElementById('spotlightBtn');
-    const focusBtn = document.getElementById('focusBtn');
-    const fullscreenBtn = document.getElementById('fullscreenBtn');
-    const holdTalkBtn = document.getElementById('holdTalkBtn');
-    const talkFloatingBtn = document.getElementById('talkFloatingBtn');
-    const voiceStatus = document.getElementById('voiceStatus');
-    const chatMessages = document.getElementById('chatMessages');
-    const chatInput = document.getElementById('chatInput');
-    const chatSendBtn = document.getElementById('chatSendBtn');
-    const chatScroll = document.getElementById('chatScroll');
-    const floatControls = document.getElementById('floatControls');
-
-    let ready = false;
-    let usingYT = false;
-    let ytPlayer = null;
-    let drawingEnabled = false;
-    let drawing = false;
-    let lastPos = null;
-    let discussionOpen = false;
-
-    // keep normalized strokes in memory so we can redraw on resize
-    let strokes = [];
-
-    // Agora wrapper holder (we attempt to capture and use the agora.js API)
-    let agoraSession = null;
-    let agoraLocalMicOn = false;
-
-    function setStatus(text){statusEl.textContent = text}
-    function setVoiceStatus(text){ voiceStatus.textContent = text; console.log('[VoiceStatus]', text); }
-
-    // --- canvas sizing (supports high DPI) ---
-    function fitCanvas(){
-      const rect = document.getElementById('player-container').getBoundingClientRect();
-      const dpr = Math.max(1, window.devicePixelRatio || 1);
-      canvas.style.width = rect.width + 'px';
-      canvas.style.height = rect.height + 'px';
-      canvas.width = Math.round(rect.width * dpr);
-      canvas.height = Math.round(rect.height * dpr);
-      ctx.setTransform(dpr,0,0,dpr,0,0);
-      redrawAllStrokes();
-    }
-    window.addEventListener('resize', fitCanvas);
-    window.addEventListener('load', fitCanvas);
-
-    // --- YouTube helpers ---
-    function isYouTubeLink(url){ if(!url) return false; return /youtube\.com|youtu\.be|youtube-nocookie\.com/i.test(url) }
-    function extractYoutubeID(url){ if(!url) return null; try{const u=new URL(url); if(u.hostname.includes('youtube.com')||u.hostname.includes('youtube-nocookie.com')){const v=u.searchParams.get('v'); if(v) return v; const parts=u.pathname.split('/'); if(parts.includes('embed')&&parts[parts.length-1]) return parts[parts.length-1]} if(u.hostname.includes('youtu.be')){const parts=u.pathname.split('/'); if(parts[1]) return parts[1]} }catch(e){} const m = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?&]+)/); return m && m[1] ? m[1] : null }
-
-    function createYouTubePlayer(id, controls){
-      ytContainer.style.display = 'block';
-      html5video.style.display = 'none';
-      window._pendingYTCreate = window._pendingYTCreate || [];
-      window._pendingYTCreate.push({id,controls});
-      if(window.YT && window.YT.Player && typeof window.onYouTubeIframeAPIReady === 'function'){
-        window.onYouTubeIframeAPIReady();
-      }
-    }
-
-    // ensure single global callback
-    window.onYouTubeIframeAPIReady = function(){
-      const list = window._pendingYTCreate || [];
-      while(list.length){
-        const item = list.shift();
-        if(ytPlayer){ try{ ytPlayer.destroy(); }catch(e){} }
-        ytPlayer = new YT.Player('ytPlayerIframe',{
-          videoId:item.id,
-          playerVars:{rel:0,modestbranding:1,playsinline:1,iv_load_policy:3,controls: item.controls?1:0},
-          events:{
-            onReady:()=>{ready=true;fitCanvas();if(isHost) hostStart();else viewerStart();},
-            onStateChange:(e)=>{ if(!isHost || !ytPlayer) return; const t = ytPlayer.getCurrentTime(); if(e.data===YT.PlayerState.PLAYING) pushRoomState('play',t); if(e.data===YT.PlayerState.PAUSED) pushRoomState('pause',t); }
-          }
-        });
-      }
-    }
-
-    function playerGetTime(){ try{ return usingYT && ytPlayer ? ytPlayer.getCurrentTime() : (html5video.currentTime || 0) }catch(e){return 0} }
-    function playerSeek(t){ try{ if(usingYT && ytPlayer) ytPlayer.seekTo(t,true); else html5video.currentTime = t }catch(e){} }
-    function playerPlay(){ try{ if(usingYT && ytPlayer) return ytPlayer.playVideo(); else return html5video.play(); }catch(e){} }
-    function playerPause(){ try{ if(usingYT && ytPlayer) return ytPlayer.pause(); else return html5video.pause(); }catch(e){} }
-    function playerIsPlaying(){ try{ if(usingYT && ytPlayer && ytPlayer.getPlayerState) return ytPlayer.getPlayerState()===YT.PlayerState.PLAYING; return (!html5video.paused && !html5video.seeking); }catch(e){return false} }
-    function playerSetRate(r){ try{ if(usingYT && ytPlayer && ytPlayer.setPlaybackRate) ytPlayer.setPlaybackRate(r); else html5video.playbackRate = r }catch(e){} }
-
-    // --- load room ---
-    roomRef.once('value').then(snap=>{
-      const data = snap.val();
-      if(!data){alert('Room not found');return}
-      if(!data.videoLink){alert('No video link configured for room');return}
-      roomInfo.textContent = `Room: ${roomId}${isHost? ' • Host':' • Viewer'}`;
-      const link = data.videoLink;
-      if(isYouTubeLink(link)){
-        usingYT = true; const id = extractYoutubeID(link);
-        createYouTubePlayer(id, isHost);
-      } else {
-        usingYT = false; ytContainer.style.display = 'none'; html5video.style.display = 'block';
-        html5video.src = link; html5video.crossOrigin = 'anonymous';
-        html5video.preload = 'auto';
-        html5video.controls = !!isHost; // viewers don't get native controls
-        html5video.addEventListener('loadedmetadata', ()=>{ready=true;fitCanvas(); if(isHost) hostStart(); else viewerStart();});
-      }
-
-      if(!isHost){ overlayBlock.classList.remove('hidden'); overlayBlock.querySelector('.hint').textContent = 'Waiting for host — controls disabled for viewers'; }
-    }).catch(err=>{console.error(err);setStatus('Error loading room')});
-
-    // --- host state push ---
-    function pushRoomState(status, time){
-      try{ roomRef.update({status,currentTime:time,updatedAt:firebase.database.ServerValue.TIMESTAMP}); }catch(e){console.warn(e)}
-    }
-
-    // --- smooth sync constants (tuned to reduce aggressive seeking) ---
-    let hostIntervalHandle = null; let lastHostUpdateMs = 0; let lastHardSeekMs = 0;
-    const HARD_SEEK_COOLDOWN_MS = 2000;
-    const HOST_UPDATE_INTERVAL_MS = 700;
-    const VIEWER_ADJUST_THROTTLE_MS = 400; let lastViewerAdjustMs = 0;
-
-    function computeHostEffectiveTime(hostTime, updatedAtMs){ const now = Date.now(); const lagMs = Math.max(0, now - (updatedAtMs || now)); return hostTime + (lagMs/1000); }
-    function computeNudgeRate(diffSeconds){ const maxNudge=0.04; const sensitivity=0.2; const rate=1+Math.max(-maxNudge,Math.min(maxNudge,diffSeconds*sensitivity)); return rate }
-    function applyPlaybackRateForAll(rate){ try{ playerSetRate(rate);}catch(e){} }
-    function hardSeekTo(timeSec){ const now=Date.now(); if(now - lastHardSeekMs < HARD_SEEK_COOLDOWN_MS) return; lastHardSeekMs=now; try{ playerSeek(timeSec);}catch(e){} }
-
-    // --- host start ---
-    function hostStart(){ setStatus('Host — you control playback');
-      try{ roomRef.update({status: playerIsPlaying()? 'play':'pause', currentTime: playerGetTime(), updatedAt: firebase.database.ServerValue.TIMESTAMP}); }catch(e){}
-
-      hostIntervalHandle = setInterval(()=>{ if(!ready) return; try{ if(playerIsPlaying()){ const nowMs = Date.now(); if(nowMs - lastHostUpdateMs >= HOST_UPDATE_INTERVAL_MS){ lastHostUpdateMs = nowMs; roomRef.update({currentTime:playerGetTime(), updatedAt:firebase.database.ServerValue.TIMESTAMP}); } } }catch(e){} }, HOST_UPDATE_INTERVAL_MS);
-
-      // host controls
-      pauseDiscussBtn.addEventListener('click', ()=>{ playerPause(); roomRef.update({status:'pause',discussionOpen:true}); });
-      toggleDrawBtn.addEventListener('click', ()=>{ drawingEnabled = !drawingEnabled; toggleDrawBtn.textContent = drawingEnabled? 'Drawing ON':'Draw'; roomRef.update({drawingEnabled}); });
-      clearDrawBtn.addEventListener('click', ()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); drawRef.remove().catch(()=>{}); strokes=[]; });
-      spotlightBtn.addEventListener('click', ()=>{ roomRef.child('hostPowers').update({spotlight:true}); setTimeout(()=>roomRef.child('hostPowers').update({spotlight:false}),5000); });
-      focusBtn.addEventListener('click', ()=>{ roomRef.child('hostPowers').update({focusMode:true}); setTimeout(()=>roomRef.child('hostPowers').update({focusMode:false}),5000); });
-      speedSel.addEventListener('change', e=>{ const sp = Number(e.target.value||1); playerSetRate(sp); roomRef.child('hostPowers').update({speed:sp}); });
-      fullscreenBtn.addEventListener('click', ()=>{ const container = document.getElementById('player-container'); if(container.requestFullscreen) container.requestFullscreen(); });
-
-      if(!usingYT){
-        html5video.addEventListener('play', ()=> pushRoomState('play',playerGetTime()));
-        html5video.addEventListener('pause', ()=> pushRoomState('pause',playerGetTime()));
-        html5video.addEventListener('seeked', ()=> pushRoomState(playerIsPlaying()? 'play':'pause', playerGetTime()));
-      }
-      document.getElementById('predictBtn').addEventListener('click', ()=>{ const q = prompt('Enter prediction question'); if(!q) return; const id = predictRef.push().key; predictRef.child(id).set({question:q,createdAt:firebase.database.ServerValue.TIMESTAMP,options:{},closed:false}); });
-      document.getElementById('openPoll').addEventListener('click', ()=>{ const q=prompt('Poll question'); if(!q) return; const id = pollsRef.push().key; pollsRef.child(id).set({q,options:{},createdAt:firebase.database.ServerValue.TIMESTAMP}); });
-    }
-
-    // --- viewer start (smoother syncing, less aggressive seeks) ---
-    function viewerStart(){ setStatus('Viewer — following host');
-
-      // improved buffering handler: avoid reassigning src (that caused cracking)
-      let bufferRecoveryTimer = null;
-      function onBuffering(){
-        if(bufferRecoveryTimer) return;
-        bufferRecoveryTimer = setTimeout(()=>{
-          roomRef.once('value').then(snap=>{
-            const data = snap.val()||{};
-            const hostTime = data.currentTime||0;
-            const eff = computeHostEffectiveTime(hostTime,data.updatedAt||Date.now());
-            // gentle recovery: pause briefly, seek to eff, try play
-            try{
-              playerPause();
-              playerSeek(Math.max(0, eff - 0.2)); // small backoff
-              playerPlay().catch(()=>{});
-            }catch(e){}
-          }).catch(()=>{});
-          bufferRecoveryTimer = null;
-        }, 700); // wait 700ms before attempting recovery
-      }
-
-      if(!usingYT){ html5video.addEventListener('waiting', onBuffering); html5video.addEventListener('stalled', onBuffering); }
-
-      roomRef.on('value', snap=>{
-        const data = snap.val();
-        if(!ready || !data) return;
-        discussionOpen = !!data.discussionOpen;
-        if(discussionOpen) setStatus('Discussion — host paused to talk'); else setStatus('Watching — synced to host');
-
-        if(data.hostPowers && typeof data.hostPowers.speed !== 'undefined'){ try{ playerSetRate(Number(data.hostPowers.speed)); }catch(e){} }
-
-        const hostTime = data.currentTime || 0;
-        const hostEffective = computeHostEffectiveTime(hostTime, data.updatedAt || Date.now());
-
-        let localT = 0; try{ localT = playerGetTime(); }catch(e){}
-        const diff = hostEffective - localT;
-        const nowMs = Date.now();
-        if(nowMs - lastViewerAdjustMs >= VIEWER_ADJUST_THROTTLE_MS){
-          lastViewerAdjustMs = nowMs;
-          // only hard seek for large drift (>2s) to avoid cracking
-          if(Math.abs(diff) > 2.0){
-            hardSeekTo(hostEffective);
-            applyPlaybackRateForAll(1);
-          } else if(Math.abs(diff) > 0.45){
-            const nudge = computeNudgeRate(diff);
-            applyPlaybackRateForAll(nudge);
-            try{ const newT = localT + diff * 0.18; playerSeek(newT); }catch(e){}
-          } else {
-            applyPlaybackRateForAll(1);
-            if(Math.abs(diff) > 0.06){
-              try{ playerSeek(localT + diff * 0.08); }catch(e){} 
-            }
-          }
-        }
-
-        // apply play/pause immediately
-        if(data.status === 'play'){
-          overlayBlock.classList.add('hidden');
-          try{ playerPlay(); }catch(e){}
-        } else {
-          if(!discussionOpen) overlayBlock.classList.remove('hidden');
-          try{ playerPause(); }catch(e){}
-        }
-      });
-
-      // protect viewer from local control attempts
-      html5video.addEventListener('seeking', ()=>{
-        roomRef.once('value').then(snap=>{
-          const d = snap.val()||{};
-          const hostTime = d.currentTime||0;
-          playerSeek(hostTime);
-        }).catch(()=>{});
-      });
-
-      // less fragile stall recovery - do not reassign src
-      let stallCount = 0;
-      if(!usingYT){
-        html5video.addEventListener('waiting', ()=>{ stallCount++; if(stallCount >= 3){
-          roomRef.once('value').then(snap=>{
-            const data = snap.val()||{};
-            const eff = computeHostEffectiveTime(data.currentTime||0, data.updatedAt||Date.now());
-            try{
-              playerPause();
-              playerSeek(Math.max(0, eff - 0.2));
-              setTimeout(()=>{ playerPlay().catch(()=>{}); }, 500);
-              stallCount = 0;
-            }catch(e){}
-          }).catch(()=>{});
-        }});
-        html5video.addEventListener('playing', ()=>{ stallCount = 0; });
-      }
-    }
-
-    // ------------- DRAWING -------------
-    function enableDrawing(){ canvas.style.pointerEvents = 'auto'; canvas.addEventListener('mousedown', onDown); canvas.addEventListener('mousemove', onMove); canvas.addEventListener('mouseup', onUp); canvas.addEventListener('mouseleave', onUp); canvas.addEventListener('touchstart', onDown,{passive:false}); canvas.addEventListener('touchmove', onMove,{passive:false}); canvas.addEventListener('touchend', onUp); }
-    function disableDrawing(){ canvas.style.pointerEvents = 'none'; canvas.removeEventListener('mousedown', onDown); canvas.removeEventListener('mousemove', onMove); canvas.removeEventListener('mouseup', onUp); canvas.removeEventListener('mouseleave', onUp); canvas.removeEventListener('touchstart', onDown); canvas.removeEventListener('touchmove', onMove); canvas.removeEventListener('touchend', onUp); }
-    function getCanvasPos(e){ const r = canvas.getBoundingClientRect(); const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY; return {x:(clientX - r.left), y:(clientY - r.top)} }
-    function onDown(e){ if(!isHost || !drawingEnabled) return; e.preventDefault(); drawing=true; lastPos = getCanvasPos(e); }
-    function onMove(e){ if(!drawing || !isHost || !drawingEnabled) return; e.preventDefault(); const pos = getCanvasPos(e); const color = '#fbbf24'; const thickness = 3; ctx.strokeStyle = color; ctx.lineWidth = thickness; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(lastPos.x,lastPos.y); ctx.lineTo(pos.x,pos.y); ctx.stroke(); try{ drawRef.push({lx: lastPos.x / canvas.clientWidth, ly: lastPos.y / canvas.clientHeight, x: pos.x / canvas.clientWidth, y: pos.y / canvas.clientHeight, color, thickness}); }catch(e){} lastPos = pos; }
-    function onUp(){ drawing=false; lastPos=null; }
-
-    drawRef.on('value', snap=>{
-      const val = snap.val() || {};
-      strokes = [];
-      Object.keys(val).forEach(k=>{ const s = val[k]; s._id = k; strokes.push(s); });
-      redrawAllStrokes();
+// Sync button for viewers
+syncBtn.addEventListener('click', () => {
+  if (!isHost) {
+    roomRef.once('value').then(snap => {
+      const data = snap.val() || {};
+      const hostTime = data.currentTime || 0;
+      hardSeekTo(hostTime);
+      setStatus('Synced to host');
     });
+  }
+});
 
-    function redrawAllStrokes(){ ctx.clearRect(0,0,canvas.width,canvas.height); const w = canvas.clientWidth, h = canvas.clientHeight; strokes.forEach(st=>{ try{ ctx.strokeStyle = st.color || '#fbbf24'; ctx.lineWidth = st.thickness || 3; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(st.lx*w, st.ly*h); ctx.lineTo(st.x*w, st.y*h); ctx.stroke(); }catch(e){} }); }
+// Chat toggle
+chatToggleBtn.addEventListener('click', () => {
+  if (document.fullscreenElement) {
+    // In fullscreen, show popup chat
+    chatPopup.classList.toggle('show');
+  } else {
+    // Not in fullscreen, scroll to chat
+    document.getElementById('chatScroll').scrollIntoView({ behavior: 'smooth' });
+  }
+});
 
-    roomRef.child('drawingEnabled').on('value', s=>{ const on = !!s.val(); drawingEnabled = on; if(on && isHost) enableDrawing(); else disableDrawing(); toggleDrawBtn.textContent = (on? 'Drawing ON':'Draw'); });
+// Floating chat button
+chatFloatingBtn.addEventListener('click', () => {
+  chatPopup.classList.toggle('show');
+});
 
-    // --- reactions ---
-    function showReactionBubble(emoji){ const el = document.createElement('div'); el.className='reaction-bubble'; el.textContent = emoji; reactionsBox.appendChild(el); setTimeout(()=>el.remove(),3000); }
-    function emitReaction(emoji){ reactionsRef.push({emoji,at:firebase.database.ServerValue.TIMESTAMP}); }
-    document.querySelectorAll('.emoji-btn').forEach(btn=>btn.addEventListener('click', ()=>{ const emoji = btn.getAttribute('data-emoji') || btn.textContent; emitReaction(emoji); }));
-    reactionsRef.on('child_added', snap=>{ const v = snap.val()||{}; if(v.emoji) showReactionBubble(v.emoji); });
+// Close chat popup
+closeChatPopup.addEventListener('click', () => {
+  chatPopup.classList.remove('show');
+});
 
-    // floating emoji buttons on video - mirror the above
-    document.querySelectorAll('.float-controls .emoji-btn').forEach(btn=>btn.addEventListener('click', e=>{ emitReaction(btn.dataset.emoji || btn.textContent); }));
+// Clear chat
+clearChatBtn.addEventListener('click', () => {
+  if (confirm('Clear all chat messages?')) {
+    chatRef.remove().catch(console.warn);
+  }
+});
 
-    // --- chat ---
-    function appendChatMessage(msg){ const div = document.createElement('div'); div.className='chat-msg'; const meta = document.createElement('div'); meta.className='chat-meta'; const date = msg.at ? new Date(msg.at) : new Date(); meta.textContent = `${msg.userLabel||'Guest'} • ${date.toLocaleTimeString()}`; const body = document.createElement('div'); body.textContent = msg.text; div.appendChild(meta); div.appendChild(body); chatMessages.appendChild(div); div.scrollIntoView({behavior:'smooth',block:'end'}); }
-    chatRef.limitToLast(150).on('child_added', snap=>{ const msg = snap.val(); if(!msg) return; appendChatMessage(msg); });
-    function sendChat(){ const text = (chatInput.value||'').trim().slice(0,1000); if(!text) return; const uid = (auth.currentUser && auth.currentUser.uid) || 'anon'; chatRef.push({text,uid,userLabel:isHost?'Host':'Viewer',at:firebase.database.ServerValue.TIMESTAMP}); chatInput.value=''; }
-    chatSendBtn.addEventListener('click', sendChat); chatInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); sendChat(); } });
+// Change video (host only)
+changeVideoBtn.addEventListener('click', () => {
+  if (!isHost) return;
+  
+  const newUrl = prompt('Enter new video URL (YouTube or direct video):');
+  if (!newUrl) return;
+  
+  roomRef.update({ videoLink: newUrl }).then(() => {
+    location.reload(); // Simple reload for demo - in production you'd handle this more gracefully
+  });
+});
 
-    // --- predicts & polls (simple) ---
-    function renderPredicts(data){ const out = document.getElementById('predict-panel'); out.innerHTML = '<strong>Predictions</strong><br/>'; Object.keys(data||{}).forEach(id=>{ const p = data[id]; const el = document.createElement('div'); el.style.marginBottom='6px'; el.innerHTML = `<div><strong>${p.question}</strong></div>`; const btn = document.createElement('button'); btn.textContent='Answer'; btn.className='btn small grey'; btn.onclick = ()=>{ const ans = prompt('Your answer'); if(!ans) return; predictRef.child(id).child('options').push({answer:ans,at:firebase.database.ServerValue.TIMESTAMP}); }; el.appendChild(btn); out.appendChild(el); }); }
-    function renderPolls(data){ const out = document.getElementById('poll-panel'); out.innerHTML = '<strong>Polls</strong><br/>'; Object.keys(data||{}).forEach(id=>{ const p=data[id]; const el=document.createElement('div'); el.style.marginBottom='6px'; el.innerHTML = `<div><strong>${p.q}</strong></div>`; const btn=document.createElement('button'); btn.textContent='Vote'; btn.className='btn small grey'; btn.onclick=()=>{ const opt=prompt('Enter your vote'); if(!opt) return; pollsRef.child(id).child('options').push({label:opt,at:firebase.database.ServerValue.TIMESTAMP}); }; el.appendChild(btn); out.appendChild(el); }); }
-    predictRef.on('value', s=>renderPredicts(s.val()||{})); pollsRef.on('value', s=>renderPolls(s.val()||{}));
+// --- Improved Video Sync Logic ---
 
-    // --- voice (agora) integration & push-to-talk handling ---
-    function tryAttachAgoraSession(session) {
-      if(!session) return false;
-      agoraSession = session;
-      console.log('agora session attached', session);
-      // best-effort hooking for common wrappers
+let hostIntervalHandle = null;
+let lastHostUpdateMs = 0;
+let lastHardSeekMs = 0;
+const HARD_SEEK_COOLDOWN_MS = 2000;
+const HOST_UPDATE_INTERVAL_MS = 700;
+const VIEWER_ADJUST_THROTTLE_MS = 400;
+let lastViewerAdjustMs = 0;
+
+function computeHostEffectiveTime(hostTime, updatedAtMs) {
+  const now = Date.now();
+  const lagMs = Math.max(0, now - (updatedAtMs || now));
+  return hostTime + (lagMs / 1000);
+}
+
+function computeNudgeRate(diffSeconds) {
+  const maxNudge = 0.04;
+  const sensitivity = 0.2;
+  const rate = 1 + Math.max(-maxNudge, Math.min(maxNudge, diffSeconds * sensitivity));
+  return rate;
+}
+
+function applyPlaybackRateForAll(rate) {
+  try {
+    playerSetRate(rate);
+  } catch(e) {}
+}
+
+function hardSeekTo(timeSec) {
+  const now = Date.now();
+  if (now - lastHardSeekMs < HARD_SEEK_COOLDOWN_MS) return;
+  lastHardSeekMs = now;
+  try {
+    playerSeek(timeSec);
+  } catch(e) {}
+}
+
+// --- YouTube helpers ---
+function isYouTubeLink(url) {
+  if (!url) return false;
+  return /youtube\.com|youtu\.be|youtube-nocookie\.com/i.test(url);
+}
+
+function extractYoutubeID(url) {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes('youtube.com') || u.hostname.includes('youtube-nocookie.com')) {
+      const v = u.searchParams.get('v');
+      if (v) return v;
+      const parts = u.pathname.split('/');
+      if (parts.includes('embed') && parts[parts.length - 1]) return parts[parts.length - 1];
+    }
+    if (u.hostname.includes('youtu.be')) {
+      const parts = u.pathname.split('/');
+      if (parts[1]) return parts[1];
+    }
+  } catch(e) {}
+  const m = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?&]+)/);
+  return m && m[1] ? m[1] : null;
+}
+
+function createYouTubePlayer(id, controls) {
+  ytContainer.style.display = 'block';
+  html5video.style.display = 'none';
+  window._pendingYTCreate = window._pendingYTCreate || [];
+  window._pendingYTCreate.push({id, controls});
+  
+  if (window.YT && window.YT.Player && typeof window.onYouTubeIframeAPIReady === 'function') {
+    window.onYouTubeIframeAPIReady();
+  }
+}
+
+window.onYouTubeIframeAPIReady = function() {
+  const list = window._pendingYTCreate || [];
+  while (list.length) {
+    const item = list.shift();
+    if (ytPlayer) {
       try {
-        if(typeof session.on === 'function') {
-          session.on('user-published', (uid, mediaType) => {
-            console.log('agora user-published', uid, mediaType);
-            setVoiceStatus('Remote user published: ' + uid);
-            // many wrappers provide subscribe method - try common names
-            if(typeof session.subscribe === 'function') {
-              session.subscribe(uid, mediaType).then(remoteTrack => {
-                if(mediaType === 'audio' && remoteTrack && typeof remoteTrack.play === 'function') {
-                  const audio = document.createElement('audio');
-                  audio.autoplay = true;
-                  audio.playsInline = true;
-                  audio.controls = false;
-                  audio.style.display = 'none';
-                  document.body.appendChild(audio);
-                  // some remoteTrack objects have .play or .playable
-                  try {
-                    if(typeof remoteTrack.play === 'function') {
-                      remoteTrack.play(audio);
-                    } else if(typeof remoteTrack.playable === 'function') {
-                      remoteTrack.playable(audio);
-                    } else if(remoteTrack.track) {
-                      // attach MediaStreamTrack
-                      const stream = new MediaStream([remoteTrack.track]);
-                      audio.srcObject = stream;
-                      audio.play().catch(()=>{});
-                    }
-                  } catch(e){ console.warn('could not auto-play remote track', e); }
-                }
-              }).catch(()=>{});
-            }
+        ytPlayer.destroy();
+      } catch(e) {}
+    }
+    ytPlayer = new YT.Player('ytPlayerIframe', {
+      videoId: item.id,
+      playerVars: { rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3, controls: item.controls ? 1 : 0 },
+      events: {
+        onReady: () => {
+          ready = true;
+          fitCanvas();
+          if (isHost) hostStart();
+          else viewerStart();
+        },
+        onStateChange: (e) => {
+          if (!isHost || !ytPlayer) return;
+          const t = ytPlayer.getCurrentTime();
+          if (e.data === YT.PlayerState.PLAYING) pushRoomState('play', t);
+          if (e.data === YT.PlayerState.PAUSED) pushRoomState('pause', t);
+        }
+      }
+    });
+  }
+};
+
+function playerGetTime() {
+  try {
+    return usingYT && ytPlayer ? ytPlayer.getCurrentTime() : (html5video.currentTime || 0);
+  } catch(e) {
+    return 0;
+  }
+}
+
+function playerSeek(t) {
+  try {
+    if (usingYT && ytPlayer) ytPlayer.seekTo(t, true);
+    else html5video.currentTime = t;
+  } catch(e) {}
+}
+
+function playerPlay() {
+  try {
+    if (usingYT && ytPlayer) return ytPlayer.playVideo();
+    else return html5video.play();
+  } catch(e) {}
+}
+
+function playerPause() {
+  try {
+    if (usingYT && ytPlayer) return ytPlayer.pauseVideo();
+    else return html5video.pause();
+  } catch(e) {}
+}
+
+function playerIsPlaying() {
+  try {
+    if (usingYT && ytPlayer && ytPlayer.getPlayerState) 
+      return ytPlayer.getPlayerState() === YT.PlayerState.PLAYING;
+    return (!html5video.paused && !html5video.seeking);
+  } catch(e) {
+    return false;
+  }
+}
+
+function playerSetRate(r) {
+  try {
+    if (usingYT && ytPlayer && ytPlayer.setPlaybackRate) ytPlayer.setPlaybackRate(r);
+    else html5video.playbackRate = r;
+  } catch(e) {}
+}
+
+// --- load room ---
+roomRef.once('value').then(snap => {
+  const data = snap.val();
+  if (!data) {
+    alert('Room not found');
+    return;
+  }
+  if (!data.videoLink) {
+    alert('No video link configured for room');
+    return;
+  }
+  
+  roomInfo.textContent = `Room: ${roomId}${isHost ? ' • Host' : ' • Viewer'}`;
+  const link = data.videoLink;
+  
+  if (isYouTubeLink(link)) {
+    usingYT = true;
+    const id = extractYoutubeID(link);
+    createYouTubePlayer(id, isHost);
+  } else {
+    usingYT = false;
+    ytContainer.style.display = 'none';
+    html5video.style.display = 'block';
+    html5video.src = link;
+    html5video.crossOrigin = 'anonymous';
+    html5video.preload = 'auto';
+    html5video.controls = !!isHost;
+    
+    html5video.addEventListener('loadedmetadata', () => {
+      ready = true;
+      fitCanvas();
+      if (isHost) hostStart();
+      else viewerStart();
+    });
+  }
+  
+  if (!isHost) {
+    overlayBlock.classList.remove('hidden');
+    overlayBlock.querySelector('.hint').textContent = 'Waiting for host — controls disabled for viewers';
+  }
+}).catch(err => {
+  console.error(err);
+  setStatus('Error loading room');
+});
+
+// --- host state push ---
+function pushRoomState(status, time) {
+  try {
+    roomRef.update({
+      status,
+      currentTime: time,
+      updatedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+  } catch(e) {
+    console.warn(e);
+  }
+}
+
+// --- host start ---
+function hostStart() {
+  setStatus('Host — you control playback');
+  
+  try {
+    roomRef.update({
+      status: playerIsPlaying() ? 'play' : 'pause',
+      currentTime: playerGetTime(),
+      updatedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+  } catch(e) {}
+  
+  hostIntervalHandle = setInterval(() => {
+    if (!ready) return;
+    try {
+      if (playerIsPlaying()) {
+        const nowMs = Date.now();
+        if (nowMs - lastHostUpdateMs >= HOST_UPDATE_INTERVAL_MS) {
+          lastHostUpdateMs = nowMs;
+          roomRef.update({
+            currentTime: playerGetTime(),
+            updatedAt: firebase.database.ServerValue.TIMESTAMP
           });
         }
-      } catch(e){ console.warn('attachAgoraSession hook failed', e); }
-      return true;
-    }
+      }
+    } catch(e) {}
+  }, HOST_UPDATE_INTERVAL_MS);
+  
+  // Host controls
+  pauseDiscussBtn.addEventListener('click', () => {
+    playerPause();
+    playPauseBtn.innerHTML = '▶️ Play';
+    roomRef.update({ status: 'pause', discussionOpen: true });
+  });
+  
+  toggleDrawBtn.addEventListener('click', () => {
+    drawingEnabled = !drawingEnabled;
+    toggleDrawBtn.textContent = drawingEnabled ? 'Drawing ON' : 'Draw';
+    roomRef.update({ drawingEnabled });
+  });
+  
+  clearDrawBtn.addEventListener('click', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawRef.remove().catch(() => {});
+    strokes = [];
+  });
+  
+  spotlightBtn.addEventListener('click', () => {
+    roomRef.child('hostPowers').update({ spotlight: true });
+    setTimeout(() => roomRef.child('hostPowers').update({ spotlight: false }), 5000);
+  });
+  
+  focusBtn.addEventListener('click', () => {
+    document.body.classList.toggle('focus-mode');
+  });
+  
+  speedSel.addEventListener('change', e => {
+    const sp = Number(e.target.value || 1);
+    playerSetRate(sp);
+    roomRef.child('hostPowers').update({ speed: sp });
+  });
+  
+  fullscreenBtn.addEventListener('click', () => {
+    const container = document.getElementById('player-container');
+    if (container.requestFullscreen) container.requestFullscreen();
+  });
+  
+  if (!usingYT) {
+    html5video.addEventListener('play', () => {
+      pushRoomState('play', playerGetTime());
+      playPauseBtn.innerHTML = '⏸ Pause';
+    });
+    
+    html5video.addEventListener('pause', () => {
+      pushRoomState('pause', playerGetTime());
+      playPauseBtn.innerHTML = '▶️ Play';
+    });
+    
+    html5video.addEventListener('seeked', () => {
+      pushRoomState(playerIsPlaying() ? 'play' : 'pause', playerGetTime());
+    });
+  }
+  
+  document.getElementById('predictBtn').addEventListener('click', () => {
+    const q = prompt('Enter prediction question');
+    if (!q) return;
+    const id = predictRef.push().key;
+    predictRef.child(id).set({
+      question: q,
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
+      options: {},
+      closed: false
+    });
+  });
+  
+  document.getElementById('openPoll').addEventListener('click', () => {
+    const q = prompt('Poll question');
+    if (!q) return;
+    const id = pollsRef.push().key;
+    pollsRef.child(id).set({
+      q,
+      options: {},
+      createdAt: firebase.database.ServerValue.TIMESTAMP
+    });
+  });
+}
 
-    auth.onAuthStateChanged(async user => {
-      if(!user) return;
-      setVoiceStatus('Initializing voice...');
+// --- viewer start (improved sync) ---
+function viewerStart() {
+  setStatus('Viewer — following host');
+  
+  // Improved buffering handler
+  let bufferRecoveryTimer = null;
+  
+  function onBuffering() {
+    if (bufferRecoveryTimer) return;
+    
+    bufferRecoveryTimer = setTimeout(() => {
+      roomRef.once('value').then(snap => {
+        const data = snap.val() || {};
+        const hostTime = data.currentTime || 0;
+        const eff = computeHostEffectiveTime(hostTime, data.updatedAt || Date.now());
+        
+        // Gentle recovery
+        try {
+          playerPause();
+          playerSeek(Math.max(0, eff - 0.2));
+          playerPlay().catch(() => {});
+        } catch(e) {}
+      }).catch(() => {});
+      
+      bufferRecoveryTimer = null;
+    }, 700);
+  }
+  
+  if (!usingYT) {
+    html5video.addEventListener('waiting', onBuffering);
+    html5video.addEventListener('stalled', onBuffering);
+  }
+  
+  roomRef.on('value', snap => {
+    const data = snap.val();
+    if (!ready || !data) return;
+    
+    discussionOpen = !!data.discussionOpen;
+    if (discussionOpen) setStatus('Discussion — host paused to talk');
+    else setStatus('Watching — synced to host');
+    
+    if (data.hostPowers && typeof data.hostPowers.speed !== 'undefined') {
       try {
-        if(typeof initAgoraVoice === 'function') {
-          const maybePromise = initAgoraVoice({ firebase, auth, roomId, isHost, holdTalkBtn, voiceStatus });
-          const session = (maybePromise && typeof maybePromise.then === 'function') ? await maybePromise : maybePromise;
-          if(tryAttachAgoraSession(session)) {
-            setVoiceStatus('Voice ready');
-          } else {
-            setVoiceStatus('Voice initialized (no session object returned).');
-            if(window.AgoraVoiceSession) tryAttachAgoraSession(window.AgoraVoiceSession);
-          }
-        } else if(window.AgoraVoiceSession) {
-          tryAttachAgoraSession(window.AgoraVoiceSession);
-          setVoiceStatus('Voice ready via global AgoraVoiceSession');
-        } else {
-          setVoiceStatus('Voice connector not found (agora.js). PTT will attempt best-effort.');
-          console.warn('initAgoraVoice not found — ensure your agora.js exposes initAgoraVoice or a global session object.');
+        playerSetRate(Number(data.hostPowers.speed));
+      } catch(e) {}
+    }
+    
+    const hostTime = data.currentTime || 0;
+    const hostEffective = computeHostEffectiveTime(hostTime, data.updatedAt || Date.now());
+    let localT = 0;
+    
+    try {
+      localT = playerGetTime();
+    } catch(e) {}
+    
+    const diff = hostEffective - localT;
+    const nowMs = Date.now();
+    
+    if (nowMs - lastViewerAdjustMs >= VIEWER_ADJUST_THROTTLE_MS) {
+      lastViewerAdjustMs = nowMs;
+      
+      // Only hard seek for large drift (>2s)
+      if (Math.abs(diff) > 2.0) {
+        hardSeekTo(hostEffective);
+        applyPlaybackRateForAll(1);
+      } else if (Math.abs(diff) > 0.45) {
+        const nudge = computeNudgeRate(diff);
+        applyPlaybackRateForAll(nudge);
+        try {
+          const newT = localT + diff * 0.18;
+          playerSeek(newT);
+        } catch(e) {}
+      } else {
+        applyPlaybackRateForAll(1);
+        if (Math.abs(diff) > 0.06) {
+          try {
+            playerSeek(localT + diff * 0.08);
+          } catch(e) {}
         }
-      } catch (err) {
-        console.error('Error initializing Agora:', err);
-        setVoiceStatus('Voice init error — check console.');
+      }
+    }
+    
+    // Apply play/pause immediately
+    if (data.status === 'play') {
+      overlayBlock.classList.add('hidden');
+      try {
+        playerPlay();
+        playPauseBtn.innerHTML = '⏸ Pause';
+      } catch(e) {}
+    } else {
+      if (!discussionOpen) overlayBlock.classList.remove('hidden');
+      try {
+        playerPause();
+        playPauseBtn.innerHTML = '▶️ Play';
+      } catch(e) {}
+    }
+  });
+  
+  // Protect viewer from local control attempts
+  html5video.addEventListener('seeking', () => {
+    roomRef.once('value').then(snap => {
+      const d = snap.val() || {};
+      const hostTime = d.currentTime || 0;
+      playerSeek(hostTime);
+    }).catch(() => {});
+  });
+  
+  // Stall recovery
+  let stallCount = 0;
+  if (!usingYT) {
+    html5video.addEventListener('waiting', () => {
+      stallCount++;
+      if (stallCount >= 3) {
+        roomRef.once('value').then(snap => {
+          const data = snap.val() || {};
+          const eff = computeHostEffectiveTime(data.currentTime || 0, data.updatedAt || Date.now());
+          try {
+            playerPause();
+            playerSeek(Math.max(0, eff - 0.2));
+            setTimeout(() => {
+              playerPlay().catch(() => {});
+            }, 500);
+            stallCount = 0;
+          } catch(e) {}
+        }).catch(() => {});
       }
     });
-
-    // helper: attempt to publish/unpublish mic through many possible function names
-    async function startLocalMic() {
-      try {
-        if(agoraSession) {
-          if(typeof agoraSession.publishLocalAudio === 'function') { await agoraSession.publishLocalAudio(); agoraLocalMicOn = true; return true; }
-          if(typeof agoraSession.startLocalAudio === 'function') { await agoraSession.startLocalAudio(); agoraLocalMicOn = true; return true; }
-          if(typeof agoraSession.unmuteLocalAudio === 'function') { await agoraSession.unmuteLocalAudio(); agoraLocalMicOn = true; return true; }
-          if(typeof agoraSession.publish === 'function') { await agoraSession.publish('audio').catch(()=>{}); agoraLocalMicOn = true; return true; }
-        }
-        if(typeof window.startAgoraMic === 'function') { await window.startAgoraMic(); agoraLocalMicOn = true; return true; }
-      } catch(e){ console.warn('startLocalMic error', e); }
-      return false;
-    }
-    async function stopLocalMic() {
-      try {
-        if(agoraSession) {
-          if(typeof agoraSession.unpublishLocalAudio === 'function') { await agoraSession.unpublishLocalAudio(); agoraLocalMicOn = false; return true; }
-          if(typeof agoraSession.stopLocalAudio === 'function') { await agoraSession.stopLocalAudio(); agoraLocalMicOn = false; return true; }
-          if(typeof agoraSession.muteLocalAudio === 'function') { await agoraSession.muteLocalAudio(); agoraLocalMicOn = false; return true; }
-          if(typeof agoraSession.unpublish === 'function') { await agoraSession.unpublish('audio').catch(()=>{}); agoraLocalMicOn = false; return true; }
-        }
-        if(typeof window.stopAgoraMic === 'function') { await window.stopAgoraMic(); agoraLocalMicOn = false; return true; }
-      } catch(e){ console.warn('stopLocalMic error', e); }
-      return false;
-    }
-
-    // attach PTT handlers to both holdTalkBtn and floating talk button
-    function attachPTTHandlers(elem) {
-      elem.addEventListener('mousedown', async (e) => { e.preventDefault(); setVoiceStatus('Requesting mic...'); const ok = await startLocalMic(); if(ok){ setVoiceStatus('You are talking'); } else { setVoiceStatus('Mic failed — check permissions or agora.js'); } });
-      elem.addEventListener('mouseup', async (e) => { e.preventDefault(); const ok = await stopLocalMic(); if(ok) setVoiceStatus('Mic off'); else setVoiceStatus('Mic stop failed'); });
-      elem.addEventListener('touchstart', async (e) => { e.preventDefault(); setVoiceStatus('Requesting mic...'); const ok = await startLocalMic(); if(ok){ setVoiceStatus('You are talking'); } else { setVoiceStatus('Mic failed — check permissions or agora.js'); } }, {passive:false});
-      elem.addEventListener('touchend', async (e) => { e.preventDefault(); const ok = await stopLocalMic(); if(ok) setVoiceStatus('Mic off'); else setVoiceStatus('Mic stop failed'); }, {passive:false});
-      elem.addEventListener('keydown', async (e) => { if(e.code === 'Space'){ e.preventDefault(); const ok = await startLocalMic(); if(ok) setVoiceStatus('You are talking'); } });
-      elem.addEventListener('keyup', async (e) => { if(e.code === 'Space'){ e.preventDefault(); const ok = await stopLocalMic(); if(ok) setVoiceStatus('Mic off'); } });
-    }
-    attachPTTHandlers(holdTalkBtn);
-    attachPTTHandlers(talkFloatingBtn);
-
-    // Update floating talk visual
-    function updateFloatingTalkVisual() {
-      talkFloatingBtn.style.background = agoraLocalMicOn ? 'linear-gradient(180deg,#ef4444,#dc2626)' : '';
-      talkFloatingBtn.title = agoraLocalMicOn ? 'Talking — release to stop' : 'Hold to talk';
-    }
-    setInterval(updateFloatingTalkVisual, 300);
-
-    // --- protect viewers from interacting with native controls ---
-    if(!isHost){ try{ html5video.controls = false; overlayBlock.classList.remove('hidden'); }catch(e){} }
-
-    // hide floating controls unless fullscreen (extra guard)
-    function updateFloatVisibility() {
-      const fs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
-      floatControls.setAttribute('aria-hidden', fs ? 'false' : 'true');
-    }
-    document.addEventListener('fullscreenchange', updateFloatVisibility);
-    document.addEventListener('webkitfullscreenchange', updateFloatVisibility);
-    document.addEventListener('mozfullscreenchange', updateFloatVisibility);
-    document.addEventListener('msfullscreenchange', updateFloatVisibility);
-    updateFloatVisibility();
-
-    // disable context menu on video for viewers
-    document.addEventListener('contextmenu', e=>{ if(!isHost && e.target === html5video) e.preventDefault(); });
-
-    // stop agora mic when leaving
-    window.addEventListener('beforeunload', async () => {
-      if(agoraLocalMicOn) await stopLocalMic().catch(()=>{});
+    
+    html5video.addEventListener('playing', () => {
+      stallCount = 0;
     });
+  }
+}
 
-    // ensure fitCanvas is run once player sizes are known
-    setTimeout(fitCanvas, 300);
+// --- Drawing functions ---
+function enableDrawing() {
+  canvas.style.pointerEvents = 'auto';
+  canvas.addEventListener('mousedown', onDown);
+  canvas.addEventListener('mousemove', onMove);
+  canvas.addEventListener('mouseup', onUp);
+  canvas.addEventListener('mouseleave', onUp);
+  canvas.addEventListener('touchstart', onDown, { passive: false });
+  canvas.addEventListener('touchmove', onMove, { passive: false });
+  canvas.addEventListener('touchend', onUp);
+}
 
-    // small debug log
-    console.info('Watch Party loaded. isHost=', isHost);
-  </script>
+function disableDrawing() {
+  canvas.style.pointerEvents = 'none';
+  canvas.removeEventListener('mousedown', onDown);
+  canvas.removeEventListener('mousemove', onMove);
+  canvas.removeEventListener('mouseup', onUp);
+  canvas.removeEventListener('mouseleave', onUp);
+  canvas.removeEventListener('touchstart', onDown);
+  canvas.removeEventListener('touchmove', onMove);
+  canvas.removeEventListener('touchend', onUp);
+}
+
+function getCanvasPos(e) {
+  const r = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return {
+    x: (clientX - r.left),
+    y: (clientY - r.top)
+  };
+}
+
+function onDown(e) {
+  if (!isHost || !drawingEnabled) return;
+  e.preventDefault();
+  drawing = true;
+  lastPos = getCanvasPos(e);
+}
+
+function onMove(e) {
+  if (!drawing || !isHost || !drawingEnabled) return;
+  e.preventDefault();
+  const pos = getCanvasPos(e);
+  const color = '#fbbf24';
+  const thickness = 3;
+  
+  ctx.strokeStyle = color;
+  ctx.lineWidth = thickness;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(lastPos.x, lastPos.y);
+  ctx.lineTo(pos.x, pos.y);
+  ctx.stroke();
+  
+  try {
+    drawRef.push({
+      lx: lastPos.x / canvas.clientWidth,
+      ly: lastPos.y / canvas.clientHeight,
+      x: pos.x / canvas.clientWidth,
+      y: pos.y / canvas.clientHeight,
+      color,
+      thickness
+    });
+  } catch(e) {}
+  
+  lastPos = pos;
+}
+
+function onUp() {
+  drawing = false;
+  lastPos = null;
+}
+
+drawRef.on('value', snap => {
+  const val = snap.val() || {};
+  strokes = [];
+  Object.keys(val).forEach(k => {
+    const s = val[k];
+    s._id = k;
+    strokes.push(s);
+  });
+  redrawAllStrokes();
+});
+
+function redrawAllStrokes() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  strokes.forEach(st => {
+    try {
+      ctx.strokeStyle = st.color || '#fbbf24';
+      ctx.lineWidth = st.thickness || 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(st.lx * w, st.ly * h);
+      ctx.lineTo(st.x * w, st.y * h);
+      ctx.stroke();
+    } catch(e) {}
+  });
+}
+
+roomRef.child('drawingEnabled').on('value', s => {
+  const on = !!s.val();
+  drawingEnabled = on;
+  if (on && isHost) enableDrawing();
+  else disableDrawing();
+  toggleDrawBtn.textContent = (on ? 'Drawing ON' : 'Draw');
+});
+
+// --- Canvas sizing ---
+function fitCanvas() {
+  const rect = document.getElementById('player-container').getBoundingClientRect();
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  canvas.width = Math.round(rect.width * dpr);
+  canvas.height = Math.round(rect.height * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  redrawAllStrokes();
+}
+
+window.addEventListener('resize', fitCanvas);
+window.addEventListener('load', fitCanvas);
+
+// --- Reactions ---
+function showReactionBubble(emoji) {
+  const el = document.createElement('div');
+  el.className = 'reaction-bubble';
+  el.textContent = emoji;
+  reactionsBox.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function emitReaction(emoji) {
+  reactionsRef.push({
+    emoji,
+    at: firebase.database.ServerValue.TIMESTAMP
+  });
+}
+
+document.querySelectorAll('.emoji-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const emoji = btn.getAttribute('data-emoji') || btn.textContent;
+    emitReaction(emoji);
+  });
+});
+
+reactionsRef.on('child_added', snap => {
+  const v = snap.val() || {};
+  if (v.emoji) showReactionBubble(v.emoji);
+});
+
+// --- Improved Chat ---
+function appendChatMessage(msg, container = chatMessages) {
+  const div = document.createElement('div');
+  div.className = 'chat-msg';
+  
+  const meta = document.createElement('div');
+  meta.className = 'chat-meta';
+  
+  const user = document.createElement('span');
+  user.className = 'chat-user';
+  user.textContent = msg.userLabel || 'Guest';
+  
+  const time = document.createElement('span');
+  time.className = 'chat-time';
+  const date = msg.at ? new Date(msg.at) : new Date();
+  time.textContent = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  
+  meta.appendChild(user);
+  meta.appendChild(time);
+  
+  const body = document.createElement('div');
+  body.textContent = msg.text;
+  
+  div.appendChild(meta);
+  div.appendChild(body);
+  container.appendChild(div);
+  
+  // Auto-scroll to bottom
+  container.scrollTop = container.scrollHeight;
+}
+
+chatRef.limitToLast(150).on('child_added', snap => {
+  const msg = snap.val();
+  if (!msg) return;
+  appendChatMessage(msg);
+  // Also update popup chat if open
+  if (chatPopup.classList.contains('show')) {
+    appendChatMessage(msg, chatPopupMessages);
+  }
+});
+
+function sendChat() {
+  const text = (chatInput.value || '').trim().slice(0, 1000);
+  if (!text) return;
+  const uid = (auth.currentUser && auth.currentUser.uid) || 'anon';
+  chatRef.push({
+    text,
+    uid,
+    userLabel: isHost ? 'Host' : 'Viewer',
+    at: firebase.database.ServerValue.TIMESTAMP
+  });
+  chatInput.value = '';
+}
+
+// Also handle popup chat sending
+function sendPopupChat() {
+  const text = (chatPopupInput.value || '').trim().slice(0, 1000);
+  if (!text) return;
+  const uid = (auth.currentUser && auth.currentUser.uid) || 'anon';
+  chatRef.push({
+    text,
+    uid,
+    userLabel: isHost ? 'Host' : 'Viewer',
+    at: firebase.database.ServerValue.TIMESTAMP
+  });
+  chatPopupInput.value = '';
+}
+
+chatSendBtn.addEventListener('click', sendChat);
+chatInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    sendChat();
+  }
+});
+
+chatPopupSend.addEventListener('click', sendPopupChat);
+chatPopupInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    sendPopupChat();
+  }
+});
+
+// --- Predicts & Polls ---
+function renderPredicts(data) {
+  const out = document.getElementById('predict-panel');
+  out.innerHTML = '<strong>Predictions</strong><br/>';
+  Object.keys(data || {}).forEach(id => {
+    const p = data[id];
+    const el = document.createElement('div');
+    el.style.marginBottom = '6px';
+    el.innerHTML = `<div><strong>${p.question}</strong></div>`;
+    const btn = document.createElement('button');
+    btn.textContent = 'Answer';
+    btn.className = 'btn small grey';
+    btn.onclick = () => {
+      const ans = prompt('Your answer');
+      if (!ans) return;
+      predictRef.child(id).child('options').push({
+        answer: ans,
+        at: firebase.database.ServerValue.TIMESTAMP
+      });
+    };
+    el.appendChild(btn);
+    out.appendChild(el);
+  });
+}
+
+function renderPolls(data) {
+  const out = document.getElementById('poll-panel');
+  out.innerHTML = '<strong>Polls</strong><br/>';
+  Object.keys(data || {}).forEach(id => {
+    const p = data[id];
+    const el = document.createElement('div');
+    el.style.marginBottom = '6px';
+    el.innerHTML = `<div><strong>${p.q}</strong></div>`;
+    const btn = document.createElement('button');
+    btn.textContent = 'Vote';
+    btn.className = 'btn small grey';
+    btn.onclick = () => {
+      const opt = prompt('Enter your vote');
+      if (!opt) return;
+      pollsRef.child(id).child('options').push({
+        label: opt,
+        at: firebase.database.ServerValue.TIMESTAMP
+      });
+    };
+    el.appendChild(btn);
+    out.appendChild(el);
+  });
+}
+
+predictRef.on('value', s => renderPredicts(s.val() || {}));
+pollsRef.on('value', s => renderPolls(s.val() || {}));
+
+// --- Voice (Agora) Integration ---
+function tryAttachAgoraSession(session) {
+  if (!session) return false;
+  agoraSession = session;
+  console.log('agora session attached', session);
+  
+  try {
+    if (typeof session.on === 'function') {
+      session.on('user-published', (uid, mediaType) => {
+        console.log('agora user-published', uid, mediaType);
+        setVoiceStatus('Remote user published: ' + uid);
+        
+        if (typeof session.subscribe === 'function') {
+          session.subscribe(uid, mediaType).then(remoteTrack => {
+            if (mediaType === 'audio' && remoteTrack && typeof remoteTrack.play === 'function') {
+              const audio = document.createElement('audio');
+              audio.autoplay = true;
+              audio.playsInline = true;
+              audio.controls = false;
+              audio.style.display = 'none';
+              document.body.appendChild(audio);
+              
+              try {
+                if (typeof remoteTrack.play === 'function') {
+                  remoteTrack.play(audio);
+                } else if (typeof remoteTrack.playable === 'function') {
+                  remoteTrack.playable(audio);
+                } else if (remoteTrack.track) {
+                  const stream = new MediaStream([remoteTrack.track]);
+                  audio.srcObject = stream;
+                  audio.play().catch(() => {});
+                }
+              } catch(e) {
+                console.warn('could not auto-play remote track', e);
+              }
+            }
+          }).catch(() => {});
+        }
+      });
+    }
+  } catch(e) {
+    console.warn('attachAgoraSession hook failed', e);
+  }
+  
+  return true;
+}
+
+auth.onAuthStateChanged(async user => {
+  if (!user) return;
+  setVoiceStatus('Initializing voice...');
+  
+  try {
+    if (typeof initAgoraVoice === 'function') {
+      const maybePromise = initAgoraVoice({ firebase, auth, roomId, isHost, holdTalkBtn, voiceStatus });
+      const session = (maybePromise && typeof maybePromise.then === 'function') ? 
+        await maybePromise : maybePromise;
+      
+      if (tryAttachAgoraSession(session)) {
+        setVoiceStatus('Voice ready');
+      } else {
+        setVoiceStatus('Voice initialized (no session object returned).');
+        if (window.AgoraVoiceSession) tryAttachAgoraSession(window.AgoraVoiceSession);
+      }
+    } else if (window.AgoraVoiceSession) {
+      tryAttachAgoraSession(window.AgoraVoiceSession);
+      setVoiceStatus('Voice ready via global AgoraVoiceSession');
+    } else {
+      setVoiceStatus('Voice connector not found (agora.js). PTT will attempt best-effort.');
+      console.warn('initAgoraVoice not found — ensure your agora.js exposes initAgoraVoice or a global session object.');
+    }
+  } catch (err) {
+    console.error('Error initializing Agora:', err);
+    setVoiceStatus('Voice init error — check console.');
+  }
+});
+
+// Improved PTT functions
+async function startLocalMic() {
+  try {
+    if (agoraSession) {
+      if (typeof agoraSession.publishLocalAudio === 'function') {
+        await agoraSession.publishLocalAudio();
+        agoraLocalMicOn = true;
+        return true;
+      }
+      if (typeof agoraSession.startLocalAudio === 'function') {
+        await agoraSession.startLocalAudio();
+        agoraLocalMicOn = true;
+        return true;
+      }
+      if (typeof agoraSession.unmuteLocalAudio === 'function') {
+        await agoraSession.unmuteLocalAudio();
+        agoraLocalMicOn = true;
+        return true;
+      }
+      if (typeof agoraSession.publish === 'function') {
+        await agoraSession.publish('audio').catch(() => {});
+        agoraLocalMicOn = true;
+        return true;
+      }
+    }
+    
+    if (typeof window.startAgoraMic === 'function') {
+      await window.startAgoraMic();
+      agoraLocalMicOn = true;
+      return true;
+    }
+  } catch(e) {
+    console.warn('startLocalMic error', e);
+  }
+  return false;
+}
+
+async function stopLocalMic() {
+  try {
+    if (agoraSession) {
+      if (typeof agoraSession.unpublishLocalAudio === 'function') {
+        await agoraSession.unpublishLocalAudio();
+        agoraLocalMicOn = false;
+        return true;
+      }
+      if (typeof agoraSession.stopLocalAudio === 'function') {
+        await agoraSession.stopLocalAudio();
+        agoraLocalMicOn = false;
+        return true;
+      }
+      if (typeof agoraSession.muteLocalAudio === 'function') {
+        await agoraSession.muteLocalAudio();
+        agoraLocalMicOn = false;
+        return true;
+      }
+      if (typeof agoraSession.unpublish === 'function') {
+        await agoraSession.unpublish('audio').catch(() => {});
+        agoraLocalMicOn = false;
+        return true;
+      }
+    }
+    
+    if (typeof window.stopAgoraMic === 'function') {
+      await window.stopAgoraMic();
+      agoraLocalMicOn = false;
+      return true;
+    }
+  } catch(e) {
+    console.warn('stopLocalMic error', e);
+  }
+  return false;
+}
+
+// Attach PTT handlers with visual feedback
+function attachPTTHandlers(elem) {
+  elem.addEventListener('mousedown', async (e) => {
+    e.preventDefault();
+    setVoiceStatus('Requesting mic...');
+    const ok = await startLocalMic();
+    if (ok) {
+      setVoiceStatus('You are talking');
+      talkFloatingBtn.classList.add('talking');
+      talkBtn.innerHTML = '🔴 Talking';
+    } else {
+      setVoiceStatus('Mic failed — check permissions or agora.js');
+    }
+  });
+  
+  elem.addEventListener('mouseup', async (e) => {
+    e.preventDefault();
+    const ok = await stopLocalMic();
+    if (ok) {
+      setVoiceStatus('Mic off');
+      talkFloatingBtn.classList.remove('talking');
+      talkBtn.innerHTML = '🎙 Talk';
+    } else {
+      setVoiceStatus('Mic stop failed');
+    }
+  });
+  
+  elem.addEventListener('touchstart', async (e) => {
+    e.preventDefault();
+    setVoiceStatus('Requesting mic...');
+    const ok = await startLocalMic();
+    if (ok) {
+      setVoiceStatus('You are talking');
+      talkFloatingBtn.classList.add('talking');
+      talkBtn.innerHTML = '🔴 Talking';
+    } else {
+      setVoiceStatus('Mic failed — check permissions or agora.js');
+    }
+  }, { passive: false });
+  
+  elem.addEventListener('touchend', async (e) => {
+    e.preventDefault();
+    const ok = await stopLocalMic();
+    if (ok) {
+      setVoiceStatus('Mic off');
+      talkFloatingBtn.classList.remove('talking');
+      talkBtn.innerHTML = '🎙 Talk';
+    } else {
+      setVoiceStatus('Mic stop failed');
+    }
+  }, { passive: false });
+}
+
+attachPTTHandlers(holdTalkBtn);
+attachPTTHandlers(talkFloatingBtn);
+
+// --- Utility functions ---
+function setStatus(text) {
+  statusEl.textContent = text;
+}
+
+function setVoiceStatus(text) {
+  voiceStatus.textContent = text;
+  console.log('[VoiceStatus]', text);
+}
+
+// --- Fullscreen handling ---
+function updateFloatVisibility() {
+  const fs = !!(document.fullscreenElement || document.webkitFullscreenElement || 
+                document.mozFullScreenElement || document.msFullscreenElement);
+  floatControls.setAttribute('aria-hidden', fs ? 'false' : 'true');
+  
+  // Hide dropdown in fullscreen
+  if (fs) {
+    dropdownMenu.classList.remove('show');
+  }
+}
+
+document.addEventListener('fullscreenchange', updateFloatVisibility);
+document.addEventListener('webkitfullscreenchange', updateFloatVisibility);
+document.addEventListener('mozfullscreenchange', updateFloatVisibility);
+document.addEventListener('msfullscreenchange', updateFloatVisibility);
+updateFloatVisibility();
+
+// --- Protect viewers from interacting with native controls ---
+if (!isHost) {
+  try {
+    html5video.controls = false;
+    overlayBlock.classList.remove('hidden');
+  } catch(e) {}
+}
+
+// Disable context menu on video for viewers
+document.addEventListener('contextmenu', e => {
+  if (!isHost && e.target === html5video) e.preventDefault();
+});
+
+// Stop agora mic when leaving
+window.addEventListener('beforeunload', async () => {
+  if (agoraLocalMicOn) await stopLocalMic().catch(() => {});
+});
+
+// Ensure fitCanvas is run once player sizes are known
+setTimeout(fitCanvas, 300);
+
+// Small debug log
+console.info('Enhanced Watch Party loaded. isHost=', isHost);
+</script>
 </body>
 </html>

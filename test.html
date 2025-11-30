@@ -7,9 +7,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
-            --primary: #ff6b35;
-            --primary-dark: #e55a2b;
-            --primary-light: #ff8c5a;
+            --primary: #ff4757;
+            --primary-dark: #e84151;
+            --primary-light: #ff6b7a;
             --secondary: #64748b;
             --light: #f8fafc;
             --dark: #1e293b;
@@ -604,7 +604,7 @@
         .control-card:hover {
             transform: translateY(-2px);
             border-color: var(--primary);
-            box-shadow: 0 8px 20px rgba(255, 107, 53, 0.2);
+            box-shadow: 0 8px 20px rgba(255, 71, 87, 0.2);
         }
         
         .control-card:active {
@@ -669,7 +669,7 @@
         .speed-select:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
+            box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.2);
         }
         
         /* Chat Section */
@@ -768,7 +768,7 @@
         
         .chat-input:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
+            box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.2);
         }
         
         .send-btn {
@@ -1793,253 +1793,57 @@
     <script src="https://www.youtube.com/iframe_api"></script>
 
     <script>
-        // --- Enhanced Sync System ---
-        class VideoSyncManager {
-            constructor(isHost, roomRef, playerFunctions) {
-                this.isHost = isHost;
-                this.roomRef = roomRef;
-                this.player = playerFunctions;
-                this.lastSyncTime = 0;
-                this.syncInterval = 5000; // 5 seconds for heartbeats
-                this.maxDrift = 1.0; // 1 second max drift
-                this.isSyncing = false;
-                this.lastHardSeek = 0;
-                this.hardSeekCooldown = 2000;
-                this.syncHandle = null;
-            }
-
-            // Only host can push state changes
-            pushRoomState(status, time) {
-                if (!this.isHost) return;
-                
-                try {
-                    this.roomRef.update({
-                        status,
-                        currentTime: time,
-                        updatedAt: firebase.database.ServerValue.TIMESTAMP,
-                        lastUpdatedBy: currentUser
-                    });
-                    console.log(`[Host] Pushed state: ${status} at ${time.toFixed(2)}s`);
-                } catch (e) {
-                    console.warn('Sync push error:', e);
-                }
-            }
-
-            // Viewer sync logic with drift correction
-            syncToHostState(hostData) {
-                if (this.isSyncing || !hostData || !this.player.ready) return;
-                
-                this.isSyncing = true;
-                const hostTime = hostData.currentTime || 0;
-                const serverTimestamp = hostData.updatedAt || Date.now();
-                const localTime = this.player.getTime();
-                
-                // Calculate effective host time with network latency
-                const effectiveHostTime = this.computeHostEffectiveTime(hostTime, serverTimestamp);
-                const timeDiff = effectiveHostTime - localTime;
-                
-                // Apply drift correction instead of hard seeking
-                this.applyDriftCorrection(timeDiff, effectiveHostTime);
-                
-                setTimeout(() => { this.isSyncing = false; }, 100);
-            }
-
-            computeHostEffectiveTime(hostTime, serverTimestamp) {
-                const now = Date.now();
-                const latency = Math.max(0, now - serverTimestamp);
-                return hostTime + (latency / 1000);
-            }
-
-            applyDriftCorrection(diff, targetTime) {
-                // Large drift - hard seek
-                if (Math.abs(diff) > this.maxDrift) {
-                    console.log(`Large drift detected: ${diff.toFixed(2)}s, seeking to ${targetTime.toFixed(2)}`);
-                    this.hardSeekTo(targetTime);
-                    this.player.setRate(1.0);
-                    return;
-                }
-                
-                // Medium drift - adjust playback rate
-                if (Math.abs(diff) > 0.3) {
-                    const rate = diff > 0.1 ? 1.03 : (diff < -0.1 ? 0.97 : 1.0);
-                    console.log(`Medium drift: ${diff.toFixed(2)}s, adjusting rate to ${rate}`);
-                    this.player.setRate(rate);
-                    
-                    // Small gradual seek
-                    try {
-                        const newTime = this.player.getTime() + diff * 0.1;
-                        this.player.seek(newTime);
-                    } catch (e) {}
-                    return;
-                }
-                
-                // Small drift - ignore or micro-adjust
-                if (Math.abs(diff) > 0.05) {
-                    try {
-                        const newTime = this.player.getTime() + diff * 0.05;
-                        this.player.seek(newTime);
-                    } catch (e) {}
-                }
-                
-                this.player.setRate(1.0);
-            }
-
-            hardSeekTo(timeSec) {
-                const now = Date.now();
-                if (now - this.lastHardSeek < this.hardSeekCooldown) return;
-                this.lastHardSeek = now;
-                
-                try {
-                    this.player.seek(timeSec);
-                } catch (e) {
-                    console.warn('Seek failed:', e);
-                }
-            }
-
-            startHostSync() {
-                if (!this.isHost) return;
-                
-                this.syncHandle = setInterval(() => {
-                    if (this.player.isPlaying() && this.player.ready) {
-                        this.pushRoomState('play', this.player.getTime());
-                    }
-                }, this.syncInterval);
-            }
-
-            startViewerSync() {
-                if (this.isHost) return;
-                
-                this.syncHandle = setInterval(() => {
-                    this.roomRef.once('value').then(snap => {
-                        const data = snap.val();
-                        this.syncToHostState(data);
-                    });
-                }, 3000);
-            }
-
-            stopSync() {
-                if (this.syncHandle) {
-                    clearInterval(this.syncHandle);
-                    this.syncHandle = null;
-                }
-            }
+        // Initialize Firebase first
+        let firebaseInitialized = false;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            firebaseInitialized = true;
+            console.log("Firebase initialized successfully");
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+            // Continue without Firebase for demo purposes
         }
 
-        // --- Enhanced Voice Chat System ---
-        class VoiceChatManager {
-            constructor() {
-                this.isTalking = false;
-                this.agoraClient = null;
-                this.localAudioTrack = null;
-                this.isInitialized = false;
-            }
+        // Global variables
+        let db, auth, roomRef, drawRef, reactionsRef, chatRef, predictRef, pollsRef, participantsRef;
+        let currentUser = null;
+        let isHost = false;
+        let roomId = 'default-room';
+        
+        // Initialize Firebase services if Firebase is available
+        if (firebaseInitialized) {
+            db = firebase.database();
+            auth = firebase.auth();
+            
+            // Set up room parameters
+            const params = new URLSearchParams(location.search);
+            roomId = params.get('room') || 'default-room';
+            isHost = params.get('host') === 'true';
 
-            async initAgoraVoice(config) {
-                try {
-                    if (this.isInitialized) return this.agoraClient;
-                    
-                    const { roomId, userId } = config;
-                    
-                    // Use test mode or your Agora credentials
-                    const APP_ID = "test_app_id"; // Replace with actual App ID in production
-                    const token = null;
-                    
-                    this.agoraClient = AgoraRTC.createClient({ 
-                        mode: "rtc", 
-                        codec: "vp8" 
-                    });
-                    
-                    await this.agoraClient.join(APP_ID, roomId, token, userId);
-                    
-                    // Create and publish local audio track
-                    this.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-                    await this.agoraClient.publish([this.localAudioTrack]);
-                    
-                    // Set up event listeners for remote users
-                    this.agoraClient.on("user-published", async (user, mediaType) => {
-                        await this.agoraClient.subscribe(user, mediaType);
-                        
-                        if (mediaType === "audio") {
-                            user.audioTrack.play();
-                            console.log("Remote user audio connected");
-                        }
-                    });
-
-                    this.agoraClient.on("user-unpublished", (user) => {
-                        console.log("Remote user left");
-                    });
-                    
-                    this.isInitialized = true;
-                    console.log("Agora voice initialized successfully");
-                    return this.agoraClient;
-                    
-                } catch (error) {
-                    console.error("Agora initialization failed:", error);
-                    // Fallback to simulated voice for demo
-                    this.initFallbackAudio();
-                    return null;
-                }
-            }
-
-            initFallbackAudio() {
-                console.log("Using fallback audio system");
-                // Simulate voice functionality for demo
-                this.isInitialized = true;
-            }
-
-            async startTalking() {
-                if (!this.isInitialized) return;
-                
-                if (this.localAudioTrack) {
-                    await this.localAudioTrack.setEnabled(true);
-                }
-                this.isTalking = true;
-                console.log("Voice transmission started");
-            }
-
-            async stopTalking() {
-                if (!this.isInitialized) return;
-                
-                if (this.localAudioTrack) {
-                    await this.localAudioTrack.setEnabled(false);
-                }
-                this.isTalking = false;
-                console.log("Voice transmission stopped");
-            }
-
-            async destroy() {
-                if (this.localAudioTrack) {
-                    this.localAudioTrack.close();
-                }
-                if (this.agoraClient) {
-                    await this.agoraClient.leave();
-                }
-                this.isInitialized = false;
-            }
+            // Set up Firebase references
+            roomRef = db.ref('rooms/' + roomId);
+            drawRef = roomRef.child('drawing');
+            reactionsRef = roomRef.child('reactions');
+            chatRef = roomRef.child('chat');
+            predictRef = roomRef.child('predicts');
+            pollsRef = roomRef.child('polls');
+            participantsRef = roomRef.child('participants');
+        } else {
+            // Create mock Firebase functions for demo
+            console.log("Using demo mode without Firebase");
+            roomRef = {
+                once: () => Promise.resolve({ val: () => null }),
+                update: () => console.log("Demo: Room updated"),
+                set: () => console.log("Demo: Room created"),
+                on: () => console.log("Demo: Room listener added"),
+                child: () => ({ 
+                    update: () => console.log("Demo: Child updated"),
+                    set: () => console.log("Demo: Child set"),
+                    on: () => console.log("Demo: Child listener added"),
+                    push: () => ({ key: 'demo', set: () => console.log("Demo: Push set") })
+                })
+            };
         }
-
-        // --- Basic init & DOM refs ---
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const auth = firebase.auth();
-        auth.signInAnonymously().catch(console.warn);
-
-        const params = new URLSearchParams(location.search);
-        const roomId = params.get('room') || 'default-room';
-        const isHost = params.get('host') === 'true';
-
-        if (!roomId) {
-            alert('Missing room id in URL. Use ?room=ROOMID&host=true to create a room');
-            throw new Error('Missing roomId');
-        }
-
-        const roomRef = db.ref('rooms/' + roomId);
-        const drawRef = roomRef.child('drawing');
-        const reactionsRef = roomRef.child('reactions');
-        const chatRef = roomRef.child('chat');
-        const predictRef = roomRef.child('predicts');
-        const pollsRef = roomRef.child('polls');
-        const participantsRef = roomRef.child('participants');
 
         // DOM elements
         const playerView = document.getElementById('player-view');
@@ -2147,99 +1951,97 @@
         let controlsTimeout = null;
         let controlsVisible = false;
 
-        // Enhanced systems
-        let syncManager = null;
-        let voiceManager = new VoiceChatManager();
+        // Demo video URL
+        const demoVideoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 
-        // Participant management
-        let currentUser = null;
-        let participants = {};
-
-        // Player functions object for sync manager
-        const playerFunctions = {
-            get ready() { return ready; },
-            getTime: () => {
-                try{ 
-                    return usingYT && ytPlayer ? ytPlayer.getCurrentTime() : (html5video.currentTime || 0); 
-                } catch(e) { return 0; } 
-            },
-            seek: (t) => { 
-                try{ 
-                    if(usingYT && ytPlayer) ytPlayer.seekTo(t,true); 
-                    else html5video.currentTime = t; 
-                } catch(e) {} 
-            },
-            play: () => { 
-                try{ 
-                    if(usingYT && ytPlayer) return ytPlayer.playVideo(); 
-                    else return html5video.play(); 
-                } catch(e) {} 
-            },
-            pause: () => { 
-                try{ 
-                    if(usingYT && ytPlayer) return ytPlayer.pauseVideo(); 
-                    else return html5video.pause(); 
-                } catch(e) {} 
-            },
-            isPlaying: () => { 
-                try{ 
-                    if(usingYT && ytPlayer && ytPlayer.getPlayerState) 
-                        return ytPlayer.getPlayerState() === YT.PlayerState.PLAYING; 
-                    return (!html5video.paused && !html5video.seeking); 
-                } catch(e) { return false; } 
-            },
-            setRate: (r) => { 
-                try{ 
-                    if(usingYT && ytPlayer && ytPlayer.setPlaybackRate) ytPlayer.setPlaybackRate(r); 
-                    else html5video.playbackRate = r; 
-                } catch(e) {} 
-            },
-            setVolume: (v) => {
-                try {
-                    if(usingYT && ytPlayer && ytPlayer.setVolume) ytPlayer.setVolume(v * 100);
-                    else html5video.volume = v;
-                    currentVolume = v;
-                    updateVolumeUI();
-                } catch(e) {}
-            },
-            mute: () => {
-                try {
-                    if(usingYT && ytPlayer && ytPlayer.mute) ytPlayer.mute();
-                    else html5video.muted = true;
-                    isMuted = true;
-                    updateVolumeUI();
-                } catch(e) {}
-            },
-            unmute: () => {
-                try {
-                    if(usingYT && ytPlayer && ytPlayer.unMute) ytPlayer.unMute();
-                    else html5video.muted = false;
-                    isMuted = false;
-                    updateVolumeUI();
-                } catch(e) {}
-            }
-        };
-
-        function setStatus(text) { 
-            statusDisplay.textContent = text; 
+        // Set up demo video
+        function setupDemoVideo() {
+            html5video.src = demoVideoUrl;
+            html5video.crossOrigin = "anonymous";
+            html5video.preload = "auto";
+            html5video.controls = false;
+            
+            html5video.addEventListener('loadedmetadata', () => {
+                ready = true;
+                fitCanvas();
+                if (isHost) hostStart();
+                else viewerStart();
+                
+                // Start time display updates
+                setInterval(updateTimeDisplay, 1000);
+                console.log("Demo video loaded successfully");
+            });
+            
+            html5video.addEventListener('error', (e) => {
+                console.error("Video loading error:", e);
+                overlayBlock.querySelector('.overlay-hint').textContent = "Error loading video. Tap to retry.";
+            });
         }
 
+        // Set status display
+        function setStatus(text) { 
+            if (statusDisplay) statusDisplay.textContent = text; 
+        }
+
+        // Set voice status
         function setVoiceStatus(text) { 
-            voiceStatus.textContent = text; 
-            sidebarVoiceStatus.textContent = text;
+            if (voiceStatus) voiceStatus.textContent = text; 
+            if (sidebarVoiceStatus) sidebarVoiceStatus.textContent = text;
             console.log('[VoiceStatus]', text); 
         }
 
-        // --- Auto-hide controls system ---
+        // Format time for display
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        // Update time display
+        function updateTimeDisplay() {
+            if (!ready || !html5video) return;
+            
+            const currentTime = html5video.currentTime || 0;
+            const duration = html5video.duration || 0;
+            
+            if (duration && !isNaN(duration)) {
+                timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+                if (detailedTimeDisplay) detailedTimeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+                
+                // Update progress bars
+                const progressPercent = (currentTime / duration) * 100;
+                if (progressBar) progressBar.style.width = `${progressPercent}%`;
+                if (detailedProgressBar) detailedProgressBar.style.width = `${progressPercent}%`;
+            } else {
+                timeDisplay.textContent = `${formatTime(currentTime)} / --:--`;
+                if (detailedTimeDisplay) detailedTimeDisplay.textContent = `${formatTime(currentTime)} / --:--`;
+            }
+        }
+
+        // Fit canvas to video container
+        function fitCanvas() {
+            if (!canvas) return;
+            
+            const rect = document.getElementById('player-container').getBoundingClientRect();
+            const dpr = Math.max(1, window.devicePixelRatio || 1);
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            canvas.width = Math.round(rect.width * dpr);
+            canvas.height = Math.round(rect.height * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            redrawAllStrokes();
+        }
+
+        // Auto-hide controls system
         function showControls() {
             if (controlsVisible) return;
             
             controlsVisible = true;
-            customControls.classList.add('visible');
-            detailedCustomControls.classList.add('visible');
-            progressContainer.classList.add('visible');
-            detailedProgressContainer.classList.add('visible');
-            videoResizeControls.classList.add('visible');
+            if (customControls) customControls.classList.add('visible');
+            if (detailedCustomControls) detailedCustomControls.classList.add('visible');
+            if (progressContainer) progressContainer.classList.add('visible');
+            if (detailedProgressContainer) detailedProgressContainer.classList.add('visible');
+            if (videoResizeControls) videoResizeControls.classList.add('visible');
             
             resetControlsTimeout();
         }
@@ -2248,11 +2050,11 @@
             if (!controlsVisible) return;
             
             controlsVisible = false;
-            customControls.classList.remove('visible');
-            detailedCustomControls.classList.remove('visible');
-            progressContainer.classList.remove('visible');
-            detailedProgressContainer.classList.remove('visible');
-            videoResizeControls.classList.remove('visible');
+            if (customControls) customControls.classList.remove('visible');
+            if (detailedCustomControls) detailedCustomControls.classList.remove('visible');
+            if (progressContainer) progressContainer.classList.remove('visible');
+            if (detailedProgressContainer) detailedProgressContainer.classList.remove('visible');
+            if (videoResizeControls) videoResizeControls.classList.remove('visible');
         }
 
         function resetControlsTimeout() {
@@ -2262,582 +2064,117 @@
             
             controlsTimeout = setTimeout(() => {
                 hideControls();
-            }, 3000); // Hide after 3 seconds of inactivity
+            }, 3000);
         }
 
-        // --- Volume UI update ---
+        // Volume control functions
         function updateVolumeUI() {
             const icon = isMuted ? 'fa-volume-mute' : 
                         currentVolume === 0 ? 'fa-volume-off' :
                         currentVolume < 0.5 ? 'fa-volume-down' : 'fa-volume-up';
             
-            volumeBtn.innerHTML = `<i class="fas ${icon}"></i>`;
-            detailedVolumeBtn.innerHTML = `<i class="fas ${icon}"></i>`;
+            if (volumeBtn) volumeBtn.innerHTML = `<i class="fas ${icon}"></i>`;
+            if (detailedVolumeBtn) detailedVolumeBtn.innerHTML = `<i class="fas ${icon}"></i>`;
             
-            volumeSlider.value = currentVolume;
-            detailedVolumeSlider.value = currentVolume;
+            if (volumeSlider) volumeSlider.value = currentVolume;
+            if (detailedVolumeSlider) detailedVolumeSlider.value = currentVolume;
         }
 
-        // --- Time display functions ---
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-        }
-
-        function updateTimeDisplay() {
-            if (!ready) return;
-            
-            const currentTime = playerFunctions.getTime();
-            const duration = usingYT && ytPlayer ? ytPlayer.getDuration() : (html5video.duration || 0);
-            
-            if (duration && !isNaN(duration)) {
-                const remaining = duration - currentTime;
-                timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
-                detailedTimeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
-                
-                // Update progress bars
-                const progressPercent = (currentTime / duration) * 100;
-                progressBar.style.width = `${progressPercent}%`;
-                detailedProgressBar.style.width = `${progressPercent}%`;
-            } else {
-                timeDisplay.textContent = `${formatTime(currentTime)} / --:--`;
-                detailedTimeDisplay.textContent = `${formatTime(currentTime)} / --:--`;
-            }
-        }
-
-        // --- canvas sizing (supports high DPI) ---
-        function fitCanvas(){
-            const rect = document.getElementById('player-container').getBoundingClientRect();
-            const dpr = Math.max(1, window.devicePixelRatio || 1);
-            canvas.style.width = rect.width + 'px';
-            canvas.style.height = rect.height + 'px';
-            canvas.width = Math.round(rect.width * dpr);
-            canvas.height = Math.round(rect.height * dpr);
-            ctx.setTransform(dpr,0,0,dpr,0,0);
-            
-            // Resize YouTube container if visible
-            if (usingYT && ytContainer.style.display !== 'none') {
-                ytContainer.style.width = rect.width + 'px';
-                ytContainer.style.height = rect.height + 'px';
-            }
-            
-            redrawAllStrokes();
-        }
-        window.addEventListener('resize', fitCanvas);
-
-        // --- YouTube helpers ---
-        function isYouTubeLink(url){ 
-            if(!url) return false; 
-            return /youtube\.com|youtu\.be|youtube-nocookie\.com/i.test(url); 
-        }
-
-        function extractYoutubeID(url){ 
-            if(!url) return null; 
-            try {
-                const u = new URL(url); 
-                if(u.hostname.includes('youtube.com') || u.hostname.includes('youtube-nocookie.com')) {
-                    const v = u.searchParams.get('v'); 
-                    if(v) return v; 
-                    const parts = u.pathname.split('/'); 
-                    if(parts.includes('embed') && parts[parts.length-1]) return parts[parts.length-1];
-                } 
-                if(u.hostname.includes('youtu.be')) {
-                    const parts = u.pathname.split('/'); 
-                    if(parts[1]) return parts[1];
-                } 
-            } catch(e) {} 
-            const m = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?&]+)/); 
-            return m && m[1] ? m[1] : null; 
-        }
-
-        function createYouTubePlayer(id, controls){
-            ytContainer.style.display = 'block';
-            html5video.style.display = 'none';
-            
-            // Set explicit dimensions for the container
-            const playerContainer = document.getElementById('player-container');
-            const rect = playerContainer.getBoundingClientRect();
-            
-            window._pendingYTCreate = window._pendingYTCreate || [];
-            window._pendingYTCreate.push({
-                id, 
-                controls,
-                width: rect.width,
-                height: rect.height
-            });
-            
-            if(window.YT && window.YT.Player && typeof window.onYouTubeIframeAPIReady === 'function'){
-                window.onYouTubeIframeAPIReady();
-            }
-        }
-
-        // ensure single global callback
-        window.onYouTubeIframeAPIReady = function(){
-            const list = window._pendingYTCreate || [];
-            while(list.length){
-                const item = list.shift();
-                if(ytPlayer){ try{ ytPlayer.destroy(); }catch(e){} }
-                ytPlayer = new YT.Player('ytPlayerIframe',{
-                    videoId: item.id,
-                    width: '100%',
-                    height: '100%',
-                    playerVars:{rel:0,modestbranding:1,playsinline:1,iv_load_policy:3,controls: item.controls?1:0,enablejsapi:1},
-                    events:{
-                        onReady:()=>{
-                            ready=true;
-                            fitCanvas();
-                            if(isHost) hostStart(); 
-                            else viewerStart();
-                            
-                            // Start time display updates
-                            setInterval(updateTimeDisplay, 1000);
-                        },
-                        onStateChange:(e)=>{ 
-                            if(!isHost || !ytPlayer) return; 
-                            const t = ytPlayer.getCurrentTime(); 
-                            if(e.data===YT.PlayerState.PLAYING) syncManager.pushRoomState('play',t); 
-                            if(e.data===YT.PlayerState.PAUSED) syncManager.pushRoomState('pause',t); 
-                        }
-                    }
-                });
-            }
-        }
-
-        // --- load room ---
-        function loadRoom() {
-            roomRef.once('value').then(snap=>{
-                const data = snap.val();
-                if(!data){
-                    // Create room if it doesn't exist and user is host
-                    if(isHost) {
-                        roomRef.set({
-                            videoLink: '',
-                            createdAt: firebase.database.ServerValue.TIMESTAMP,
-                            host: true,
-                            status: 'pause',
-                            currentTime: 0
-                        });
-                    } else {
-                        alert('Room not found');
-                        return;
-                    }
-                }
-                
-                if(data.videoLink){
-                    const link = data.videoLink;
-                    if(isYouTubeLink(link)){
-                        usingYT = true; 
-                        const id = extractYoutubeID(link);
-                        createYouTubePlayer(id, isHost);
-                    } else {
-                        usingYT = false; 
-                        ytContainer.style.display = 'none'; 
-                        html5video.style.display = 'block';
-                        html5video.src = link; 
-                        html5video.crossOrigin = 'anonymous';
-                        html5video.preload = 'auto';
-                        html5video.controls = !!isHost;
-                        html5video.addEventListener('loadedmetadata', ()=>{
-                            ready=true;
-                            fitCanvas(); 
-                            if(isHost) hostStart(); 
-                            else viewerStart();
-                            
-                            // Start time display updates
-                            setInterval(updateTimeDisplay, 1000);
-                        });
-                    }
-                }
-
-                if(!isHost){ 
-                    overlayBlock.classList.remove('hidden'); 
-                    overlayBlock.querySelector('.overlay-hint').textContent = 'Waiting for host — controls disabled for viewers'; 
-                }
-                
-                // Set invite link
-                shareLink.value = window.location.href;
-                sidebarShareLink.value = window.location.href;
-                
-                // Set initial status
-                setStatus(isHost ? 'Host — you control playback' : 'Viewer — following host');
-                
-                // Initialize sync manager
-                syncManager = new VideoSyncManager(isHost, roomRef, playerFunctions);
-                
-            }).catch(err=>{console.error(err);setStatus('Error loading room')});
-        }
-
-        // --- host start ---
-        function hostStart(){ 
-            setStatus('Host — you control playback');
-            
-            // Start host sync
-            syncManager.startHostSync();
-
-            // Host controls
-            pauseDiscussBtn.addEventListener('click', ()=>{ 
-                playerFunctions.pause(); 
-                roomRef.update({status:'pause',discussionOpen:true}); 
-            });
-            
-            toggleDrawBtn.addEventListener('click', ()=>{ 
-                drawingEnabled = !drawingEnabled; 
-                toggleDrawBtn.classList.toggle('active', drawingEnabled);
-                roomRef.update({drawingEnabled}); 
-            });
-            
-            clearDrawBtn.addEventListener('click', ()=>{ 
-                ctx.clearRect(0,0,canvas.width,canvas.height); 
-                drawRef.remove().catch(()=>{}); 
-                strokes=[]; 
-            });
-            
-            spotlightBtn.addEventListener('click', ()=>{ 
-                roomRef.child('hostPowers').update({spotlight:true}); 
-                setTimeout(()=>roomRef.child('hostPowers').update({spotlight:false}),5000); 
-            });
-            
-            focusBtn.addEventListener('click', ()=>{ 
-                roomRef.child('hostPowers').update({focusMode:true}); 
-                setTimeout(()=>roomRef.child('hostPowers').update({focusMode:false}),5000); 
-            });
-            
-            syncBtn.addEventListener('click', ()=>{
-                syncManager.pushRoomState(playerFunctions.isPlaying() ? 'play' : 'pause', playerFunctions.getTime());
-            });
-            
-            speedSel.addEventListener('change', e=>{ 
-                const sp = Number(e.target.value||1); 
-                playerFunctions.setRate(sp); 
-                roomRef.child('hostPowers').update({speed:sp}); 
-            });
-
-            if(!usingYT){
-                html5video.addEventListener('play', ()=> syncManager.pushRoomState('play',playerFunctions.getTime()));
-                html5video.addEventListener('pause', ()=> syncManager.pushRoomState('pause',playerFunctions.getTime()));
-                html5video.addEventListener('seeked', ()=> syncManager.pushRoomState(playerFunctions.isPlaying()? 'play':'pause', playerFunctions.getTime()));
-            }
-            
-            predictBtn.addEventListener('click', ()=>{ 
-                const q = prompt('Enter prediction question'); 
-                if(!q) return; 
-                const id = predictRef.push().key; 
-                predictRef.child(id).set({
-                    question:q,
-                    createdAt:firebase.database.ServerValue.TIMESTAMP,
-                    options:{},
-                    closed:false
-                }); 
-            });
-            
-            openPoll.addEventListener('click', ()=>{ 
-                const q=prompt('Poll question'); 
-                if(!q) return; 
-                const id = pollsRef.push().key; 
-                pollsRef.child(id).set({
-                    q,
-                    options:{},
-                    createdAt:firebase.database.ServerValue.TIMESTAMP
-                }); 
-            });
-        }
-
-        // --- viewer start ---
-        function viewerStart(){ 
-            setStatus('Viewer — following host');
-
-            // Start viewer sync
-            syncManager.startViewerSync();
-
-            roomRef.on('value', snap=>{
-                const data = snap.val();
-                if(!ready || !data) return;
-                discussionOpen = !!data.discussionOpen;
-                if(discussionOpen) setStatus('Discussion — host paused to talk'); 
-                else setStatus('Watching — synced to host');
-
-                if(data.hostPowers && typeof data.hostPowers.speed !== 'undefined'){ 
-                    try{ playerFunctions.setRate(Number(data.hostPowers.speed)); } catch(e) {} 
-                }
-
-                // Sync to host state
-                syncManager.syncToHostState(data);
-
-                if(data.status === 'play'){
-                    overlayBlock.classList.add('hidden');
-                    try{ playerFunctions.play(); } catch(e) {}
-                } else {
-                    if(!discussionOpen) overlayBlock.classList.remove('hidden');
-                    try{ playerFunctions.pause(); } catch(e) {}
-                }
-            });
-
-            html5video.addEventListener('seeking', ()=>{
-                // Prevent viewers from seeking independently
-                roomRef.once('value').then(snap=>{
-                    const d = snap.val()||{};
-                    const hostTime = d.currentTime||0;
-                    playerFunctions.seek(hostTime);
-                }).catch(()=>{});
-            });
-
-            // Sync button for viewers
-            syncBtn.addEventListener('click', ()=>{
-                roomRef.once('value').then(snap=>{
-                    const data = snap.val()||{};
-                    const hostTime = data.currentTime||0;
-                    syncManager.hardSeekTo(hostTime);
-                });
-            });
-        }
-
-        // Initialize the app
-        function initApp() {
-            // Set up event listeners
-            setupEventListeners();
-            
-            // Load room data
-            loadRoom();
-            
-            // Set up participant tracking
-            setupParticipants();
-            
-            // Start with controls hidden
-            hideControls();
-            
-            console.log('Enhanced Watch Party Pro initialized');
-        }
-
-        // Set up all event listeners
-        function setupEventListeners() {
-            // View toggle
-            menuBtn.addEventListener('click', toggleToDetailedView);
-            backToPlayerBtn.addEventListener('click', toggleToPlayerView);
-            
-            // Video controls
-            playPauseBtn.addEventListener('click', togglePlayPause);
-            detailedPlayPauseBtn.addEventListener('click', togglePlayPause);
-            skipBackBtn.addEventListener('click', skipBackward);
-            detailedSkipBackBtn.addEventListener('click', skipBackward);
-            skipForwardBtn.addEventListener('click', skipForward);
-            detailedSkipForwardBtn.addEventListener('click', skipForward);
-            fullscreenBtn.addEventListener('click', toggleFullscreen);
-            detailedFullscreenBtn.addEventListener('click', toggleFullscreen);
-            fitScreenBtn.addEventListener('click', fitToScreen);
-            fullscreenResizeBtn.addEventListener('click', toggleFullscreen);
-            
-            // Volume controls
-            volumeBtn.addEventListener('click', toggleMute);
-            detailedVolumeBtn.addEventListener('click', toggleMute);
-            volumeSlider.addEventListener('input', updateVolume);
-            detailedVolumeSlider.addEventListener('input', updateVolume);
-            
-            // Progress bar seeking
-            setupProgressBar(progressContainer, progressBar);
-            setupProgressBar(detailedProgressContainer, detailedProgressBar);
-            
-            // Overlay tap to play
-            overlayBlock.addEventListener('click', startVideo);
-            
-            // Widget toggles
-            voiceWidget.addEventListener('click', () => toggleWidget('voice'));
-            reactionsWidget.addEventListener('click', () => toggleWidget('reactions'));
-            chatWidget.addEventListener('click', () => toggleWidget('chat'));
-            shareWidget.addEventListener('click', () => toggleWidget('share'));
-            
-            // Hold to talk buttons
-            setupHoldToTalk(holdTalkBtn);
-            setupHoldToTalk(sidebarHoldTalkBtn);
-            
-            // Reaction buttons
-            document.querySelectorAll('.reaction-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const emoji = e.target.getAttribute('data-emoji') || e.target.textContent;
-                    sendReaction(emoji);
-                    closeWidget('reactions');
-                });
-            });
-            
-            // Chat send buttons
-            chatSendBtn.addEventListener('click', () => sendChatMessage(chatInput, chatMessages));
-            sidebarChatSendBtn.addEventListener('click', () => sendChatMessage(sidebarChatInput, sidebarChatMessages));
-            
-            chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') sendChatMessage(chatInput, chatMessages);
-            });
-            
-            sidebarChatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') sendChatMessage(sidebarChatInput, sidebarChatMessages);
-            });
-            
-            // Copy buttons
-            copyBtn.addEventListener('click', () => copyToClipboard(shareLink, copyBtn));
-            sidebarCopyBtn.addEventListener('click', () => copyToClipboard(sidebarShareLink, sidebarCopyBtn));
-            
-            // Handle window resize
-            window.addEventListener('resize', handleResize);
-            
-            // Handle page visibility
-            document.addEventListener('visibilitychange', handleVisibilityChange);
-            
-            // Close widgets when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.widget-container') && 
-                    !e.target.closest('.sidebar-menu')) {
-                    if (activeWidget) {
-                        closeWidget(activeWidget);
-                    }
-                }
-            });
-
-            // Touch gestures for mobile
-            setupTouchGestures();
-            
-            // Auto-hide controls system
-            setupAutoHideControls();
-        }
-
-        // Auto-hide controls setup
-        function setupAutoHideControls() {
-            // Show controls on video container interaction
-            const videoContainer = document.querySelector('.video-container');
-            videoContainer.addEventListener('click', (e) => {
-                if (e.target === videoContainer || e.target === html5video || e.target === ytContainer) {
-                    showControls();
-                }
-            });
-            
-            videoContainer.addEventListener('mousemove', showControls);
-            videoContainer.addEventListener('touchstart', showControls);
-            
-            // Keep controls visible when interacting with them
-            customControls.addEventListener('mousemove', resetControlsTimeout);
-            detailedCustomControls.addEventListener('mousemove', resetControlsTimeout);
-            progressContainer.addEventListener('mousemove', resetControlsTimeout);
-            detailedProgressContainer.addEventListener('mousemove', resetControlsTimeout);
-            
-            // Hide controls when mouse leaves video area
-            videoContainer.addEventListener('mouseleave', () => {
-                if (!document.querySelector('.widget-content.active')) {
-                    resetControlsTimeout();
-                }
-            });
-        }
-
-        // Progress bar setup
-        function setupProgressBar(container, bar) {
-            let isSeeking = false;
-            
-            container.addEventListener('mousedown', startSeeking);
-            container.addEventListener('touchstart', startSeeking, { passive: false });
-            
-            function startSeeking(e) {
-                e.preventDefault();
-                isSeeking = true;
-                seekToPosition(e);
-                showControls();
-                
-                document.addEventListener('mousemove', seekToPosition);
-                document.addEventListener('touchmove', seekToPosition, { passive: false });
-                document.addEventListener('mouseup', stopSeeking);
-                document.addEventListener('touchend', stopSeeking);
-            }
-            
-            function seekToPosition(e) {
-                if (!isSeeking || !ready) return;
-                
-                const rect = container.getBoundingClientRect();
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-                
-                const duration = usingYT && ytPlayer ? ytPlayer.getDuration() : (html5video.duration || 0);
-                if (duration && !isNaN(duration)) {
-                    const newTime = duration * percent;
-                    playerFunctions.seek(newTime);
-                    
-                    if (isHost) {
-                        syncManager.pushRoomState(playerFunctions.isPlaying() ? 'play' : 'pause', newTime);
-                    }
-                }
-            }
-            
-            function stopSeeking() {
-                isSeeking = false;
-                document.removeEventListener('mousemove', seekToPosition);
-                document.removeEventListener('touchmove', seekToPosition);
-                document.removeEventListener('mouseup', stopSeeking);
-                document.removeEventListener('touchend', stopSeeking);
-                resetControlsTimeout();
-            }
-        }
-
-        // Volume control functions
         function toggleMute() {
+            if (!html5video) return;
+            
             if (isMuted) {
-                playerFunctions.unmute();
+                html5video.muted = false;
+                isMuted = false;
             } else {
-                playerFunctions.mute();
+                html5video.muted = true;
+                isMuted = true;
             }
+            updateVolumeUI();
             resetControlsTimeout();
         }
 
         function updateVolume() {
+            if (!html5video || !volumeSlider) return;
+            
             const volume = parseFloat(volumeSlider.value);
-            playerFunctions.setVolume(volume);
+            html5video.volume = volume;
+            currentVolume = volume;
+            updateVolumeUI();
             resetControlsTimeout();
         }
 
-        // Touch gesture support
-        function setupTouchGestures() {
-            let initialPinchDistance = null;
-            let currentScale = 1;
+        // Video control functions
+        function startVideo() {
+            if (!html5video) return;
             
-            const videoContainer = document.querySelector('.video-container');
+            html5video.play().then(() => {
+                overlayBlock.classList.add('hidden');
+                isPlaying = true;
+                updatePlayPauseButton();
+            }).catch(error => {
+                console.error('Error playing video:', error);
+                overlayBlock.querySelector('.overlay-hint').textContent = 'Tap to play video';
+            });
+            showControls();
+        }
+
+        function togglePlayPause() {
+            if (!html5video) return;
             
-            videoContainer.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 2) {
-                    initialPinchDistance = getPinchDistance(e.touches);
-                    e.preventDefault();
-                }
-            });
-
-            videoContainer.addEventListener('touchmove', (e) => {
-                if (e.touches.length === 2 && initialPinchDistance) {
-                    const currentDistance = getPinchDistance(e.touches);
-                    const scale = currentDistance / initialPinchDistance;
-                    
-                    // Adjust video size based on pinch
-                    handlePinchZoom(scale);
-                    e.preventDefault();
-                }
-            });
-
-            videoContainer.addEventListener('touchend', () => {
-                initialPinchDistance = null;
-            });
-
-            function getPinchDistance(touches) {
-                const dx = touches[0].clientX - touches[1].clientX;
-                const dy = touches[0].clientY - touches[1].clientY;
-                return Math.sqrt(dx * dx + dy * dy);
+            if (isPlaying) {
+                html5video.pause();
+                isPlaying = false;
+            } else {
+                html5video.play();
+                isPlaying = true;
             }
+            updatePlayPauseButton();
+            resetControlsTimeout();
+        }
 
-            function handlePinchZoom(scale) {
-                const video = usingYT ? ytContainer : html5video;
-                currentScale = Math.max(0.5, Math.min(3, currentScale * scale));
-                
-                video.style.transform = `scale(${currentScale})`;
-                video.style.transformOrigin = 'center center';
-                
-                // Reset scale on double tap
-                setTimeout(() => {
-                    video.ondblclick = () => {
-                        currentScale = 1;
-                        video.style.transform = 'scale(1)';
-                    };
-                }, 100);
+        function updatePlayPauseButton() {
+            const icon = isPlaying ? 'fa-pause' : 'fa-play';
+            if (playPauseBtn) playPauseBtn.innerHTML = `<i class="fas ${icon}"></i>`;
+            if (detailedPlayPauseBtn) detailedPlayPauseBtn.innerHTML = `<i class="fas ${icon}"></i>`;
+        }
+
+        function skipBackward() {
+            if (!html5video) return;
+            
+            html5video.currentTime = Math.max(0, html5video.currentTime - 10);
+            resetControlsTimeout();
+        }
+
+        function skipForward() {
+            if (!html5video) return;
+            
+            html5video.currentTime = Math.min(html5video.duration, html5video.currentTime + 30);
+            resetControlsTimeout();
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                if (isDetailedView && detailedView) {
+                    detailedView.requestFullscreen().catch(err => {
+                        console.error('Error attempting to enable fullscreen:', err);
+                    });
+                } else if (playerView) {
+                    playerView.requestFullscreen().catch(err => {
+                        console.error('Error attempting to enable fullscreen:', err);
+                    });
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
             }
+            resetControlsTimeout();
+        }
+
+        function fitToScreen() {
+            if (html5video) html5video.style.objectFit = 'contain';
+            resetControlsTimeout();
         }
 
         // Widget management
@@ -2908,10 +2245,12 @@
             isDetailedView = true;
             
             // Move video to detailed view
-            detailedPlayerContainer.appendChild(html5video);
-            detailedPlayerContainer.appendChild(ytContainer);
-            detailedPlayerContainer.appendChild(canvas);
-            detailedPlayerContainer.appendChild(reactionsBox);
+            if (detailedPlayerContainer) {
+                detailedPlayerContainer.appendChild(html5video);
+                detailedPlayerContainer.appendChild(ytContainer);
+                detailedPlayerContainer.appendChild(canvas);
+                detailedPlayerContainer.appendChild(reactionsBox);
+            }
             
             // Animate views
             playerView.classList.add('hidden');
@@ -2925,10 +2264,12 @@
             
             // Move video back to player view
             const playerContainer = document.getElementById('player-container');
-            playerContainer.appendChild(html5video);
-            playerContainer.appendChild(ytContainer);
-            playerContainer.appendChild(canvas);
-            playerContainer.appendChild(reactionsBox);
+            if (playerContainer) {
+                playerContainer.appendChild(html5video);
+                playerContainer.appendChild(ytContainer);
+                playerContainer.appendChild(canvas);
+                playerContainer.appendChild(reactionsBox);
+            }
             
             // Animate views
             detailedView.classList.remove('active');
@@ -2939,160 +2280,10 @@
             console.log('Switched to player view');
         }
 
-        // Video control functions
-        function startVideo() {
-            if (usingYT && ytPlayer) {
-                ytPlayer.playVideo();
-                overlayBlock.classList.add('hidden');
-            } else {
-                html5video.play().then(() => {
-                    overlayBlock.classList.add('hidden');
-                }).catch(error => {
-                    console.error('Error playing video:', error);
-                    overlayBlock.querySelector('.overlay-hint').textContent = 'Tap to play video';
-                });
-            }
-            showControls();
-        }
-
-        function togglePlayPause() {
-            if (playerFunctions.isPlaying()) {
-                playerFunctions.pause();
-                if (isHost) syncManager.pushRoomState('pause', playerFunctions.getTime());
-            } else {
-                playerFunctions.play();
-                if (isHost) syncManager.pushRoomState('play', playerFunctions.getTime());
-            }
-            resetControlsTimeout();
-        }
-
-        function skipBackward() {
-            playerFunctions.seek(playerFunctions.getTime() - 10);
-            if (isHost) syncManager.pushRoomState(playerFunctions.isPlaying()? 'play':'pause', playerFunctions.getTime());
-            resetControlsTimeout();
-        }
-
-        function skipForward() {
-            playerFunctions.seek(playerFunctions.getTime() + 30);
-            if (isHost) syncManager.pushRoomState(playerFunctions.isPlaying()? 'play':'pause', playerFunctions.getTime());
-            resetControlsTimeout();
-        }
-
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                if (isDetailedView) {
-                    detailedView.requestFullscreen().catch(err => {
-                        console.error('Error attempting to enable fullscreen:', err);
-                    });
-                } else {
-                    playerView.requestFullscreen().catch(err => {
-                        console.error('Error attempting to enable fullscreen:', err);
-                    });
-                }
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-            }
-            resetControlsTimeout();
-        }
-
-        function fitToScreen() {
-            html5video.style.objectFit = 'contain';
-            if (usingYT && ytContainer) {
-                ytContainer.style.objectFit = 'contain';
-            }
-            resetControlsTimeout();
-        }
-
-        // Participant management
-        function setupParticipants() {
-            // Generate unique user ID
-            const userId = 'user_' + Math.random().toString(36).substr(2, 9);
-            currentUser = userId;
-            
-            // Add user to participants
-            const userRef = participantsRef.child(userId);
-            userRef.set({
-                joinedAt: firebase.database.ServerValue.TIMESTAMP,
-                isHost: isHost,
-                lastSeen: firebase.database.ServerValue.TIMESTAMP
-            });
-            
-            // Update last seen periodically
-            setInterval(() => {
-                userRef.update({
-                    lastSeen: firebase.database.ServerValue.TIMESTAMP
-                });
-            }, 30000);
-            
-            // Listen for participant changes
-            participantsRef.on('value', (snapshot) => {
-                const participantsData = snapshot.val() || {};
-                participants = participantsData;
-                
-                // Remove users who haven't been seen in 60 seconds
-                const now = Date.now();
-                Object.keys(participantsData).forEach(userId => {
-                    const user = participantsData[userId];
-                    if (now - user.lastSeen > 60000) {
-                        participantsRef.child(userId).remove();
-                    }
-                });
-                
-                // Update participant count
-                const activeParticipants = Object.keys(participants).length;
-                participantCount.textContent = activeParticipants;
-            });
-            
-            // Clean up on page unload
-            window.addEventListener('beforeunload', () => {
-                userRef.remove();
-                if (syncManager) syncManager.stopSync();
-                voiceManager.destroy();
-            });
-        }
-
-        // Hold to talk functionality
-        function setupHoldToTalk(button) {
-            let pressTimer;
-            
-            button.addEventListener('mousedown', startTalking);
-            button.addEventListener('touchstart', startTalking);
-            
-            button.addEventListener('mouseup', stopTalking);
-            button.addEventListener('touchend', stopTalking);
-            button.addEventListener('mouseleave', stopTalking);
-            
-            function startTalking(e) {
-                e.preventDefault();
-                setVoiceStatus('Talking...');
-                button.classList.add('talking');
-                
-                // Start voice transmission
-                voiceManager.initAgoraVoice({
-                    roomId: roomId,
-                    userId: currentUser
-                }).then(() => {
-                    voiceManager.startTalking();
-                }).catch(error => {
-                    console.error('Voice start error:', error);
-                    setVoiceStatus('Voice error - check console');
-                });
-            }
-            
-            function stopTalking(e) {
-                e.preventDefault();
-                setVoiceStatus('Voice ready - Hold to talk');
-                button.classList.remove('talking');
-                
-                // Stop voice transmission
-                voiceManager.stopTalking();
-            }
-        }
-
         // Chat functionality
         function sendChatMessage(input, container) {
+            if (!input || !container) return;
+            
             const text = input.value.trim();
             if (!text) return;
             
@@ -3127,7 +2318,7 @@
             messageDiv.appendChild(avatar);
             messageDiv.appendChild(content);
             
-            // Add to both chat containers
+            // Add to chat container
             container.appendChild(messageDiv);
             
             // Scroll to bottom
@@ -3136,70 +2327,12 @@
             // Clear input
             input.value = '';
             
-            // Save to Firebase
-            const chatRef = db.ref('rooms/' + roomId + '/chat').push();
-            chatRef.set({
-                text: text,
-                userLabel: isHost ? 'Host' : 'Viewer',
-                uid: currentUser,
-                at: firebase.database.ServerValue.TIMESTAMP
-            });
+            console.log("Chat message sent:", text);
         }
 
-        // Load chat messages
-        chatRef.limitToLast(100).on('child_added', (snapshot) => {
-            const msg = snapshot.val();
-            if (!msg) return;
-            
-            // Don't show our own messages twice
-            if (msg.uid === currentUser) return;
-            
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${msg.userLabel === 'Host' ? 'self' : ''}`;
-            
-            const avatar = document.createElement('div');
-            avatar.className = 'message-avatar';
-            avatar.textContent = msg.userLabel === 'Host' ? 'H' : 'V';
-            
-            const content = document.createElement('div');
-            content.className = 'message-content';
-            
-            const meta = document.createElement('div');
-            meta.className = 'message-meta';
-            
-            const date = msg.at ? new Date(msg.at) : new Date();
-            const timeStr = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            
-            meta.innerHTML = `
-                <span>${msg.userLabel || 'Guest'}</span>
-                <span>${timeStr}</span>
-            `;
-            
-            const body = document.createElement('div');
-            body.textContent = msg.text;
-            
-            content.appendChild(body);
-            content.appendChild(meta);
-            
-            messageDiv.appendChild(avatar);
-            messageDiv.appendChild(content);
-            
-            // Add to both chat containers
-            chatMessages.appendChild(messageDiv.cloneNode(true));
-            sidebarChatMessages.appendChild(messageDiv);
-            
-            // Scroll to bottom
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            sidebarChatMessages.scrollTop = sidebarChatMessages.scrollHeight;
-            
-            // Update badge if chat is not open
-            if (activeWidget !== 'chat' && !isDetailedView) {
-                unreadChatCount++;
-                updateChatBadge();
-            }
-        });
-
         function updateChatBadge() {
+            if (!chatBadge) return;
+            
             if (unreadChatCount > 0) {
                 chatBadge.textContent = unreadChatCount > 9 ? '9+' : unreadChatCount;
                 chatBadge.style.display = 'flex';
@@ -3210,6 +2343,8 @@
 
         // Reactions
         function sendReaction(emoji) {
+            if (!reactionsBox) return;
+            
             // Create reaction bubble
             const bubble = document.createElement('div');
             bubble.className = 'reaction-bubble';
@@ -3221,33 +2356,13 @@
                 bubble.remove();
             }, 3000);
             
-            // Save to Firebase
-            const reactionsRef = db.ref('rooms/' + roomId + '/reactions').push();
-            reactionsRef.set({
-                emoji: emoji,
-                at: firebase.database.ServerValue.TIMESTAMP
-            });
-        }
-
-        // Listen for reactions from Firebase
-        reactionsRef.on('child_added', (snapshot) => {
-            const reaction = snapshot.val();
-            if (reaction && reaction.emoji) {
-                // Create reaction bubble
-                const bubble = document.createElement('div');
-                bubble.className = 'reaction-bubble';
-                bubble.textContent = reaction.emoji;
-                reactionsBox.appendChild(bubble);
-                
-                // Remove after animation
-                setTimeout(() => {
-                    bubble.remove();
-                }, 3000);
-            }
+            console.log("Reaction sent:", emoji);
         }
 
         // Copy to clipboard
         function copyToClipboard(input, button) {
+            if (!input || !button) return;
+            
             input.select();
             document.execCommand('copy');
             
@@ -3259,81 +2374,27 @@
                 button.innerHTML = originalText;
                 button.classList.remove('copied');
             }, 2000);
+            
+            console.log("Link copied to clipboard");
         }
-
-        // Predictions and Polls
-        function renderPredicts(data){ 
-            predictPanel.innerHTML = '<div style="font-size: 14px; color: var(--primary); margin-bottom: 10px; font-weight: 500;">Active Predictions</div>'; 
-            Object.keys(data||{}).forEach(id=>{ 
-                const p = data[id]; 
-                const el = document.createElement('div'); 
-                el.className = 'control-card';
-                el.style.marginBottom = '10px';
-                el.innerHTML = `
-                    <div style="text-align: left; width: 100%;">
-                        <div style="font-weight: 500; margin-bottom: 8px;">${p.question}</div>
-                        <button class="interactive-btn" style="width: 100%; padding: 8px; font-size: 12px;">
-                            Answer Prediction
-                        </button>
-                    </div>
-                `;
-                el.querySelector('button').onclick = ()=>{ 
-                    const ans = prompt('Your prediction answer'); 
-                    if(!ans) return; 
-                    predictRef.child(id).child('options').push({
-                        answer:ans,
-                        uid: currentUser,
-                        at:firebase.database.ServerValue.TIMESTAMP
-                    }); 
-                };
-                predictPanel.appendChild(el); 
-            }); 
-        }
-        
-        function renderPolls(data){ 
-            pollPanel.innerHTML = '<div style="font-size: 14px; color: var(--primary); margin-bottom: 10px; font-weight: 500;">Active Polls</div>'; 
-            Object.keys(data||{}).forEach(id=>{ 
-                const p=data[id]; 
-                const el=document.createElement('div'); 
-                el.className = 'control-card';
-                el.style.marginBottom = '10px';
-                el.innerHTML = `
-                    <div style="text-align: left; width: 100%;">
-                        <div style="font-weight: 500; margin-bottom: 8px;">${p.q}</div>
-                        <button class="interactive-btn" style="width: 100%; padding: 8px; font-size: 12px;">
-                            Vote in Poll
-                        </button>
-                    </div>
-                `;
-                el.querySelector('button').onclick = ()=>{ 
-                    const opt=prompt('Enter your vote'); 
-                    if(!opt) return; 
-                    pollsRef.child(id).child('options').push({
-                        label:opt,
-                        uid: currentUser,
-                        at:firebase.database.ServerValue.TIMESTAMP
-                    }); 
-                };
-                pollPanel.appendChild(el); 
-            }); 
-        }
-        
-        predictRef.on('value', s=>renderPredicts(s.val()||{})); 
-        pollsRef.on('value', s=>renderPolls(s.val()||{}));
 
         // Drawing functionality
         function enableDrawing(){ 
+            if (!canvas) return;
+            
             canvas.style.pointerEvents = 'auto'; 
             canvas.addEventListener('mousedown', onDown); 
             canvas.addEventListener('mousemove', onMove); 
             canvas.addEventListener('mouseup', onUp); 
             canvas.addEventListener('mouseleave', onUp); 
-            canvas.addEventListener('touchstart', onDown,{passive:false}); 
-            canvas.addEventListener('touchmove', onMove,{passive:false}); 
+            canvas.addEventListener('touchstart', onDown, {passive:false}); 
+            canvas.addEventListener('touchmove', onMove, {passive:false}); 
             canvas.addEventListener('touchend', onUp); 
         }
         
         function disableDrawing(){ 
+            if (!canvas) return;
+            
             canvas.style.pointerEvents = 'none'; 
             canvas.removeEventListener('mousedown', onDown); 
             canvas.removeEventListener('mousemove', onMove); 
@@ -3365,7 +2426,7 @@
             if(!drawing || !isHost || !drawingEnabled) return; 
             e.preventDefault(); 
             const pos = getCanvasPos(e); 
-            const color = '#ff6b35'; 
+            const color = '#ff4757'; 
             const thickness = 3; 
             ctx.strokeStyle = color; 
             ctx.lineWidth = thickness; 
@@ -3374,16 +2435,6 @@
             ctx.moveTo(lastPos.x,lastPos.y); 
             ctx.lineTo(pos.x,pos.y); 
             ctx.stroke(); 
-            try{ 
-                drawRef.push({
-                    lx: lastPos.x / canvas.clientWidth, 
-                    ly: lastPos.y / canvas.clientHeight, 
-                    x: pos.x / canvas.clientWidth, 
-                    y: pos.y / canvas.clientHeight, 
-                    color, 
-                    thickness
-                }); 
-            } catch(e) {} 
             lastPos = pos; 
         }
         
@@ -3392,19 +2443,14 @@
             lastPos=null; 
         }
 
-        drawRef.on('value', snap=>{
-            const val = snap.val() || {};
-            strokes = [];
-            Object.keys(val).forEach(k=>{ const s = val[k]; s._id = k; strokes.push(s); });
-            redrawAllStrokes();
-        });
-
         function redrawAllStrokes(){ 
+            if (!ctx || !canvas) return;
+            
             ctx.clearRect(0,0,canvas.width,canvas.height); 
             const w = canvas.clientWidth, h = canvas.clientHeight; 
             strokes.forEach(st=>{ 
                 try{ 
-                    ctx.strokeStyle = st.color || '#ff6b35'; 
+                    ctx.strokeStyle = st.color || '#ff4757'; 
                     ctx.lineWidth = st.thickness || 3; 
                     ctx.lineCap='round'; 
                     ctx.beginPath(); 
@@ -3415,30 +2461,198 @@
             }); 
         }
 
-        roomRef.child('drawingEnabled').on('value', s=>{ 
-            const on = !!s.val(); 
-            drawingEnabled = on; 
-            if(on && isHost) enableDrawing(); 
-            else disableDrawing(); 
-            toggleDrawBtn.classList.toggle('active', on);
-        });
-
-        // Utility functions
-        function handleResize() {
-            fitCanvas();
-        }
-
-        function handleVisibilityChange() {
-            if (document.hidden) {
-                // Page is hidden, pause video
-                if (playerFunctions.isPlaying()) {
-                    playerFunctions.pause();
-                }
+        // Host controls
+        function hostStart(){ 
+            setStatus('Host — you control playback');
+            
+            // Set up host controls
+            if (pauseDiscussBtn) {
+                pauseDiscussBtn.addEventListener('click', ()=>{ 
+                    html5video.pause(); 
+                    isPlaying = false;
+                    updatePlayPauseButton();
+                    console.log("Paused for discussion");
+                });
+            }
+            
+            if (toggleDrawBtn) {
+                toggleDrawBtn.addEventListener('click', ()=>{ 
+                    drawingEnabled = !drawingEnabled; 
+                    toggleDrawBtn.classList.toggle('active', drawingEnabled);
+                    if (drawingEnabled) enableDrawing();
+                    else disableDrawing();
+                    console.log("Drawing enabled:", drawingEnabled);
+                });
+            }
+            
+            if (clearDrawBtn) {
+                clearDrawBtn.addEventListener('click', ()=>{ 
+                    ctx.clearRect(0,0,canvas.width,canvas.height); 
+                    strokes=[]; 
+                    console.log("Drawing cleared");
+                });
+            }
+            
+            if (speedSel) {
+                speedSel.addEventListener('change', e=>{ 
+                    const sp = Number(e.target.value||1); 
+                    html5video.playbackRate = sp; 
+                    console.log("Playback speed set to:", sp);
+                });
             }
         }
 
+        // Viewer controls
+        function viewerStart(){ 
+            setStatus('Viewer — following host');
+            
+            // Set up viewer controls
+            if (syncBtn) {
+                syncBtn.addEventListener('click', ()=>{
+                    console.log("Sync requested");
+                });
+            }
+        }
+
+        // Set up all event listeners
+        function setupEventListeners() {
+            // View toggle
+            if (menuBtn) menuBtn.addEventListener('click', toggleToDetailedView);
+            if (backToPlayerBtn) backToPlayerBtn.addEventListener('click', toggleToPlayerView);
+            
+            // Video controls
+            if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
+            if (detailedPlayPauseBtn) detailedPlayPauseBtn.addEventListener('click', togglePlayPause);
+            if (skipBackBtn) skipBackBtn.addEventListener('click', skipBackward);
+            if (detailedSkipBackBtn) detailedSkipBackBtn.addEventListener('click', skipBackward);
+            if (skipForwardBtn) skipForwardBtn.addEventListener('click', skipForward);
+            if (detailedSkipForwardBtn) detailedSkipForwardBtn.addEventListener('click', skipForward);
+            if (fullscreenBtn) fullscreenBtn.addEventListener('click', toggleFullscreen);
+            if (detailedFullscreenBtn) detailedFullscreenBtn.addEventListener('click', toggleFullscreen);
+            if (fitScreenBtn) fitScreenBtn.addEventListener('click', fitToScreen);
+            if (fullscreenResizeBtn) fullscreenResizeBtn.addEventListener('click', toggleFullscreen);
+            
+            // Volume controls
+            if (volumeBtn) volumeBtn.addEventListener('click', toggleMute);
+            if (detailedVolumeBtn) detailedVolumeBtn.addEventListener('click', toggleMute);
+            if (volumeSlider) volumeSlider.addEventListener('input', updateVolume);
+            if (detailedVolumeSlider) detailedVolumeSlider.addEventListener('input', updateVolume);
+            
+            // Overlay tap to play
+            if (overlayBlock) overlayBlock.addEventListener('click', startVideo);
+            
+            // Widget toggles
+            if (voiceWidget) voiceWidget.addEventListener('click', () => toggleWidget('voice'));
+            if (reactionsWidget) reactionsWidget.addEventListener('click', () => toggleWidget('reactions'));
+            if (chatWidget) chatWidget.addEventListener('click', () => toggleWidget('chat'));
+            if (shareWidget) shareWidget.addEventListener('click', () => toggleWidget('share'));
+            
+            // Reaction buttons
+            document.querySelectorAll('.reaction-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const emoji = e.target.getAttribute('data-emoji') || e.target.textContent;
+                    sendReaction(emoji);
+                    closeWidget('reactions');
+                });
+            });
+            
+            // Chat send buttons
+            if (chatSendBtn) chatSendBtn.addEventListener('click', () => sendChatMessage(chatInput, chatMessages));
+            if (sidebarChatSendBtn) sidebarChatSendBtn.addEventListener('click', () => sendChatMessage(sidebarChatInput, sidebarChatMessages));
+            
+            if (chatInput) {
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') sendChatMessage(chatInput, chatMessages);
+                });
+            }
+            
+            if (sidebarChatInput) {
+                sidebarChatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') sendChatMessage(sidebarChatInput, sidebarChatMessages);
+                });
+            }
+            
+            // Copy buttons
+            if (copyBtn) copyBtn.addEventListener('click', () => copyToClipboard(shareLink, copyBtn));
+            if (sidebarCopyBtn) sidebarCopyBtn.addEventListener('click', () => copyToClipboard(sidebarShareLink, sidebarCopyBtn));
+            
+            // Handle window resize
+            window.addEventListener('resize', fitCanvas);
+            
+            // Close widgets when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.widget-container') && 
+                    !e.target.closest('.sidebar-menu')) {
+                    if (activeWidget) {
+                        closeWidget(activeWidget);
+                    }
+                }
+            });
+
+            // Auto-hide controls system
+            setupAutoHideControls();
+            
+            console.log("All event listeners set up successfully");
+        }
+
+        // Auto-hide controls setup
+        function setupAutoHideControls() {
+            // Show controls on video container interaction
+            const videoContainer = document.querySelector('.video-container');
+            if (videoContainer) {
+                videoContainer.addEventListener('click', (e) => {
+                    if (e.target === videoContainer || e.target === html5video) {
+                        showControls();
+                    }
+                });
+                
+                videoContainer.addEventListener('mousemove', showControls);
+                videoContainer.addEventListener('touchstart', showControls);
+                
+                // Hide controls when mouse leaves video area
+                videoContainer.addEventListener('mouseleave', () => {
+                    if (!document.querySelector('.widget-content.active')) {
+                        resetControlsTimeout();
+                    }
+                });
+            }
+            
+            // Keep controls visible when interacting with them
+            if (customControls) customControls.addEventListener('mousemove', resetControlsTimeout);
+            if (detailedCustomControls) detailedCustomControls.addEventListener('mousemove', resetControlsTimeout);
+            if (progressContainer) progressContainer.addEventListener('mousemove', resetControlsTimeout);
+            if (detailedProgressContainer) detailedProgressContainer.addEventListener('mousemove', resetControlsTimeout);
+        }
+
+        // Initialize the app
+        function initApp() {
+            console.log("Initializing Watch Party Pro...");
+            
+            // Set up demo video
+            setupDemoVideo();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Set up participant tracking
+            if (participantCount) participantCount.textContent = "1";
+            
+            // Set up share links
+            if (shareLink) shareLink.value = window.location.href;
+            if (sidebarShareLink) sidebarShareLink.value = window.location.href;
+            
+            // Start with controls hidden
+            hideControls();
+            
+            console.log("Watch Party Pro initialized successfully");
+        }
+
         // Initialize the app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', initApp);
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
     </script>
 </body>
 </html>

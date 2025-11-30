@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Watch Party | CallConnect</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -12,28 +12,17 @@
             --light: #f1f2f6;
             --dark: #2f3542;
             --success: #2ed573;
-            --bg-color: #f5f5f5;
-            --text-color: #2f3542;
-            --card-bg: white;
-            --sidebar-bg: white;
-            --nav-bg: white;
-            --input-bg: white;
-            --video-bg: #1a1a1a;
-            --widget-bg: rgba(45, 52, 54, 0.85);
-        }
-
-        [data-theme="dark"] {
             --bg-color: #1a1a1a;
             --text-color: #f1f2f6;
             --card-bg: #2d3436;
             --sidebar-bg: #2d3436;
             --nav-bg: #2d3436;
             --input-bg: #3d4547;
-            --secondary: #a4b0be;
             --video-bg: #000;
             --widget-bg: rgba(45, 52, 54, 0.9);
+            --glass-bg: rgba(255, 255, 255, 0.1);
         }
-        
+
         * {
             margin: 0;
             padding: 0;
@@ -47,8 +36,10 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            transition: background-color 0.3s, color 0.3s;
             overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
         }
         
         .container {
@@ -61,19 +52,24 @@
             padding: 0;
             position: relative;
             height: 100vh;
+            overflow: hidden;
         }
         
+        /* Fullscreen video mode */
         .video-container {
             background-color: var(--video-bg);
             border-radius: 0;
             overflow: hidden;
             box-shadow: none;
-            position: relative;
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 1;
         }
         
         #player-container {
@@ -128,6 +124,7 @@
             max-width: 90%;
         }
         
+        /* Video controls */
         .custom-controls {
             position: absolute;
             bottom: 20px;
@@ -210,6 +207,7 @@
             font-size: 20px;
             position: relative;
             z-index: 1001;
+            -webkit-tap-highlight-color: transparent;
         }
         
         .widget-icon:hover, .widget-icon.active {
@@ -285,6 +283,7 @@
             width: 100%;
             background-color: var(--primary);
             color: white;
+            -webkit-tap-highlight-color: transparent;
         }
         
         .voice-btn:hover {
@@ -346,6 +345,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            -webkit-tap-highlight-color: transparent;
         }
         
         .reaction-btn:hover {
@@ -448,6 +448,7 @@
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s;
+            -webkit-tap-highlight-color: transparent;
         }
         
         .send-btn:hover {
@@ -488,6 +489,7 @@
             align-items: center;
             gap: 8px;
             font-size: 14px;
+            -webkit-tap-highlight-color: transparent;
         }
         
         .copy-btn:hover {
@@ -501,12 +503,14 @@
         /* Reactions Animation */
         #reactions {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            bottom: 80px;
+            left: 0;
+            width: 100%;
             z-index: 40;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            align-items: center;
+            pointer-events: none;
         }
         
         .reaction-bubble {
@@ -516,16 +520,17 @@
             font-size: 20px;
             animation: floatUp 3s ease forwards;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
         }
         
         @keyframes floatUp {
             0% { transform: translateY(0); opacity: 1; }
-            80% { opacity: 1; }
-            100% { transform: translateY(-60px); opacity: 0; }
+            70% { opacity: 0.8; }
+            100% { transform: translateY(-100px); opacity: 0; }
         }
         
-        /* Dropdown Menu */
-        .dropdown-menu {
+        /* Sidebar Menu */
+        .sidebar-menu {
             position: absolute;
             top: 20px;
             left: 20px;
@@ -536,7 +541,7 @@
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background: var(--widget-bg);
+            background: var(--glass-bg);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -546,6 +551,8 @@
             border: none;
             color: white;
             font-size: 20px;
+            -webkit-tap-highlight-color: transparent;
+            backdrop-filter: blur(10px);
         }
         
         .menu-btn:hover {
@@ -557,7 +564,7 @@
             position: absolute;
             top: 60px;
             left: 0;
-            background: var(--widget-bg);
+            background: var(--glass-bg);
             border-radius: 12px;
             padding: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
@@ -607,6 +614,7 @@
             gap: 8px;
             font-size: 14px;
             text-align: left;
+            -webkit-tap-highlight-color: transparent;
         }
         
         .menu-btn-item:hover {
@@ -639,6 +647,55 @@
             color: white;
         }
         
+        /* Fullscreen UI mode */
+        .fullscreen-ui .video-container {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .fullscreen-ui .sidebar-menu .menu-btn {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+        }
+        
+        .fullscreen-ui .floating-widgets .widget-icon {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Detailed UI mode */
+        .detailed-ui {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            height: 100vh;
+        }
+        
+        .detailed-ui .video-container {
+            position: relative;
+            height: 100%;
+        }
+        
+        .detailed-ui .sidebar-panel {
+            background: var(--card-bg);
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .detailed-ui .sidebar-menu .menu-btn {
+            background: var(--primary);
+        }
+        
+        .detailed-ui .floating-widgets {
+            display: none;
+        }
+        
+        .detailed-ui .custom-controls {
+            opacity: 1;
+        }
+        
         /* Mobile Responsive */
         @media (max-width: 768px) {
             .widget-content {
@@ -654,6 +711,7 @@
                 bottom: 10px;
                 padding: 10px 15px;
                 gap: 10px;
+                opacity: 1;
             }
             
             .control-btn-lg {
@@ -673,7 +731,7 @@
                 gap: 12px;
             }
             
-            .dropdown-menu {
+            .sidebar-menu {
                 top: 15px;
                 left: 15px;
             }
@@ -693,6 +751,15 @@
             .chat-messages {
                 height: 200px;
             }
+            
+            .detailed-ui {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr auto;
+            }
+            
+            .detailed-ui .sidebar-panel {
+                max-height: 40vh;
+            }
         }
         
         @media (max-width: 480px) {
@@ -711,7 +778,7 @@
                 gap: 10px;
             }
             
-            .dropdown-menu {
+            .sidebar-menu {
                 top: 10px;
                 left: 10px;
             }
@@ -771,7 +838,7 @@
                 gap: 8px;
             }
             
-            .dropdown-menu {
+            .sidebar-menu {
                 top: 8px;
                 left: 8px;
             }
@@ -826,7 +893,7 @@
                 gap: 8px;
             }
             
-            .dropdown-menu {
+            .sidebar-menu {
                 top: 10px;
                 left: 10px;
             }
@@ -856,13 +923,49 @@
             width: 100%;
             height: 100%;
         }
+        
+        /* Touch improvements */
+        .touch-controls .custom-controls {
+            opacity: 1;
+        }
+        
+        /* Video resize controls */
+        .video-resize-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+            z-index: 35;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .video-container:hover .video-resize-controls {
+            opacity: 1;
+        }
+        
+        .resize-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            -webkit-tap-highlight-color: transparent;
+        }
     </style>
 </head>
-<body>
+<body class="fullscreen-ui">
     <div class="container">
         <div class="video-container">
             <div id="player-container">
-                <video id="html5video" playsinline preload="metadata"></video>
+                <video id="html5video" playsinline preload="metadata" controls></video>
                 <div id="ytContainer" style="display:none;width:100%;height:100%">
                     <div id="ytPlayerIframe"></div>
                 </div>
@@ -871,6 +974,15 @@
                     <div class="overlay-hint">You're viewing — host controls playback</div>
                 </div>
                 <div id="reactions"></div>
+                
+                <div class="video-resize-controls">
+                    <button class="resize-btn" id="fit-screen-btn">
+                        <i class="fas fa-expand-arrows-alt"></i>
+                    </button>
+                    <button class="resize-btn" id="fullscreen-btn">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
             </div>
             
             <div class="custom-controls">
@@ -889,8 +1001,8 @@
             </div>
         </div>
         
-        <!-- Dropdown Menu -->
-        <div class="dropdown-menu">
+        <!-- Sidebar Menu -->
+        <div class="sidebar-menu">
             <button class="menu-btn" id="menu-btn">
                 <i class="fas fa-bars"></i>
             </button>
@@ -949,6 +1061,63 @@
                             <i class="fas fa-moon"></i> Toggle Theme
                         </button>
                     </div>
+                </div>
+                
+                <div class="menu-section">
+                    <h3 class="menu-title"><i class="fas fa-desktop"></i> View Mode</h3>
+                    <div class="menu-controls">
+                        <button id="view-mode-toggle" class="menu-btn-item">
+                            <i class="fas fa-columns"></i> Detailed View
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar Panel (for detailed view) -->
+        <div class="sidebar-panel" style="display: none;">
+            <div class="menu-section">
+                <h3 class="menu-title"><i class="fas fa-comments"></i> Chat</h3>
+                <div class="chat-messages" id="sidebar-chat-messages">
+                    <!-- Chat messages will be added here -->
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" id="sidebar-chat-input" placeholder="Type your message...">
+                    <button class="send-btn" id="sidebar-chat-send-btn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="menu-section">
+                <h3 class="menu-title"><i class="fas fa-microphone"></i> Voice Controls</h3>
+                <div class="voice-controls">
+                    <button id="sidebar-hold-talk-btn" class="voice-btn">
+                        <i class="fas fa-microphone"></i> Hold to Talk
+                    </button>
+                    <div class="voice-status" id="sidebar-voice-status">Voice ready</div>
+                </div>
+            </div>
+            
+            <div class="menu-section">
+                <h3 class="menu-title"><i class="fas fa-smile"></i> Reactions</h3>
+                <div class="reactions-grid">
+                    <button class="reaction-btn" data-emoji="😂">😂</button>
+                    <button class="reaction-btn" data-emoji="😱">😱</button>
+                    <button class="reaction-btn" data-emoji="🤨">🤨</button>
+                    <button class="reaction-btn" data-emoji="👏">👏</button>
+                    <button class="reaction-btn" data-emoji="🔥">🔥</button>
+                    <button class="reaction-btn" data-emoji="❤️">❤️</button>
+                </div>
+            </div>
+            
+            <div class="menu-section">
+                <h3 class="menu-title"><i class="fas fa-share-alt"></i> Share</h3>
+                <div class="share-link-container">
+                    <input type="text" id="sidebar-share-link" readonly>
+                    <button class="copy-btn" id="sidebar-copy-btn">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
                 </div>
             </div>
         </div>
@@ -1161,6 +1330,16 @@
         
         const menuBtn = document.getElementById('menu-btn');
         const menuContent = document.getElementById('menu-content');
+        
+        // Sidebar panel elements
+        const sidebarPanel = document.querySelector('.sidebar-panel');
+        const sidebarChatMessages = document.getElementById('sidebar-chat-messages');
+        const sidebarChatInput = document.getElementById('sidebar-chat-input');
+        const sidebarChatSendBtn = document.getElementById('sidebar-chat-send-btn');
+        const sidebarHoldTalkBtn = document.getElementById('sidebar-hold-talk-btn');
+        const sidebarVoiceStatus = document.getElementById('sidebar-voice-status');
+        const sidebarShareLink = document.getElementById('sidebar-share-link');
+        const sidebarCopyBtn = document.getElementById('sidebar-copy-btn');
 
         // Control elements from menu
         const speedSel = document.getElementById('speedSel');
@@ -1173,6 +1352,11 @@
         const predictBtn = document.getElementById('predictBtn');
         const openPoll = document.getElementById('openPoll');
         const themeToggle = document.getElementById('theme-toggle');
+        const viewModeToggle = document.getElementById('view-mode-toggle');
+        
+        // Video resize controls
+        const fitScreenBtn = document.getElementById('fit-screen-btn');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
 
         let ready = false;
         let usingYT = false;
@@ -1193,9 +1377,13 @@
         let activeWidget = null;
         let unreadChatCount = 0;
         let widgetTimeout = null;
+        
+        // UI state
+        let isFullscreenUI = true;
 
         function setVoiceStatus(text) { 
             voiceStatus.textContent = text; 
+            sidebarVoiceStatus.textContent = text;
             console.log('[VoiceStatus]', text); 
         }
 
@@ -1308,40 +1496,52 @@
         }
 
         // --- load room ---
-        roomRef.once('value').then(snap=>{
-            const data = snap.val();
-            if(!data){
-                // Create a new room if it doesn't exist
-                roomRef.set({
-                    videoLink: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", // Default video
-                    createdAt: firebase.database.ServerValue.TIMESTAMP
-                });
-            }
-            
-            const link = data?.videoLink || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-            if(isYouTubeLink(link)){
-                usingYT = true; 
-                const id = extractYoutubeID(link);
-                createYouTubePlayer(id, isHost);
-            } else {
-                usingYT = false; 
-                ytContainer.style.display = 'none'; 
-                html5video.style.display = 'block';
-                html5video.src = link; 
-                html5video.crossOrigin = 'anonymous';
-                html5video.preload = 'auto';
-                html5video.controls = !!isHost;
-                html5video.addEventListener('loadedmetadata', ()=>{ready=true;fitCanvas(); if(isHost) hostStart(); else viewerStart();});
-            }
+        function loadRoom() {
+            roomRef.once('value').then(snap=>{
+                const data = snap.val();
+                if(!data){
+                    // Create a new room if it doesn't exist
+                    roomRef.set({
+                        videoLink: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", // Default video
+                        createdAt: firebase.database.ServerValue.TIMESTAMP
+                    }).then(() => {
+                        // Retry loading after creating room
+                        loadRoom();
+                    });
+                    return;
+                }
+                
+                const link = data?.videoLink || "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+                if(isYouTubeLink(link)){
+                    usingYT = true; 
+                    const id = extractYoutubeID(link);
+                    createYouTubePlayer(id, isHost);
+                } else {
+                    usingYT = false; 
+                    ytContainer.style.display = 'none'; 
+                    html5video.style.display = 'block';
+                    html5video.src = link; 
+                    html5video.crossOrigin = 'anonymous';
+                    html5video.preload = 'auto';
+                    html5video.controls = !!isHost;
+                    html5video.addEventListener('loadedmetadata', ()=>{ready=true;fitCanvas(); if(isHost) hostStart(); else viewerStart();});
+                    // Auto-play the video
+                    html5video.play().catch(e => console.log("Autoplay prevented:", e));
+                }
 
-            if(!isHost){ 
-                overlayBlock.classList.remove('hidden'); 
-                overlayBlock.querySelector('.overlay-hint').textContent = 'Waiting for host — controls disabled for viewers'; 
-            }
-            
-            // Set share link
-            shareLink.value = window.location.href;
-        }).catch(err=>{console.error(err);});
+                if(!isHost){ 
+                    overlayBlock.classList.remove('hidden'); 
+                    overlayBlock.querySelector('.overlay-hint').textContent = 'Waiting for host — controls disabled for viewers'; 
+                }
+                
+                // Set share link
+                shareLink.value = window.location.href;
+                sidebarShareLink.value = window.location.href;
+            }).catch(err=>{console.error(err);});
+        }
+
+        // Initialize room loading
+        loadRoom();
 
         // --- host state push ---
         function pushRoomState(status, time){
@@ -1415,13 +1615,16 @@
             }, HOST_UPDATE_INTERVAL_MS);
 
             // Custom controls
-            document.getElementById('custom-play-pause').addEventListener('click', ()=>{
+            const playPauseBtn = document.getElementById('custom-play-pause');
+            playPauseBtn.addEventListener('click', ()=>{
                 if(playerIsPlaying()) {
                     playerPause();
                     pushRoomState('pause', playerGetTime());
+                    playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
                 } else {
                     playerPlay();
                     pushRoomState('play', playerGetTime());
+                    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
                 }
             });
 
@@ -1488,8 +1691,14 @@
             });
 
             if(!usingYT){
-                html5video.addEventListener('play', ()=> pushRoomState('play',playerGetTime()));
-                html5video.addEventListener('pause', ()=> pushRoomState('pause',playerGetTime()));
+                html5video.addEventListener('play', ()=> {
+                    pushRoomState('play',playerGetTime());
+                    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                });
+                html5video.addEventListener('pause', ()=> {
+                    pushRoomState('pause',playerGetTime());
+                    playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                });
                 html5video.addEventListener('seeked', ()=> pushRoomState(playerIsPlaying()? 'play':'pause', playerGetTime()));
             }
             
@@ -1757,7 +1966,7 @@
         });
 
         // --- chat ---
-        function appendChatMessage(msg){ 
+        function appendChatMessage(msg, container){ 
             const div = document.createElement('div'); 
             div.className = `message ${msg.userLabel === 'Host' ? 'self' : ''}`;
             
@@ -1787,12 +1996,12 @@
             
             div.appendChild(avatar);
             div.appendChild(content);
-            chatMessages.appendChild(div); 
+            container.appendChild(div); 
             
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            container.scrollTop = container.scrollHeight;
             
-            // Update badge if chat is not open
-            if (activeWidget !== 'chat') {
+            // Update badge if chat is not open and we're in fullscreen mode
+            if (isFullscreenUI && activeWidget !== 'chat') {
                 unreadChatCount++;
                 updateChatBadge();
             }
@@ -1801,11 +2010,12 @@
         chatRef.limitToLast(150).on('child_added', snap=>{ 
             const msg = snap.val(); 
             if(!msg) return; 
-            appendChatMessage(msg); 
+            appendChatMessage(msg, chatMessages);
+            appendChatMessage(msg, sidebarChatMessages);
         });
         
-        function sendChat(){ 
-            const text = (chatInput.value||'').trim().slice(0,1000); 
+        function sendChat(input, container){ 
+            const text = (input.value||'').trim().slice(0,1000); 
             if(!text) return; 
             const uid = (auth.currentUser && auth.currentUser.uid) || 'anon'; 
             chatRef.push({
@@ -1814,14 +2024,22 @@
                 userLabel: isHost ? 'Host' : 'Viewer',
                 at: firebase.database.ServerValue.TIMESTAMP
             }); 
-            chatInput.value=''; 
+            input.value=''; 
         }
         
-        chatSendBtn.addEventListener('click', sendChat); 
+        chatSendBtn.addEventListener('click', ()=> sendChat(chatInput, chatMessages)); 
         chatInput.addEventListener('keydown', (e)=>{ 
             if(e.key==='Enter'){ 
                 e.preventDefault(); 
-                sendChat(); 
+                sendChat(chatInput, chatMessages); 
+            } 
+        });
+        
+        sidebarChatSendBtn.addEventListener('click', ()=> sendChat(sidebarChatInput, sidebarChatMessages)); 
+        sidebarChatInput.addEventListener('keydown', (e)=>{ 
+            if(e.key==='Enter'){ 
+                e.preventDefault(); 
+                sendChat(sidebarChatInput, sidebarChatMessages); 
             } 
         });
 
@@ -1902,7 +2120,7 @@
         
         // Close widgets when clicking outside
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.widget-container') && !e.target.closest('.dropdown-menu')) {
+            if (!e.target.closest('.widget-container') && !e.target.closest('.sidebar-menu')) {
                 if (activeWidget) {
                     closeWidget(activeWidget);
                 }
@@ -2063,6 +2281,7 @@
         }
         
         attachPTTHandlers(holdTalkBtn);
+        attachPTTHandlers(sidebarHoldTalkBtn);
 
         // Update voice widget visual
         function updateVoiceWidgetVisual() {
@@ -2098,6 +2317,59 @@
                 copyBtn.innerHTML = originalText;
                 copyBtn.classList.remove('copied');
             }, 2000);
+        });
+        
+        sidebarCopyBtn.addEventListener('click', () => {
+            sidebarShareLink.select();
+            document.execCommand('copy');
+            
+            const originalText = sidebarCopyBtn.innerHTML;
+            sidebarCopyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            sidebarCopyBtn.classList.add('copied');
+            
+            setTimeout(() => {
+                sidebarCopyBtn.innerHTML = originalText;
+                sidebarCopyBtn.classList.remove('copied');
+            }, 2000);
+        });
+
+        // --- UI Mode Toggle ---
+        function toggleUIMode() {
+            if (isFullscreenUI) {
+                // Switch to detailed UI
+                document.body.classList.remove('fullscreen-ui');
+                document.body.classList.add('detailed-ui');
+                sidebarPanel.style.display = 'flex';
+                isFullscreenUI = false;
+                viewModeToggle.innerHTML = '<i class="fas fa-compress"></i> Fullscreen View';
+                
+                // Close any open widgets
+                if (activeWidget) {
+                    closeWidget(activeWidget);
+                }
+            } else {
+                // Switch to fullscreen UI
+                document.body.classList.remove('detailed-ui');
+                document.body.classList.add('fullscreen-ui');
+                sidebarPanel.style.display = 'none';
+                isFullscreenUI = true;
+                viewModeToggle.innerHTML = '<i class="fas fa-columns"></i> Detailed View';
+            }
+        }
+        
+        viewModeToggle.addEventListener('click', toggleUIMode);
+
+        // --- Video resize controls ---
+        fitScreenBtn.addEventListener('click', () => {
+            html5video.style.objectFit = 'contain';
+        });
+        
+        fullscreenBtn.addEventListener('click', () => {
+            const container = document.querySelector('.video-container');
+            if(container.requestFullscreen) container.requestFullscreen();
+            else if(container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+            else if(container.mozRequestFullScreen) container.mozRequestFullScreen();
+            else if(container.msRequestFullscreen) container.msRequestFullscreen();
         });
 
         // --- protect viewers from interacting with native controls ---
@@ -2236,21 +2508,42 @@
             const customControls = document.querySelector('.custom-controls');
             customControls.style.opacity = '1';
             
+            // Add touch controls class for mobile
+            document.body.classList.add('touch-controls');
+            
             // Adjust widget positions for mobile
             if (window.innerWidth <= 768) {
                 const floatingWidgets = document.querySelector('.floating-widgets');
                 floatingWidgets.style.top = '10px';
                 floatingWidgets.style.right = '10px';
                 
-                const dropdownMenu = document.querySelector('.dropdown-menu');
-                dropdownMenu.style.top = '10px';
-                dropdownMenu.style.left = '10px';
+                const sidebarMenu = document.querySelector('.sidebar-menu');
+                sidebarMenu.style.top = '10px';
+                sidebarMenu.style.left = '10px';
             }
         }
         
         // Handle mobile view on load and resize
         window.addEventListener('load', handleMobileView);
         window.addEventListener('resize', handleMobileView);
+
+        // Auto-play video on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (html5video && !usingYT) {
+                    html5video.play().catch(e => {
+                        console.log("Autoplay prevented, showing play button:", e);
+                        // Show custom play button if autoplay is blocked
+                        overlayBlock.classList.remove('hidden');
+                        overlayBlock.querySelector('.overlay-hint').textContent = 'Tap to play video';
+                        overlayBlock.addEventListener('click', () => {
+                            html5video.play();
+                            overlayBlock.classList.add('hidden');
+                        }, {once: true});
+                    });
+                }
+            }, 1000);
+        });
 
         // small debug log
         console.info('Watch Party loaded. isHost=', isHost);

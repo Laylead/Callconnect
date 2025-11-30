@@ -19,6 +19,7 @@
             --nav-bg: white;
             --input-bg: white;
             --video-bg: #1a1a1a;
+            --widget-bg: rgba(45, 52, 54, 0.8);
         }
 
         [data-theme="dark"] {
@@ -30,6 +31,7 @@
             --input-bg: #3d4547;
             --secondary: #a4b0be;
             --video-bg: #000;
+            --widget-bg: rgba(45, 52, 54, 0.9);
         }
         
         * {
@@ -46,96 +48,29 @@
             display: flex;
             flex-direction: column;
             transition: background-color 0.3s, color 0.3s;
+            overflow: hidden;
         }
         
         .container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            max-width: 1400px;
-            margin: 0 auto;
+            max-width: 100%;
+            margin: 0;
             width: 100%;
-            padding: 20px;
-        }
-        
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 0;
-            margin-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 71, 87, 0.2);
-        }
-        
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--primary);
-            text-decoration: none;
-        }
-        
-        .logo i {
-            font-size: 28px;
-        }
-        
-        .back-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 500;
-            padding: 8px 15px;
-            border-radius: 8px;
-            transition: all 0.3s;
-        }
-        
-        .back-btn:hover {
-            background-color: rgba(255, 71, 87, 0.1);
-        }
-        
-        .theme-toggle {
-            background: none;
-            border: none;
-            color: var(--text-color);
-            font-size: 20px;
-            cursor: pointer;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: all 0.3s;
-        }
-        
-        .theme-toggle:hover {
-            background-color: rgba(255, 71, 87, 0.1);
-        }
-        
-        .watch-party-container {
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 25px;
-            margin-top: 20px;
-        }
-        
-        @media (max-width: 992px) {
-            .watch-party-container {
-                grid-template-columns: 1fr;
-            }
+            padding: 0;
+            position: relative;
         }
         
         .video-container {
             background-color: var(--video-bg);
-            border-radius: 12px;
+            border-radius: 0;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: none;
             position: relative;
             aspect-ratio: 16/9;
+            width: 100%;
+            height: 100vh;
         }
         
         #player-container {
@@ -235,133 +170,96 @@
             gap: 5px;
         }
         
-        .floating-controls {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
+        /* Floating Widgets */
+        .floating-widgets {
+            position: absolute;
+            top: 20px;
+            right: 20px;
             display: flex;
             flex-direction: column;
             gap: 15px;
             z-index: 1000;
         }
         
-        .floating-mic {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            transition: all 0.3s;
-            border: none;
-            color: white;
-            font-size: 24px;
+        .widget-container {
+            position: relative;
         }
         
-        .floating-mic.talking {
-            background: #ff6b81;
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 107, 129, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(255, 107, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 107, 129, 0); }
-        }
-        
-        .emoji-float {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-        
-        .emoji-btn-float {
+        .widget-icon {
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background: var(--card-bg);
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
+            background: var(--widget-bg);
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             transition: all 0.3s;
+            border: none;
+            color: white;
+            font-size: 20px;
+            position: relative;
+            z-index: 1001;
         }
         
-        .emoji-btn-float:hover {
+        .widget-icon:hover, .widget-icon.active {
+            background: var(--primary);
             transform: scale(1.1);
         }
         
-        .party-sidebar {
-            background-color: var(--card-bg);
+        .widget-icon.minimized {
+            width: 35px;
+            height: 35px;
+            font-size: 16px;
+            opacity: 0.7;
+        }
+        
+        .widget-content {
+            position: absolute;
+            top: 0;
+            right: 60px;
+            background: var(--widget-bg);
             border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 71, 87, 0.1);
-            height: fit-content;
-            position: sticky;
-            top: 20px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
         }
         
-        .sidebar-section {
-            margin-bottom: 25px;
+        .widget-content.active {
+            display: block;
         }
         
-        .sidebar-title {
-            font-size: 18px;
-            margin-bottom: 15px;
-            color: var(--text-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .sidebar-title i {
-            color: var(--primary);
-        }
-        
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .control-btn {
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 71, 87, 0.2);
-            background: var(--input-bg);
-            color: var(--text-color);
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-        }
-        
-        .control-btn:hover {
-            background: rgba(255, 71, 87, 0.1);
-            border-color: var(--primary);
-        }
-        
-        .control-btn.active {
+        .widget-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
             background: var(--primary);
             color: white;
-            border-color: var(--primary);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
         }
         
-        .voice-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 15px;
+        /* Voice Widget */
+        .voice-status {
+            font-size: 14px;
+            color: var(--light);
+            text-align: center;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            margin-bottom: 10px;
         }
         
         .voice-btn {
@@ -375,32 +273,84 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-        }
-        
-        .hold-talk-btn {
+            width: 100%;
             background-color: var(--primary);
             color: white;
         }
         
-        .hold-talk-btn:hover {
+        .voice-btn:hover {
             background-color: #ff6b81;
         }
         
-        .voice-status {
-            font-size: 14px;
-            color: var(--secondary);
-            text-align: center;
-            padding: 10px;
-            background: var(--input-bg);
-            border-radius: 8px;
+        .voice-btn.talking {
+            background-color: #ff6b81;
+            animation: pulse 1.5s infinite;
         }
         
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 107, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 107, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 107, 129, 0); }
+        }
+        
+        .sound-wave {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 3px;
+            margin-top: 10px;
+            height: 30px;
+        }
+        
+        .sound-bar {
+            width: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+            animation: soundWave 1.5s ease-in-out infinite;
+        }
+        
+        .sound-bar:nth-child(2) { animation-delay: 0.2s; }
+        .sound-bar:nth-child(3) { animation-delay: 0.4s; }
+        .sound-bar:nth-child(4) { animation-delay: 0.6s; }
+        .sound-bar:nth-child(5) { animation-delay: 0.8s; }
+        
+        @keyframes soundWave {
+            0%, 100% { height: 5px; }
+            50% { height: 25px; }
+        }
+        
+        /* Reactions Widget */
+        .reactions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        
+        .reaction-btn {
+            padding: 12px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .reaction-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.1);
+        }
+        
+        /* Chat Widget */
         .chat-messages {
             height: 250px;
             overflow-y: auto;
             margin-bottom: 15px;
             padding: 10px;
-            background-color: var(--input-bg);
+            background-color: rgba(255,255,255,0.1);
             border-radius: 8px;
             display: flex;
             flex-direction: column;
@@ -435,10 +385,11 @@
         .message-content {
             padding: 10px 15px;
             border-radius: 18px;
-            background-color: rgba(255, 71, 87, 0.1);
+            background-color: rgba(255, 255, 255, 0.2);
             font-size: 14px;
             line-height: 1.4;
             max-width: 80%;
+            color: white;
         }
         
         .message.self .message-content {
@@ -448,7 +399,7 @@
         
         .message-meta {
             font-size: 11px;
-            color: var(--secondary);
+            color: rgba(255,255,255,0.7);
             margin-top: 4px;
             display: flex;
             justify-content: space-between;
@@ -463,9 +414,9 @@
             flex: 1;
             padding: 12px 15px;
             border-radius: 25px;
-            border: 1px solid rgba(255, 71, 87, 0.3);
-            background-color: var(--input-bg);
-            color: var(--text-color);
+            border: 1px solid rgba(255,255,255,0.3);
+            background-color: rgba(255,255,255,0.1);
+            color: white;
             outline: none;
             transition: all 0.3s;
         }
@@ -494,65 +445,20 @@
             transform: scale(1.05);
         }
         
-        .party-info {
-            background-color: var(--input-bg);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .party-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: var(--primary);
-        }
-        
-        .party-host {
-            font-size: 14px;
-            color: var(--secondary);
-            margin-bottom: 15px;
-        }
-        
-        .party-meta {
-            display: flex;
-            gap: 15px;
-            margin-top: 10px;
-        }
-        
-        .party-stat {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .stat-value {
-            font-weight: 600;
-            font-size: 18px;
-        }
-        
-        .stat-label {
-            font-size: 12px;
-            color: var(--secondary);
-        }
-        
-        .invite-section {
-            margin-top: 20px;
-        }
-        
-        .invite-link-container {
+        /* Share Widget */
+        .share-link-container {
             display: flex;
             gap: 10px;
             margin-bottom: 15px;
         }
         
-        #invite-link {
+        #share-link {
             flex: 1;
             padding: 10px 15px;
             border-radius: 8px;
-            border: 1px solid rgba(255, 71, 87, 0.3);
-            background-color: var(--input-bg);
-            color: var(--text-color);
+            border: 1px solid rgba(255,255,255,0.3);
+            background-color: rgba(255,255,255,0.1);
+            color: white;
             font-size: 14px;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -581,32 +487,11 @@
             background-color: var(--success);
         }
         
-        .reactions-container {
-            display: flex;
-            gap: 10px;
-            margin: 15px 0;
-            flex-wrap: wrap;
-        }
-        
-        .reaction-btn {
-            padding: 8px 12px;
-            border-radius: 20px;
-            background: var(--input-bg);
-            border: 1px solid rgba(255, 71, 87, 0.2);
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 16px;
-        }
-        
-        .reaction-btn:hover {
-            background: rgba(255, 71, 87, 0.1);
-            transform: scale(1.1);
-        }
-        
+        /* Reactions Animation */
         #reactions {
             position: absolute;
             top: 20px;
-            right: 20px;
+            left: 20px;
             z-index: 40;
             display: flex;
             flex-direction: column;
@@ -628,192 +513,218 @@
             100% { transform: translateY(-60px); opacity: 0; }
         }
         
-        .interactive-panel {
-            background: var(--input-bg);
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 15px;
+        /* Dropdown Menu */
+        .dropdown-menu {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
         }
         
-        .interactive-title {
+        .menu-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--widget-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            border: none;
+            color: white;
+            font-size: 20px;
+        }
+        
+        .menu-btn:hover {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+        
+        .menu-content {
+            position: absolute;
+            top: 60px;
+            left: 0;
+            background: var(--widget-bg);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 250px;
+            display: none;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .menu-content.active {
+            display: block;
+        }
+        
+        .menu-section {
+            margin-bottom: 15px;
+        }
+        
+        .menu-title {
             font-size: 16px;
             margin-bottom: 10px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .menu-title i {
             color: var(--primary);
         }
         
-        .poll-option, .predict-option {
-            padding: 8px 12px;
-            background: var(--card-bg);
-            border-radius: 6px;
-            margin: 5px 0;
+        .menu-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .menu-btn-item {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+            color: white;
             cursor: pointer;
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            text-align: left;
         }
         
-        .poll-option:hover, .predict-option:hover {
-            background: rgba(255, 71, 87, 0.1);
+        .menu-btn-item:hover {
+            background: rgba(255,255,255,0.2);
         }
         
+        .menu-btn-item.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .speed-control {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        .speed-control span {
+            font-size: 14px;
+            color: white;
+        }
+        
+        .speed-select {
+            flex: 1;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        /* Responsive */
         @media (max-width: 768px) {
-            .watch-party-container {
-                gap: 15px;
+            .widget-content {
+                width: 280px;
+                right: 60px;
             }
             
-            .custom-controls {
-                opacity: 1;
-                padding: 10px;
-            }
-            
-            .control-btn-lg {
-                font-size: 20px;
-                width: 40px;
-                height: 40px;
-            }
-            
-            .skip-btn {
-                font-size: 14px;
-            }
-            
-            .floating-controls {
-                bottom: 20px;
-                right: 20px;
-            }
-            
-            .floating-mic {
-                width: 50px;
-                height: 50px;
-                font-size: 20px;
-            }
-            
-            .emoji-btn-float {
-                width: 40px;
-                height: 40px;
-                font-size: 18px;
+            .menu-content {
+                width: 220px;
             }
         }
         
         @media (max-width: 480px) {
-            .header {
-                flex-direction: column;
-                gap: 15px;
-                align-items: flex-start;
+            .widget-content {
+                width: 250px;
+                right: 50px;
             }
             
-            .header-actions {
-                width: 100%;
-                display: flex;
-                justify-content: space-between;
+            .menu-content {
+                width: 200px;
             }
             
-            .video-container {
-                border-radius: 0;
-                margin-left: -20px;
-                margin-right: -20px;
-                width: calc(100% + 40px);
+            .floating-widgets {
+                top: 15px;
+                right: 15px;
             }
             
-            .party-sidebar {
-                border-radius: 0;
-                margin-left: -20px;
-                margin-right: -20px;
-                width: calc(100% + 40px);
-                border-left: none;
-                border-right: none;
+            .dropdown-menu {
+                top: 15px;
+                left: 15px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <a href="#" class="logo">
-                <i class="fas fa-film"></i>
-                Watch Party
-            </a>
-            <div class="header-actions">
-                <button class="theme-toggle" id="theme-toggle">
-                    <i class="fas fa-moon"></i>
+        <div class="video-container">
+            <div id="player-container">
+                <video id="html5video" playsinline preload="metadata"></video>
+                <div id="ytContainer" style="display:none;width:100%;height:100%">
+                    <div id="ytPlayerIframe"></div>
+                </div>
+                <canvas id="drawingCanvas"></canvas>
+                <div id="overlay-block" class="hidden">
+                    <div class="overlay-hint">You're viewing — host controls playback</div>
+                </div>
+                <div id="reactions"></div>
+            </div>
+            
+            <div class="custom-controls">
+                <button class="control-btn-lg" id="custom-play-pause">
+                    <i class="fas fa-pause"></i>
                 </button>
-                <a href="#" class="back-btn">
-                    <i class="fas fa-arrow-left"></i>
-                    Back to Home
-                </a>
+                <button class="skip-btn" id="skip-back">
+                    <i class="fas fa-backward"></i> 10s
+                </button>
+                <button class="skip-btn" id="skip-forward">
+                    10s <i class="fas fa-forward"></i>
+                </button>
+                <button class="control-btn-lg" id="custom-fullscreen">
+                    <i class="fas fa-expand"></i>
+                </button>
             </div>
         </div>
         
-        <div class="watch-party-container">
-            <div class="video-container">
-                <div id="player-container">
-                    <video id="html5video" playsinline preload="metadata"></video>
-                    <div id="ytContainer" style="display:none;width:100%;height:100%">
-                        <div id="ytPlayerIframe"></div>
-                    </div>
-                    <canvas id="drawingCanvas"></canvas>
-                    <div id="overlay-block" class="hidden">
-                        <div class="overlay-hint">You're viewing — host controls playback</div>
-                    </div>
-                    <div id="reactions"></div>
-                </div>
-                
-                <div class="custom-controls">
-                    <button class="control-btn-lg" id="custom-play-pause">
-                        <i class="fas fa-pause"></i>
-                    </button>
-                    <button class="skip-btn" id="skip-back">
-                        <i class="fas fa-backward"></i> 10s
-                    </button>
-                    <button class="skip-btn" id="skip-forward">
-                        10s <i class="fas fa-forward"></i>
-                    </button>
-                    <button class="control-btn-lg" id="custom-fullscreen">
-                        <i class="fas fa-expand"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <div class="party-sidebar">
-                <div class="party-info">
-                    <h2 class="party-title" id="party-title">Watch Party</h2>
-                    <p class="party-host">Room: <strong id="room-info">Loading...</strong></p>
-                    
-                    <div class="party-meta">
-                        <div class="party-stat">
-                            <div class="stat-value" id="participant-count">1</div>
-                            <div class="stat-label">Participants</div>
-                        </div>
-                        <div class="party-stat">
-                            <div class="stat-value" id="status-display">Loading</div>
-                            <div class="stat-label">Status</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="sidebar-section">
-                    <h3 class="sidebar-title"><i class="fas fa-sliders-h"></i> Controls</h3>
-                    <div class="controls-grid">
-                        <button id="pauseDiscussBtn" class="control-btn">
+        <!-- Dropdown Menu -->
+        <div class="dropdown-menu">
+            <button class="menu-btn" id="menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="menu-content" id="menu-content">
+                <div class="menu-section">
+                    <h3 class="menu-title"><i class="fas fa-sliders-h"></i> Controls</h3>
+                    <div class="menu-controls">
+                        <button id="pauseDiscussBtn" class="menu-btn-item">
                             <i class="fas fa-pause"></i> Pause & Discuss
                         </button>
-                        <button id="toggleDrawBtn" class="control-btn">
+                        <button id="toggleDrawBtn" class="menu-btn-item">
                             <i class="fas fa-pencil-alt"></i> Draw
                         </button>
-                        <button id="clearDrawBtn" class="control-btn">
+                        <button id="clearDrawBtn" class="menu-btn-item">
                             <i class="fas fa-eraser"></i> Clear Draw
                         </button>
-                        <button id="spotlightBtn" class="control-btn">
+                        <button id="spotlightBtn" class="menu-btn-item">
                             <i class="fas fa-lightbulb"></i> Spotlight
                         </button>
-                        <button id="focusBtn" class="control-btn">
+                        <button id="focusBtn" class="menu-btn-item">
                             <i class="fas fa-crosshairs"></i> Focus Mode
                         </button>
-                        <button id="syncBtn" class="control-btn">
+                        <button id="syncBtn" class="menu-btn-item">
                             <i class="fas fa-sync"></i> Sync
                         </button>
                     </div>
                     
-                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
-                        <span style="font-size: 14px;">Speed:</span>
-                        <select id="speedSel" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid rgba(255, 71, 87, 0.3); background: var(--input-bg); color: var(--text-color);">
+                    <div class="speed-control">
+                        <span>Speed:</span>
+                        <select id="speedSel" class="speed-select">
                             <option value="0.5">0.5x</option>
                             <option value="0.75">0.75x</option>
                             <option value="1" selected>1x</option>
@@ -823,62 +734,98 @@
                     </div>
                 </div>
                 
-                <div class="sidebar-section">
-                    <h3 class="sidebar-title"><i class="fas fa-comments"></i> Chat</h3>
-                    <div class="chat-messages" id="chatMessages">
-                        <!-- Chat messages will be added here -->
-                    </div>
-                    
-                    <div class="chat-input-container">
-                        <input type="text" id="chatInput" placeholder="Type your message...">
-                        <button class="send-btn" id="chatSendBtn">
-                            <i class="fas fa-paper-plane"></i>
+                <div class="menu-section">
+                    <h3 class="menu-title"><i class="fas fa-poll"></i> Interactive</h3>
+                    <div class="menu-controls">
+                        <button id="predictBtn" class="menu-btn-item">
+                            <i class="fas fa-crystal-ball"></i> Predict
+                        </button>
+                        <button id="openPoll" class="menu-btn-item">
+                            <i class="fas fa-chart-bar"></i> Poll
                         </button>
                     </div>
                 </div>
                 
-                <div class="sidebar-section">
-                    <h3 class="sidebar-title"><i class="fas fa-microphone"></i> Voice Talk</h3>
-                    <div class="voice-controls">
-                        <button id="holdTalkBtn" class="voice-btn hold-talk-btn">
-                            <i class="fas fa-microphone"></i> Hold to Talk
+                <div class="menu-section">
+                    <h3 class="menu-title"><i class="fas fa-palette"></i> Theme</h3>
+                    <div class="menu-controls">
+                        <button id="theme-toggle" class="menu-btn-item">
+                            <i class="fas fa-moon"></i> Toggle Theme
                         </button>
-                        <div id="voiceStatus" class="voice-status">Initializing voice...</div>
                     </div>
                 </div>
-                
-                <div class="sidebar-section">
-                    <h3 class="sidebar-title"><i class="fas fa-bolt"></i> Reactions</h3>
-                    <div class="reactions-container">
+            </div>
+        </div>
+        
+        <!-- Floating Widgets -->
+        <div class="floating-widgets">
+            <!-- Voice Widget -->
+            <div class="widget-container">
+                <button class="widget-icon" id="voice-widget">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <div class="widget-content" id="voice-content">
+                    <div class="voice-status" id="voice-status">Voice ready</div>
+                    <button id="hold-talk-btn" class="voice-btn">
+                        <i class="fas fa-microphone"></i> Hold to Talk
+                    </button>
+                    <div class="sound-wave" id="sound-wave" style="display: none;">
+                        <div class="sound-bar"></div>
+                        <div class="sound-bar"></div>
+                        <div class="sound-bar"></div>
+                        <div class="sound-bar"></div>
+                        <div class="sound-bar"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reactions Widget -->
+            <div class="widget-container">
+                <button class="widget-icon" id="reactions-widget">
+                    <i class="fas fa-smile"></i>
+                </button>
+                <div class="widget-content" id="reactions-content">
+                    <div class="reactions-grid">
                         <button class="reaction-btn" data-emoji="😂">😂</button>
                         <button class="reaction-btn" data-emoji="😱">😱</button>
                         <button class="reaction-btn" data-emoji="🤨">🤨</button>
                         <button class="reaction-btn" data-emoji="👏">👏</button>
                         <button class="reaction-btn" data-emoji="🔥">🔥</button>
                         <button class="reaction-btn" data-emoji="❤️">❤️</button>
+                        <button class="reaction-btn" data-emoji="😢">😢</button>
+                        <button class="reaction-btn" data-emoji="😡">😡</button>
+                        <button class="reaction-btn" data-emoji="🎉">🎉</button>
                     </div>
                 </div>
-                
-                <div class="sidebar-section">
-                    <h3 class="sidebar-title"><i class="fas fa-poll"></i> Interactive</h3>
-                    <div class="interactive-panel">
-                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                            <button id="predictBtn" class="control-btn" style="flex: 1;">
-                                <i class="fas fa-crystal-ball"></i> Predict
-                            </button>
-                            <button id="openPoll" class="control-btn" style="flex: 1;">
-                                <i class="fas fa-chart-bar"></i> Poll
-                            </button>
-                        </div>
-                        <div id="predict-panel"></div>
-                        <div id="poll-panel"></div>
+            </div>
+            
+            <!-- Chat Widget -->
+            <div class="widget-container">
+                <button class="widget-icon" id="chat-widget">
+                    <i class="fas fa-comment"></i>
+                    <div class="widget-badge" id="chat-badge" style="display: none;">0</div>
+                </button>
+                <div class="widget-content" id="chat-content">
+                    <div class="chat-messages" id="chat-messages">
+                        <!-- Chat messages will be added here -->
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chat-input" placeholder="Type your message...">
+                        <button class="send-btn" id="chat-send-btn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
                     </div>
                 </div>
-                
-                <div class="sidebar-section">
-                    <h3 class="sidebar-title"><i class="fas fa-user-plus"></i> Invite Friends</h3>
-                    <div class="invite-link-container">
-                        <input type="text" id="invite-link" class="form-input" readonly>
+            </div>
+            
+            <!-- Share Widget -->
+            <div class="widget-container">
+                <button class="widget-icon" id="share-widget">
+                    <i class="fas fa-share-alt"></i>
+                </button>
+                <div class="widget-content" id="share-content">
+                    <div class="share-link-container">
+                        <input type="text" id="share-link" readonly>
                         <button class="copy-btn" id="copy-btn">
                             <i class="fas fa-copy"></i> Copy
                         </button>
@@ -886,17 +833,6 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="floating-controls">
-        <div class="emoji-float">
-            <button class="emoji-btn-float" data-emoji="😂">😂</button>
-            <button class="emoji-btn-float" data-emoji="👏">👏</button>
-            <button class="emoji-btn-float" data-emoji="🔥">🔥</button>
-        </div>
-        <button class="floating-mic" id="talkFloatingBtn">
-            <i class="fas fa-microphone"></i>
-        </button>
     </div>
 
     <!-- External scripts -->
@@ -938,10 +874,34 @@
         const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
         const reactionsBox = document.getElementById('reactions');
-        const roomInfo = document.getElementById('room-info');
         const statusDisplay = document.getElementById('status-display');
 
-        // Control elements
+        // Widget elements
+        const voiceWidget = document.getElementById('voice-widget');
+        const voiceContent = document.getElementById('voice-content');
+        const holdTalkBtn = document.getElementById('hold-talk-btn');
+        const voiceStatus = document.getElementById('voice-status');
+        const soundWave = document.getElementById('sound-wave');
+        
+        const reactionsWidget = document.getElementById('reactions-widget');
+        const reactionsContent = document.getElementById('reactions-content');
+        
+        const chatWidget = document.getElementById('chat-widget');
+        const chatContent = document.getElementById('chat-content');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const chatSendBtn = document.getElementById('chat-send-btn');
+        const chatBadge = document.getElementById('chat-badge');
+        
+        const shareWidget = document.getElementById('share-widget');
+        const shareContent = document.getElementById('share-content');
+        const shareLink = document.getElementById('share-link');
+        const copyBtn = document.getElementById('copy-btn');
+        
+        const menuBtn = document.getElementById('menu-btn');
+        const menuContent = document.getElementById('menu-content');
+
+        // Control elements from menu
         const speedSel = document.getElementById('speedSel');
         const pauseDiscussBtn = document.getElementById('pauseDiscussBtn');
         const toggleDrawBtn = document.getElementById('toggleDrawBtn');
@@ -949,14 +909,9 @@
         const spotlightBtn = document.getElementById('spotlightBtn');
         const focusBtn = document.getElementById('focusBtn');
         const syncBtn = document.getElementById('syncBtn');
-        const holdTalkBtn = document.getElementById('holdTalkBtn');
-        const talkFloatingBtn = document.getElementById('talkFloatingBtn');
-        const voiceStatus = document.getElementById('voiceStatus');
-        const chatMessages = document.getElementById('chatMessages');
-        const chatInput = document.getElementById('chatInput');
-        const chatSendBtn = document.getElementById('chatSendBtn');
         const predictBtn = document.getElementById('predictBtn');
         const openPoll = document.getElementById('openPoll');
+        const themeToggle = document.getElementById('theme-toggle');
 
         let ready = false;
         let usingYT = false;
@@ -973,9 +928,10 @@
         let agoraSession = null;
         let agoraLocalMicOn = false;
 
-        function setStatus(text) { 
-            statusDisplay.textContent = text; 
-        }
+        // Widget state
+        let activeWidget = null;
+        let unreadChatCount = 0;
+        let widgetTimeout = null;
 
         function setVoiceStatus(text) { 
             voiceStatus.textContent = text; 
@@ -1095,7 +1051,6 @@
             const data = snap.val();
             if(!data){alert('Room not found');return}
             if(!data.videoLink){alert('No video link configured for room');return}
-            roomInfo.textContent = `${roomId}${isHost? ' • Host':' • Viewer'}`;
             const link = data.videoLink;
             if(isYouTubeLink(link)){
                 usingYT = true; 
@@ -1117,9 +1072,9 @@
                 overlayBlock.querySelector('.overlay-hint').textContent = 'Waiting for host — controls disabled for viewers'; 
             }
             
-            // Set invite link
-            document.getElementById('invite-link').value = window.location.href;
-        }).catch(err=>{console.error(err);setStatus('Error loading room')});
+            // Set share link
+            shareLink.value = window.location.href;
+        }).catch(err=>{console.error(err);});
 
         // --- host state push ---
         function pushRoomState(status, time){
@@ -1168,7 +1123,6 @@
 
         // --- host start ---
         function hostStart(){ 
-            setStatus('Host — you control playback');
             try{ 
                 roomRef.update({
                     status: playerIsPlaying()? 'play':'pause', 
@@ -1219,7 +1173,7 @@
                 if(container.requestFullscreen) container.requestFullscreen();
             });
 
-            // Host controls
+            // Host controls from menu
             pauseDiscussBtn.addEventListener('click', ()=>{ 
                 playerPause(); 
                 roomRef.update({status:'pause',discussionOpen:true}); 
@@ -1295,8 +1249,6 @@
 
         // --- viewer start ---
         function viewerStart(){ 
-            setStatus('Viewer — following host');
-
             let bufferRecoveryTimer = null;
             function onBuffering(){
                 if(bufferRecoveryTimer) return;
@@ -1324,8 +1276,6 @@
                 const data = snap.val();
                 if(!ready || !data) return;
                 discussionOpen = !!data.discussionOpen;
-                if(discussionOpen) setStatus('Discussion — host paused to talk'); 
-                else setStatus('Watching — synced to host');
 
                 if(data.hostPowers && typeof data.hostPowers.speed !== 'undefined'){ 
                     try{ playerSetRate(Number(data.hostPowers.speed)); } catch(e) {} 
@@ -1523,10 +1473,11 @@
             }); 
         }
         
-        document.querySelectorAll('.reaction-btn, .emoji-btn-float').forEach(btn=>{
+        document.querySelectorAll('.reaction-btn').forEach(btn=>{
             btn.addEventListener('click', ()=>{ 
                 const emoji = btn.getAttribute('data-emoji') || btn.textContent; 
                 emitReaction(emoji); 
+                closeWidget('reactions');
             });
         });
         
@@ -1569,6 +1520,12 @@
             chatMessages.appendChild(div); 
             
             chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Update badge if chat is not open
+            if (activeWidget !== 'chat') {
+                unreadChatCount++;
+                updateChatBadge();
+            }
         }
         
         chatRef.limitToLast(150).on('child_added', snap=>{ 
@@ -1598,59 +1555,89 @@
             } 
         });
 
-        // --- predicts & polls ---
-        function renderPredicts(data){ 
-            const out = document.getElementById('predict-panel'); 
-            out.innerHTML = '<div class="interactive-title">Predictions</div>'; 
-            Object.keys(data||{}).forEach(id=>{ 
-                const p = data[id]; 
-                const el = document.createElement('div'); 
-                el.className = 'predict-option';
-                el.innerHTML = `
-                    <div><strong>${p.question}</strong></div>
-                    <button class="control-btn" style="margin-top: 5px; font-size: 12px; padding: 5px 10px;">
-                        Answer
-                    </button>
-                `;
-                el.querySelector('button').onclick = ()=>{ 
-                    const ans = prompt('Your answer'); 
-                    if(!ans) return; 
-                    predictRef.child(id).child('options').push({
-                        answer:ans,
-                        at:firebase.database.ServerValue.TIMESTAMP
-                    }); 
-                };
-                out.appendChild(el); 
-            }); 
+        function updateChatBadge() {
+            if (unreadChatCount > 0) {
+                chatBadge.textContent = unreadChatCount > 9 ? '9+' : unreadChatCount;
+                chatBadge.style.display = 'flex';
+            } else {
+                chatBadge.style.display = 'none';
+            }
+        }
+
+        // --- Widget Management ---
+        function toggleWidget(widgetName) {
+            // Close any active widget timeout
+            if (widgetTimeout) {
+                clearTimeout(widgetTimeout);
+                widgetTimeout = null;
+            }
+            
+            // If clicking the same widget, close it
+            if (activeWidget === widgetName) {
+                closeWidget(widgetName);
+                return;
+            }
+            
+            // Close any other open widget
+            if (activeWidget) {
+                closeWidget(activeWidget);
+            }
+            
+            // Open the selected widget
+            const widgetIcon = document.getElementById(`${widgetName}-widget`);
+            const widgetContent = document.getElementById(`${widgetName}-content`);
+            
+            widgetIcon.classList.add('active');
+            widgetContent.classList.add('active');
+            activeWidget = widgetName;
+            
+            // Reset chat badge when opening chat
+            if (widgetName === 'chat') {
+                unreadChatCount = 0;
+                updateChatBadge();
+            }
+            
+            // Auto-close reactions after 5 seconds if no interaction
+            if (widgetName === 'reactions') {
+                widgetTimeout = setTimeout(() => {
+                    closeWidget('reactions');
+                }, 5000);
+            }
         }
         
-        function renderPolls(data){ 
-            const out = document.getElementById('poll-panel'); 
-            out.innerHTML = '<div class="interactive-title">Polls</div>'; 
-            Object.keys(data||{}).forEach(id=>{ 
-                const p=data[id]; 
-                const el=document.createElement('div'); 
-                el.className = 'poll-option';
-                el.innerHTML = `
-                    <div><strong>${p.q}</strong></div>
-                    <button class="control-btn" style="margin-top: 5px; font-size: 12px; padding: 5px 10px;">
-                        Vote
-                    </button>
-                `;
-                el.querySelector('button').onclick = ()=>{ 
-                    const opt=prompt('Enter your vote'); 
-                    if(!opt) return; 
-                    pollsRef.child(id).child('options').push({
-                        label:opt,
-                        at:firebase.database.ServerValue.TIMESTAMP
-                    }); 
-                };
-                out.appendChild(el); 
-            }); 
+        function closeWidget(widgetName) {
+            const widgetIcon = document.getElementById(`${widgetName}-widget`);
+            const widgetContent = document.getElementById(`${widgetName}-content`);
+            
+            widgetIcon.classList.remove('active');
+            widgetContent.classList.remove('active');
+            
+            if (activeWidget === widgetName) {
+                activeWidget = null;
+            }
+            
+            // Clear any timeout
+            if (widgetTimeout) {
+                clearTimeout(widgetTimeout);
+                widgetTimeout = null;
+            }
         }
         
-        predictRef.on('value', s=>renderPredicts(s.val()||{})); 
-        pollsRef.on('value', s=>renderPolls(s.val()||{}));
+        // Widget event listeners
+        voiceWidget.addEventListener('click', () => toggleWidget('voice'));
+        reactionsWidget.addEventListener('click', () => toggleWidget('reactions'));
+        chatWidget.addEventListener('click', () => toggleWidget('chat'));
+        shareWidget.addEventListener('click', () => toggleWidget('share'));
+        menuBtn.addEventListener('click', () => toggleWidget('menu'));
+        
+        // Close widgets when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.widget-container') && !e.target.closest('.dropdown-menu')) {
+                if (activeWidget) {
+                    closeWidget(activeWidget);
+                }
+            }
+        });
 
         // --- voice (agora) integration ---
         function tryAttachAgoraSession(session) {
@@ -1662,6 +1649,10 @@
                     session.on('user-published', (uid, mediaType) => {
                         console.log('agora user-published', uid, mediaType);
                         setVoiceStatus('Remote user published: ' + uid);
+                        
+                        // Show sound wave animation when someone is talking
+                        soundWave.style.display = 'flex';
+                        
                         if(typeof session.subscribe === 'function') {
                             session.subscribe(uid, mediaType).then(remoteTrack => {
                                 if(mediaType === 'audio' && remoteTrack && typeof remoteTrack.play === 'function') {
@@ -1684,6 +1675,12 @@
                             }).catch(()=>{});
                         }
                     });
+                    
+                    session.on('user-unpublished', (uid, mediaType) => {
+                        console.log('agora user-unpublished', uid, mediaType);
+                        // Hide sound wave when user stops talking
+                        soundWave.style.display = 'none';
+                    });
                 }
             } catch(e){ console.warn('attachAgoraSession hook failed', e); }
             return true;
@@ -1694,7 +1691,7 @@
             setVoiceStatus('Initializing voice...');
             try {
                 if(typeof initAgoraVoice === 'function') {
-                    const maybePromise = initAgoraVoice({ firebase, auth, roomId, isHost, holdTalkBtn, voiceStatus });
+                    const maybePromise = initAgoraVoice({ firebase, auth, roomId, isHost, holdTalkBtn: holdTalkBtn, voiceStatus });
                     const session = (maybePromise && typeof maybePromise.then === 'function') ? await maybePromise : maybePromise;
                     if(tryAttachAgoraSession(session)) {
                         setVoiceStatus('Voice ready');
@@ -1751,6 +1748,7 @@
                 if(ok){ 
                     setVoiceStatus('You are talking'); 
                     elem.classList.add('talking');
+                    soundWave.style.display = 'flex';
                 } else { 
                     setVoiceStatus('Mic failed — check permissions or agora.js'); 
                 } 
@@ -1762,6 +1760,7 @@
                 if(ok) {
                     setVoiceStatus('Mic off'); 
                     elem.classList.remove('talking');
+                    soundWave.style.display = 'none';
                 } else {
                     setVoiceStatus('Mic stop failed'); 
                 }
@@ -1774,6 +1773,7 @@
                 if(ok){ 
                     setVoiceStatus('You are talking'); 
                     elem.classList.add('talking');
+                    soundWave.style.display = 'flex';
                 } else { 
                     setVoiceStatus('Mic failed — check permissions or agora.js'); 
                 } 
@@ -1785,6 +1785,7 @@
                 if(ok) {
                     setVoiceStatus('Mic off'); 
                     elem.classList.remove('talking');
+                    soundWave.style.display = 'none';
                 } else {
                     setVoiceStatus('Mic stop failed'); 
                 }
@@ -1792,36 +1793,33 @@
         }
         
         attachPTTHandlers(holdTalkBtn);
-        attachPTTHandlers(talkFloatingBtn);
 
-        // Update floating talk visual
-        function updateFloatingTalkVisual() {
+        // Update voice widget visual
+        function updateVoiceWidgetVisual() {
             if(agoraLocalMicOn) {
-                talkFloatingBtn.classList.add('talking');
-                talkFloatingBtn.title = 'Talking — release to stop';
+                voiceWidget.classList.add('talking');
+                voiceWidget.title = 'Talking — release to stop';
             } else {
-                talkFloatingBtn.classList.remove('talking');
-                talkFloatingBtn.title = 'Hold to talk';
+                voiceWidget.classList.remove('talking');
+                voiceWidget.title = 'Voice controls';
             }
         }
-        setInterval(updateFloatingTalkVisual, 300);
+        setInterval(updateVoiceWidgetVisual, 300);
 
         // --- Theme toggle ---
-        document.getElementById('theme-toggle').addEventListener('click', () => {
+        themeToggle.addEventListener('click', () => {
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
-            document.getElementById('theme-toggle').innerHTML = isDark ? 
-                '<i class="fas fa-moon"></i>' : 
-                '<i class="fas fa-sun"></i>';
+            themeToggle.innerHTML = isDark ? 
+                '<i class="fas fa-moon"></i> Toggle Theme' : 
+                '<i class="fas fa-sun"></i> Toggle Theme';
         });
 
-        // --- Copy invite link ---
-        document.getElementById('copy-btn').addEventListener('click', () => {
-            const link = document.getElementById('invite-link');
-            link.select();
+        // --- Copy share link ---
+        copyBtn.addEventListener('click', () => {
+            shareLink.select();
             document.execCommand('copy');
             
-            const copyBtn = document.getElementById('copy-btn');
             const originalText = copyBtn.innerHTML;
             copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
             copyBtn.classList.add('copied');
@@ -1847,6 +1845,120 @@
 
         // ensure fitCanvas is run once player sizes are known
         setTimeout(fitCanvas, 300);
+
+        // Make widgets draggable
+        function makeWidgetsDraggable() {
+            const widgets = document.querySelectorAll('.widget-icon');
+            
+            widgets.forEach(widget => {
+                let isDragging = false;
+                let offsetX, offsetY;
+                
+                widget.addEventListener('mousedown', startDrag);
+                widget.addEventListener('touchstart', startDrag);
+                
+                function startDrag(e) {
+                    isDragging = true;
+                    
+                    if (e.type === 'mousedown') {
+                        offsetX = e.clientX - widget.getBoundingClientRect().left;
+                        offsetY = e.clientY - widget.getBoundingClientRect().top;
+                    } else if (e.type === 'touchstart') {
+                        offsetX = e.touches[0].clientX - widget.getBoundingClientRect().left;
+                        offsetY = e.touches[0].clientY - widget.getBoundingClientRect().top;
+                    }
+                    
+                    document.addEventListener('mousemove', drag);
+                    document.addEventListener('touchmove', drag);
+                    document.addEventListener('mouseup', stopDrag);
+                    document.addEventListener('touchend', stopDrag);
+                    
+                    e.preventDefault();
+                }
+                
+                function drag(e) {
+                    if (!isDragging) return;
+                    
+                    let clientX, clientY;
+                    if (e.type === 'mousemove') {
+                        clientX = e.clientX;
+                        clientY = e.clientY;
+                    } else if (e.type === 'touchmove') {
+                        clientX = e.touches[0].clientX;
+                        clientY = e.touches[0].clientY;
+                    }
+                    
+                    const container = document.querySelector('.floating-widgets');
+                    const containerRect = container.getBoundingClientRect();
+                    
+                    // Calculate new position relative to container
+                    const newX = clientX - containerRect.left - offsetX;
+                    const newY = clientY - containerRect.top - offsetY;
+                    
+                    // Apply constraints to keep widget within container
+                    const maxX = containerRect.width - widget.offsetWidth;
+                    const maxY = containerRect.height - widget.offsetHeight;
+                    
+                    const constrainedX = Math.max(0, Math.min(newX, maxX));
+                    const constrainedY = Math.max(0, Math.min(newY, maxY));
+                    
+                    widget.style.position = 'absolute';
+                    widget.style.left = `${constrainedX}px`;
+                    widget.style.top = `${constrainedY}px`;
+                    
+                    e.preventDefault();
+                }
+                
+                function stopDrag() {
+                    isDragging = false;
+                    document.removeEventListener('mousemove', drag);
+                    document.removeEventListener('touchmove', drag);
+                    document.removeEventListener('mouseup', stopDrag);
+                    document.removeEventListener('touchend', stopDrag);
+                }
+            });
+        }
+        
+        // Initialize widget dragging
+        makeWidgetsDraggable();
+
+        // Auto-minimize widgets after inactivity
+        function initAutoMinimize() {
+            let inactivityTimer;
+            const widgets = document.querySelectorAll('.widget-icon');
+            const delay = 10000; // 10 seconds
+            
+            function resetTimer() {
+                clearTimeout(inactivityTimer);
+                // Show all widgets at normal size
+                widgets.forEach(widget => {
+                    widget.classList.remove('minimized');
+                });
+                
+                inactivityTimer = setTimeout(minimizeWidgets, delay);
+            }
+            
+            function minimizeWidgets() {
+                // Minimize all widgets except the active one
+                widgets.forEach(widget => {
+                    if (!widget.classList.contains('active')) {
+                        widget.classList.add('minimized');
+                    }
+                });
+            }
+            
+            // Reset timer on any user interaction
+            document.addEventListener('mousedown', resetTimer);
+            document.addEventListener('mousemove', resetTimer);
+            document.addEventListener('touchstart', resetTimer);
+            document.addEventListener('keypress', resetTimer);
+            
+            // Start the timer
+            resetTimer();
+        }
+        
+        // Initialize auto-minimize
+        initAutoMinimize();
 
         // small debug log
         console.info('Watch Party loaded. isHost=', isHost);

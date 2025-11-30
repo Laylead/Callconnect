@@ -2,45 +2,57 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watch Party | CallConnect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Watch Party Pro | CallConnect</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
-            --primary: #ff4757;
-            --secondary: #57606f;
-            --light: #f1f2f6;
-            --dark: #2f3542;
-            --success: #2ed573;
-            --bg-color: #f5f5f5;
-            --text-color: #2f3542;
-            --card-bg: white;
-            --sidebar-bg: white;
-            --nav-bg: white;
-            --input-bg: white;
-            --video-bg: #1a1a1a;
-            --glass-bg: rgba(255, 255, 255, 0.2);
-            --glass-border: rgba(255, 255, 255, 0.3);
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #8b5cf6;
+            --secondary: #64748b;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-color: #0f172a;
+            --text-color: #f1f5f9;
+            --card-bg: #1e293b;
+            --sidebar-bg: #1e293b;
+            --nav-bg: #1e293b;
+            --input-bg: #334155;
+            --video-bg: #000;
+            --widget-bg: rgba(30, 41, 59, 0.95);
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --border-radius: 16px;
+            --border-radius-sm: 8px;
+            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        [data-theme="dark"] {
-            --bg-color: #1a1a1a;
-            --text-color: #f1f2f6;
-            --card-bg: #2d3436;
-            --sidebar-bg: #2d3436;
-            --nav-bg: #2d3436;
-            --input-bg: #3d4547;
-            --secondary: #a4b0be;
-            --video-bg: #000;
-            --glass-bg: rgba(0, 0, 0, 0.4);
-            --glass-border: rgba(255, 255, 255, 0.1);
+        [data-theme="light"] {
+            --bg-color: #f8fafc;
+            --text-color: #1e293b;
+            --card-bg: #ffffff;
+            --sidebar-bg: #ffffff;
+            --nav-bg: #ffffff;
+            --input-bg: #f1f5f9;
+            --widget-bg: rgba(255, 255, 255, 0.95);
+            --glass-bg: rgba(0, 0, 0, 0.05);
+            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
         
         body {
@@ -49,54 +61,58 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            transition: background-color 0.3s, color 0.3s;
             overflow: hidden;
-        }
-        
-        .container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            max-width: 1400px;
-            margin: 0 auto;
-            width: 100%;
-            height: 100vh;
-            padding: 0;
-        }
-        
-        .header {
-            display: none;
-        }
-        
-        /* Fullscreen mode styles */
-        body.fullscreen {
-            overflow: hidden;
-        }
-        
-        body.fullscreen .container {
-            padding: 0;
-        }
-        
-        body.fullscreen .video-container {
+            position: fixed;
             width: 100%;
             height: 100%;
-            border-radius: 0;
-            margin: 0;
+            touch-action: manipulation;
+            transition: var(--transition);
         }
         
-        body.fullscreen .floating-widgets {
-            display: flex;
-        }
-        
-        body.fullscreen .sidebar-toggle {
-            display: flex;
-        }
-        
-        body.fullscreen .party-sidebar {
-            transform: translateX(100%);
-            width: 0;
-            padding: 0;
+        /* App Container */
+        .app-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
             overflow: hidden;
+        }
+        
+        /* Player View */
+        .player-view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+        }
+        
+        .player-view.hidden {
+            transform: translateX(-100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        /* Detailed View */
+        .detailed-view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .detailed-view.active {
+            transform: translateX(0);
+            opacity: 1;
+            pointer-events: all;
         }
         
         /* Video container */
@@ -104,34 +120,35 @@
             background-color: var(--video-bg);
             border-radius: 0;
             overflow: hidden;
+            box-shadow: none;
             position: relative;
             width: 100%;
             height: 100%;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+        
+        .detailed-view .video-container {
+            height: 60vh;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            box-shadow: var(--shadow);
         }
         
         #player-container {
             width: 100%;
             height: 100%;
             position: relative;
-            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
-        #html5video, #ytContainer {
+        #html5video {
             width: 100%;
             height: 100%;
             object-fit: contain;
-        }
-        
-        #drawingCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 10;
         }
         
         #overlay-block {
@@ -140,11 +157,12 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 20;
+            backdrop-filter: blur(10px);
         }
         
         #overlay-block.hidden {
@@ -152,44 +170,46 @@
         }
         
         .overlay-hint {
-            background: rgba(255,255,255,0.9);
-            padding: 15px 25px;
-            border-radius: 10px;
-            color: #333;
+            background: var(--card-bg);
+            padding: 20px 30px;
+            border-radius: var(--border-radius);
+            color: var(--text-color);
             font-weight: 500;
+            text-align: center;
+            max-width: 90%;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--glass-bg);
         }
         
-        /* Player controls */
-        .player-controls {
+        /* Video controls */
+        .custom-controls {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(transparent, rgba(0,0,0,0.7));
-            padding: 20px 15px 15px;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
+            gap: 15px;
             align-items: center;
-            justify-content: space-between;
+            background: rgba(0,0,0,0.8);
+            padding: 15px 25px;
+            border-radius: var(--border-radius);
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: var(--transition);
             z-index: 30;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
         }
         
-        .video-container:hover .player-controls {
+        .video-container:hover .custom-controls,
+        .touch-controls .custom-controls {
             opacity: 1;
         }
         
-        .control-left, .control-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .control-btn {
-            width: 40px;
-            height: 40px;
+        .control-btn-lg {
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            background: none;
+            background: var(--glass-bg);
             border: none;
             color: white;
             font-size: 18px;
@@ -197,37 +217,41 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s;
+            transition: var(--transition);
         }
         
-        .control-btn:hover {
+        .control-btn-lg:hover {
+            background: var(--primary);
+            transform: scale(1.05);
+        }
+        
+        .control-btn-lg:active {
+            transform: scale(0.95);
+        }
+        
+        .skip-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: var(--transition);
+            border-radius: var(--border-radius-sm);
+        }
+        
+        .skip-btn:hover {
             background: rgba(255,255,255,0.1);
         }
         
-        .time-display {
-            color: white;
-            font-size: 14px;
-            font-weight: 500;
+        .skip-btn:active {
+            transform: scale(0.95);
         }
         
-        .progress-container {
-            flex: 1;
-            height: 5px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 5px;
-            margin: 0 15px;
-            cursor: pointer;
-            position: relative;
-        }
-        
-        .progress-bar {
-            height: 100%;
-            background: var(--primary);
-            border-radius: 5px;
-            width: 0%;
-        }
-        
-        /* Floating widgets */
+        /* Floating Widgets */
         .floating-widgets {
             position: absolute;
             top: 20px;
@@ -235,148 +259,274 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            z-index: 100;
-            transition: all 0.3s;
+            z-index: 1000;
         }
         
-        .floating-widget {
-            width: 50px;
-            height: 50px;
+        .widget-container {
+            position: relative;
+        }
+        
+        .widget-icon {
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
+            background: var(--widget-bg);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.3s;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: none;
             color: white;
             font-size: 20px;
             position: relative;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1001;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
         }
         
-        .floating-widget.minimized {
-            width: 35px;
-            height: 35px;
-            font-size: 16px;
-            opacity: 0.7;
-        }
-        
-        .floating-widget.active {
+        .widget-icon:hover {
+            transform: scale(1.05);
             background: var(--primary);
         }
         
-        .floating-widget.talking {
-            background: var(--primary);
-            animation: pulse 1.5s infinite;
+        .widget-icon:active {
+            transform: scale(0.95);
         }
         
-        .floating-widget .badge {
+        .widget-icon.active {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+        
+        .widget-badge {
             position: absolute;
             top: -5px;
             right: -5px;
-            background: var(--primary);
+            background: var(--danger);
             color: white;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 12px;
+            width: 22px;
+            height: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
         
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 107, 129, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(255, 107, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 107, 129, 0); }
-        }
-        
-        @keyframes sound-wave {
-            0% { transform: scaleY(0.5); }
-            50% { transform: scaleY(1.2); }
-            100% { transform: scaleY(0.5); }
-        }
-        
-        .sound-wave {
-            display: flex;
-            align-items: center;
-            gap: 2px;
-        }
-        
-        .sound-wave span {
-            width: 3px;
-            height: 10px;
-            background: white;
-            border-radius: 2px;
-            animation: sound-wave 1s infinite ease-in-out;
-        }
-        
-        .sound-wave span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-        
-        .sound-wave span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-        
-        /* Widget panels */
-        .widget-panel {
+        /* Sidebar Menu */
+        .sidebar-menu {
             position: absolute;
-            top: 60px;
-            right: 0;
-            background: var(--glass-bg);
-            backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 15px;
-            width: 300px;
-            color: white;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            z-index: 101;
-            display: none;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
         }
         
-        .widget-panel.active {
-            display: block;
-        }
-        
-        .widget-header {
+        .menu-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--widget-bg);
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .widget-title {
-            font-size: 16px;
-            font-weight: 600;
-        }
-        
-        .close-widget {
-            background: none;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
             border: none;
             color: white;
-            font-size: 16px;
-            cursor: pointer;
+            font-size: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
         }
         
-        /* Chat panel */
+        .menu-btn:hover {
+            background: var(--primary);
+            transform: scale(1.05);
+        }
+        
+        .menu-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Detailed View Layout */
+        .detailed-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 0;
+            height: 40vh;
+            overflow: hidden;
+        }
+        
+        .control-panel {
+            background: var(--card-bg);
+            padding: 25px;
+            overflow-y: auto;
+            border-right: 1px solid var(--glass-bg);
+        }
+        
+        .sidebar-panel {
+            background: var(--sidebar-bg);
+            padding: 25px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        /* Section Headers */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--glass-bg);
+        }
+        
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        /* Control Grids */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .control-card {
+            background: var(--input-bg);
+            border: 1px solid var(--glass-bg);
+            border-radius: var(--border-radius-sm);
+            padding: 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-align: center;
+        }
+        
+        .control-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.2);
+        }
+        
+        .control-card:active {
+            transform: translateY(0);
+        }
+        
+        .control-card.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .control-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: var(--transition);
+        }
+        
+        .control-card.active .control-icon {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .control-label {
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        /* Speed Control */
+        .speed-control {
+            background: var(--input-bg);
+            border-radius: var(--border-radius-sm);
+            padding: 16px;
+            border: 1px solid var(--glass-bg);
+        }
+        
+        .speed-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .speed-select {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--glass-bg);
+            background: var(--card-bg);
+            color: var(--text-color);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        
+        .speed-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        
+        /* Chat Section */
+        .chat-container {
+            background: var(--input-bg);
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--glass-bg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
         .chat-messages {
             height: 200px;
             overflow-y: auto;
-            margin-bottom: 15px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
         
         .message {
             display: flex;
             gap: 10px;
             max-width: 100%;
+            animation: messageSlide 0.3s ease-out;
+        }
+        
+        @keyframes messageSlide {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .message.self {
@@ -385,8 +535,8 @@
         }
         
         .message-avatar {
-            width: 28px;
-            height: 28px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             object-fit: cover;
             flex-shrink: 0;
@@ -395,13 +545,14 @@
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 12px;
+            font-size: 14px;
+            font-weight: 600;
         }
         
         .message-content {
-            padding: 8px 12px;
+            padding: 12px 16px;
             border-radius: 18px;
-            background-color: rgba(255, 255, 255, 0.2);
+            background-color: var(--glass-bg);
             font-size: 14px;
             line-height: 1.4;
             max-width: 80%;
@@ -413,8 +564,8 @@
         }
         
         .message-meta {
-            font-size: 10px;
-            color: rgba(255,255,255,0.7);
+            font-size: 11px;
+            color: var(--secondary);
             margin-top: 4px;
             display: flex;
             justify-content: space-between;
@@ -422,32 +573,31 @@
         
         .chat-input-container {
             display: flex;
-            gap: 10px;
+            gap: 12px;
+            padding: 16px;
+            border-top: 1px solid var(--glass-bg);
         }
         
-        #chat-input {
+        .chat-input {
             flex: 1;
-            padding: 10px 15px;
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.3);
-            background-color: rgba(255,255,255,0.2);
-            color: white;
+            padding: 12px 16px;
+            border-radius: 25px;
+            border: 1px solid var(--glass-bg);
+            background-color: var(--card-bg);
+            color: var(--text-color);
             outline: none;
-            transition: all 0.3s;
+            transition: var(--transition);
             font-size: 14px;
         }
         
-        #chat-input:focus {
+        .chat-input:focus {
             border-color: var(--primary);
-        }
-        
-        #chat-input::placeholder {
-            color: rgba(255,255,255,0.7);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
         }
         
         .send-btn {
-            width: 40px;
-            height: 40px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
             background-color: var(--primary);
             color: white;
@@ -456,59 +606,172 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: var(--transition);
         }
         
         .send-btn:hover {
-            background-color: #ff6b81;
+            background-color: var(--primary-dark);
             transform: scale(1.05);
         }
         
-        /* Reactions panel */
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Voice Controls */
+        .voice-controls {
+            background: var(--input-bg);
+            border-radius: var(--border-radius-sm);
+            padding: 20px;
+            border: 1px solid var(--glass-bg);
+            text-align: center;
+        }
+        
+        .voice-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: var(--border-radius-sm);
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background-color: var(--primary);
+            color: white;
+            font-size: 15px;
+        }
+        
+        .voice-btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .voice-btn:active {
+            transform: translateY(0);
+        }
+        
+        .voice-btn.talking {
+            background-color: var(--danger);
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        
+        .voice-status {
+            font-size: 14px;
+            color: var(--secondary);
+            text-align: center;
+            padding: 12px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius-sm);
+            margin-top: 12px;
+        }
+        
+        /* Reactions Section */
+        .reactions-section {
+            background: var(--input-bg);
+            border-radius: var(--border-radius-sm);
+            padding: 20px;
+            border: 1px solid var(--glass-bg);
+        }
+        
         .reactions-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 10px;
         }
         
-        .reaction-option {
-            width: 100%;
-            aspect-ratio: 1;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.2);
-            border: none;
-            font-size: 24px;
+        .reaction-btn {
+            padding: 12px;
+            border-radius: var(--border-radius-sm);
+            background: var(--card-bg);
+            border: 1px solid var(--glass-bg);
             cursor: pointer;
-            transition: all 0.3s;
+            transition: var(--transition);
+            font-size: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         
-        .reaction-option:hover {
-            background: rgba(255,255,255,0.3);
+        .reaction-btn:hover {
+            background: var(--primary);
             transform: scale(1.1);
+            border-color: var(--primary);
         }
         
-        /* Share panel */
-        .share-panel-content {
+        .reaction-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Interactive Section */
+        .interactive-section {
+            background: var(--input-bg);
+            border-radius: var(--border-radius-sm);
+            padding: 20px;
+            border: 1px solid var(--glass-bg);
+        }
+        
+        .interactive-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .interactive-btn {
+            padding: 14px;
+            border-radius: var(--border-radius-sm);
+            background: var(--card-bg);
+            border: 1px solid var(--glass-bg);
+            cursor: pointer;
+            transition: var(--transition);
             display: flex;
-            flex-direction: column;
-            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .interactive-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .interactive-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* Share Section */
+        .share-section {
+            background: var(--input-bg);
+            border-radius: var(--border-radius-sm);
+            padding: 20px;
+            border: 1px solid var(--glass-bg);
         }
         
         .share-link-container {
             display: flex;
-            gap: 10px;
+            gap: 12px;
+            margin-bottom: 15px;
         }
         
-        #share-link {
+        .share-link {
             flex: 1;
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.3);
-            background-color: rgba(255,255,255,0.2);
-            color: white;
+            padding: 12px 16px;
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--glass-bg);
+            background-color: var(--card-bg);
+            color: var(--text-color);
             font-size: 14px;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -516,14 +779,14 @@
         }
         
         .copy-btn {
-            padding: 10px 15px;
-            border-radius: 8px;
+            padding: 12px 20px;
+            border-radius: var(--border-radius-sm);
             background-color: var(--primary);
             color: white;
             border: none;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: var(--transition);
             display: flex;
             align-items: center;
             gap: 8px;
@@ -531,474 +794,580 @@
         }
         
         .copy-btn:hover {
-            background-color: #ff6b81;
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .copy-btn:active {
+            transform: translateY(0);
         }
         
         .copy-btn.copied {
             background-color: var(--success);
         }
         
-        /* Sidebar toggle */
-        .sidebar-toggle {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            color: white;
-            font-size: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 100;
-        }
-        
-        .sidebar-toggle:hover {
-            background: rgba(255,255,255,0.3);
-        }
-        
-        /* Party sidebar */
-        .party-sidebar {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 350px;
-            height: 100vh;
-            background-color: var(--sidebar-bg);
-            color: var(--text-color);
-            padding: 20px;
-            overflow-y: auto;
-            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
-            z-index: 200;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-        }
-        
-        .party-sidebar.active {
-            transform: translateX(0);
-        }
-        
-        .sidebar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 71, 87, 0.2);
-        }
-        
-        .sidebar-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: var(--primary);
-        }
-        
-        .close-sidebar {
-            background: none;
-            border: none;
-            color: var(--text-color);
-            font-size: 20px;
-            cursor: pointer;
-        }
-        
-        .sidebar-section {
-            margin-bottom: 25px;
-        }
-        
-        .section-title {
-            font-size: 16px;
-            margin-bottom: 15px;
-            color: var(--text-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .section-title i {
-            color: var(--primary);
-        }
-        
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .sidebar-btn {
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 71, 87, 0.2);
-            background: var(--input-bg);
-            color: var(--text-color);
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-        }
-        
-        .sidebar-btn:hover {
-            background: rgba(255, 71, 87, 0.1);
-            border-color: var(--primary);
-        }
-        
-        .sidebar-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-        
-        .voice-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .voice-btn {
-            padding: 12px;
-            border-radius: 8px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        
-        .hold-talk-btn {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        .hold-talk-btn:hover {
-            background-color: #ff6b81;
-        }
-        
-        .voice-status {
-            font-size: 14px;
-            color: var(--secondary);
-            text-align: center;
-            padding: 10px;
-            background: var(--input-bg);
-            border-radius: 8px;
-        }
-        
-        /* Reactions display */
+        /* Reactions Animation */
         #reactions {
             position: absolute;
             bottom: 80px;
             left: 0;
-            right: 0;
-            display: flex;
-            justify-content: center;
+            width: 100%;
             z-index: 40;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             pointer-events: none;
         }
         
         .reaction-bubble {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 16px;
+            border-radius: 25px;
+            font-size: 22px;
             animation: floatUp 3s ease forwards;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            margin: 0 5px;
+            box-shadow: var(--shadow);
+            margin-bottom: 10px;
         }
         
         @keyframes floatUp {
             0% { transform: translateY(0); opacity: 1; }
-            80% { opacity: 1; }
-            100% { transform: translateY(-60px); opacity: 0; }
+            70% { opacity: 0.8; }
+            100% { transform: translateY(-120px); opacity: 0; }
         }
         
-        /* Interactive panels */
-        .interactive-panel {
-            background: var(--input-bg);
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 15px;
+        /* Video resize controls */
+        .video-resize-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 35;
+            opacity: 0;
+            transition: var(--transition);
         }
         
-        .interactive-title {
+        .video-container:hover .video-resize-controls,
+        .touch-controls .video-resize-controls {
+            opacity: 1;
+        }
+        
+        .resize-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
             font-size: 16px;
-            margin-bottom: 10px;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+        }
+        
+        .resize-btn:hover {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+        
+        .resize-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Detailed View Header */
+        .detailed-header {
+            background: var(--card-bg);
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--glass-bg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .detailed-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 22px;
+            font-weight: 700;
             color: var(--primary);
         }
         
-        .poll-option, .predict-option {
-            padding: 8px 12px;
-            background: var(--card-bg);
-            border-radius: 6px;
-            margin: 5px 0;
-            cursor: pointer;
-            transition: all 0.3s;
+        .back-to-player {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 10px 18px;
+            border-radius: var(--border-radius-sm);
+            transition: var(--transition);
+            background: var(--input-bg);
+            border: 1px solid var(--glass-bg);
         }
         
-        .poll-option:hover, .predict-option:hover {
-            background: rgba(255, 71, 87, 0.1);
+        .back-to-player:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
         }
         
-        /* Responsive styles */
-        @media (max-width: 768px) {
-            .widget-panel {
-                width: 280px;
+        .back-to-player:active {
+            transform: translateY(0);
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 1024px) {
+            .detailed-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
             }
             
+            .control-panel {
+                border-right: none;
+                border-bottom: 1px solid var(--glass-bg);
+                max-height: 40vh;
+            }
+            
+            .sidebar-panel {
+                max-height: 60vh;
+            }
+        }
+        
+        @media (max-width: 768px) {
             .floating-widgets {
                 top: 15px;
                 right: 15px;
+                gap: 12px;
             }
             
-            .sidebar-toggle {
+            .sidebar-menu {
                 top: 15px;
                 left: 15px;
             }
             
-            .party-sidebar {
-                width: 100%;
+            .widget-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 18px;
+            }
+            
+            .menu-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 18px;
+            }
+            
+            .custom-controls {
+                bottom: 15px;
+                padding: 12px 20px;
+                gap: 12px;
+            }
+            
+            .control-btn-lg {
+                width: 44px;
+                height: 44px;
+                font-size: 16px;
+            }
+            
+            .skip-btn {
+                font-size: 13px;
+                padding: 7px 10px;
+            }
+            
+            .detailed-header {
+                padding: 15px 20px;
+            }
+            
+            .detailed-logo {
+                font-size: 20px;
+            }
+            
+            .control-panel, .sidebar-panel {
+                padding: 20px;
+            }
+            
+            .controls-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .reactions-grid {
+                grid-template-columns: repeat(3, 1fr);
             }
         }
         
         @media (max-width: 480px) {
-            .widget-panel {
-                width: 250px;
-            }
-            
-            .floating-widget {
-                width: 45px;
-                height: 45px;
-                font-size: 18px;
-            }
-            
-            .floating-widget.minimized {
-                width: 30px;
-                height: 30px;
-                font-size: 14px;
-            }
-        }
-        
-        /* Landscape orientation */
-        @media (orientation: landscape) and (max-height: 500px) {
-            .player-controls {
-                padding: 10px 15px 10px;
-            }
-            
             .floating-widgets {
                 top: 10px;
                 right: 10px;
                 gap: 10px;
             }
             
-            .sidebar-toggle {
+            .sidebar-menu {
                 top: 10px;
                 left: 10px;
             }
+            
+            .widget-icon {
+                width: 46px;
+                height: 46px;
+                font-size: 16px;
+            }
+            
+            .menu-btn {
+                width: 46px;
+                height: 46px;
+                font-size: 16px;
+            }
+            
+            .custom-controls {
+                bottom: 10px;
+                padding: 10px 15px;
+                gap: 10px;
+            }
+            
+            .control-btn-lg {
+                width: 40px;
+                height: 40px;
+                font-size: 15px;
+            }
+            
+            .skip-btn {
+                font-size: 12px;
+                padding: 6px 8px;
+            }
+            
+            .controls-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .reactions-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .interactive-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .detailed-view .video-container {
+                height: 50vh;
+            }
+        }
+        
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--input-bg);
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
         }
     </style>
 </head>
-<body class="fullscreen">
-    <div class="container">
-        <div class="video-container">
-            <div id="player-container">
-                <video id="html5video" playsinline preload="metadata"></video>
-                <div id="ytContainer" style="display:none;width:100%;height:100%">
-                    <div id="ytPlayerIframe"></div>
+<body class="touch-controls" data-theme="dark">
+    <div class="app-container">
+        <!-- Player View -->
+        <div class="player-view" id="player-view">
+            <div class="video-container">
+                <div id="player-container">
+                    <video id="html5video" playsinline preload="metadata"></video>
+                    <div id="overlay-block">
+                        <div class="overlay-hint">Tap anywhere to start the video</div>
+                    </div>
+                    <div id="reactions"></div>
+                    
+                    <div class="video-resize-controls">
+                        <button class="resize-btn" id="fit-screen-btn">
+                            <i class="fas fa-expand-arrows-alt"></i>
+                        </button>
+                        <button class="resize-btn" id="fullscreen-btn">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
                 </div>
-                <canvas id="drawingCanvas"></canvas>
-                <div id="overlay-block" class="hidden">
-                    <div class="overlay-hint">You're viewing — host controls playback</div>
-                </div>
-                <div id="reactions"></div>
-            </div>
-            
-            <div class="player-controls">
-                <div class="control-left">
-                    <button class="control-btn" id="play-pause-btn">
-                        <i class="fas fa-pause"></i>
+                
+                <div class="custom-controls">
+                    <button class="control-btn-lg" id="custom-play-pause">
+                        <i class="fas fa-play"></i>
                     </button>
-                    <div class="time-display" id="current-time">0:00</div>
-                </div>
-                
-                <div class="progress-container" id="progress-container">
-                    <div class="progress-bar" id="progress-bar"></div>
-                </div>
-                
-                <div class="control-right">
-                    <div class="time-display" id="duration">0:00</div>
-                    <button class="control-btn" id="fullscreen-btn">
+                    <button class="skip-btn" id="skip-back">
+                        <i class="fas fa-backward"></i> 10s
+                    </button>
+                    <button class="skip-btn" id="skip-forward">
+                        10s <i class="fas fa-forward"></i>
+                    </button>
+                    <button class="control-btn-lg" id="custom-fullscreen">
                         <i class="fas fa-expand"></i>
                     </button>
                 </div>
             </div>
             
-            <div class="sidebar-toggle" id="sidebar-toggle">
-                <i class="fas fa-bars"></i>
+            <!-- Sidebar Menu -->
+            <div class="sidebar-menu">
+                <button class="menu-btn" id="menu-btn">
+                    <i class="fas fa-th-large"></i>
+                </button>
             </div>
             
-            <div class="floating-widgets" id="floating-widgets">
-                <div class="floating-widget" id="voice-widget">
-                    <i class="fas fa-microphone"></i>
-                </div>
-                <div class="floating-widget" id="chat-widget">
-                    <i class="fas fa-comments"></i>
-                </div>
-                <div class="floating-widget" id="reaction-widget">
-                    <i class="fas fa-smile"></i>
-                </div>
-                <div class="floating-widget" id="share-widget">
-                    <i class="fas fa-share-alt"></i>
-                </div>
-            </div>
-            
-            <!-- Widget Panels -->
-            <div class="widget-panel" id="voice-panel">
-                <div class="widget-header">
-                    <div class="widget-title">Voice Talk</div>
-                    <button class="close-widget" data-widget="voice">
-                        <i class="fas fa-times"></i>
+            <!-- Floating Widgets -->
+            <div class="floating-widgets">
+                <!-- Voice Widget -->
+                <div class="widget-container">
+                    <button class="widget-icon" id="voice-widget">
+                        <i class="fas fa-microphone"></i>
                     </button>
                 </div>
-                <div class="voice-controls">
-                    <button id="hold-talk-btn" class="voice-btn hold-talk-btn">
-                        <i class="fas fa-microphone"></i> Hold to Talk
-                    </button>
-                    <div id="voice-status" class="voice-status">Voice ready</div>
-                </div>
-            </div>
-            
-            <div class="widget-panel" id="chat-panel">
-                <div class="widget-header">
-                    <div class="widget-title">Chat</div>
-                    <button class="close-widget" data-widget="chat">
-                        <i class="fas fa-times"></i>
+                
+                <!-- Reactions Widget -->
+                <div class="widget-container">
+                    <button class="widget-icon" id="reactions-widget">
+                        <i class="fas fa-smile"></i>
                     </button>
                 </div>
-                <div class="chat-messages" id="chat-messages">
-                    <!-- Chat messages will be added here -->
-                </div>
-                <div class="chat-input-container">
-                    <input type="text" id="chat-input" placeholder="Type your message...">
-                    <button class="send-btn" id="chat-send-btn">
-                        <i class="fas fa-paper-plane"></i>
+                
+                <!-- Chat Widget -->
+                <div class="widget-container">
+                    <button class="widget-icon" id="chat-widget">
+                        <i class="fas fa-comment"></i>
+                        <div class="widget-badge" id="chat-badge" style="display: none;">0</div>
                     </button>
                 </div>
-            </div>
-            
-            <div class="widget-panel" id="reaction-panel">
-                <div class="widget-header">
-                    <div class="widget-title">Reactions</div>
-                    <button class="close-widget" data-widget="reaction">
-                        <i class="fas fa-times"></i>
+                
+                <!-- Share Widget -->
+                <div class="widget-container">
+                    <button class="widget-icon" id="share-widget">
+                        <i class="fas fa-share-alt"></i>
                     </button>
-                </div>
-                <div class="reactions-grid">
-                    <button class="reaction-option" data-emoji="😂">😂</button>
-                    <button class="reaction-option" data-emoji="😱">😱</button>
-                    <button class="reaction-option" data-emoji="🤨">🤨</button>
-                    <button class="reaction-option" data-emoji="👏">👏</button>
-                    <button class="reaction-option" data-emoji="🔥">🔥</button>
-                    <button class="reaction-option" data-emoji="❤️">❤️</button>
-                    <button class="reaction-option" data-emoji="😢">😢</button>
-                    <button class="reaction-option" data-emoji="🎉">🎉</button>
-                </div>
-            </div>
-            
-            <div class="widget-panel" id="share-panel">
-                <div class="widget-header">
-                    <div class="widget-title">Share</div>
-                    <button class="close-widget" data-widget="share">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="share-panel-content">
-                    <p>Invite friends to join your watch party</p>
-                    <div class="share-link-container">
-                        <input type="text" id="share-link" readonly>
-                        <button class="copy-btn" id="copy-link-btn">
-                            <i class="fas fa-copy"></i> Copy
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
         
-        <div class="party-sidebar" id="party-sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-title">Watch Party Controls</div>
-                <button class="close-sidebar" id="close-sidebar">
-                    <i class="fas fa-times"></i>
+        <!-- Detailed View -->
+        <div class="detailed-view" id="detailed-view">
+            <div class="detailed-header">
+                <div class="detailed-logo">
+                    <i class="fas fa-film"></i>
+                    Watch Party Pro
+                </div>
+                <button class="back-to-player" id="back-to-player">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Player
                 </button>
             </div>
             
-            <div class="sidebar-section">
-                <h3 class="section-title"><i class="fas fa-sliders-h"></i> Controls</h3>
-                <div class="controls-grid">
-                    <button id="pause-discuss-btn" class="sidebar-btn">
-                        <i class="fas fa-pause"></i> Pause & Discuss
-                    </button>
-                    <button id="toggle-draw-btn" class="sidebar-btn">
-                        <i class="fas fa-pencil-alt"></i> Draw
-                    </button>
-                    <button id="clear-draw-btn" class="sidebar-btn">
-                        <i class="fas fa-eraser"></i> Clear Draw
-                    </button>
-                    <button id="spotlight-btn" class="sidebar-btn">
-                        <i class="fas fa-lightbulb"></i> Spotlight
-                    </button>
-                    <button id="focus-btn" class="sidebar-btn">
-                        <i class="fas fa-crosshairs"></i> Focus Mode
-                    </button>
-                    <button id="sync-btn" class="sidebar-btn">
-                        <i class="fas fa-sync"></i> Sync
-                    </button>
+            <div class="video-container">
+                <div id="detailed-player-container">
+                    <!-- Video will be moved here dynamically -->
                 </div>
                 
-                <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
-                    <span style="font-size: 14px;">Speed:</span>
-                    <select id="speed-select" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid rgba(255, 71, 87, 0.3); background: var(--input-bg); color: var(--text-color);">
-                        <option value="0.5">0.5x</option>
-                        <option value="0.75">0.75x</option>
-                        <option value="1" selected>1x</option>
-                        <option value="1.25">1.25x</option>
-                        <option value="1.5">1.5x</option>
-                    </select>
+                <div class="custom-controls">
+                    <button class="control-btn-lg" id="detailed-play-pause">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button class="skip-btn" id="detailed-skip-back">
+                        <i class="fas fa-backward"></i> 10s
+                    </button>
+                    <button class="skip-btn" id="detailed-skip-forward">
+                        10s <i class="fas fa-forward"></i>
+                    </button>
+                    <button class="control-btn-lg" id="detailed-fullscreen">
+                        <i class="fas fa-expand"></i>
+                    </button>
                 </div>
             </div>
             
-            <div class="sidebar-section">
-                <h3 class="section-title"><i class="fas fa-poll"></i> Interactive</h3>
-                <div class="interactive-panel">
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                        <button id="predict-btn" class="sidebar-btn" style="flex: 1;">
-                            <i class="fas fa-crystal-ball"></i> Predict
+            <div class="detailed-content">
+                <!-- Control Panel -->
+                <div class="control-panel">
+                    <!-- Video Controls Section -->
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fas fa-sliders-h"></i>
+                        </div>
+                        <h3 class="section-title">Video Controls</h3>
+                    </div>
+                    
+                    <div class="controls-grid">
+                        <div class="control-card" id="pauseDiscussBtn">
+                            <div class="control-icon">
+                                <i class="fas fa-pause"></i>
+                            </div>
+                            <div class="control-label">Pause & Discuss</div>
+                        </div>
+                        
+                        <div class="control-card" id="toggleDrawBtn">
+                            <div class="control-icon">
+                                <i class="fas fa-pencil-alt"></i>
+                            </div>
+                            <div class="control-label">Drawing</div>
+                        </div>
+                        
+                        <div class="control-card" id="clearDrawBtn">
+                            <div class="control-icon">
+                                <i class="fas fa-eraser"></i>
+                            </div>
+                            <div class="control-label">Clear Draw</div>
+                        </div>
+                        
+                        <div class="control-card" id="spotlightBtn">
+                            <div class="control-icon">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div class="control-label">Spotlight</div>
+                        </div>
+                        
+                        <div class="control-card" id="focusBtn">
+                            <div class="control-icon">
+                                <i class="fas fa-crosshairs"></i>
+                            </div>
+                            <div class="control-label">Focus Mode</div>
+                        </div>
+                        
+                        <div class="control-card" id="syncBtn">
+                            <div class="control-icon">
+                                <i class="fas fa-sync"></i>
+                            </div>
+                            <div class="control-label">Sync Video</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Playback Speed -->
+                    <div class="speed-control">
+                        <div class="speed-label">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Playback Speed</span>
+                        </div>
+                        <select id="speedSel" class="speed-select">
+                            <option value="0.5">0.5x Slow</option>
+                            <option value="0.75">0.75x</option>
+                            <option value="1" selected>1.0x Normal</option>
+                            <option value="1.25">1.25x</option>
+                            <option value="1.5">1.5x Fast</option>
+                            <option value="2">2.0x Very Fast</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Interactive Features -->
+                    <div class="section-header" style="margin-top: 25px;">
+                        <div class="section-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h3 class="section-title">Interactive Features</h3>
+                    </div>
+                    
+                    <div class="interactive-grid">
+                        <button class="interactive-btn" id="predictBtn">
+                            <i class="fas fa-crystal-ball"></i>
+                            Create Prediction
                         </button>
-                        <button id="open-poll-btn" class="sidebar-btn" style="flex: 1;">
-                            <i class="fas fa-chart-bar"></i> Poll
+                        <button class="interactive-btn" id="openPoll">
+                            <i class="fas fa-chart-bar"></i>
+                            Create Poll
                         </button>
                     </div>
-                    <div id="predict-panel"></div>
-                    <div id="poll-panel"></div>
                 </div>
-            </div>
-            
-            <div class="sidebar-section">
-                <h3 class="section-title"><i class="fas fa-info-circle"></i> Room Info</h3>
-                <div class="party-info">
-                    <p>Room: <strong id="room-info">Loading...</strong></p>
-                    <p>Status: <strong id="status-display">Loading</strong></p>
-                    <p>Participants: <strong id="participant-count">1</strong></p>
+                
+                <!-- Sidebar Panel -->
+                <div class="sidebar-panel">
+                    <!-- Chat Section -->
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <h3 class="section-title">Party Chat</h3>
+                    </div>
+                    
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="message">
+                                <div class="message-avatar">H</div>
+                                <div class="message-content">
+                                    Welcome to the watch party! 🎉 Let's enjoy this together.
+                                    <div class="message-meta">
+                                        <span>Host</span>
+                                        <span>Just now</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-input-container">
+                            <input type="text" class="chat-input" id="chat-input" placeholder="Type your message...">
+                            <button class="send-btn" id="chat-send-btn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Voice Controls -->
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fas fa-microphone"></i>
+                        </div>
+                        <h3 class="section-title">Voice Chat</h3>
+                    </div>
+                    
+                    <div class="voice-controls">
+                        <button id="hold-talk-btn" class="voice-btn">
+                            <i class="fas fa-microphone"></i> Hold to Talk
+                        </button>
+                        <div class="voice-status" id="voice-status">Voice ready - Hold to talk</div>
+                    </div>
+                    
+                    <!-- Reactions -->
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fas fa-smile"></i>
+                        </div>
+                        <h3 class="section-title">Quick Reactions</h3>
+                    </div>
+                    
+                    <div class="reactions-section">
+                        <div class="reactions-grid">
+                            <button class="reaction-btn" data-emoji="😂">😂</button>
+                            <button class="reaction-btn" data-emoji="😱">😱</button>
+                            <button class="reaction-btn" data-emoji="🤨">🤨</button>
+                            <button class="reaction-btn" data-emoji="👏">👏</button>
+                            <button class="reaction-btn" data-emoji="🔥">🔥</button>
+                            <button class="reaction-btn" data-emoji="❤️">❤️</button>
+                            <button class="reaction-btn" data-emoji="😢">😢</button>
+                            <button class="reaction-btn" data-emoji="🎉">🎉</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Share Section -->
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fas fa-share-alt"></i>
+                        </div>
+                        <h3 class="section-title">Share Party</h3>
+                    </div>
+                    
+                    <div class="share-section">
+                        <div class="share-link-container">
+                            <input type="text" class="share-link" id="share-link" readonly>
+                            <button class="copy-btn" id="copy-btn">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                        <p style="font-size: 13px; color: var(--secondary); text-align: center;">
+                            Share this link to invite friends to your watch party
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1011,755 +1380,440 @@
     <script src="firebase-config.js"></script>
     <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.9.0.js"></script>
     <script src="agora.js"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
 
     <script>
-        // --- Basic init & DOM refs ---
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
-        auth.signInAnonymously().catch(console.warn);
-
+        
+        // Initialize Agora
+        let agoraSession = null;
+        let agoraLocalMicOn = false;
+        
+        // Get URL parameters
         const params = new URLSearchParams(location.search);
-        const roomId = params.get('room');
+        const roomId = params.get('room') || 'default-room';
         const isHost = params.get('host') === 'true';
 
-        if (!roomId) {
-            alert('Missing room id in URL. Use ?room=ROOMID&host=true to create a room');
-            throw new Error('Missing roomId');
-        }
-
-        const roomRef = db.ref('rooms/' + roomId);
-        const drawRef = roomRef.child('drawing');
-        const reactionsRef = roomRef.child('reactions');
-        const chatRef = roomRef.child('chat');
-        const predictRef = roomRef.child('predicts');
-        const pollsRef = roomRef.child('polls');
-
         // DOM elements
+        const playerView = document.getElementById('player-view');
+        const detailedView = document.getElementById('detailed-view');
+        const menuBtn = document.getElementById('menu-btn');
+        const backToPlayerBtn = document.getElementById('back-to-player');
         const html5video = document.getElementById('html5video');
-        const ytContainer = document.getElementById('ytContainer');
         const overlayBlock = document.getElementById('overlay-block');
-        const canvas = document.getElementById('drawingCanvas');
-        const ctx = canvas.getContext('2d');
         const reactionsBox = document.getElementById('reactions');
-        const roomInfo = document.getElementById('room-info');
-        const statusDisplay = document.getElementById('status-display');
-        const participantCount = document.getElementById('participant-count');
+        const detailedPlayerContainer = document.getElementById('detailed-player-container');
 
-        // Widget elements
-        const floatingWidgets = document.getElementById('floating-widgets');
-        const voiceWidget = document.getElementById('voice-widget');
-        const chatWidget = document.getElementById('chat-widget');
-        const reactionWidget = document.getElementById('reaction-widget');
-        const shareWidget = document.getElementById('share-widget');
-        
-        const voicePanel = document.getElementById('voice-panel');
-        const chatPanel = document.getElementById('chat-panel');
-        const reactionPanel = document.getElementById('reaction-panel');
-        const sharePanel = document.getElementById('share-panel');
-        
+        // Video controls
+        const playPauseBtn = document.getElementById('custom-play-pause');
+        const detailedPlayPauseBtn = document.getElementById('detailed-play-pause');
+        const skipBackBtn = document.getElementById('skip-back');
+        const detailedSkipBackBtn = document.getElementById('detailed-skip-back');
+        const skipForwardBtn = document.getElementById('skip-forward');
+        const detailedSkipForwardBtn = document.getElementById('detailed-skip-forward');
+        const fullscreenBtn = document.getElementById('custom-fullscreen');
+        const detailedFullscreenBtn = document.getElementById('detailed-fullscreen');
+        const fitScreenBtn = document.getElementById('fit-screen-btn');
+        const fullscreenResizeBtn = document.getElementById('fullscreen-btn');
+
+        // Control elements
+        const speedSel = document.getElementById('speedSel');
+        const pauseDiscussBtn = document.getElementById('pauseDiscussBtn');
+        const toggleDrawBtn = document.getElementById('toggleDrawBtn');
+        const clearDrawBtn = document.getElementById('clearDrawBtn');
+        const spotlightBtn = document.getElementById('spotlightBtn');
+        const focusBtn = document.getElementById('focusBtn');
+        const syncBtn = document.getElementById('syncBtn');
+        const holdTalkBtn = document.getElementById('hold-talk-btn');
+        const voiceStatus = document.getElementById('voice-status');
         const chatMessages = document.getElementById('chat-messages');
         const chatInput = document.getElementById('chat-input');
         const chatSendBtn = document.getElementById('chat-send-btn');
+        const predictBtn = document.getElementById('predictBtn');
+        const openPoll = document.getElementById('openPoll');
         const shareLink = document.getElementById('share-link');
-        const copyLinkBtn = document.getElementById('copy-link-btn');
-        
-        // Player controls
-        const playPauseBtn = document.getElementById('play-pause-btn');
-        const fullscreenBtn = document.getElementById('fullscreen-btn');
-        const progressContainer = document.getElementById('progress-container');
-        const progressBar = document.getElementById('progress-bar');
-        const currentTimeDisplay = document.getElementById('current-time');
-        const durationDisplay = document.getElementById('duration');
-        
-        // Sidebar elements
-        const sidebarToggle = document.getElementById('sidebar-toggle');
-        const partySidebar = document.getElementById('party-sidebar');
-        const closeSidebar = document.getElementById('close-sidebar');
-        
-        // Sidebar controls
-        const speedSelect = document.getElementById('speed-select');
-        const pauseDiscussBtn = document.getElementById('pause-discuss-btn');
-        const toggleDrawBtn = document.getElementById('toggle-draw-btn');
-        const clearDrawBtn = document.getElementById('clear-draw-btn');
-        const spotlightBtn = document.getElementById('spotlight-btn');
-        const focusBtn = document.getElementById('focus-btn');
-        const syncBtn = document.getElementById('sync-btn');
-        const holdTalkBtn = document.getElementById('hold-talk-btn');
-        const predictBtn = document.getElementById('predict-btn');
-        const openPollBtn = document.getElementById('open-poll-btn');
+        const copyBtn = document.getElementById('copy-btn');
 
-        let ready = false;
-        let usingYT = false;
-        let ytPlayer = null;
+        // State variables
+        let isPlaying = false;
+        let isDetailedView = false;
+        let unreadChatCount = 0;
         let drawingEnabled = false;
-        let drawing = false;
-        let lastPos = null;
-        let discussionOpen = false;
-        let activeWidget = null;
-        let newChatCount = 0;
-        let isSomeoneTalking = false;
 
-        // keep normalized strokes in memory so we can redraw on resize
-        let strokes = [];
-
-        // Agora wrapper holder
-        let agoraSession = null;
-        let agoraLocalMicOn = false;
-
-        // Widget dragging
-        let isDragging = false;
-        let dragWidget = null;
-        let dragOffsetX = 0;
-        let dragOffsetY = 0;
-
-        // Minimize timeout
-        let minimizeTimeout = null;
-
-        function setStatus(text) { 
-            statusDisplay.textContent = text; 
-        }
-
-        function setVoiceStatus(text) { 
-            document.getElementById('voice-status').textContent = text; 
-            console.log('[VoiceStatus]', text); 
-        }
-
-        // --- canvas sizing (supports high DPI) ---
-        function fitCanvas(){
-            const rect = document.getElementById('player-container').getBoundingClientRect();
-            const dpr = Math.max(1, window.devicePixelRatio || 1);
-            canvas.style.width = rect.width + 'px';
-            canvas.style.height = rect.height + 'px';
-            canvas.width = Math.round(rect.width * dpr);
-            canvas.height = Math.round(rect.height * dpr);
-            ctx.setTransform(dpr,0,0,dpr,0,0);
-            redrawAllStrokes();
-        }
-        window.addEventListener('resize', fitCanvas);
-        window.addEventListener('load', fitCanvas);
-
-        // --- YouTube helpers ---
-        function isYouTubeLink(url){ 
-            if(!url) return false; 
-            return /youtube\.com|youtu\.be|youtube-nocookie\.com/i.test(url); 
-        }
-
-        function extractYoutubeID(url){ 
-            if(!url) return null; 
-            try {
-                const u = new URL(url); 
-                if(u.hostname.includes('youtube.com') || u.hostname.includes('youtube-nocookie.com')) {
-                    const v = u.searchParams.get('v'); 
-                    if(v) return v; 
-                    const parts = u.pathname.split('/'); 
-                    if(parts.includes('embed') && parts[parts.length-1]) return parts[parts.length-1];
-                } 
-                if(u.hostname.includes('youtu.be')) {
-                    const parts = u.pathname.split('/'); 
-                    if(parts[1]) return parts[1];
-                } 
-            } catch(e) {} 
-            const m = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?&]+)/); 
-            return m && m[1] ? m[1] : null; 
-        }
-
-        function createYouTubePlayer(id, controls){
-            ytContainer.style.display = 'block';
-            html5video.style.display = 'none';
-            window._pendingYTCreate = window._pendingYTCreate || [];
-            window._pendingYTCreate.push({id,controls});
-            if(window.YT && window.YT.Player && typeof window.onYouTubeIframeAPIReady === 'function'){
-                window.onYouTubeIframeAPIReady();
-            }
-        }
-
-        // ensure single global callback
-        window.onYouTubeIframeAPIReady = function(){
-            const list = window._pendingYTCreate || [];
-            while(list.length){
-                const item = list.shift();
-                if(ytPlayer){ try{ ytPlayer.destroy(); }catch(e){} }
-                ytPlayer = new YT.Player('ytPlayerIframe',{
-                    videoId:item.id,
-                    playerVars:{rel:0,modestbranding:1,playsinline:1,iv_load_policy:3,controls: item.controls?1:0},
-                    events:{
-                        onReady:()=>{ready=true;fitCanvas();if(isHost) hostStart();else viewerStart();},
-                        onStateChange:(e)=>{ 
-                            if(!isHost || !ytPlayer) return; 
-                            const t = ytPlayer.getCurrentTime(); 
-                            if(e.data===YT.PlayerState.PLAYING) {
-                                pushRoomState('play',t);
-                                updatePlayPauseButton(true);
-                            }
-                            if(e.data===YT.PlayerState.PAUSED) {
-                                pushRoomState('pause',t);
-                                updatePlayPauseButton(false);
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        function playerGetTime(){ 
-            try{ 
-                return usingYT && ytPlayer ? ytPlayer.getCurrentTime() : (html5video.currentTime || 0); 
-            } catch(e) { return 0; } 
-        }
-
-        function playerSeek(t){ 
-            try{ 
-                if(usingYT && ytPlayer) ytPlayer.seekTo(t,true); 
-                else html5video.currentTime = t; 
-            } catch(e) {} 
-        }
-
-        function playerPlay(){ 
-            try{ 
-                if(usingYT && ytPlayer) return ytPlayer.playVideo(); 
-                else return html5video.play(); 
-            } catch(e) {} 
-        }
-
-        function playerPause(){ 
-            try{ 
-                if(usingYT && ytPlayer) return ytPlayer.pauseVideo(); 
-                else return html5video.pause(); 
-            } catch(e) {} 
-        }
-
-        function playerIsPlaying(){ 
-            try{ 
-                if(usingYT && ytPlayer && ytPlayer.getPlayerState) 
-                    return ytPlayer.getPlayerState() === YT.PlayerState.PLAYING; 
-                return (!html5video.paused && !html5video.seeking); 
-            } catch(e) { return false; } 
-        }
-
-        function playerSetRate(r){ 
-            try{ 
-                if(usingYT && ytPlayer && ytPlayer.setPlaybackRate) ytPlayer.setPlaybackRate(r); 
-                else html5video.playbackRate = r; 
-            } catch(e) {} 
-        }
-
-        function playerGetDuration(){
-            try{
-                if(usingYT && ytPlayer) return ytPlayer.getDuration();
-                else return html5video.duration || 0;
-            } catch(e) { return 0; }
-        }
-
-        // Format time in seconds to MM:SS
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-        }
-
-        // Update player controls
-        function updatePlayerControls() {
-            if (!ready) return;
+        // Initialize the app
+        function initApp() {
+            // Set up video
+            setupVideo();
             
-            const currentTime = playerGetTime();
-            const duration = playerGetDuration();
-            
-            currentTimeDisplay.textContent = formatTime(currentTime);
-            durationDisplay.textContent = formatTime(duration);
-            
-            if (duration > 0) {
-                const progressPercent = (currentTime / duration) * 100;
-                progressBar.style.width = `${progressPercent}%`;
-            }
-        }
-
-        // Update play/pause button
-        function updatePlayPauseButton(isPlaying) {
-            const icon = playPauseBtn.querySelector('i');
-            if (isPlaying) {
-                icon.className = 'fas fa-pause';
-            } else {
-                icon.className = 'fas fa-play';
-            }
-        }
-
-        // --- load room ---
-        roomRef.once('value').then(snap=>{
-            const data = snap.val();
-            if(!data){alert('Room not found');return}
-            if(!data.videoLink){alert('No video link configured for room');return}
-            roomInfo.textContent = `${roomId}${isHost? ' • Host':' • Viewer'}`;
-            const link = data.videoLink;
-            if(isYouTubeLink(link)){
-                usingYT = true; 
-                const id = extractYoutubeID(link);
-                createYouTubePlayer(id, isHost);
-            } else {
-                usingYT = false; 
-                ytContainer.style.display = 'none'; 
-                html5video.style.display = 'block';
-                html5video.src = link; 
-                html5video.crossOrigin = 'anonymous';
-                html5video.preload = 'auto';
-                html5video.controls = !!isHost;
-                html5video.addEventListener('loadedmetadata', ()=>{ready=true;fitCanvas(); if(isHost) hostStart(); else viewerStart();});
-            }
-
-            if(!isHost){ 
-                overlayBlock.classList.remove('hidden'); 
-                overlayBlock.querySelector('.overlay-hint').textContent = 'Waiting for host — controls disabled for viewers'; 
-            }
+            // Set up event listeners
+            setupEventListeners();
             
             // Set share link
-            shareLink.value = window.location.href;
+            const currentUrl = window.location.href;
+            shareLink.value = currentUrl;
             
-            // Start player controls update interval
-            setInterval(updatePlayerControls, 500);
-        }).catch(err=>{console.error(err);setStatus('Error loading room')});
-
-        // --- host state push ---
-        function pushRoomState(status, time){
-            try{ 
-                roomRef.update({
-                    status,
-                    currentTime: time,
-                    updatedAt: firebase.database.ServerValue.TIMESTAMP
-                }); 
-            } catch(e) { console.warn(e); }
+            // Initialize Firebase room
+            initFirebaseRoom();
+            
+            console.log('Watch Party Pro initialized');
         }
 
-        // --- sync logic ---
-        let hostIntervalHandle = null; 
-        let lastHostUpdateMs = 0; 
-        let lastHardSeekMs = 0;
-        let lastViewerAdjustMs = 0;
-        
-        const HARD_SEEK_COOLDOWN_MS = 2000;
-        const HOST_UPDATE_INTERVAL_MS = 700;
-        const VIEWER_ADJUST_THROTTLE_MS = 400;
-
-        function computeHostEffectiveTime(hostTime, updatedAtMs){ 
-            const now = Date.now(); 
-            const lagMs = Math.max(0, now - (updatedAtMs || now)); 
-            return hostTime + (lagMs/1000); 
+        // Set up video element
+        function setupVideo() {
+            // Use a sample video for demonstration
+            html5video.src = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+            html5video.preload = 'auto';
+            
+            // Video event listeners
+            html5video.addEventListener('loadedmetadata', () => {
+                console.log('Video loaded, duration:', html5video.duration);
+            });
+            
+            html5video.addEventListener('play', () => {
+                isPlaying = true;
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                detailedPlayPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            });
+            
+            html5video.addEventListener('pause', () => {
+                isPlaying = false;
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                detailedPlayPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            });
+            
+            html5video.addEventListener('waiting', () => {
+                console.log('Video buffering...');
+            });
+            
+            html5video.addEventListener('canplay', () => {
+                console.log('Video can play');
+            });
+            
+            html5video.addEventListener('error', (e) => {
+                console.error('Video error:', e);
+                overlayBlock.querySelector('.overlay-hint').textContent = 'Error loading video. Tap to retry.';
+            });
         }
-        
-        function computeNudgeRate(diffSeconds){ 
-            const maxNudge=0.04; 
-            const sensitivity=0.2; 
-            const rate=1+Math.max(-maxNudge,Math.min(maxNudge,diffSeconds*sensitivity)); 
-            return rate; 
-        }
-        
-        function applyPlaybackRateForAll(rate){ 
-            try{ playerSetRate(rate); } catch(e) {} 
-        }
-        
-        function hardSeekTo(timeSec){ 
-            const now=Date.now(); 
-            if(now - lastHardSeekMs < HARD_SEEK_COOLDOWN_MS) return; 
-            lastHardSeekMs=now; 
-            try{ playerSeek(timeSec); } catch(e) {} 
-        }
 
-        // --- host start ---
-        function hostStart(){ 
-            setStatus('Host — you control playback');
-            try{ 
-                roomRef.update({
-                    status: playerIsPlaying()? 'play':'pause', 
-                    currentTime: playerGetTime(), 
-                    updatedAt: firebase.database.ServerValue.TIMESTAMP
-                }); 
-            } catch(e) {}
-
-            hostIntervalHandle = setInterval(()=>{ 
-                if(!ready) return; 
-                try{ 
-                    if(playerIsPlaying()){ 
-                        const nowMs = Date.now(); 
-                        if(nowMs - lastHostUpdateMs >= HOST_UPDATE_INTERVAL_MS){ 
-                            lastHostUpdateMs = nowMs; 
-                            roomRef.update({
-                                currentTime: playerGetTime(), 
-                                updatedAt: firebase.database.ServerValue.TIMESTAMP
-                            }); 
-                        } 
-                    } 
-                } catch(e) {} 
-            }, HOST_UPDATE_INTERVAL_MS);
-
-            // Player controls
-            playPauseBtn.addEventListener('click', ()=>{
-                if(playerIsPlaying()) {
-                    playerPause();
-                    pushRoomState('pause', playerGetTime());
-                    updatePlayPauseButton(false);
-                } else {
-                    playerPlay();
-                    pushRoomState('play', playerGetTime());
-                    updatePlayPauseButton(true);
+        // Initialize Firebase room
+        function initFirebaseRoom() {
+            auth.signInAnonymously().catch(console.warn);
+            
+            const roomRef = db.ref('rooms/' + roomId);
+            
+            // Set up room if host
+            if (isHost) {
+                roomRef.set({
+                    videoLink: html5video.src,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    host: true
+                });
+            }
+            
+            // Listen for room updates
+            roomRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    // Update room status
+                    console.log('Room data:', data);
                 }
             });
+        }
 
-            progressContainer.addEventListener('click', (e)=>{
-                if(!isHost) return;
-                const rect = progressContainer.getBoundingClientRect();
-                const percent = (e.clientX - rect.left) / rect.width;
-                const duration = playerGetDuration();
-                const newTime = percent * duration;
-                playerSeek(newTime);
-                pushRoomState(playerIsPlaying()? 'play':'pause', newTime);
+        // Set up all event listeners
+        function setupEventListeners() {
+            // View toggle
+            menuBtn.addEventListener('click', toggleToDetailedView);
+            backToPlayerBtn.addEventListener('click', toggleToPlayerView);
+            
+            // Video controls
+            playPauseBtn.addEventListener('click', togglePlayPause);
+            detailedPlayPauseBtn.addEventListener('click', togglePlayPause);
+            skipBackBtn.addEventListener('click', skipBackward);
+            detailedSkipBackBtn.addEventListener('click', skipBackward);
+            skipForwardBtn.addEventListener('click', skipForward);
+            detailedSkipForwardBtn.addEventListener('click', skipForward);
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            detailedFullscreenBtn.addEventListener('click', toggleFullscreen);
+            fitScreenBtn.addEventListener('click', fitToScreen);
+            fullscreenResizeBtn.addEventListener('click', toggleFullscreen);
+            
+            // Overlay tap to play
+            overlayBlock.addEventListener('click', startVideo);
+            
+            // Control buttons
+            pauseDiscussBtn.addEventListener('click', pauseAndDiscuss);
+            toggleDrawBtn.addEventListener('click', toggleDrawing);
+            clearDrawBtn.addEventListener('click', clearDrawing);
+            spotlightBtn.addEventListener('click', activateSpotlight);
+            focusBtn.addEventListener('click', activateFocusMode);
+            syncBtn.addEventListener('click', syncVideo);
+            predictBtn.addEventListener('click', createPrediction);
+            openPoll.addEventListener('click', createPoll);
+            
+            // Hold to talk button
+            setupHoldToTalk(holdTalkBtn);
+            
+            // Reaction buttons
+            document.querySelectorAll('.reaction-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const emoji = e.target.getAttribute('data-emoji') || e.target.textContent;
+                    sendReaction(emoji);
+                });
             });
+            
+            // Chat send button
+            chatSendBtn.addEventListener('click', sendChatMessage);
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendChatMessage();
+            });
+            
+            // Copy button
+            copyBtn.addEventListener('click', copyToClipboard);
+            
+            // Speed control
+            speedSel.addEventListener('change', (e) => {
+                html5video.playbackRate = parseFloat(e.target.value);
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', handleResize);
+        }
 
-            fullscreenBtn.addEventListener('click', ()=>{
-                if (document.fullscreenElement) {
+        // View toggle functions
+        function toggleToDetailedView() {
+            isDetailedView = true;
+            
+            // Move video to detailed view
+            detailedPlayerContainer.appendChild(html5video);
+            detailedPlayerContainer.appendChild(reactionsBox);
+            
+            // Animate views
+            playerView.classList.add('hidden');
+            detailedView.classList.add('active');
+            
+            console.log('Switched to detailed view');
+        }
+
+        function toggleToPlayerView() {
+            isDetailedView = false;
+            
+            // Move video back to player view
+            const playerContainer = document.getElementById('player-container');
+            playerContainer.appendChild(html5video);
+            playerContainer.appendChild(reactionsBox);
+            
+            // Animate views
+            detailedView.classList.remove('active');
+            setTimeout(() => {
+                playerView.classList.remove('hidden');
+            }, 400);
+            
+            console.log('Switched to player view');
+        }
+
+        // Video control functions
+        function startVideo() {
+            html5video.play().then(() => {
+                overlayBlock.classList.add('hidden');
+            }).catch(error => {
+                console.error('Error playing video:', error);
+                overlayBlock.querySelector('.overlay-hint').textContent = 'Tap to play video';
+            });
+        }
+
+        function togglePlayPause() {
+            if (isPlaying) {
+                html5video.pause();
+            } else {
+                html5video.play();
+            }
+        }
+
+        function skipBackward() {
+            html5video.currentTime = Math.max(0, html5video.currentTime - 10);
+        }
+
+        function skipForward() {
+            html5video.currentTime = Math.min(html5video.duration, html5video.currentTime + 10);
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                if (isDetailedView) {
+                    detailedView.requestFullscreen().catch(err => {
+                        console.error('Error attempting to enable fullscreen:', err);
+                    });
+                } else {
+                    playerView.requestFullscreen().catch(err => {
+                        console.error('Error attempting to enable fullscreen:', err);
+                    });
+                }
+            } else {
+                if (document.exitFullscreen) {
                     document.exitFullscreen();
-                } else {
-                    document.documentElement.requestFullscreen();
                 }
-            });
+            }
+        }
 
-            // Sidebar controls
-            pauseDiscussBtn.addEventListener('click', ()=>{ 
-                playerPause(); 
-                roomRef.update({status:'pause',discussionOpen:true}); 
-                updatePlayPauseButton(false);
-            });
-            
-            toggleDrawBtn.addEventListener('click', ()=>{ 
-                drawingEnabled = !drawingEnabled; 
-                toggleDrawBtn.innerHTML = drawingEnabled ? 
-                    '<i class="fas fa-pencil-alt"></i> Drawing ON' : 
-                    '<i class="fas fa-pencil-alt"></i> Draw'; 
-                toggleDrawBtn.classList.toggle('active', drawingEnabled);
-                roomRef.update({drawingEnabled}); 
-            });
-            
-            clearDrawBtn.addEventListener('click', ()=>{ 
-                ctx.clearRect(0,0,canvas.width,canvas.height); 
-                drawRef.remove().catch(()=>{}); 
-                strokes=[]; 
-            });
-            
-            spotlightBtn.addEventListener('click', ()=>{ 
-                roomRef.child('hostPowers').update({spotlight:true}); 
-                setTimeout(()=>roomRef.child('hostPowers').update({spotlight:false}),5000); 
-            });
-            
-            focusBtn.addEventListener('click', ()=>{ 
-                roomRef.child('hostPowers').update({focusMode:true}); 
-                setTimeout(()=>roomRef.child('hostPowers').update({focusMode:false}),5000); 
-            });
-            
-            syncBtn.addEventListener('click', ()=>{
-                roomRef.update({
-                    currentTime: playerGetTime(),
-                    updatedAt: firebase.database.ServerValue.TIMESTAMP
-                });
-            });
-            
-            speedSelect.addEventListener('change', e=>{ 
-                const sp = Number(e.target.value||1); 
-                playerSetRate(sp); 
-                roomRef.child('hostPowers').update({speed:sp}); 
-            });
+        function fitToScreen() {
+            html5video.style.objectFit = 'contain';
+        }
 
-            if(!usingYT){
-                html5video.addEventListener('play', ()=> {
-                    pushRoomState('play',playerGetTime());
-                    updatePlayPauseButton(true);
+        // Control functions
+        function pauseAndDiscuss() {
+            html5video.pause();
+            showNotification('Video paused for discussion');
+            
+            // Add visual feedback
+            pauseDiscussBtn.classList.add('active');
+            setTimeout(() => {
+                pauseDiscussBtn.classList.remove('active');
+            }, 1000);
+        }
+
+        function toggleDrawing() {
+            drawingEnabled = !drawingEnabled;
+            toggleDrawBtn.classList.toggle('active', drawingEnabled);
+            showNotification(`Drawing ${drawingEnabled ? 'enabled' : 'disabled'}`);
+        }
+
+        function clearDrawing() {
+            showNotification('Drawing cleared');
+        }
+
+        function activateSpotlight() {
+            showNotification('Spotlight activated for 5 seconds');
+            spotlightBtn.classList.add('active');
+            setTimeout(() => {
+                spotlightBtn.classList.remove('active');
+            }, 5000);
+        }
+
+        function activateFocusMode() {
+            showNotification('Focus mode activated');
+            focusBtn.classList.add('active');
+        }
+
+        function syncVideo() {
+            showNotification('Video synced with host');
+            syncBtn.classList.add('active');
+            setTimeout(() => {
+                syncBtn.classList.remove('active');
+            }, 1000);
+        }
+
+        function createPrediction() {
+            const question = prompt('Enter prediction question:');
+            if (question) {
+                showNotification(`Prediction created: "${question}"`);
+                
+                // Add to Firebase
+                const predictRef = db.ref('rooms/' + roomId + '/predicts').push();
+                predictRef.set({
+                    question: question,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    options: {},
+                    closed: false
                 });
-                html5video.addEventListener('pause', ()=> {
-                    pushRoomState('pause',playerGetTime());
-                    updatePlayPauseButton(false);
+            }
+        }
+
+        function createPoll() {
+            const question = prompt('Enter poll question:');
+            if (question) {
+                showNotification(`Poll created: "${question}"`);
+                
+                // Add to Firebase
+                const pollRef = db.ref('rooms/' + roomId + '/polls').push();
+                pollRef.set({
+                    question: question,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    options: {}
                 });
-                html5video.addEventListener('seeked', ()=> pushRoomState(playerIsPlaying()? 'play':'pause', playerGetTime()));
+            }
+        }
+
+        // Hold to talk functionality
+        function setupHoldToTalk(button) {
+            let pressTimer;
+            
+            button.addEventListener('mousedown', startTalking);
+            button.addEventListener('touchstart', startTalking);
+            
+            button.addEventListener('mouseup', stopTalking);
+            button.addEventListener('touchend', stopTalking);
+            button.addEventListener('mouseleave', stopTalking);
+            
+            function startTalking(e) {
+                e.preventDefault();
+                voiceStatus.textContent = 'Talking...';
+                button.classList.add('talking');
+                
+                // Start Agora voice transmission
+                startAgoraVoice();
             }
             
-            predictBtn.addEventListener('click', ()=>{ 
-                const q = prompt('Enter prediction question'); 
-                if(!q) return; 
-                const id = predictRef.push().key; 
-                predictRef.child(id).set({
-                    question:q,
-                    createdAt:firebase.database.ServerValue.TIMESTAMP,
-                    options:{},
-                    closed:false
-                }); 
-            });
+            function stopTalking(e) {
+                e.preventDefault();
+                voiceStatus.textContent = 'Voice ready - Hold to talk';
+                button.classList.remove('talking');
+                
+                // Stop Agora voice transmission
+                stopAgoraVoice();
+            }
+        }
+
+        // Agora voice functions
+        function startAgoraVoice() {
+            if (typeof initAgoraVoice === 'function') {
+                initAgoraVoice({ 
+                    firebase, 
+                    auth, 
+                    roomId, 
+                    isHost, 
+                    holdTalkBtn, 
+                    voiceStatus 
+                }).then(session => {
+                    agoraSession = session;
+                    agoraLocalMicOn = true;
+                    console.log('Agora voice started');
+                }).catch(error => {
+                    console.error('Error starting Agora voice:', error);
+                    voiceStatus.textContent = 'Voice error - check console';
+                });
+            } else {
+                console.warn('Agora voice not available');
+                voiceStatus.textContent = 'Voice not available';
+            }
+        }
+
+        function stopAgoraVoice() {
+            if (agoraSession && typeof agoraSession.leave === 'function') {
+                agoraSession.leave().then(() => {
+                    agoraLocalMicOn = false;
+                    console.log('Agora voice stopped');
+                }).catch(error => {
+                    console.error('Error stopping Agora voice:', error);
+                });
+            }
+            agoraLocalMicOn = false;
+        }
+
+        // Chat functionality
+        function sendChatMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
             
-            openPollBtn.addEventListener('click', ()=>{ 
-                const q=prompt('Poll question'); 
-                if(!q) return; 
-                const id = pollsRef.push().key; 
-                pollsRef.child(id).set({
-                    q,
-                    options:{},
-                    createdAt:firebase.database.ServerValue.TIMESTAMP
-                }); 
-            });
-        }
-
-        // --- viewer start ---
-        function viewerStart(){ 
-            setStatus('Viewer — following host');
-
-            let bufferRecoveryTimer = null;
-            function onBuffering(){
-                if(bufferRecoveryTimer) return;
-                bufferRecoveryTimer = setTimeout(()=>{
-                    roomRef.once('value').then(snap=>{
-                        const data = snap.val()||{};
-                        const hostTime = data.currentTime||0;
-                        const eff = computeHostEffectiveTime(hostTime,data.updatedAt||Date.now());
-                        try{
-                            playerPause();
-                            playerSeek(Math.max(0, eff - 0.2));
-                            playerPlay().catch(()=>{});
-                        }catch(e){}
-                    }).catch(()=>{});
-                    bufferRecoveryTimer = null;
-                }, 700);
-            }
-
-            if(!usingYT){ 
-                html5video.addEventListener('waiting', onBuffering); 
-                html5video.addEventListener('stalled', onBuffering); 
-            }
-
-            roomRef.on('value', snap=>{
-                const data = snap.val();
-                if(!ready || !data) return;
-                discussionOpen = !!data.discussionOpen;
-                if(discussionOpen) setStatus('Discussion — host paused to talk'); 
-                else setStatus('Watching — synced to host');
-
-                if(data.hostPowers && typeof data.hostPowers.speed !== 'undefined'){ 
-                    try{ playerSetRate(Number(data.hostPowers.speed)); } catch(e) {} 
-                }
-
-                const hostTime = data.currentTime || 0;
-                const hostEffective = computeHostEffectiveTime(hostTime, data.updatedAt || Date.now());
-
-                let localT = 0; 
-                try{ localT = playerGetTime(); } catch(e) {}
-                const diff = hostEffective - localT;
-                const nowMs = Date.now();
-                if(nowMs - lastViewerAdjustMs >= VIEWER_ADJUST_THROTTLE_MS){
-                    lastViewerAdjustMs = nowMs;
-                    if(Math.abs(diff) > 2.0){
-                        hardSeekTo(hostEffective);
-                        applyPlaybackRateForAll(1);
-                    } else if(Math.abs(diff) > 0.45){
-                        const nudge = computeNudgeRate(diff);
-                        applyPlaybackRateForAll(nudge);
-                        try{ const newT = localT + diff * 0.18; playerSeek(newT); } catch(e) {}
-                    } else {
-                        applyPlaybackRateForAll(1);
-                        if(Math.abs(diff) > 0.06){
-                            try{ playerSeek(localT + diff * 0.08); } catch(e) {} 
-                        }
-                    }
-                }
-
-                if(data.status === 'play'){
-                    overlayBlock.classList.add('hidden');
-                    try{ 
-                        playerPlay(); 
-                        updatePlayPauseButton(true);
-                    } catch(e) {}
-                } else {
-                    if(!discussionOpen) overlayBlock.classList.remove('hidden');
-                    try{ 
-                        playerPause(); 
-                        updatePlayPauseButton(false);
-                    } catch(e) {}
-                }
-            });
-
-            html5video.addEventListener('seeking', ()=>{
-                roomRef.once('value').then(snap=>{
-                    const d = snap.val()||{};
-                    const hostTime = d.currentTime||0;
-                    playerSeek(hostTime);
-                }).catch(()=>{});
-            });
-
-            let stallCount = 0;
-            if(!usingYT){
-                html5video.addEventListener('waiting', ()=>{ 
-                    stallCount++; 
-                    if(stallCount >= 3){
-                        roomRef.once('value').then(snap=>{
-                            const data = snap.val()||{};
-                            const eff = computeHostEffectiveTime(data.currentTime||0, data.updatedAt||Date.now());
-                            try{
-                                playerPause();
-                                playerSeek(Math.max(0, eff - 0.2));
-                                setTimeout(()=>{ playerPlay().catch(()=>{}); }, 500);
-                                stallCount = 0;
-                            }catch(e){}
-                        }).catch(()=>{});
-                    }
-                });
-                html5video.addEventListener('playing', ()=>{ stallCount = 0; });
-            }
-
-            // Sync button for viewers
-            syncBtn.addEventListener('click', ()=>{
-                roomRef.once('value').then(snap=>{
-                    const data = snap.val()||{};
-                    const hostTime = data.currentTime||0;
-                    hardSeekTo(hostTime);
-                });
-            });
-        }
-
-        // ------------- DRAWING -------------
-        function enableDrawing(){ 
-            canvas.style.pointerEvents = 'auto'; 
-            canvas.addEventListener('mousedown', onDown); 
-            canvas.addEventListener('mousemove', onMove); 
-            canvas.addEventListener('mouseup', onUp); 
-            canvas.addEventListener('mouseleave', onUp); 
-            canvas.addEventListener('touchstart', onDown,{passive:false}); 
-            canvas.addEventListener('touchmove', onMove,{passive:false}); 
-            canvas.addEventListener('touchend', onUp); 
-        }
-        
-        function disableDrawing(){ 
-            canvas.style.pointerEvents = 'none'; 
-            canvas.removeEventListener('mousedown', onDown); 
-            canvas.removeEventListener('mousemove', onMove); 
-            canvas.removeEventListener('mouseup', onUp); 
-            canvas.removeEventListener('mouseleave', onUp); 
-            canvas.removeEventListener('touchstart', onDown); 
-            canvas.removeEventListener('touchmove', onMove); 
-            canvas.removeEventListener('touchend', onUp); 
-        }
-        
-        function getCanvasPos(e){ 
-            const r = canvas.getBoundingClientRect(); 
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX; 
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY; 
-            return {
-                x: (clientX - r.left), 
-                y: (clientY - r.top)
-            }; 
-        }
-        
-        function onDown(e){ 
-            if(!isHost || !drawingEnabled) return; 
-            e.preventDefault(); 
-            drawing=true; 
-            lastPos = getCanvasPos(e); 
-        }
-        
-        function onMove(e){ 
-            if(!drawing || !isHost || !drawingEnabled) return; 
-            e.preventDefault(); 
-            const pos = getCanvasPos(e); 
-            const color = '#fbbf24'; 
-            const thickness = 3; 
-            ctx.strokeStyle = color; 
-            ctx.lineWidth = thickness; 
-            ctx.lineCap = 'round'; 
-            ctx.beginPath(); 
-            ctx.moveTo(lastPos.x,lastPos.y); 
-            ctx.lineTo(pos.x,pos.y); 
-            ctx.stroke(); 
-            try{ 
-                drawRef.push({
-                    lx: lastPos.x / canvas.clientWidth, 
-                    ly: lastPos.y / canvas.clientHeight, 
-                    x: pos.x / canvas.clientWidth, 
-                    y: pos.y / canvas.clientHeight, 
-                    color, 
-                    thickness
-                }); 
-            } catch(e) {} 
-            lastPos = pos; 
-        }
-        
-        function onUp(){ 
-            drawing=false; 
-            lastPos=null; 
-        }
-
-        drawRef.on('value', snap=>{
-            const val = snap.val() || {};
-            strokes = [];
-            Object.keys(val).forEach(k=>{ const s = val[k]; s._id = k; strokes.push(s); });
-            redrawAllStrokes();
-        });
-
-        function redrawAllStrokes(){ 
-            ctx.clearRect(0,0,canvas.width,canvas.height); 
-            const w = canvas.clientWidth, h = canvas.clientHeight; 
-            strokes.forEach(st=>{ 
-                try{ 
-                    ctx.strokeStyle = st.color || '#fbbf24'; 
-                    ctx.lineWidth = st.thickness || 3; 
-                    ctx.lineCap='round'; 
-                    ctx.beginPath(); 
-                    ctx.moveTo(st.lx*w, st.ly*h); 
-                    ctx.lineTo(st.x*w, st.y*h); 
-                    ctx.stroke(); 
-                } catch(e) {} 
-            }); 
-        }
-
-        roomRef.child('drawingEnabled').on('value', s=>{ 
-            const on = !!s.val(); 
-            drawingEnabled = on; 
-            if(on && isHost) enableDrawing(); 
-            else disableDrawing(); 
-            toggleDrawBtn.innerHTML = on ? 
-                '<i class="fas fa-pencil-alt"></i> Drawing ON' : 
-                '<i class="fas fa-pencil-alt"></i> Draw'; 
-            toggleDrawBtn.classList.toggle('active', on);
-        });
-
-        // --- reactions ---
-        function showReactionBubble(emoji){ 
-            const el = document.createElement('div'); 
-            el.className='reaction-bubble'; 
-            el.textContent = emoji; 
-            reactionsBox.appendChild(el); 
-            setTimeout(()=>el.remove(),3000); 
-        }
-        
-        function emitReaction(emoji){ 
-            reactionsRef.push({
-                emoji,
-                at: firebase.database.ServerValue.TIMESTAMP
-            }); 
-        }
-        
-        document.querySelectorAll('.reaction-option').forEach(btn=>{
-            btn.addEventListener('click', ()=>{ 
-                const emoji = btn.getAttribute('data-emoji') || btn.textContent; 
-                emitReaction(emoji); 
-                closeWidget('reaction');
-            });
-        });
-        
-        reactionsRef.on('child_added', snap=>{ 
-            const v = snap.val()||{}; 
-            if(v.emoji) showReactionBubble(v.emoji); 
-        });
-
-        // --- chat ---
-        function appendChatMessage(msg){ 
-            const div = document.createElement('div'); 
-            div.className = `message ${msg.userLabel === 'Host' ? 'self' : ''}`;
+            // Create message element
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message self';
             
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar';
-            avatar.textContent = msg.userLabel === 'Host' ? 'H' : 'V';
+            avatar.textContent = 'Y';
             
             const content = document.createElement('div');
             content.className = 'message-content';
@@ -1767,520 +1821,199 @@
             const meta = document.createElement('div');
             meta.className = 'message-meta';
             
-            const date = msg.at ? new Date(msg.at) : new Date();
-            const timeStr = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             
             meta.innerHTML = `
-                <span>${msg.userLabel||'Guest'}</span>
+                <span>You</span>
                 <span>${timeStr}</span>
             `;
             
             const body = document.createElement('div');
-            body.textContent = msg.text; 
+            body.textContent = text;
             
             content.appendChild(body);
             content.appendChild(meta);
             
-            div.appendChild(avatar);
-            div.appendChild(content);
-            chatMessages.appendChild(div); 
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
             
+            // Add to chat
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
             chatMessages.scrollTop = chatMessages.scrollHeight;
             
-            // Update chat badge if chat panel is closed
-            if (activeWidget !== 'chat') {
-                newChatCount++;
-                updateChatBadge();
-            }
-        }
-        
-        chatRef.limitToLast(150).on('child_added', snap=>{ 
-            const msg = snap.val(); 
-            if(!msg) return; 
-            appendChatMessage(msg); 
-        });
-        
-        function sendChat(){ 
-            const text = (chatInput.value||'').trim().slice(0,1000); 
-            if(!text) return; 
-            const uid = (auth.currentUser && auth.currentUser.uid) || 'anon'; 
-            chatRef.push({
-                text,
-                uid,
+            // Clear input
+            chatInput.value = '';
+            
+            // Save to Firebase
+            const chatRef = db.ref('rooms/' + roomId + '/chat').push();
+            chatRef.set({
+                text: text,
                 userLabel: isHost ? 'Host' : 'Viewer',
                 at: firebase.database.ServerValue.TIMESTAMP
-            }); 
-            chatInput.value=''; 
-        }
-        
-        chatSendBtn.addEventListener('click', sendChat); 
-        chatInput.addEventListener('keydown', (e)=>{ 
-            if(e.key==='Enter'){ 
-                e.preventDefault(); 
-                sendChat(); 
-            } 
-        });
-
-        function updateChatBadge() {
-            if (newChatCount > 0) {
-                let badge = chatWidget.querySelector('.badge');
-                if (!badge) {
-                    badge = document.createElement('div');
-                    badge.className = 'badge';
-                    chatWidget.appendChild(badge);
-                }
-                badge.textContent = newChatCount > 9 ? '9+' : newChatCount;
-            } else {
-                const badge = chatWidget.querySelector('.badge');
-                if (badge) badge.remove();
-            }
-        }
-
-        // --- predicts & polls ---
-        function renderPredicts(data){ 
-            const out = document.getElementById('predict-panel'); 
-            out.innerHTML = '<div class="interactive-title">Predictions</div>'; 
-            Object.keys(data||{}).forEach(id=>{ 
-                const p = data[id]; 
-                const el = document.createElement('div'); 
-                el.className = 'predict-option';
-                el.innerHTML = `
-                    <div><strong>${p.question}</strong></div>
-                    <button class="sidebar-btn" style="margin-top: 5px; font-size: 12px; padding: 5px 10px;">
-                        Answer
-                    </button>
-                `;
-                el.querySelector('button').onclick = ()=>{ 
-                    const ans = prompt('Your answer'); 
-                    if(!ans) return; 
-                    predictRef.child(id).child('options').push({
-                        answer:ans,
-                        at:firebase.database.ServerValue.TIMESTAMP
-                    }); 
-                };
-                out.appendChild(el); 
-            }); 
-        }
-        
-        function renderPolls(data){ 
-            const out = document.getElementById('poll-panel'); 
-            out.innerHTML = '<div class="interactive-title">Polls</div>'; 
-            Object.keys(data||{}).forEach(id=>{ 
-                const p=data[id]; 
-                const el=document.createElement('div'); 
-                el.className = 'poll-option';
-                el.innerHTML = `
-                    <div><strong>${p.q}</strong></div>
-                    <button class="sidebar-btn" style="margin-top: 5px; font-size: 12px; padding: 5px 10px;">
-                        Vote
-                    </button>
-                `;
-                el.querySelector('button').onclick = ()=>{ 
-                    const opt=prompt('Enter your vote'); 
-                    if(!opt) return; 
-                    pollsRef.child(id).child('options').push({
-                        label:opt,
-                        at:firebase.database.ServerValue.TIMESTAMP
-                    }); 
-                };
-                out.appendChild(el); 
-            }); 
-        }
-        
-        predictRef.on('value', s=>renderPredicts(s.val()||{})); 
-        pollsRef.on('value', s=>renderPolls(s.val()||{}));
-
-        // --- Widget Management ---
-        function openWidget(widgetName) {
-            // Close any open widget
-            closeAllWidgets();
-            
-            // Open the requested widget
-            activeWidget = widgetName;
-            const panel = document.getElementById(`${widgetName}-panel`);
-            if (panel) {
-                panel.classList.add('active');
-            }
-            
-            // Reset chat badge if opening chat
-            if (widgetName === 'chat') {
-                newChatCount = 0;
-                updateChatBadge();
-            }
-            
-            // Reset minimize timeout
-            resetMinimizeTimeout();
-        }
-        
-        function closeWidget(widgetName) {
-            const panel = document.getElementById(`${widgetName}-panel`);
-            if (panel) {
-                panel.classList.remove('active');
-            }
-            
-            if (activeWidget === widgetName) {
-                activeWidget = null;
-            }
-        }
-        
-        function closeAllWidgets() {
-            document.querySelectorAll('.widget-panel').forEach(panel => {
-                panel.classList.remove('active');
             });
-            activeWidget = null;
+            
+            // Simulate response after a delay
+            setTimeout(simulateResponse, 1000 + Math.random() * 2000);
         }
-        
-        // Widget event listeners
-        voiceWidget.addEventListener('click', () => {
-            if (activeWidget === 'voice') {
-                closeWidget('voice');
-            } else {
-                openWidget('voice');
-            }
-        });
-        
-        chatWidget.addEventListener('click', () => {
-            if (activeWidget === 'chat') {
-                closeWidget('chat');
-            } else {
-                openWidget('chat');
-                newChatCount = 0;
-                updateChatBadge();
-            }
-        });
-        
-        reactionWidget.addEventListener('click', () => {
-            if (activeWidget === 'reaction') {
-                closeWidget('reaction');
-            } else {
-                openWidget('reaction');
-            }
-        });
-        
-        shareWidget.addEventListener('click', () => {
-            if (activeWidget === 'share') {
-                closeWidget('share');
-            } else {
-                openWidget('share');
-            }
-        });
-        
-        // Close widget buttons
-        document.querySelectorAll('.close-widget').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const widget = e.target.closest('.close-widget').getAttribute('data-widget');
-                closeWidget(widget);
+
+        function simulateResponse() {
+            const responses = [
+                "That was hilarious! 😂",
+                "I can't believe that just happened!",
+                "This is my favorite part!",
+                "Who else is watching this?",
+                "This movie is amazing!",
+                "I've seen this before but it's still great!",
+                "Can we rewind that part?",
+                "The acting in this scene is incredible!",
+                "I love this soundtrack!",
+                "What did you think of that plot twist?"
+            ];
+            
+            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+            
+            // Create response message
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = 'V';
+            
+            const content = document.createElement('div');
+            content.className = 'message-content';
+            
+            const meta = document.createElement('div');
+            meta.className = 'message-meta';
+            
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            meta.innerHTML = `
+                <span>Viewer${Math.floor(Math.random() * 10) + 1}</span>
+                <span>${timeStr}</span>
+            `;
+            
+            const body = document.createElement('div');
+            body.textContent = randomResponse;
+            
+            content.appendChild(body);
+            content.appendChild(meta);
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+            
+            // Add to chat
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Save to Firebase
+            const chatRef = db.ref('rooms/' + roomId + '/chat').push();
+            chatRef.set({
+                text: randomResponse,
+                userLabel: 'Viewer',
+                at: firebase.database.ServerValue.TIMESTAMP
             });
+        }
+
+        // Reactions
+        function sendReaction(emoji) {
+            // Create reaction bubble
+            const bubble = document.createElement('div');
+            bubble.className = 'reaction-bubble';
+            bubble.textContent = emoji;
+            reactionsBox.appendChild(bubble);
+            
+            // Remove after animation
+            setTimeout(() => {
+                bubble.remove();
+            }, 3000);
+            
+            // Save to Firebase
+            const reactionsRef = db.ref('rooms/' + roomId + '/reactions').push();
+            reactionsRef.set({
+                emoji: emoji,
+                at: firebase.database.ServerValue.TIMESTAMP
+            });
+            
+            console.log(`Reaction sent: ${emoji}`);
+        }
+
+        // Listen for reactions from Firebase
+        db.ref('rooms/' + roomId + '/reactions').on('child_added', (snapshot) => {
+            const reaction = snapshot.val();
+            if (reaction && reaction.emoji) {
+                // Create reaction bubble
+                const bubble = document.createElement('div');
+                bubble.className = 'reaction-bubble';
+                bubble.textContent = reaction.emoji;
+                reactionsBox.appendChild(bubble);
+                
+                // Remove after animation
+                setTimeout(() => {
+                    bubble.remove();
+                }, 3000);
+            }
         });
-        
-        // Copy link button
-        copyLinkBtn.addEventListener('click', () => {
+
+        // Copy to clipboard
+        function copyToClipboard() {
             shareLink.select();
             document.execCommand('copy');
             
-            const originalText = copyLinkBtn.innerHTML;
-            copyLinkBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-            copyLinkBtn.classList.add('copied');
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            copyBtn.classList.add('copied');
             
             setTimeout(() => {
-                copyLinkBtn.innerHTML = originalText;
-                copyLinkBtn.classList.remove('copied');
+                copyBtn.innerHTML = originalText;
+                copyBtn.classList.remove('copied');
             }, 2000);
-        });
+        }
 
-        // --- Widget Dragging ---
-        function startDrag(e, widget) {
-            e.preventDefault();
-            isDragging = true;
-            dragWidget = widget;
+        // Utility functions
+        function showNotification(message) {
+            // Create a notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--primary);
+                color: white;
+                padding: 12px 20px;
+                border-radius: var(--border-radius-sm);
+                z-index: 10000;
+                font-weight: 500;
+                box-shadow: var(--shadow);
+                animation: slideDown 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
             
-            const rect = widget.getBoundingClientRect();
-            if (e.type === 'touchstart') {
-                dragOffsetX = e.touches[0].clientX - rect.left;
-                dragOffsetY = e.touches[0].clientY - rect.top;
-            } else {
-                dragOffsetX = e.clientX - rect.left;
-                dragOffsetY = e.clientY - rect.top;
-            }
-            
-            document.addEventListener('mousemove', onDrag);
-            document.addEventListener('touchmove', onDrag, { passive: false });
-            document.addEventListener('mouseup', stopDrag);
-            document.addEventListener('touchend', stopDrag);
-            
-            // Reset minimize timeout
-            resetMinimizeTimeout();
+            setTimeout(() => {
+                notification.style.animation = 'slideUp 0.3s ease';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
         }
-        
-        function onDrag(e) {
-            if (!isDragging) return;
-            e.preventDefault();
-            
-            let clientX, clientY;
-            if (e.type === 'touchmove') {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            } else {
-                clientX = e.clientX;
-                clientY = e.clientY;
-            }
-            
-            const container = document.querySelector('.video-container');
-            const containerRect = container.getBoundingClientRect();
-            
-            // Calculate new position
-            let newX = clientX - dragOffsetX;
-            let newY = clientY - dragOffsetY;
-            
-            // Constrain to container bounds
-            newX = Math.max(0, Math.min(newX, containerRect.width - dragWidget.offsetWidth));
-            newY = Math.max(0, Math.min(newY, containerRect.height - dragWidget.offsetHeight));
-            
-            // Apply new position
-            dragWidget.style.position = 'absolute';
-            dragWidget.style.left = `${newX}px`;
-            dragWidget.style.top = `${newY}px`;
-        }
-        
-        function stopDrag() {
-            isDragging = false;
-            dragWidget = null;
-            
-            document.removeEventListener('mousemove', onDrag);
-            document.removeEventListener('touchmove', onDrag);
-            document.removeEventListener('mouseup', stopDrag);
-            document.removeEventListener('touchend', stopDrag);
-            
-            // Restart minimize timeout
-            resetMinimizeTimeout();
-        }
-        
-        // Add drag listeners to widgets
-        document.querySelectorAll('.floating-widget').forEach(widget => {
-            widget.addEventListener('mousedown', (e) => startDrag(e, widget));
-            widget.addEventListener('touchstart', (e) => startDrag(e, widget), { passive: false });
-        });
-        
-        // --- Widget Minimize ---
-        function resetMinimizeTimeout() {
-            if (minimizeTimeout) clearTimeout(minimizeTimeout);
-            
-            // Show all widgets at normal size
-            document.querySelectorAll('.floating-widget').forEach(widget => {
-                widget.classList.remove('minimized');
-            });
-            
-            // Set timeout to minimize after 10 seconds of inactivity
-            minimizeTimeout = setTimeout(() => {
-                document.querySelectorAll('.floating-widget').forEach(widget => {
-                    if (!widget.classList.contains('active')) {
-                        widget.classList.add('minimized');
-                    }
-                });
-            }, 10000);
-        }
-        
-        // Initialize minimize timeout
-        resetMinimizeTimeout();
-        
-        // Reset timeout on any interaction
-        document.addEventListener('mousedown', resetMinimizeTimeout);
-        document.addEventListener('touchstart', resetMinimizeTimeout);
-        document.addEventListener('keydown', resetMinimizeTimeout);
 
-        // --- Sidebar Management ---
-        sidebarToggle.addEventListener('click', () => {
-            partySidebar.classList.add('active');
-            document.body.classList.remove('fullscreen');
-        });
-        
-        closeSidebar.addEventListener('click', () => {
-            partySidebar.classList.remove('active');
-            document.body.classList.add('fullscreen');
-        });
-        
-        // Close sidebar when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!partySidebar.contains(e.target) && !sidebarToggle.contains(e.target) && partySidebar.classList.contains('active')) {
-                partySidebar.classList.remove('active');
-                document.body.classList.add('fullscreen');
-            }
-        });
-
-        // --- voice (agora) integration ---
-        function tryAttachAgoraSession(session) {
-            if(!session) return false;
-            agoraSession = session;
-            console.log('agora session attached', session);
-            try {
-                if(typeof session.on === 'function') {
-                    session.on('user-published', (uid, mediaType) => {
-                        console.log('agora user-published', uid, mediaType);
-                        setVoiceStatus('Remote user published: ' + uid);
-                        isSomeoneTalking = true;
-                        updateVoiceWidget();
-                        if(typeof session.subscribe === 'function') {
-                            session.subscribe(uid, mediaType).then(remoteTrack => {
-                                if(mediaType === 'audio' && remoteTrack && typeof remoteTrack.play === 'function') {
-                                    const audio = document.createElement('audio');
-                                    audio.autoplay = true;
-                                    audio.playsInline = true;
-                                    audio.controls = false;
-                                    audio.style.display = 'none';
-                                    document.body.appendChild(audio);
-                                    try {
-                                        if(typeof remoteTrack.play === 'function') {
-                                            remoteTrack.play(audio);
-                                        } else if(remoteTrack.track) {
-                                            const stream = new MediaStream([remoteTrack.track]);
-                                            audio.srcObject = stream;
-                                            audio.play().catch(()=>{});
-                                        }
-                                    } catch(e){ console.warn('could not auto-play remote track', e); }
-                                }
-                            }).catch(()=>{});
-                        }
-                    });
-                    
-                    session.on('user-unpublished', (uid, mediaType) => {
-                        console.log('agora user-unpublished', uid, mediaType);
-                        isSomeoneTalking = false;
-                        updateVoiceWidget();
-                    });
-                }
-            } catch(e){ console.warn('attachAgoraSession hook failed', e); }
-            return true;
-        }
-        
-        function updateVoiceWidget() {
-            const icon = voiceWidget.querySelector('i');
-            if (agoraLocalMicOn) {
-                voiceWidget.classList.add('talking');
-                icon.className = 'fas fa-microphone';
-            } else if (isSomeoneTalking) {
-                voiceWidget.classList.remove('talking');
-                voiceWidget.innerHTML = '<div class="sound-wave"><span></span><span></span><span></span></div>';
-            } else {
-                voiceWidget.classList.remove('talking');
-                voiceWidget.innerHTML = '<i class="fas fa-microphone"></i>';
+        function handleResize() {
+            // Adjust UI for different screen sizes
+            if (window.innerWidth <= 768) {
+                document.body.classList.add('touch-controls');
             }
         }
 
-        auth.onAuthStateChanged(async user => {
-            if(!user) return;
-            setVoiceStatus('Initializing voice...');
-            try {
-                if(typeof initAgoraVoice === 'function') {
-                    const maybePromise = initAgoraVoice({ firebase, auth, roomId, isHost, holdTalkBtn: holdTalkBtn, voiceStatus: document.getElementById('voice-status') });
-                    const session = (maybePromise && typeof maybePromise.then === 'function') ? await maybePromise : maybePromise;
-                    if(tryAttachAgoraSession(session)) {
-                        setVoiceStatus('Voice ready');
-                    } else {
-                        setVoiceStatus('Voice initialized (no session object returned).');
-                        if(window.AgoraVoiceSession) tryAttachAgoraSession(window.AgoraVoiceSession);
-                    }
-                } else if(window.AgoraVoiceSession) {
-                    tryAttachAgoraSession(window.AgoraVoiceSession);
-                    setVoiceStatus('Voice ready via global AgoraVoiceSession');
-                } else {
-                    setVoiceStatus('Voice connector not found (agora.js). PTT will attempt best-effort.');
-                    console.warn('initAgoraVoice not found — ensure your agora.js exposes initAgoraVoice or a global session object.');
-                }
-            } catch (err) {
-                console.error('Error initializing Agora:', err);
-                setVoiceStatus('Voice init error — check console.');
-            }
-        });
-
-        // helper: attempt to publish/unpublish mic
-        async function startLocalMic() {
-            try {
-                if(agoraSession) {
-                    if(typeof agoraSession.publishLocalAudio === 'function') { await agoraSession.publishLocalAudio(); agoraLocalMicOn = true; updateVoiceWidget(); return true; }
-                    if(typeof agoraSession.startLocalAudio === 'function') { await agoraSession.startLocalAudio(); agoraLocalMicOn = true; updateVoiceWidget(); return true; }
-                    if(typeof agoraSession.unmuteLocalAudio === 'function') { await agoraSession.unmuteLocalAudio(); agoraLocalMicOn = true; updateVoiceWidget(); return true; }
-                    if(typeof agoraSession.publish === 'function') { await agoraSession.publish('audio').catch(()=>{}); agoraLocalMicOn = true; updateVoiceWidget(); return true; }
-                }
-                if(typeof window.startAgoraMic === 'function') { await window.startAgoraMic(); agoraLocalMicOn = true; updateVoiceWidget(); return true; }
-            } catch(e){ console.warn('startLocalMic error', e); }
-            return false;
-        }
-        
-        async function stopLocalMic() {
-            try {
-                if(agoraSession) {
-                    if(typeof agoraSession.unpublishLocalAudio === 'function') { await agoraSession.unpublishLocalAudio(); agoraLocalMicOn = false; updateVoiceWidget(); return true; }
-                    if(typeof agoraSession.stopLocalAudio === 'function') { await agoraSession.stopLocalAudio(); agoraLocalMicOn = false; updateVoiceWidget(); return true; }
-                    if(typeof agoraSession.muteLocalAudio === 'function') { await agoraSession.muteLocalAudio(); agoraLocalMicOn = false; updateVoiceWidget(); return true; }
-                    if(typeof agoraSession.unpublish === 'function') { await agoraSession.unpublish('audio').catch(()=>{}); agoraLocalMicOn = false; updateVoiceWidget(); return true; }
-                }
-                if(typeof window.stopAgoraMic === 'function') { await window.stopAgoraMic(); agoraLocalMicOn = false; updateVoiceWidget(); return true; }
-            } catch(e){ console.warn('stopLocalMic error', e); }
-            return false;
-        }
-
-        // attach PTT handlers
-        function attachPTTHandlers(elem) {
-            elem.addEventListener('mousedown', async (e) => { 
-                e.preventDefault(); 
-                setVoiceStatus('Requesting mic...'); 
-                const ok = await startLocalMic(); 
-                if(ok){ 
-                    setVoiceStatus('You are talking'); 
-                    elem.classList.add('talking');
-                } else { 
-                    setVoiceStatus('Mic failed — check permissions or agora.js'); 
-                } 
-            });
-            
-            elem.addEventListener('mouseup', async (e) => { 
-                e.preventDefault(); 
-                const ok = await stopLocalMic(); 
-                if(ok) {
-                    setVoiceStatus('Mic off'); 
-                    elem.classList.remove('talking');
-                } else {
-                    setVoiceStatus('Mic stop failed'); 
-                }
-            });
-            
-            elem.addEventListener('touchstart', async (e) => { 
-                e.preventDefault(); 
-                setVoiceStatus('Requesting mic...'); 
-                const ok = await startLocalMic(); 
-                if(ok){ 
-                    setVoiceStatus('You are talking'); 
-                    elem.classList.add('talking');
-                } else { 
-                    setVoiceStatus('Mic failed — check permissions or agora.js'); 
-                } 
-            }, {passive:false});
-            
-            elem.addEventListener('touchend', async (e) => { 
-                e.preventDefault(); 
-                const ok = await stopLocalMic(); 
-                if(ok) {
-                    setVoiceStatus('Mic off'); 
-                    elem.classList.remove('talking');
-                } else {
-                    setVoiceStatus('Mic stop failed'); 
-                }
-            }, {passive:false});
-        }
-        
-        attachPTTHandlers(holdTalkBtn);
-        attachPTTHandlers(voiceWidget);
-
-        // stop agora mic when leaving
-        window.addEventListener('beforeunload', async () => {
-            if(agoraLocalMicOn) await stopLocalMic().catch(()=>{});
-        });
-
-        // ensure fitCanvas is run once player sizes are known
-        setTimeout(fitCanvas, 300);
-
-        // small debug log
-        console.info('Watch Party loaded. isHost=', isHost);
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>

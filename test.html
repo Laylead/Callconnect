@@ -312,6 +312,33 @@
             transform: scale(1.1);
         }
         
+        .widget-content {
+            position: absolute;
+            top: 0;
+            right: 60px;
+            background: var(--widget-bg);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .widget-content.active {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
         .widget-badge {
             position: absolute;
             top: -5px;
@@ -1059,6 +1086,11 @@
             .detailed-content {
                 height: 60vh;
             }
+            
+            .widget-content {
+                width: 280px;
+                right: 55px;
+            }
         }
         
         @media (max-width: 480px) {
@@ -1120,6 +1152,11 @@
             
             .detailed-content {
                 height: 65vh;
+            }
+            
+            .widget-content {
+                width: 260px;
+                right: 50px;
             }
         }
         
@@ -1199,6 +1236,12 @@
                     <button class="widget-icon" id="voice-widget">
                         <i class="fas fa-microphone"></i>
                     </button>
+                    <div class="widget-content" id="voice-content">
+                        <div class="voice-status" id="voice-status">Voice ready - Hold to talk</div>
+                        <button id="hold-talk-btn" class="voice-btn">
+                            <i class="fas fa-microphone"></i> Hold to Talk
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- Reactions Widget -->
@@ -1206,6 +1249,18 @@
                     <button class="widget-icon" id="reactions-widget">
                         <i class="fas fa-smile"></i>
                     </button>
+                    <div class="widget-content" id="reactions-content">
+                        <div class="reactions-grid">
+                            <button class="reaction-btn" data-emoji="😂">😂</button>
+                            <button class="reaction-btn" data-emoji="😱">😱</button>
+                            <button class="reaction-btn" data-emoji="🤨">🤨</button>
+                            <button class="reaction-btn" data-emoji="👏">👏</button>
+                            <button class="reaction-btn" data-emoji="🔥">🔥</button>
+                            <button class="reaction-btn" data-emoji="❤️">❤️</button>
+                            <button class="reaction-btn" data-emoji="😢">😢</button>
+                            <button class="reaction-btn" data-emoji="🎉">🎉</button>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Chat Widget -->
@@ -1214,6 +1269,26 @@
                         <i class="fas fa-comment"></i>
                         <div class="widget-badge" id="chat-badge" style="display: none;">0</div>
                     </button>
+                    <div class="widget-content" id="chat-content">
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="message">
+                                <div class="message-avatar">H</div>
+                                <div class="message-content">
+                                    Welcome to the watch party! 🎉
+                                    <div class="message-meta">
+                                        <span>Host</span>
+                                        <span>Just now</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-input-container">
+                            <input type="text" id="chat-input" placeholder="Type your message...">
+                            <button class="send-btn" id="chat-send-btn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Share Widget -->
@@ -1221,6 +1296,14 @@
                     <button class="widget-icon" id="share-widget">
                         <i class="fas fa-share-alt"></i>
                     </button>
+                    <div class="widget-content" id="share-content">
+                        <div class="share-link-container">
+                            <input type="text" id="share-link" readonly>
+                            <button class="copy-btn" id="copy-btn">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1373,7 +1456,7 @@
                     </div>
                     
                     <div class="chat-container">
-                        <div class="chat-messages" id="chat-messages">
+                        <div class="chat-messages" id="sidebar-chat-messages">
                             <div class="message">
                                 <div class="message-avatar">H</div>
                                 <div class="message-content">
@@ -1386,8 +1469,8 @@
                             </div>
                         </div>
                         <div class="chat-input-container">
-                            <input type="text" class="chat-input" id="chat-input" placeholder="Type your message...">
-                            <button class="send-btn" id="chat-send-btn">
+                            <input type="text" class="chat-input" id="sidebar-chat-input" placeholder="Type your message...">
+                            <button class="send-btn" id="sidebar-chat-send-btn">
                                 <i class="fas fa-paper-plane"></i>
                             </button>
                         </div>
@@ -1402,10 +1485,10 @@
                     </div>
                     
                     <div class="voice-controls">
-                        <button id="hold-talk-btn" class="voice-btn">
+                        <button id="sidebar-hold-talk-btn" class="voice-btn">
                             <i class="fas fa-microphone"></i> Hold to Talk
                         </button>
-                        <div class="voice-status" id="voice-status">Voice ready - Hold to talk</div>
+                        <div class="voice-status" id="sidebar-voice-status">Voice ready - Hold to talk</div>
                     </div>
                     
                     <!-- Reactions -->
@@ -1439,8 +1522,8 @@
                     
                     <div class="share-section">
                         <div class="share-link-container">
-                            <input type="text" class="share-link" id="share-link" readonly>
-                            <button class="copy-btn" id="copy-btn">
+                            <input type="text" class="share-link" id="sidebar-share-link" readonly>
+                            <button class="copy-btn" id="sidebar-copy-btn">
                                 <i class="fas fa-copy"></i> Copy
                             </button>
                         </div>
@@ -1501,6 +1584,36 @@
         const participantCount = document.getElementById('participant-count');
         const statusDisplay = document.getElementById('status-display');
 
+        // Floating Widgets
+        const voiceWidget = document.getElementById('voice-widget');
+        const voiceContent = document.getElementById('voice-content');
+        const holdTalkBtn = document.getElementById('hold-talk-btn');
+        const voiceStatus = document.getElementById('voice-status');
+        
+        const reactionsWidget = document.getElementById('reactions-widget');
+        const reactionsContent = document.getElementById('reactions-content');
+        
+        const chatWidget = document.getElementById('chat-widget');
+        const chatContent = document.getElementById('chat-content');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const chatSendBtn = document.getElementById('chat-send-btn');
+        const chatBadge = document.getElementById('chat-badge');
+        
+        const shareWidget = document.getElementById('share-widget');
+        const shareContent = document.getElementById('share-content');
+        const shareLink = document.getElementById('share-link');
+        const copyBtn = document.getElementById('copy-btn');
+
+        // Sidebar panel elements
+        const sidebarChatMessages = document.getElementById('sidebar-chat-messages');
+        const sidebarChatInput = document.getElementById('sidebar-chat-input');
+        const sidebarChatSendBtn = document.getElementById('sidebar-chat-send-btn');
+        const sidebarHoldTalkBtn = document.getElementById('sidebar-hold-talk-btn');
+        const sidebarVoiceStatus = document.getElementById('sidebar-voice-status');
+        const sidebarShareLink = document.getElementById('sidebar-share-link');
+        const sidebarCopyBtn = document.getElementById('sidebar-copy-btn');
+
         // Video controls
         const playPauseBtn = document.getElementById('custom-play-pause');
         const detailedPlayPauseBtn = document.getElementById('detailed-play-pause');
@@ -1521,15 +1634,8 @@
         const spotlightBtn = document.getElementById('spotlightBtn');
         const focusBtn = document.getElementById('focusBtn');
         const syncBtn = document.getElementById('syncBtn');
-        const holdTalkBtn = document.getElementById('hold-talk-btn');
-        const voiceStatus = document.getElementById('voice-status');
-        const chatMessages = document.getElementById('chat-messages');
-        const chatInput = document.getElementById('chat-input');
-        const chatSendBtn = document.getElementById('chat-send-btn');
         const predictBtn = document.getElementById('predictBtn');
         const openPoll = document.getElementById('openPoll');
-        const shareLink = document.getElementById('share-link');
-        const copyBtn = document.getElementById('copy-btn');
         const predictPanel = document.getElementById('predict-panel');
         const pollPanel = document.getElementById('poll-panel');
 
@@ -1547,6 +1653,8 @@
         let strokes = [];
         let agoraSession = null;
         let agoraLocalMicOn = false;
+        let activeWidget = null;
+        let widgetTimeout = null;
 
         // Participant management
         let currentUser = null;
@@ -1558,6 +1666,7 @@
 
         function setVoiceStatus(text) { 
             voiceStatus.textContent = text; 
+            sidebarVoiceStatus.textContent = text;
             console.log('[VoiceStatus]', text); 
         }
 
@@ -1714,6 +1823,7 @@
                 
                 // Set invite link
                 shareLink.value = window.location.href;
+                sidebarShareLink.value = window.location.href;
                 
                 // Set initial status
                 setStatus(isHost ? 'Host — you control playback' : 'Viewer — following host');
@@ -2008,31 +2118,119 @@
             // Overlay tap to play
             overlayBlock.addEventListener('click', startVideo);
             
+            // Widget toggles
+            voiceWidget.addEventListener('click', () => toggleWidget('voice'));
+            reactionsWidget.addEventListener('click', () => toggleWidget('reactions'));
+            chatWidget.addEventListener('click', () => toggleWidget('chat'));
+            shareWidget.addEventListener('click', () => toggleWidget('share'));
+            
             // Hold to talk buttons
             setupHoldToTalk(holdTalkBtn);
+            setupHoldToTalk(sidebarHoldTalkBtn);
             
             // Reaction buttons
             document.querySelectorAll('.reaction-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const emoji = e.target.getAttribute('data-emoji') || e.target.textContent;
                     sendReaction(emoji);
+                    closeWidget('reactions');
                 });
             });
             
-            // Chat send button
-            chatSendBtn.addEventListener('click', sendChatMessage);
+            // Chat send buttons
+            chatSendBtn.addEventListener('click', () => sendChatMessage(chatInput, chatMessages));
+            sidebarChatSendBtn.addEventListener('click', () => sendChatMessage(sidebarChatInput, sidebarChatMessages));
+            
             chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') sendChatMessage();
+                if (e.key === 'Enter') sendChatMessage(chatInput, chatMessages);
             });
             
-            // Copy button
-            copyBtn.addEventListener('click', copyToClipboard);
+            sidebarChatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendChatMessage(sidebarChatInput, sidebarChatMessages);
+            });
+            
+            // Copy buttons
+            copyBtn.addEventListener('click', () => copyToClipboard(shareLink, copyBtn));
+            sidebarCopyBtn.addEventListener('click', () => copyToClipboard(sidebarShareLink, sidebarCopyBtn));
             
             // Handle window resize
             window.addEventListener('resize', handleResize);
             
             // Handle page visibility
             document.addEventListener('visibilitychange', handleVisibilityChange);
+            
+            // Close widgets when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.widget-container') && 
+                    !e.target.closest('.sidebar-menu')) {
+                    if (activeWidget) {
+                        closeWidget(activeWidget);
+                    }
+                }
+            });
+        }
+
+        // Widget management
+        function toggleWidget(widgetName) {
+            // Close any active widget timeout
+            if (widgetTimeout) {
+                clearTimeout(widgetTimeout);
+                widgetTimeout = null;
+            }
+            
+            // If clicking the same widget, close it
+            if (activeWidget === widgetName) {
+                closeWidget(widgetName);
+                return;
+            }
+            
+            // Close any other open widget
+            if (activeWidget) {
+                closeWidget(activeWidget);
+            }
+            
+            // Open the selected widget
+            const widgetIcon = document.getElementById(`${widgetName}-widget`);
+            const widgetContent = document.getElementById(`${widgetName}-content`);
+            
+            if (widgetIcon && widgetContent) {
+                widgetIcon.classList.add('active');
+                widgetContent.classList.add('active');
+                activeWidget = widgetName;
+                
+                // Reset chat badge when opening chat
+                if (widgetName === 'chat') {
+                    unreadChatCount = 0;
+                    updateChatBadge();
+                }
+                
+                // Auto-close reactions after 5 seconds if no interaction
+                if (widgetName === 'reactions') {
+                    widgetTimeout = setTimeout(() => {
+                        closeWidget('reactions');
+                    }, 5000);
+                }
+            }
+        }
+
+        function closeWidget(widgetName) {
+            const widgetIcon = document.getElementById(`${widgetName}-widget`);
+            const widgetContent = document.getElementById(`${widgetName}-content`);
+            
+            if (widgetIcon && widgetContent) {
+                widgetIcon.classList.remove('active');
+                widgetContent.classList.remove('active');
+                
+                if (activeWidget === widgetName) {
+                    activeWidget = null;
+                }
+            }
+            
+            // Clear any timeout
+            if (widgetTimeout) {
+                clearTimeout(widgetTimeout);
+                widgetTimeout = null;
+            }
         }
 
         // View toggle functions
@@ -2241,8 +2439,8 @@
         }
 
         // Chat functionality
-        function sendChatMessage() {
-            const text = chatInput.value.trim();
+        function sendChatMessage(input, container) {
+            const text = input.value.trim();
             if (!text) return;
             
             // Create message element
@@ -2276,14 +2474,14 @@
             messageDiv.appendChild(avatar);
             messageDiv.appendChild(content);
             
-            // Add to chat
-            chatMessages.appendChild(messageDiv);
+            // Add to both chat containers
+            container.appendChild(messageDiv);
             
             // Scroll to bottom
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            container.scrollTop = container.scrollHeight;
             
             // Clear input
-            chatInput.value = '';
+            input.value = '';
             
             // Save to Firebase
             const chatRef = db.ref('rooms/' + roomId + '/chat').push();
@@ -2333,9 +2531,29 @@
             messageDiv.appendChild(avatar);
             messageDiv.appendChild(content);
             
-            chatMessages.appendChild(messageDiv);
+            // Add to both chat containers
+            chatMessages.appendChild(messageDiv.cloneNode(true));
+            sidebarChatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
             chatMessages.scrollTop = chatMessages.scrollHeight;
+            sidebarChatMessages.scrollTop = sidebarChatMessages.scrollHeight;
+            
+            // Update badge if chat is not open
+            if (activeWidget !== 'chat' && !isDetailedView) {
+                unreadChatCount++;
+                updateChatBadge();
+            }
         });
+
+        function updateChatBadge() {
+            if (unreadChatCount > 0) {
+                chatBadge.textContent = unreadChatCount > 9 ? '9+' : unreadChatCount;
+                chatBadge.style.display = 'flex';
+            } else {
+                chatBadge.style.display = 'none';
+            }
+        }
 
         // Reactions
         function sendReaction(emoji) {
@@ -2376,17 +2594,17 @@
         });
 
         // Copy to clipboard
-        function copyToClipboard() {
-            shareLink.select();
+        function copyToClipboard(input, button) {
+            input.select();
             document.execCommand('copy');
             
-            const originalText = copyBtn.innerHTML;
-            copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-            copyBtn.classList.add('copied');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            button.classList.add('copied');
             
             setTimeout(() => {
-                copyBtn.innerHTML = originalText;
-                copyBtn.classList.remove('copied');
+                button.innerHTML = originalText;
+                button.classList.remove('copied');
             }, 2000);
         }
 

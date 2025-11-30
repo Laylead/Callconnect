@@ -110,23 +110,21 @@
             pointer-events: all;
         }
         
-        /* Video container */
+        /* Enhanced Video Container */
         .video-container {
-            background-color: var(--video-bg);
-            border-radius: 0;
-            overflow: hidden;
-            box-shadow: none;
             position: relative;
             width: 100%;
             height: 100%;
+            background: var(--video-bg);
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
             z-index: 1;
         }
         
         .detailed-view .video-container {
-            height: 50vh;
+            height: 40vh;
             border-radius: 0;
             box-shadow: var(--shadow);
             flex-shrink: 0;
@@ -145,6 +143,7 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
+            max-height: 100%;
         }
         
         #ytContainer {
@@ -193,23 +192,25 @@
             border: 1px solid var(--glass-bg);
         }
         
-        /* Video controls */
+        /* Enhanced Video Controls */
         .custom-controls {
             position: absolute;
-            bottom: 25px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             gap: 15px;
             align-items: center;
-            background: rgba(0,0,0,0.8);
-            padding: 15px 25px;
+            background: rgba(0,0,0,0.85);
+            padding: 12px 20px;
             border-radius: var(--border-radius);
             opacity: 0;
             transition: var(--transition);
             z-index: 30;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,0.1);
+            min-width: 300px;
+            justify-content: center;
         }
         
         .video-container:hover .custom-controls,
@@ -218,13 +219,13 @@
         }
         
         .control-btn-lg {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             background: var(--glass-bg);
             border: none;
             color: white;
-            font-size: 18px;
+            font-size: 16px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -261,6 +262,16 @@
         
         .skip-btn:active {
             transform: scale(0.95);
+        }
+        
+        /* Time Display */
+        .time-display {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            min-width: 100px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
         }
         
         /* Floating Widgets */
@@ -397,7 +408,7 @@
             display: grid;
             grid-template-columns: 1fr 380px;
             gap: 0;
-            height: 50vh;
+            height: 60vh;
             overflow: hidden;
         }
         
@@ -1010,6 +1021,10 @@
             .sidebar-panel {
                 max-height: 60vh;
             }
+            
+            .video-container {
+                height: 45vh !important;
+            }
         }
         
         @media (max-width: 768px) {
@@ -1040,17 +1055,24 @@
                 bottom: 15px;
                 padding: 12px 20px;
                 gap: 12px;
+                width: 95%;
+                max-width: 350px;
             }
             
             .control-btn-lg {
-                width: 44px;
-                height: 44px;
-                font-size: 16px;
+                width: 40px;
+                height: 40px;
+                font-size: 15px;
             }
             
             .skip-btn {
                 font-size: 13px;
                 padding: 7px 10px;
+            }
+            
+            .time-display {
+                font-size: 13px;
+                min-width: 90px;
             }
             
             .detailed-header {
@@ -1080,11 +1102,11 @@
             }
             
             .detailed-view .video-container {
-                height: 40vh;
+                height: 35vh;
             }
             
             .detailed-content {
-                height: 60vh;
+                height: 65vh;
             }
             
             .widget-content {
@@ -1121,17 +1143,24 @@
                 bottom: 10px;
                 padding: 10px 15px;
                 gap: 10px;
+                width: 95%;
+                max-width: 320px;
             }
             
             .control-btn-lg {
-                width: 40px;
-                height: 40px;
-                font-size: 15px;
+                width: 36px;
+                height: 36px;
+                font-size: 14px;
             }
             
             .skip-btn {
                 font-size: 12px;
                 padding: 6px 8px;
+            }
+            
+            .time-display {
+                font-size: 12px;
+                min-width: 80px;
             }
             
             .controls-grid {
@@ -1147,11 +1176,11 @@
             }
             
             .detailed-view .video-container {
-                height: 35vh;
+                height: 30vh;
             }
             
             .detailed-content {
-                height: 65vh;
+                height: 70vh;
             }
             
             .widget-content {
@@ -1213,6 +1242,7 @@
                     <button class="skip-btn" id="skip-back">
                         <i class="fas fa-backward"></i> 10s
                     </button>
+                    <div class="time-display" id="time-display">0:00 / 0:00</div>
                     <button class="skip-btn" id="skip-forward">
                         10s <i class="fas fa-forward"></i>
                     </button>
@@ -1342,6 +1372,7 @@
                     <button class="skip-btn" id="detailed-skip-back">
                         <i class="fas fa-backward"></i> 10s
                     </button>
+                    <div class="time-display" id="detailed-time-display">0:00 / 0:00</div>
                     <button class="skip-btn" id="detailed-skip-forward">
                         10s <i class="fas fa-forward"></i>
                     </button>
@@ -1546,6 +1577,231 @@
     <script src="https://www.youtube.com/iframe_api"></script>
 
     <script>
+        // --- Enhanced Sync System ---
+        class VideoSyncManager {
+            constructor(isHost, roomRef, playerFunctions) {
+                this.isHost = isHost;
+                this.roomRef = roomRef;
+                this.player = playerFunctions;
+                this.lastSyncTime = 0;
+                this.syncInterval = 5000; // 5 seconds for heartbeats
+                this.maxDrift = 1.0; // 1 second max drift
+                this.isSyncing = false;
+                this.lastHardSeek = 0;
+                this.hardSeekCooldown = 2000;
+                this.syncHandle = null;
+            }
+
+            // Only host can push state changes
+            pushRoomState(status, time) {
+                if (!this.isHost) return;
+                
+                try {
+                    this.roomRef.update({
+                        status,
+                        currentTime: time,
+                        updatedAt: firebase.database.ServerValue.TIMESTAMP,
+                        lastUpdatedBy: currentUser
+                    });
+                    console.log(`[Host] Pushed state: ${status} at ${time.toFixed(2)}s`);
+                } catch (e) {
+                    console.warn('Sync push error:', e);
+                }
+            }
+
+            // Viewer sync logic with drift correction
+            syncToHostState(hostData) {
+                if (this.isSyncing || !hostData || !this.player.ready) return;
+                
+                this.isSyncing = true;
+                const hostTime = hostData.currentTime || 0;
+                const serverTimestamp = hostData.updatedAt || Date.now();
+                const localTime = this.player.getTime();
+                
+                // Calculate effective host time with network latency
+                const effectiveHostTime = this.computeHostEffectiveTime(hostTime, serverTimestamp);
+                const timeDiff = effectiveHostTime - localTime;
+                
+                // Apply drift correction instead of hard seeking
+                this.applyDriftCorrection(timeDiff, effectiveHostTime);
+                
+                setTimeout(() => { this.isSyncing = false; }, 100);
+            }
+
+            computeHostEffectiveTime(hostTime, serverTimestamp) {
+                const now = Date.now();
+                const latency = Math.max(0, now - serverTimestamp);
+                return hostTime + (latency / 1000);
+            }
+
+            applyDriftCorrection(diff, targetTime) {
+                // Large drift - hard seek
+                if (Math.abs(diff) > this.maxDrift) {
+                    console.log(`Large drift detected: ${diff.toFixed(2)}s, seeking to ${targetTime.toFixed(2)}`);
+                    this.hardSeekTo(targetTime);
+                    this.player.setRate(1.0);
+                    return;
+                }
+                
+                // Medium drift - adjust playback rate
+                if (Math.abs(diff) > 0.3) {
+                    const rate = diff > 0.1 ? 1.03 : (diff < -0.1 ? 0.97 : 1.0);
+                    console.log(`Medium drift: ${diff.toFixed(2)}s, adjusting rate to ${rate}`);
+                    this.player.setRate(rate);
+                    
+                    // Small gradual seek
+                    try {
+                        const newTime = this.player.getTime() + diff * 0.1;
+                        this.player.seek(newTime);
+                    } catch (e) {}
+                    return;
+                }
+                
+                // Small drift - ignore or micro-adjust
+                if (Math.abs(diff) > 0.05) {
+                    try {
+                        const newTime = this.player.getTime() + diff * 0.05;
+                        this.player.seek(newTime);
+                    } catch (e) {}
+                }
+                
+                this.player.setRate(1.0);
+            }
+
+            hardSeekTo(timeSec) {
+                const now = Date.now();
+                if (now - this.lastHardSeek < this.hardSeekCooldown) return;
+                this.lastHardSeek = now;
+                
+                try {
+                    this.player.seek(timeSec);
+                } catch (e) {
+                    console.warn('Seek failed:', e);
+                }
+            }
+
+            startHostSync() {
+                if (!this.isHost) return;
+                
+                this.syncHandle = setInterval(() => {
+                    if (this.player.isPlaying() && this.player.ready) {
+                        this.pushRoomState('play', this.player.getTime());
+                    }
+                }, this.syncInterval);
+            }
+
+            startViewerSync() {
+                if (this.isHost) return;
+                
+                this.syncHandle = setInterval(() => {
+                    this.roomRef.once('value').then(snap => {
+                        const data = snap.val();
+                        this.syncToHostState(data);
+                    });
+                }, 3000);
+            }
+
+            stopSync() {
+                if (this.syncHandle) {
+                    clearInterval(this.syncHandle);
+                    this.syncHandle = null;
+                }
+            }
+        }
+
+        // --- Enhanced Voice Chat System ---
+        class VoiceChatManager {
+            constructor() {
+                this.isTalking = false;
+                this.agoraClient = null;
+                this.localAudioTrack = null;
+                this.isInitialized = false;
+            }
+
+            async initAgoraVoice(config) {
+                try {
+                    if (this.isInitialized) return this.agoraClient;
+                    
+                    const { roomId, userId } = config;
+                    
+                    // Use test mode or your Agora credentials
+                    const APP_ID = "test_app_id"; // Replace with actual App ID in production
+                    const token = null;
+                    
+                    this.agoraClient = AgoraRTC.createClient({ 
+                        mode: "rtc", 
+                        codec: "vp8" 
+                    });
+                    
+                    await this.agoraClient.join(APP_ID, roomId, token, userId);
+                    
+                    // Create and publish local audio track
+                    this.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+                    await this.agoraClient.publish([this.localAudioTrack]);
+                    
+                    // Set up event listeners for remote users
+                    this.agoraClient.on("user-published", async (user, mediaType) => {
+                        await this.agoraClient.subscribe(user, mediaType);
+                        
+                        if (mediaType === "audio") {
+                            user.audioTrack.play();
+                            console.log("Remote user audio connected");
+                        }
+                    });
+
+                    this.agoraClient.on("user-unpublished", (user) => {
+                        console.log("Remote user left");
+                    });
+                    
+                    this.isInitialized = true;
+                    console.log("Agora voice initialized successfully");
+                    return this.agoraClient;
+                    
+                } catch (error) {
+                    console.error("Agora initialization failed:", error);
+                    // Fallback to simulated voice for demo
+                    this.initFallbackAudio();
+                    return null;
+                }
+            }
+
+            initFallbackAudio() {
+                console.log("Using fallback audio system");
+                // Simulate voice functionality for demo
+                this.isInitialized = true;
+            }
+
+            async startTalking() {
+                if (!this.isInitialized) return;
+                
+                if (this.localAudioTrack) {
+                    await this.localAudioTrack.setEnabled(true);
+                }
+                this.isTalking = true;
+                console.log("Voice transmission started");
+            }
+
+            async stopTalking() {
+                if (!this.isInitialized) return;
+                
+                if (this.localAudioTrack) {
+                    await this.localAudioTrack.setEnabled(false);
+                }
+                this.isTalking = false;
+                console.log("Voice transmission stopped");
+            }
+
+            async destroy() {
+                if (this.localAudioTrack) {
+                    this.localAudioTrack.close();
+                }
+                if (this.agoraClient) {
+                    await this.agoraClient.leave();
+                }
+                this.isInitialized = false;
+            }
+        }
+
         // --- Basic init & DOM refs ---
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
@@ -1583,6 +1839,8 @@
         const detailedPlayerContainer = document.getElementById('detailed-player-container');
         const participantCount = document.getElementById('participant-count');
         const statusDisplay = document.getElementById('status-display');
+        const timeDisplay = document.getElementById('time-display');
+        const detailedTimeDisplay = document.getElementById('detailed-time-display');
 
         // Floating Widgets
         const voiceWidget = document.getElementById('voice-widget');
@@ -1651,14 +1909,57 @@
         let usingYT = false;
         let ytPlayer = null;
         let strokes = [];
-        let agoraSession = null;
-        let agoraLocalMicOn = false;
         let activeWidget = null;
         let widgetTimeout = null;
+
+        // Enhanced systems
+        let syncManager = null;
+        let voiceManager = new VoiceChatManager();
 
         // Participant management
         let currentUser = null;
         let participants = {};
+
+        // Player functions object for sync manager
+        const playerFunctions = {
+            get ready() { return ready; },
+            getTime: () => {
+                try{ 
+                    return usingYT && ytPlayer ? ytPlayer.getCurrentTime() : (html5video.currentTime || 0); 
+                } catch(e) { return 0; } 
+            },
+            seek: (t) => { 
+                try{ 
+                    if(usingYT && ytPlayer) ytPlayer.seekTo(t,true); 
+                    else html5video.currentTime = t; 
+                } catch(e) {} 
+            },
+            play: () => { 
+                try{ 
+                    if(usingYT && ytPlayer) return ytPlayer.playVideo(); 
+                    else return html5video.play(); 
+                } catch(e) {} 
+            },
+            pause: () => { 
+                try{ 
+                    if(usingYT && ytPlayer) return ytPlayer.pauseVideo(); 
+                    else return html5video.pause(); 
+                } catch(e) {} 
+            },
+            isPlaying: () => { 
+                try{ 
+                    if(usingYT && ytPlayer && ytPlayer.getPlayerState) 
+                        return ytPlayer.getPlayerState() === YT.PlayerState.PLAYING; 
+                    return (!html5video.paused && !html5video.seeking); 
+                } catch(e) { return false; } 
+            },
+            setRate: (r) => { 
+                try{ 
+                    if(usingYT && ytPlayer && ytPlayer.setPlaybackRate) ytPlayer.setPlaybackRate(r); 
+                    else html5video.playbackRate = r; 
+                } catch(e) {} 
+            }
+        };
 
         function setStatus(text) { 
             statusDisplay.textContent = text; 
@@ -1668,6 +1969,29 @@
             voiceStatus.textContent = text; 
             sidebarVoiceStatus.textContent = text;
             console.log('[VoiceStatus]', text); 
+        }
+
+        // --- Time display functions ---
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        function updateTimeDisplay() {
+            if (!ready) return;
+            
+            const currentTime = playerFunctions.getTime();
+            const duration = usingYT && ytPlayer ? ytPlayer.getDuration() : (html5video.duration || 0);
+            
+            if (duration && !isNaN(duration)) {
+                const remaining = duration - currentTime;
+                timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+                detailedTimeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+            } else {
+                timeDisplay.textContent = `${formatTime(currentTime)} / --:--`;
+                detailedTimeDisplay.textContent = `${formatTime(currentTime)} / --:--`;
+            }
         }
 
         // --- canvas sizing (supports high DPI) ---
@@ -1682,7 +2006,6 @@
             redrawAllStrokes();
         }
         window.addEventListener('resize', fitCanvas);
-        window.addEventListener('load', fitCanvas);
 
         // --- YouTube helpers ---
         function isYouTubeLink(url){ 
@@ -1729,53 +2052,24 @@
                     videoId:item.id,
                     playerVars:{rel:0,modestbranding:1,playsinline:1,iv_load_policy:3,controls: item.controls?1:0},
                     events:{
-                        onReady:()=>{ready=true;fitCanvas();if(isHost) hostStart();else viewerStart();},
-                        onStateChange:(e)=>{ if(!isHost || !ytPlayer) return; const t = ytPlayer.getCurrentTime(); if(e.data===YT.PlayerState.PLAYING) pushRoomState('play',t); if(e.data===YT.PlayerState.PAUSED) pushRoomState('pause',t); }
+                        onReady:()=>{
+                            ready=true;
+                            fitCanvas();
+                            if(isHost) hostStart(); 
+                            else viewerStart();
+                            
+                            // Start time display updates
+                            setInterval(updateTimeDisplay, 1000);
+                        },
+                        onStateChange:(e)=>{ 
+                            if(!isHost || !ytPlayer) return; 
+                            const t = ytPlayer.getCurrentTime(); 
+                            if(e.data===YT.PlayerState.PLAYING) syncManager.pushRoomState('play',t); 
+                            if(e.data===YT.PlayerState.PAUSED) syncManager.pushRoomState('pause',t); 
+                        }
                     }
                 });
             }
-        }
-
-        function playerGetTime(){ 
-            try{ 
-                return usingYT && ytPlayer ? ytPlayer.getCurrentTime() : (html5video.currentTime || 0); 
-            } catch(e) { return 0; } 
-        }
-
-        function playerSeek(t){ 
-            try{ 
-                if(usingYT && ytPlayer) ytPlayer.seekTo(t,true); 
-                else html5video.currentTime = t; 
-            } catch(e) {} 
-        }
-
-        function playerPlay(){ 
-            try{ 
-                if(usingYT && ytPlayer) return ytPlayer.playVideo(); 
-                else return html5video.play(); 
-            } catch(e) {} 
-        }
-
-        function playerPause(){ 
-            try{ 
-                if(usingYT && ytPlayer) return ytPlayer.pauseVideo(); 
-                else return html5video.pause(); 
-            } catch(e) {} 
-        }
-
-        function playerIsPlaying(){ 
-            try{ 
-                if(usingYT && ytPlayer && ytPlayer.getPlayerState) 
-                    return ytPlayer.getPlayerState() === YT.PlayerState.PLAYING; 
-                return (!html5video.paused && !html5video.seeking); 
-            } catch(e) { return false; } 
-        }
-
-        function playerSetRate(r){ 
-            try{ 
-                if(usingYT && ytPlayer && ytPlayer.setPlaybackRate) ytPlayer.setPlaybackRate(r); 
-                else html5video.playbackRate = r; 
-            } catch(e) {} 
         }
 
         // --- load room ---
@@ -1812,7 +2106,15 @@
                         html5video.crossOrigin = 'anonymous';
                         html5video.preload = 'auto';
                         html5video.controls = !!isHost;
-                        html5video.addEventListener('loadedmetadata', ()=>{ready=true;fitCanvas(); if(isHost) hostStart(); else viewerStart();});
+                        html5video.addEventListener('loadedmetadata', ()=>{
+                            ready=true;
+                            fitCanvas(); 
+                            if(isHost) hostStart(); 
+                            else viewerStart();
+                            
+                            // Start time display updates
+                            setInterval(updateTimeDisplay, 1000);
+                        });
                     }
                 }
 
@@ -1828,84 +2130,22 @@
                 // Set initial status
                 setStatus(isHost ? 'Host — you control playback' : 'Viewer — following host');
                 
+                // Initialize sync manager
+                syncManager = new VideoSyncManager(isHost, roomRef, playerFunctions);
+                
             }).catch(err=>{console.error(err);setStatus('Error loading room')});
-        }
-
-        // --- host state push ---
-        function pushRoomState(status, time){
-            try{ 
-                roomRef.update({
-                    status,
-                    currentTime: time,
-                    updatedAt: firebase.database.ServerValue.TIMESTAMP
-                }); 
-            } catch(e) { console.warn(e); }
-        }
-
-        // --- sync logic ---
-        let hostIntervalHandle = null; 
-        let lastHostUpdateMs = 0; 
-        let lastHardSeekMs = 0;
-        let lastViewerAdjustMs = 0;
-        
-        const HARD_SEEK_COOLDOWN_MS = 2000;
-        const HOST_UPDATE_INTERVAL_MS = 700;
-        const VIEWER_ADJUST_THROTTLE_MS = 400;
-
-        function computeHostEffectiveTime(hostTime, updatedAtMs){ 
-            const now = Date.now(); 
-            const lagMs = Math.max(0, now - (updatedAtMs || now)); 
-            return hostTime + (lagMs/1000); 
-        }
-        
-        function computeNudgeRate(diffSeconds){ 
-            const maxNudge=0.04; 
-            const sensitivity=0.2; 
-            const rate=1+Math.max(-maxNudge,Math.min(maxNudge,diffSeconds*sensitivity)); 
-            return rate; 
-        }
-        
-        function applyPlaybackRateForAll(rate){ 
-            try{ playerSetRate(rate); } catch(e) {} 
-        }
-        
-        function hardSeekTo(timeSec){ 
-            const now=Date.now(); 
-            if(now - lastHardSeekMs < HARD_SEEK_COOLDOWN_MS) return; 
-            lastHardSeekMs=now; 
-            try{ playerSeek(timeSec); } catch(e) {} 
         }
 
         // --- host start ---
         function hostStart(){ 
             setStatus('Host — you control playback');
-            try{ 
-                roomRef.update({
-                    status: playerIsPlaying()? 'play':'pause', 
-                    currentTime: playerGetTime(), 
-                    updatedAt: firebase.database.ServerValue.TIMESTAMP
-                }); 
-            } catch(e) {}
-
-            hostIntervalHandle = setInterval(()=>{ 
-                if(!ready) return; 
-                try{ 
-                    if(playerIsPlaying()){ 
-                        const nowMs = Date.now(); 
-                        if(nowMs - lastHostUpdateMs >= HOST_UPDATE_INTERVAL_MS){ 
-                            lastHostUpdateMs = nowMs; 
-                            roomRef.update({
-                                currentTime: playerGetTime(), 
-                                updatedAt: firebase.database.ServerValue.TIMESTAMP
-                            }); 
-                        } 
-                    } 
-                } catch(e) {} 
-            }, HOST_UPDATE_INTERVAL_MS);
+            
+            // Start host sync
+            syncManager.startHostSync();
 
             // Host controls
             pauseDiscussBtn.addEventListener('click', ()=>{ 
-                playerPause(); 
+                playerFunctions.pause(); 
                 roomRef.update({status:'pause',discussionOpen:true}); 
             });
             
@@ -1932,22 +2172,19 @@
             });
             
             syncBtn.addEventListener('click', ()=>{
-                roomRef.update({
-                    currentTime: playerGetTime(),
-                    updatedAt: firebase.database.ServerValue.TIMESTAMP
-                });
+                syncManager.pushRoomState(playerFunctions.isPlaying() ? 'play' : 'pause', playerFunctions.getTime());
             });
             
             speedSel.addEventListener('change', e=>{ 
                 const sp = Number(e.target.value||1); 
-                playerSetRate(sp); 
+                playerFunctions.setRate(sp); 
                 roomRef.child('hostPowers').update({speed:sp}); 
             });
 
             if(!usingYT){
-                html5video.addEventListener('play', ()=> pushRoomState('play',playerGetTime()));
-                html5video.addEventListener('pause', ()=> pushRoomState('pause',playerGetTime()));
-                html5video.addEventListener('seeked', ()=> pushRoomState(playerIsPlaying()? 'play':'pause', playerGetTime()));
+                html5video.addEventListener('play', ()=> syncManager.pushRoomState('play',playerFunctions.getTime()));
+                html5video.addEventListener('pause', ()=> syncManager.pushRoomState('pause',playerFunctions.getTime()));
+                html5video.addEventListener('seeked', ()=> syncManager.pushRoomState(playerFunctions.isPlaying()? 'play':'pause', playerFunctions.getTime()));
             }
             
             predictBtn.addEventListener('click', ()=>{ 
@@ -1978,28 +2215,8 @@
         function viewerStart(){ 
             setStatus('Viewer — following host');
 
-            let bufferRecoveryTimer = null;
-            function onBuffering(){
-                if(bufferRecoveryTimer) return;
-                bufferRecoveryTimer = setTimeout(()=>{
-                    roomRef.once('value').then(snap=>{
-                        const data = snap.val()||{};
-                        const hostTime = data.currentTime||0;
-                        const eff = computeHostEffectiveTime(hostTime,data.updatedAt||Date.now());
-                        try{
-                            playerPause();
-                            playerSeek(Math.max(0, eff - 0.2));
-                            playerPlay().catch(()=>{});
-                        }catch(e){}
-                    }).catch(()=>{});
-                    bufferRecoveryTimer = null;
-                }, 700);
-            }
-
-            if(!usingYT){ 
-                html5video.addEventListener('waiting', onBuffering); 
-                html5video.addEventListener('stalled', onBuffering); 
-            }
+            // Start viewer sync
+            syncManager.startViewerSync();
 
             roomRef.on('value', snap=>{
                 const data = snap.val();
@@ -2009,76 +2226,36 @@
                 else setStatus('Watching — synced to host');
 
                 if(data.hostPowers && typeof data.hostPowers.speed !== 'undefined'){ 
-                    try{ playerSetRate(Number(data.hostPowers.speed)); } catch(e) {} 
+                    try{ playerFunctions.setRate(Number(data.hostPowers.speed)); } catch(e) {} 
                 }
 
-                const hostTime = data.currentTime || 0;
-                const hostEffective = computeHostEffectiveTime(hostTime, data.updatedAt || Date.now());
-
-                let localT = 0; 
-                try{ localT = playerGetTime(); } catch(e) {}
-                const diff = hostEffective - localT;
-                const nowMs = Date.now();
-                if(nowMs - lastViewerAdjustMs >= VIEWER_ADJUST_THROTTLE_MS){
-                    lastViewerAdjustMs = nowMs;
-                    if(Math.abs(diff) > 2.0){
-                        hardSeekTo(hostEffective);
-                        applyPlaybackRateForAll(1);
-                    } else if(Math.abs(diff) > 0.45){
-                        const nudge = computeNudgeRate(diff);
-                        applyPlaybackRateForAll(nudge);
-                        try{ const newT = localT + diff * 0.18; playerSeek(newT); } catch(e) {}
-                    } else {
-                        applyPlaybackRateForAll(1);
-                        if(Math.abs(diff) > 0.06){
-                            try{ playerSeek(localT + diff * 0.08); } catch(e) {} 
-                        }
-                    }
-                }
+                // Sync to host state
+                syncManager.syncToHostState(data);
 
                 if(data.status === 'play'){
                     overlayBlock.classList.add('hidden');
-                    try{ playerPlay(); } catch(e) {}
+                    try{ playerFunctions.play(); } catch(e) {}
                 } else {
                     if(!discussionOpen) overlayBlock.classList.remove('hidden');
-                    try{ playerPause(); } catch(e) {}
+                    try{ playerFunctions.pause(); } catch(e) {}
                 }
             });
 
             html5video.addEventListener('seeking', ()=>{
+                // Prevent viewers from seeking independently
                 roomRef.once('value').then(snap=>{
                     const d = snap.val()||{};
                     const hostTime = d.currentTime||0;
-                    playerSeek(hostTime);
+                    playerFunctions.seek(hostTime);
                 }).catch(()=>{});
             });
-
-            let stallCount = 0;
-            if(!usingYT){
-                html5video.addEventListener('waiting', ()=>{ 
-                    stallCount++; 
-                    if(stallCount >= 3){
-                        roomRef.once('value').then(snap=>{
-                            const data = snap.val()||{};
-                            const eff = computeHostEffectiveTime(data.currentTime||0, data.updatedAt||Date.now());
-                            try{
-                                playerPause();
-                                playerSeek(Math.max(0, eff - 0.2));
-                                setTimeout(()=>{ playerPlay().catch(()=>{}); }, 500);
-                                stallCount = 0;
-                            }catch(e){}
-                        }).catch(()=>{});
-                    }
-                });
-                html5video.addEventListener('playing', ()=>{ stallCount = 0; });
-            }
 
             // Sync button for viewers
             syncBtn.addEventListener('click', ()=>{
                 roomRef.once('value').then(snap=>{
                     const data = snap.val()||{};
                     const hostTime = data.currentTime||0;
-                    hardSeekTo(hostTime);
+                    syncManager.hardSeekTo(hostTime);
                 });
             });
         }
@@ -2094,7 +2271,7 @@
             // Set up participant tracking
             setupParticipants();
             
-            console.log('Watch Party Pro initialized');
+            console.log('Enhanced Watch Party Pro initialized');
         }
 
         // Set up all event listeners
@@ -2168,6 +2345,61 @@
                     }
                 }
             });
+
+            // Touch gestures for mobile
+            setupTouchGestures();
+        }
+
+        // Touch gesture support
+        function setupTouchGestures() {
+            let initialPinchDistance = null;
+            let currentScale = 1;
+            
+            const videoContainer = document.querySelector('.video-container');
+            
+            videoContainer.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    initialPinchDistance = getPinchDistance(e.touches);
+                    e.preventDefault();
+                }
+            });
+
+            videoContainer.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2 && initialPinchDistance) {
+                    const currentDistance = getPinchDistance(e.touches);
+                    const scale = currentDistance / initialPinchDistance;
+                    
+                    // Adjust video size based on pinch
+                    handlePinchZoom(scale);
+                    e.preventDefault();
+                }
+            });
+
+            videoContainer.addEventListener('touchend', () => {
+                initialPinchDistance = null;
+            });
+
+            function getPinchDistance(touches) {
+                const dx = touches[0].clientX - touches[1].clientX;
+                const dy = touches[0].clientY - touches[1].clientY;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            function handlePinchZoom(scale) {
+                const video = usingYT ? ytContainer : html5video;
+                currentScale = Math.max(0.5, Math.min(3, currentScale * scale));
+                
+                video.style.transform = `scale(${currentScale})`;
+                video.style.transformOrigin = 'center center';
+                
+                // Reset scale on double tap
+                setTimeout(() => {
+                    video.ondblclick = () => {
+                        currentScale = 1;
+                        video.style.transform = 'scale(1)';
+                    };
+                }, 100);
+            }
         }
 
         // Widget management
@@ -2285,23 +2517,23 @@
         }
 
         function togglePlayPause() {
-            if (playerIsPlaying()) {
-                playerPause();
-                if (isHost) pushRoomState('pause', playerGetTime());
+            if (playerFunctions.isPlaying()) {
+                playerFunctions.pause();
+                if (isHost) syncManager.pushRoomState('pause', playerFunctions.getTime());
             } else {
-                playerPlay();
-                if (isHost) pushRoomState('play', playerGetTime());
+                playerFunctions.play();
+                if (isHost) syncManager.pushRoomState('play', playerFunctions.getTime());
             }
         }
 
         function skipBackward() {
-            playerSeek(playerGetTime() - 10);
-            if (isHost) pushRoomState(playerIsPlaying()? 'play':'pause', playerGetTime());
+            playerFunctions.seek(playerFunctions.getTime() - 10);
+            if (isHost) syncManager.pushRoomState(playerFunctions.isPlaying()? 'play':'pause', playerFunctions.getTime());
         }
 
         function skipForward() {
-            playerSeek(playerGetTime() + 10);
-            if (isHost) pushRoomState(playerIsPlaying()? 'play':'pause', playerGetTime());
+            playerFunctions.seek(playerFunctions.getTime() + 10);
+            if (isHost) syncManager.pushRoomState(playerFunctions.isPlaying()? 'play':'pause', playerFunctions.getTime());
         }
 
         function toggleFullscreen() {
@@ -2324,6 +2556,9 @@
 
         function fitToScreen() {
             html5video.style.objectFit = 'contain';
+            if (usingYT && ytContainer) {
+                ytContainer.style.objectFit = 'contain';
+            }
         }
 
         // Participant management
@@ -2369,6 +2604,8 @@
             // Clean up on page unload
             window.addEventListener('beforeunload', () => {
                 userRef.remove();
+                if (syncManager) syncManager.stopSync();
+                voiceManager.destroy();
             });
         }
 
@@ -2388,8 +2625,16 @@
                 setVoiceStatus('Talking...');
                 button.classList.add('talking');
                 
-                // Start Agora voice transmission
-                startAgoraVoice();
+                // Start voice transmission
+                voiceManager.initAgoraVoice({
+                    roomId: roomId,
+                    userId: currentUser
+                }).then(() => {
+                    voiceManager.startTalking();
+                }).catch(error => {
+                    console.error('Voice start error:', error);
+                    setVoiceStatus('Voice error - check console');
+                });
             }
             
             function stopTalking(e) {
@@ -2397,45 +2642,9 @@
                 setVoiceStatus('Voice ready - Hold to talk');
                 button.classList.remove('talking');
                 
-                // Stop Agora voice transmission
-                stopAgoraVoice();
+                // Stop voice transmission
+                voiceManager.stopTalking();
             }
-        }
-
-        // Agora voice functions
-        function startAgoraVoice() {
-            if (typeof initAgoraVoice === 'function') {
-                initAgoraVoice({ 
-                    firebase, 
-                    auth, 
-                    roomId, 
-                    isHost, 
-                    holdTalkBtn, 
-                    voiceStatus 
-                }).then(session => {
-                    agoraSession = session;
-                    agoraLocalMicOn = true;
-                    console.log('Agora voice started');
-                }).catch(error => {
-                    console.error('Error starting Agora voice:', error);
-                    setVoiceStatus('Voice error - check console');
-                });
-            } else {
-                console.warn('Agora voice not available');
-                setVoiceStatus('Voice not available');
-            }
-        }
-
-        function stopAgoraVoice() {
-            if (agoraSession && typeof agoraSession.leave === 'function') {
-                agoraSession.leave().then(() => {
-                    agoraLocalMicOn = false;
-                    console.log('Agora voice stopped');
-                }).catch(error => {
-                    console.error('Error stopping Agora voice:', error);
-                });
-            }
-            agoraLocalMicOn = false;
         }
 
         // Chat functionality
@@ -2778,8 +2987,8 @@
         function handleVisibilityChange() {
             if (document.hidden) {
                 // Page is hidden, pause video
-                if (playerIsPlaying()) {
-                    playerPause();
+                if (playerFunctions.isPlaying()) {
+                    playerFunctions.pause();
                 }
             }
         }

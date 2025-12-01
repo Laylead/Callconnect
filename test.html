@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=3.0, minimum-scale=0.5">
     <title>Watch Party Pro | CallConnect</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -139,6 +139,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transform-origin: center center;
+            transition: transform 0.3s ease;
         }
         
         #html5video {
@@ -156,6 +158,7 @@
             border-radius: 0;
             overflow: hidden;
             background: black;
+            z-index: 10;
         }
 
         /* Ensure YouTube iframe fills its container properly */
@@ -164,6 +167,8 @@
             height: 100%;
             border: none;
             background: black;
+            position: relative;
+            z-index: 10;
         }
 
         /* For YouTube player specifically */
@@ -171,6 +176,9 @@
             width: 100% !important;
             height: 100% !important;
             border: none;
+            position: absolute;
+            top: 0;
+            left: 0;
         }
         
         #drawingCanvas {
@@ -180,7 +188,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 10;
+            z-index: 20;
         }
         
         #overlay-block {
@@ -189,11 +197,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.9);
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 20;
+            z-index: 30;
             backdrop-filter: blur(10px);
         }
         
@@ -201,33 +209,90 @@
             display: none;
         }
         
-        .overlay-hint {
-            background: var(--card-bg);
-            padding: 20px 30px;
-            border-radius: var(--border-radius);
-            color: var(--text-color);
-            font-weight: 500;
+        /* Popcorn Loading Animation */
+        .popcorn-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            color: white;
+            font-size: 1.5rem;
             text-align: center;
-            max-width: 90%;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--glass-bg);
+            padding: 20px;
+        }
+
+        .popcorn-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+        }
+
+        .popcorn {
+            font-size: 48px;
+            animation: popcorn-bounce 1.5s infinite;
+            position: absolute;
+        }
+
+        .popcorn:nth-child(1) {
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .popcorn:nth-child(2) {
+            animation-delay: 0.2s;
+            left: 30%;
+            top: 20%;
+        }
+
+        .popcorn:nth-child(3) {
+            animation-delay: 0.4s;
+            left: 70%;
+            top: 20%;
+        }
+
+        @keyframes popcorn-bounce {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .loading-dots span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: dot-pulse 1.5s infinite;
+        }
+
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dot-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.3); opacity: 1; }
         }
         
         /* ENHANCED TRANSPARENT Video controls - ANDROID FIXED */
         .custom-controls {
             position: absolute;
-            bottom: 80px; /* Increased for Android navigation bar */
+            bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             gap: 15px;
             align-items: center;
-            background: rgba(0,0,0,0.7); /* More opaque for better visibility */
+            background: rgba(0,0,0,0.8);
             padding: 15px 25px;
             border-radius: var(--border-radius);
             opacity: 0;
             transition: var(--transition);
-            z-index: 2147483647; /* Maximum z-index */
+            z-index: 2147483647;
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255,255,255,0.2);
             min-width: 380px;
@@ -304,16 +369,16 @@
         /* Progress Bar - ANDROID FIXED */
         .progress-container {
             position: absolute;
-            bottom: 140px; /* Increased for Android navigation bar */
+            bottom: 140px;
             left: 50%;
             transform: translateX(-50%);
             width: 90%;
             max-width: 800px;
-            height: 8px; /* Slightly thicker for touch */
+            height: 8px;
             background: rgba(255,255,255,0.3);
             border-radius: 4px;
             overflow: hidden;
-            z-index: 2147483647; /* Maximum z-index */
+            z-index: 2147483647;
             opacity: 0;
             transition: var(--transition);
             backdrop-filter: blur(10px);
@@ -451,7 +516,7 @@
             position: absolute;
             top: 0;
             right: 60px;
-            background: rgba(30, 41, 59, 0.9);
+            background: rgba(30, 41, 59, 0.95);
             border-radius: var(--border-radius);
             padding: 20px;
             box-shadow: var(--shadow);
@@ -986,7 +1051,7 @@
         /* Reactions Animation */
         #reactions {
             position: absolute;
-            bottom: 180px; /* Adjusted for Android */
+            bottom: 180px;
             left: 0;
             width: 100%;
             z-index: 40;
@@ -1032,7 +1097,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.7);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1128,6 +1193,114 @@
             font-weight: 500;
         }
         
+        /* Rotation Hint Animation */
+        .rotation-hint {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2147483646;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .rotation-hint.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .rotation-icon {
+            font-size: 80px;
+            margin-bottom: 30px;
+            animation: rotate-device 3s ease-in-out infinite;
+        }
+
+        @keyframes rotate-device {
+            0% { transform: rotate(0deg); }
+            30% { transform: rotate(90deg); }
+            70% { transform: rotate(90deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        .rotation-text {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .rotation-subtext {
+            font-size: 1rem;
+            opacity: 0.8;
+            max-width: 300px;
+        }
+
+        /* Resize Indicator */
+        .resize-indicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        /* Resize Options Menu */
+        .video-resize-options {
+            position: absolute;
+            bottom: 200px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(0,0,0,0.9);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            display: none;
+        }
+
+        .video-resize-options.show {
+            display: flex;
+        }
+
+        .resize-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            padding: 10px;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .resize-option:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .resize-option i {
+            width: 24px;
+            text-align: center;
+        }
+
         /* Mobile Responsive - ANDROID FIXED */
         @media (max-width: 1024px) {
             .detailed-content {
@@ -1171,7 +1344,7 @@
             }
             
             .custom-controls {
-                bottom: 90px; /* Android adjustment */
+                bottom: 90px;
                 padding: 12px 20px;
                 gap: 12px;
                 min-width: 320px;
@@ -1233,7 +1406,7 @@
             }
             
             .progress-container {
-                bottom: 150px; /* Android adjustment */
+                bottom: 150px;
                 width: 85%;
             }
         }
@@ -1263,7 +1436,7 @@
             }
             
             .custom-controls {
-                bottom: 100px; /* Android adjustment */
+                bottom: 100px;
                 padding: 10px 15px;
                 gap: 10px;
                 min-width: 300px;
@@ -1311,7 +1484,7 @@
             }
             
             .progress-container {
-                bottom: 160px; /* Android adjustment */
+                bottom: 160px;
                 width: 80%;
             }
         }
@@ -1332,7 +1505,7 @@
         }
         
         /* Landscape Mode Fixes */
-        @media (max-height: 500px) and (orientation: landscape) {
+        @media (orientation: landscape) {
             .player-view .video-container {
                 height: 100vh;
             }
@@ -1360,10 +1533,20 @@
             .custom-controls {
                 bottom: 70px;
                 padding: 8px 15px;
+                min-width: 400px;
             }
             
             .progress-container {
                 bottom: 110px;
+            }
+            
+            /* Ensure YouTube controls are visible */
+            .ytp-chrome-bottom {
+                z-index: 2147483647 !important;
+            }
+            
+            .ytp-right-controls {
+                z-index: 2147483647 !important;
             }
         }
         
@@ -1441,10 +1624,37 @@
                 }
             }
         }
+        
+        /* Pinch and drag styles */
+        #player-container.resizable {
+            cursor: move;
+            touch-action: none;
+        }
+
+        #player-container.pinch-resizing {
+            transition: transform 0.1s ease;
+        }
+
+        body.pinch-mode #player-container {
+            cursor: grab;
+        }
+
+        body.pinch-mode #player-container:active {
+            cursor: grabbing;
+        }
     </style>
 </head>
 <body class="touch-controls" data-theme="dark">
     <div class="app-container">
+        <!-- Rotation Hint Overlay -->
+        <div class="rotation-hint" id="rotation-hint">
+            <div class="rotation-icon">
+                <i class="fas fa-rotate-right"></i>
+            </div>
+            <div class="rotation-text">Rotate for Full Experience</div>
+            <div class="rotation-subtext">Turn your device sideways for the best viewing experience</div>
+        </div>
+
         <!-- Player View -->
         <div class="player-view" id="player-view">
             <div class="video-container">
@@ -1455,7 +1665,19 @@
                     </div>
                     <canvas id="drawingCanvas"></canvas>
                     <div id="overlay-block">
-                        <div class="overlay-hint">Tap to load video from Firebase</div>
+                        <div class="popcorn-loading">
+                            <div class="popcorn-container">
+                                <div class="popcorn">🍿</div>
+                                <div class="popcorn">🍿</div>
+                                <div class="popcorn">🍿</div>
+                            </div>
+                            <div>Grab your popcorn....</div>
+                            <div class="loading-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
                     </div>
                     <div id="reactions"></div>
                     
@@ -1464,6 +1686,10 @@
                         <div class="progress-bar" id="progress-bar"></div>
                     </div>
                     
+                    <!-- Resize Indicator -->
+                    <div class="resize-indicator" id="resize-indicator"></div>
+                    
+                    <!-- Video Resize Controls -->
                     <div class="video-resize-controls" id="video-resize-controls">
                         <button class="resize-btn" id="fit-screen-btn">
                             <i class="fas fa-expand-arrows-alt"></i>
@@ -1471,6 +1697,29 @@
                         <button class="resize-btn" id="fullscreen-btn">
                             <i class="fas fa-expand"></i>
                         </button>
+                        <button class="resize-btn" id="reset-size-btn">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Resize Options Menu -->
+                    <div class="video-resize-options" id="video-resize-options">
+                        <div class="resize-option" data-scale="1">
+                            <i class="fas fa-expand"></i>
+                            <span>Default Size</span>
+                        </div>
+                        <div class="resize-option" data-scale="1.5">
+                            <i class="fas fa-search-plus"></i>
+                            <span>Large</span>
+                        </div>
+                        <div class="resize-option" data-scale="2">
+                            <i class="fas fa-expand-alt"></i>
+                            <span>Extra Large</span>
+                        </div>
+                        <div class="resize-option" data-scale="0.75">
+                            <i class="fas fa-search-minus"></i>
+                            <span>Small</span>
+                        </div>
                     </div>
                 </div>
                 
@@ -1499,6 +1748,10 @@
                     
                     <button class="control-btn-lg" id="custom-fullscreen">
                         <i class="fas fa-expand"></i>
+                    </button>
+                    
+                    <button class="control-btn-lg" id="resize-menu-btn">
+                        <i class="fas fa-arrows-alt"></i>
                     </button>
                 </div>
             </div>
@@ -1852,7 +2105,6 @@
             console.log("Firebase initialized successfully");
         } catch (error) {
             console.error("Firebase initialization error:", error);
-            // Continue without Firebase for demo purposes
         }
 
         // Global variables
@@ -1860,6 +2112,19 @@
         let currentUser = null;
         let isHost = false;
         let roomId = 'default-room';
+        
+        // Video resize variables
+        let currentScale = 1;
+        let currentTranslateX = 0;
+        let currentTranslateY = 0;
+        let isDragging = false;
+        let isPinching = false;
+        let startDistance = 0;
+        let startScale = 1;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let transformStartX = 0;
+        let transformStartY = 0;
         
         // Initialize Firebase services if Firebase is available
         if (firebaseInitialized) {
@@ -1900,6 +2165,12 @@
         }
 
         // DOM elements
+        const rotationHint = document.getElementById('rotation-hint');
+        const resizeIndicator = document.getElementById('resize-indicator');
+        const resetSizeBtn = document.getElementById('reset-size-btn');
+        const resizeMenuBtn = document.getElementById('resize-menu-btn');
+        const videoResizeOptions = document.getElementById('video-resize-options');
+        const playerContainer = document.getElementById('player-container');
         const playerView = document.getElementById('player-view');
         const detailedView = document.getElementById('detailed-view');
         const menuBtn = document.getElementById('menu-btn');
@@ -1965,7 +2236,6 @@
         const detailedFullscreenBtn = document.getElementById('detailed-fullscreen');
         const fitScreenBtn = document.getElementById('fit-screen-btn');
         const fullscreenResizeBtn = document.getElementById('fullscreen-btn');
-        const videoResizeControls = document.getElementById('video-resize-controls');
 
         // Volume controls
         const volumeBtn = document.getElementById('volume-btn');
@@ -2004,6 +2274,10 @@
         let currentVolume = 1;
         let controlsTimeout = null;
         let controlsVisible = false;
+        let isFullscreen = false;
+        let lastOrientation = window.orientation || 0;
+        let rotationHintShown = false;
+        let syncManager = null;
 
         // Enhanced Sync Manager
         class EnhancedVideoSyncManager {
@@ -2012,17 +2286,16 @@
                 this.roomRef = roomRef;
                 this.player = playerFunctions;
                 this.lastSyncTime = 0;
-                this.syncInterval = 3000; // Reduced for better sync
-                this.maxDrift = 0.5; // Reduced max drift
+                this.syncInterval = 3000;
+                this.maxDrift = 0.5;
                 this.isSyncing = false;
                 this.lastHardSeek = 0;
-                this.hardSeekCooldown = 1500; // Reduced cooldown
+                this.hardSeekCooldown = 1500;
                 this.syncHandle = null;
                 this.buffering = false;
                 this.bufferTimeout = null;
             }
 
-            // Only host can push state changes
             pushRoomState(status, time) {
                 if (!this.isHost) return;
                 
@@ -2039,7 +2312,6 @@
                 }
             }
 
-            // Viewer sync logic with improved drift correction
             syncToHostState(hostData) {
                 if (this.isSyncing || !hostData || !this.player.ready) return;
                 
@@ -2048,11 +2320,9 @@
                 const serverTimestamp = hostData.updatedAt || Date.now();
                 const localTime = this.player.getTime();
                 
-                // Calculate effective host time with network latency
                 const effectiveHostTime = this.computeHostEffectiveTime(hostTime, serverTimestamp);
                 const timeDiff = effectiveHostTime - localTime;
                 
-                // Apply improved drift correction
                 this.applyEnhancedDriftCorrection(timeDiff, effectiveHostTime);
                 
                 setTimeout(() => { this.isSyncing = false; }, 50);
@@ -2061,14 +2331,12 @@
             computeHostEffectiveTime(hostTime, serverTimestamp) {
                 const now = Date.now();
                 const latency = Math.max(0, now - serverTimestamp);
-                // Add small buffer for network jitter
                 return hostTime + (latency / 1000) + 0.1;
             }
 
             applyEnhancedDriftCorrection(diff, targetTime) {
-                // Large drift - hard seek with buffer prevention
                 if (Math.abs(diff) > this.maxDrift) {
-                    if (this.buffering) return; // Don't seek while buffering
+                    if (this.buffering) return;
                     
                     console.log(`Large drift detected: ${diff.toFixed(2)}s, seeking to ${targetTime.toFixed(2)}`);
                     this.hardSeekTo(targetTime);
@@ -2076,7 +2344,6 @@
                     return;
                 }
                 
-                // Medium drift - adjust playback rate more aggressively
                 if (Math.abs(diff) > 0.2) {
                     const rate = diff > 0 ? 1.05 : 0.95;
                     console.log(`Medium drift: ${diff.toFixed(2)}s, adjusting rate to ${rate}`);
@@ -2084,7 +2351,6 @@
                     return;
                 }
                 
-                // Small drift - micro-adjust
                 if (Math.abs(diff) > 0.05) {
                     try {
                         const newTime = this.player.getTime() + diff * 0.2;
@@ -2100,7 +2366,6 @@
                 if (now - this.lastHardSeek < this.hardSeekCooldown) return;
                 this.lastHardSeek = now;
                 
-                // Set buffering state to prevent multiple seeks
                 this.buffering = true;
                 clearTimeout(this.bufferTimeout);
                 this.bufferTimeout = setTimeout(() => {
@@ -2132,7 +2397,7 @@
                         const data = snap.val();
                         this.syncToHostState(data);
                     });
-                }, 2000); // More frequent checks
+                }, 2000);
             }
 
             stopSync() {
@@ -2143,28 +2408,257 @@
             }
         }
 
-        let syncManager = null;
+        // VIDEO RESIZE AND PINCH-TO-ZOOM FUNCTIONS
+        function initVideoResize() {
+            if (!playerContainer) return;
+            
+            playerContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+            playerContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+            playerContainer.addEventListener('touchend', handleTouchEnd);
+            playerContainer.addEventListener('touchcancel', handleTouchEnd);
+            
+            playerContainer.addEventListener('mousedown', handleMouseDown);
+            
+            console.log("Video resize initialized");
+        }
 
-        // Set status display
+        function handleTouchStart(e) {
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                dragStartX = touch.clientX;
+                dragStartY = touch.clientY;
+                transformStartX = currentTranslateX;
+                transformStartY = currentTranslateY;
+                isDragging = true;
+                playerContainer.classList.add('pinch-resizing');
+                
+                resizeIndicator.textContent = `Drag to move`;
+                resizeIndicator.style.display = 'block';
+                
+                e.preventDefault();
+            } else if (e.touches.length === 2) {
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                startDistance = Math.hypot(
+                    touch2.clientX - touch1.clientX,
+                    touch2.clientY - touch1.clientY
+                );
+                startScale = currentScale;
+                isPinching = true;
+                isDragging = false;
+                
+                resizeIndicator.textContent = `Pinch to zoom`;
+                resizeIndicator.style.display = 'block';
+                
+                e.preventDefault();
+            }
+            
+            showControls();
+        }
+
+        function handleTouchMove(e) {
+            if (!isDragging && !isPinching) return;
+            
+            if (isDragging && e.touches.length === 1) {
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - dragStartX;
+                const deltaY = touch.clientY - dragStartY;
+                
+                const maxTranslate = (currentScale - 1) * 50;
+                currentTranslateX = Math.max(-maxTranslate, Math.min(maxTranslate, transformStartX + deltaX));
+                currentTranslateY = Math.max(-maxTranslate, Math.min(maxTranslate, transformStartY + deltaY));
+                
+                applyPlayerTransform();
+                
+                e.preventDefault();
+            } else if (isPinching && e.touches.length === 2) {
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = Math.hypot(
+                    touch2.clientX - touch1.clientX,
+                    touch2.clientY - touch1.clientY
+                );
+                
+                if (startDistance > 0) {
+                    const scaleChange = currentDistance / startDistance;
+                    const newScale = Math.max(0.5, Math.min(3, startScale * scaleChange));
+                    
+                    if (Math.abs(newScale - currentScale) > 0.01) {
+                        currentScale = newScale;
+                        applyPlayerTransform();
+                        
+                        resizeIndicator.textContent = `Scale: ${currentScale.toFixed(2)}x`;
+                        resizeIndicator.style.display = 'block';
+                    }
+                }
+                
+                e.preventDefault();
+            }
+        }
+
+        function handleTouchEnd(e) {
+            isDragging = false;
+            isPinching = false;
+            playerContainer.classList.remove('pinch-resizing');
+            
+            setTimeout(() => {
+                resizeIndicator.style.display = 'none';
+            }, 2000);
+            
+            resetControlsTimeout();
+        }
+
+        function handleMouseDown(e) {
+            if (e.button !== 0) return;
+            
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            transformStartX = currentTranslateX;
+            transformStartY = currentTranslateY;
+            isDragging = true;
+            
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            
+            e.preventDefault();
+        }
+
+        function handleMouseMove(e) {
+            if (!isDragging) return;
+            
+            const deltaX = e.clientX - dragStartX;
+            const deltaY = e.clientY - dragStartY;
+            
+            const maxTranslate = (currentScale - 1) * 50;
+            currentTranslateX = Math.max(-maxTranslate, Math.min(maxTranslate, transformStartX + deltaX));
+            currentTranslateY = Math.max(-maxTranslate, Math.min(maxTranslate, transformStartY + deltaY));
+            
+            applyPlayerTransform();
+        }
+
+        function handleMouseUp() {
+            isDragging = false;
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        }
+
+        function applyPlayerTransform() {
+            if (!playerContainer) return;
+            
+            playerContainer.style.transform = `
+                translate(${currentTranslateX}px, ${currentTranslateY}px)
+                scale(${currentScale})
+            `;
+        }
+
+        function resetPlayerSize() {
+            currentScale = 1;
+            currentTranslateX = 0;
+            currentTranslateY = 0;
+            applyPlayerTransform();
+            
+            resizeIndicator.textContent = `Reset to default`;
+            resizeIndicator.style.display = 'block';
+            
+            setTimeout(() => {
+                resizeIndicator.style.display = 'none';
+            }, 2000);
+            
+            console.log("Player size reset to default");
+        }
+
+        function setPlayerSize(scale) {
+            currentScale = scale;
+            currentTranslateX = 0;
+            currentTranslateY = 0;
+            applyPlayerTransform();
+            
+            resizeIndicator.textContent = `Scale: ${scale}x`;
+            resizeIndicator.style.display = 'block';
+            
+            setTimeout(() => {
+                resizeIndicator.style.display = 'none';
+            }, 2000);
+            
+            videoResizeOptions.classList.remove('show');
+        }
+
+        // ROTATION HINT FUNCTIONALITY
+        function showRotationHint() {
+            if (rotationHintShown) return;
+            
+            rotationHint.classList.add('show');
+            rotationHintShown = true;
+            
+            setTimeout(() => {
+                rotationHint.classList.remove('show');
+            }, 5000);
+        }
+
+        function checkOrientation() {
+            const currentOrientation = window.orientation || 0;
+            
+            if (isFullscreen && Math.abs(currentOrientation - lastOrientation) === 90) {
+                showRotationHint();
+            }
+            
+            lastOrientation = currentOrientation;
+        }
+
+        // FULLSCREEN HANDLING
+        function handleFullscreenChange() {
+            isFullscreen = !!document.fullscreenElement;
+            
+            if (isFullscreen) {
+                showControls();
+                
+                setTimeout(() => {
+                    if (window.innerHeight > window.innerWidth) {
+                        showRotationHint();
+                    }
+                }, 1000);
+            }
+        }
+
+        // FIX YOUTUBE CONTROLS IN LANDSCAPE
+        function ensureYouTubeControls() {
+            if (!usingYT || !ytPlayer) return;
+            
+            try {
+                const iframe = document.querySelector('#ytPlayerIframe iframe');
+                if (iframe) {
+                    iframe.style.zIndex = '2147483647';
+                    
+                    const src = iframe.src;
+                    if (!src.includes('controls=1')) {
+                        const newSrc = src.includes('?') ? 
+                            src.replace('controls=0', 'controls=1') : 
+                            src + '&controls=1';
+                        iframe.src = newSrc;
+                    }
+                }
+            } catch (e) {
+                console.warn("Could not modify YouTube iframe:", e);
+            }
+        }
+
+        // Core functions
         function setStatus(text) { 
             if (statusDisplay) statusDisplay.textContent = text; 
         }
 
-        // Set voice status
         function setVoiceStatus(text) { 
             if (voiceStatus) voiceStatus.textContent = text; 
             if (sidebarVoiceStatus) sidebarVoiceStatus.textContent = text;
             console.log('[VoiceStatus]', text); 
         }
 
-        // Format time for display
         function formatTime(seconds) {
             const mins = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
             return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
         }
 
-        // Update time display
         function updateTimeDisplay() {
             if (!ready || !html5video) return;
             
@@ -2175,7 +2669,6 @@
                 timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
                 if (detailedTimeDisplay) detailedTimeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
                 
-                // Update progress bars
                 const progressPercent = (currentTime / duration) * 100;
                 if (progressBar) progressBar.style.width = `${progressPercent}%`;
                 if (detailedProgressBar) detailedProgressBar.style.width = `${progressPercent}%`;
@@ -2185,11 +2678,10 @@
             }
         }
 
-        // Fit canvas to video container
         function fitCanvas() {
             if (!canvas) return;
             
-            const rect = document.getElementById('player-container').getBoundingClientRect();
+            const rect = playerContainer.getBoundingClientRect();
             const dpr = Math.max(1, window.devicePixelRatio || 1);
             canvas.style.width = rect.width + 'px';
             canvas.style.height = rect.height + 'px';
@@ -2199,7 +2691,6 @@
             redrawAllStrokes();
         }
 
-        // Auto-hide controls system
         function showControls() {
             if (controlsVisible) return;
             
@@ -2230,11 +2721,12 @@
             }
             
             controlsTimeout = setTimeout(() => {
-                hideControls();
+                if (!isDragging && !isPinching) {
+                    hideControls();
+                }
             }, 3000);
         }
 
-        // Volume control functions
         function updateVolumeUI() {
             const icon = isMuted ? 'fa-volume-mute' : 
                         currentVolume === 0 ? 'fa-volume-off' :
@@ -2271,11 +2763,9 @@
             resetControlsTimeout();
         }
 
-        // Video control functions
         function startVideo() {
             if (!html5video) return;
             
-            // If video hasn't loaded yet, load from Firebase
             if (!html5video.src || html5video.src === "") {
                 loadVideoFromFirebase();
                 return;
@@ -2288,7 +2778,6 @@
                 showControls();
             }).catch(error => {
                 console.error('Error playing video:', error);
-                overlayBlock.querySelector('.overlay-hint').textContent = 'Tap to play video';
             });
         }
 
@@ -2354,19 +2843,15 @@
             resetControlsTimeout();
         }
 
-        // Load video from Firebase
         function loadVideoFromFirebase() {
             if (!firebaseInitialized) {
                 console.error("Firebase not initialized");
                 return;
             }
             
-            overlayBlock.querySelector('.overlay-hint').textContent = 'Loading video from Firebase...';
-            
             roomRef.once('value').then(snap => {
                 const data = snap.val();
                 if (!data) {
-                    // Create room if it doesn't exist and user is host
                     if (isHost) {
                         roomRef.set({
                             videoLink: '',
@@ -2375,9 +2860,6 @@
                             status: 'pause',
                             currentTime: 0
                         });
-                        overlayBlock.querySelector('.overlay-hint').textContent = 'Room created. Add video URL as host.';
-                    } else {
-                        overlayBlock.querySelector('.overlay-hint').textContent = 'Room not found. Host needs to create room first.';
                     }
                     return;
                 }
@@ -2403,11 +2885,9 @@
                             if (isHost) hostStart();
                             else viewerStart();
                             
-                            // Start time display updates
                             setInterval(updateTimeDisplay, 1000);
-                            overlayBlock.querySelector('.overlay-hint').textContent = 'Video loaded. Tap to play.';
+                            overlayBlock.classList.add('hidden');
                             
-                            // Initialize sync manager
                             syncManager = new EnhancedVideoSyncManager(isHost, roomRef, {
                                 get ready() { return ready; },
                                 getTime: () => html5video.currentTime || 0,
@@ -2427,15 +2907,11 @@
                         
                         html5video.addEventListener('error', (e) => {
                             console.error("Video loading error:", e);
-                            overlayBlock.querySelector('.overlay-hint').textContent = 'Error loading video. Check URL or try another.';
                         });
                     }
-                } else {
-                    overlayBlock.querySelector('.overlay-hint').textContent = 'No video in room. Host needs to add video URL.';
                 }
             }).catch(err => {
                 console.error(err);
-                overlayBlock.querySelector('.overlay-hint').textContent = 'Error loading room data.';
             });
         }
 
@@ -2481,7 +2957,6 @@
             }
         }
 
-        // ensure single global callback
         window.onYouTubeIframeAPIReady = function(){
             const list = window._pendingYTCreate || [];
             while(list.length){
@@ -2491,7 +2966,14 @@
                     videoId: item.id,
                     width: '100%',
                     height: '100%',
-                    playerVars:{rel:0,modestbranding:1,playsinline:1,iv_load_policy:3,controls: item.controls?1:0,enablejsapi:1},
+                    playerVars:{
+                        rel:0,
+                        modestbranding:1,
+                        playsinline:1,
+                        iv_load_policy:3,
+                        controls: 1,
+                        enablejsapi:1
+                    },
                     events:{
                         onReady:()=>{
                             ready=true;
@@ -2499,11 +2981,9 @@
                             if(isHost) hostStart(); 
                             else viewerStart();
                             
-                            // Start time display updates
                             setInterval(updateTimeDisplay, 1000);
                             overlayBlock.classList.add('hidden');
                             
-                            // Initialize sync manager for YouTube
                             syncManager = new EnhancedVideoSyncManager(isHost, roomRef, {
                                 get ready() { return ready; },
                                 getTime: () => ytPlayer.getCurrentTime(),
@@ -2519,6 +2999,8 @@
                             } else {
                                 syncManager.startViewerSync();
                             }
+                            
+                            ensureYouTubeControls();
                         },
                         onStateChange:(e)=>{ 
                             if(!isHost || !ytPlayer) return; 
@@ -2533,24 +3015,20 @@
 
         // Widget management
         function toggleWidget(widgetName) {
-            // Close any active widget timeout
             if (widgetTimeout) {
                 clearTimeout(widgetTimeout);
                 widgetTimeout = null;
             }
             
-            // If clicking the same widget, close it
             if (activeWidget === widgetName) {
                 closeWidget(widgetName);
                 return;
             }
             
-            // Close any other open widget
             if (activeWidget) {
                 closeWidget(activeWidget);
             }
             
-            // Open the selected widget
             const widgetIcon = document.getElementById(`${widgetName}-widget`);
             const widgetContent = document.getElementById(`${widgetName}-content`);
             
@@ -2559,13 +3037,11 @@
                 widgetContent.classList.add('active');
                 activeWidget = widgetName;
                 
-                // Reset chat badge when opening chat
                 if (widgetName === 'chat') {
                     unreadChatCount = 0;
                     updateChatBadge();
                 }
                 
-                // Auto-close reactions after 5 seconds if no interaction
                 if (widgetName === 'reactions') {
                     widgetTimeout = setTimeout(() => {
                         closeWidget('reactions');
@@ -2587,7 +3063,6 @@
                 }
             }
             
-            // Clear any timeout
             if (widgetTimeout) {
                 clearTimeout(widgetTimeout);
                 widgetTimeout = null;
@@ -2598,7 +3073,6 @@
         function toggleToDetailedView() {
             isDetailedView = true;
             
-            // Move video to detailed view
             if (detailedPlayerContainer) {
                 detailedPlayerContainer.appendChild(html5video);
                 detailedPlayerContainer.appendChild(ytContainer);
@@ -2606,11 +3080,9 @@
                 detailedPlayerContainer.appendChild(reactionsBox);
             }
             
-            // Animate views
             playerView.classList.add('hidden');
             detailedView.classList.add('active');
             
-            // Show controls when switching to detailed view
             showControls();
             
             console.log('Switched to detailed view');
@@ -2619,7 +3091,6 @@
         function toggleToPlayerView() {
             isDetailedView = false;
             
-            // Move video back to player view
             const playerContainer = document.getElementById('player-container');
             if (playerContainer) {
                 playerContainer.appendChild(html5video);
@@ -2628,13 +3099,11 @@
                 playerContainer.appendChild(reactionsBox);
             }
             
-            // Animate views
             detailedView.classList.remove('active');
             setTimeout(() => {
                 playerView.classList.remove('hidden');
             }, 400);
             
-            // Show controls when switching back to player view
             showControls();
             
             console.log('Switched to player view');
@@ -2647,7 +3116,6 @@
             const text = input.value.trim();
             if (!text) return;
             
-            // Create message element
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message self';
             
@@ -2678,16 +3146,12 @@
             messageDiv.appendChild(avatar);
             messageDiv.appendChild(content);
             
-            // Add to chat container
             container.appendChild(messageDiv);
             
-            // Scroll to bottom
             container.scrollTop = container.scrollHeight;
             
-            // Clear input
             input.value = '';
             
-            // Save to Firebase if available
             if (firebaseInitialized) {
                 const chatRef = db.ref('rooms/' + roomId + '/chat').push();
                 chatRef.set({
@@ -2716,18 +3180,15 @@
         function sendReaction(emoji) {
             if (!reactionsBox) return;
             
-            // Create reaction bubble
             const bubble = document.createElement('div');
             bubble.className = 'reaction-bubble';
             bubble.textContent = emoji;
             reactionsBox.appendChild(bubble);
             
-            // Remove after animation
             setTimeout(() => {
                 bubble.remove();
             }, 3000);
             
-            // Save to Firebase if available
             if (firebaseInitialized) {
                 const reactionsRef = db.ref('rooms/' + roomId + '/reactions').push();
                 reactionsRef.set({
@@ -2816,7 +3277,6 @@
             ctx.lineTo(pos.x,pos.y); 
             ctx.stroke(); 
             
-            // Save to Firebase if available
             if (firebaseInitialized) {
                 try{ 
                     drawRef.push({
@@ -2860,7 +3320,6 @@
         function hostStart(){ 
             setStatus('Host — you control playback');
             
-            // Set up host controls
             if (pauseDiscussBtn) {
                 pauseDiscussBtn.addEventListener('click', ()=>{ 
                     if (usingYT && ytPlayer) {
@@ -2882,7 +3341,6 @@
                     if (drawingEnabled) enableDrawing();
                     else disableDrawing();
                     
-                    // Update Firebase
                     if (firebaseInitialized) {
                         roomRef.update({drawingEnabled});
                     }
@@ -2896,7 +3354,6 @@
                     ctx.clearRect(0,0,canvas.width,canvas.height); 
                     strokes=[]; 
                     
-                    // Update Firebase
                     if (firebaseInitialized) {
                         drawRef.remove().catch(()=>{});
                     }
@@ -2914,7 +3371,6 @@
                         html5video.playbackRate = sp;
                     }
                     
-                    // Update Firebase
                     if (firebaseInitialized) {
                         roomRef.child('hostPowers').update({speed:sp});
                     }
@@ -2928,7 +3384,6 @@
         function viewerStart(){ 
             setStatus('Viewer — following host');
             
-            // Set up viewer controls
             if (syncBtn) {
                 syncBtn.addEventListener('click', ()=>{
                     if (syncManager) {
@@ -2960,6 +3415,22 @@
             if (detailedFullscreenBtn) detailedFullscreenBtn.addEventListener('click', toggleFullscreen);
             if (fitScreenBtn) fitScreenBtn.addEventListener('click', fitToScreen);
             if (fullscreenResizeBtn) fullscreenResizeBtn.addEventListener('click', toggleFullscreen);
+            if (resetSizeBtn) resetSizeBtn.addEventListener('click', resetPlayerSize);
+            
+            // Resize menu
+            if (resizeMenuBtn) {
+                resizeMenuBtn.addEventListener('click', () => {
+                    videoResizeOptions.classList.toggle('show');
+                });
+            }
+            
+            // Resize options
+            document.querySelectorAll('.resize-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    const scale = parseFloat(option.getAttribute('data-scale'));
+                    setPlayerSize(scale);
+                });
+            });
             
             // Volume controls
             if (volumeBtn) volumeBtn.addEventListener('click', toggleMute);
@@ -3006,7 +3477,20 @@
             if (sidebarCopyBtn) sidebarCopyBtn.addEventListener('click', () => copyToClipboard(sidebarShareLink, sidebarCopyBtn));
             
             // Handle window resize
-            window.addEventListener('resize', fitCanvas);
+            window.addEventListener('resize', () => {
+                fitCanvas();
+                ensureYouTubeControls();
+            });
+            
+            // Orientation change
+            window.addEventListener('orientationchange', checkOrientation);
+            screen.orientation?.addEventListener('change', checkOrientation);
+            
+            // Fullscreen change
+            document.addEventListener('fullscreenchange', handleFullscreenChange);
+            document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+            document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+            document.addEventListener('MSFullscreenChange', handleFullscreenChange);
             
             // Close widgets when clicking outside
             document.addEventListener('click', (e) => {
@@ -3016,17 +3500,25 @@
                         closeWidget(activeWidget);
                     }
                 }
+                
+                if (!e.target.closest('#video-resize-options') && 
+                    !e.target.closest('#resize-menu-btn') &&
+                    !e.target.closest('#resize-btn')) {
+                    videoResizeOptions.classList.remove('show');
+                }
             });
 
             // Auto-hide controls system
             setupAutoHideControls();
+            
+            // Initialize video resize
+            initVideoResize();
             
             console.log("All event listeners set up successfully");
         }
 
         // Auto-hide controls setup
         function setupAutoHideControls() {
-            // Show controls on video container interaction
             const videoContainer = document.querySelector('.video-container');
             if (videoContainer) {
                 videoContainer.addEventListener('click', (e) => {
@@ -3038,7 +3530,6 @@
                 videoContainer.addEventListener('mousemove', showControls);
                 videoContainer.addEventListener('touchstart', showControls);
                 
-                // Hide controls when mouse leaves video area
                 videoContainer.addEventListener('mouseleave', () => {
                     if (!document.querySelector('.widget-content.active')) {
                         resetControlsTimeout();
@@ -3046,7 +3537,6 @@
                 });
             }
             
-            // Keep controls visible when interacting with them
             if (customControls) customControls.addEventListener('mousemove', resetControlsTimeout);
             if (detailedCustomControls) detailedCustomControls.addEventListener('mousemove', resetControlsTimeout);
             if (progressContainer) progressContainer.addEventListener('mousemove', resetControlsTimeout);
@@ -3057,26 +3547,20 @@
         function initApp() {
             console.log("Initializing Watch Party Pro...");
             
-            // Set up event listeners
             setupEventListeners();
             
-            // Set up participant tracking
             if (participantCount) participantCount.textContent = "1";
             
-            // Set up share links
             if (shareLink) shareLink.value = window.location.href;
             if (sidebarShareLink) sidebarShareLink.value = window.location.href;
             
-            // Set initial status
             setStatus(isHost ? 'Host — you control playback' : 'Viewer — following host');
             
-            // Start with controls visible initially
             showControls();
             
             console.log("Watch Party Pro initialized successfully");
         }
 
-        // Initialize the app when DOM is loaded
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initApp);
         } else {

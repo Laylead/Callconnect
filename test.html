@@ -7,15 +7,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
-            --primary: #6A0DFF;
-            --primary-dark: #5A0CE0;
-            --primary-light: #8A4FFF;
+            --primary: #8A4FFF;
+            --primary-dark: #6A0DFF;
+            --primary-light: #CBB2FF;
             --secondary: #C8C8D9;
             --light: #F8F8FF;
-            --dark: #1A043A;
+            --dark: #050016;
             --success: #10b981;
             --warning: #f59e0b;
-            --danger: #D300FF;
+            --danger: #ff4757;
             --bg-color: #09001F;
             --text-color: #F8F8FF;
             --card-bg: rgba(255, 255, 255, 0.08);
@@ -27,16 +27,19 @@
             --glass-bg: rgba(255, 255, 255, 0.12);
             --border-radius: 22px;
             --border-radius-sm: 12px;
-            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             --glow: 0 0 12px #8A4FFF, 0 0 24px #6A0DFF;
+            --soft-glow: 0 0 8px rgba(106, 13, 255, 0.6);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
 
         [data-theme="light"] {
             --bg-color: #f8fafc;
             --text-color: #1e293b;
             --card-bg: #ffffff;
-            --sidebar-bg: #ffffff;
+            --sidebar-bg: #f1f5f9;
             --nav-bg: #ffffff;
             --input-bg: #f1f5f9;
             --widget-bg: rgba(255, 255, 255, 0.95);
@@ -116,7 +119,6 @@
             background-color: var(--video-bg);
             border-radius: 0;
             overflow: hidden;
-            box-shadow: none;
             position: relative;
             width: 100%;
             height: 100%;
@@ -127,9 +129,9 @@
         }
         
         .detailed-view .video-container {
-            height: 50vh;
+            height: 40vh;
+            min-height: 250px;
             border-radius: 0;
-            box-shadow: var(--shadow);
             flex-shrink: 0;
         }
         
@@ -171,15 +173,6 @@
             z-index: 10;
         }
 
-        #ytPlayerIframe iframe {
-            width: 100% !important;
-            height: 100% !important;
-            border: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-        
         #drawingCanvas {
             position: absolute;
             top: 0;
@@ -196,7 +189,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -231,7 +224,6 @@
             font-size: 48px;
             animation: popcorn-bounce 1.5s infinite;
             position: absolute;
-            filter: drop-shadow(0 0 8px rgba(255, 201, 60, 0.6));
         }
 
         .popcorn:nth-child(1) {
@@ -268,7 +260,6 @@
             border-radius: 50%;
             background: var(--primary);
             animation: dot-pulse 1.5s infinite;
-            box-shadow: 0 0 8px var(--primary);
         }
 
         .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
@@ -279,29 +270,29 @@
             50% { transform: scale(1.3); opacity: 1; }
         }
         
-        /* FIXED: MOBILE RESPONSIVE VIDEO CONTROLS - NO OVERLAP */
+        /* FIXED: VIDEO CONTROLS - CORRECTED LAYOUT */
         .custom-controls {
             position: absolute;
             bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 8px;
+            gap: 12px;
             align-items: center;
-            background: rgba(10, 2, 25, 0.95);
-            padding: 12px 20px;
+            background: rgba(26, 4, 58, 0.85);
+            padding: 16px 24px;
             border-radius: 25px;
             opacity: 0;
             transition: var(--transition);
             z-index: 2147483647;
             backdrop-filter: blur(20px);
-            border: 2px solid rgba(138, 79, 255, 0.3);
-            min-width: 300px;
+            border: var(--glass-border);
+            min-width: 320px;
             max-width: 95%;
             justify-content: center;
-            box-shadow: var(--glow);
-            flex-wrap: wrap;
-            overflow: visible !important;
+            box-shadow: var(--glass-shadow);
+            flex-wrap: nowrap;
+            overflow: visible;
         }
         
         .custom-controls.visible {
@@ -309,13 +300,13 @@
         }
         
         .control-btn-lg {
-            width: 42px;
-            height: 42px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            background: radial-gradient(circle at top left, #D300FF 0%, #6A0DFF 100%);
-            border: none;
+            background: rgba(138, 79, 255, 0.15);
+            border: var(--glass-border);
             color: white;
-            font-size: 16px;
+            font-size: 18px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -325,66 +316,78 @@
             flex-shrink: 0;
             position: relative;
             z-index: 2147483647;
-            box-shadow: 0 0 20px rgba(106, 13, 255, 0.6), inset 0 0 6px rgba(255, 255, 255, 0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
         
-        .control-btn-lg:hover {
-            background: var(--primary-dark);
-            transform: scale(1.05);
-            box-shadow: var(--glow);
-        }
-        
+        .control-btn-lg:hover,
         .control-btn-lg:active {
-            transform: scale(0.95);
+            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
+            transform: scale(1.05);
+            box-shadow: var(--soft-glow);
+            border-color: rgba(138, 79, 255, 0.5);
+        }
+        
+        .control-btn-lg.glow {
+            animation: button-glow 2s ease-in-out 3;
+        }
+        
+        @keyframes button-glow {
+            0%, 100% { 
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                background: rgba(138, 79, 255, 0.15);
+            }
+            50% { 
+                box-shadow: var(--glow);
+                background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
+            }
         }
         
         .skip-btn {
-            background: none;
-            border: none;
+            background: rgba(255, 255, 255, 0.08);
+            border: var(--glass-border);
             color: white;
-            font-size: 12px;
+            font-size: 13px;
             cursor: pointer;
-            padding: 6px 10px;
+            padding: 8px 14px;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
             transition: var(--transition);
             border-radius: 20px;
             font-weight: 500;
             backdrop-filter: blur(5px);
-            background: rgba(138, 79, 255, 0.3);
             flex-shrink: 0;
             white-space: nowrap;
             position: relative;
             z-index: 2147483647;
-            border: 1px solid rgba(138, 79, 255, 0.2);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
         
-        .skip-btn:hover {
-            background: rgba(138, 79, 255, 0.5);
-            box-shadow: 0 0 12px rgba(138, 79, 255, 0.4);
-        }
-        
+        .skip-btn:hover,
         .skip-btn:active {
-            transform: scale(0.95);
+            background: rgba(138, 79, 255, 0.25);
+            border-color: var(--primary);
+            transform: scale(1.05);
         }
         
         /* Time Display */
         .time-display {
             color: white;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 500;
-            min-width: 70px;
+            min-width: 80px;
             text-align: center;
             font-variant-numeric: tabular-nums;
-            padding: 0 8px;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+            padding: 0 10px;
             flex-shrink: 0;
             position: relative;
             z-index: 2147483647;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 6px 12px;
         }
         
-        /* Progress Bar - FIXED NO OVERLAP */
+        /* Progress Bar */
         .progress-container {
             position: absolute;
             bottom: 140px;
@@ -393,7 +396,7 @@
             width: 90%;
             max-width: 800px;
             height: 6px;
-            background: rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.15);
             border-radius: 3px;
             overflow: hidden;
             z-index: 2147483646;
@@ -402,7 +405,7 @@
             backdrop-filter: blur(10px);
             cursor: pointer;
             touch-action: none;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(138, 79, 255, 0.2);
         }
         
         .progress-container.visible {
@@ -416,7 +419,6 @@
             width: 0%;
             transition: width 0.1s linear;
             position: relative;
-            box-shadow: 0 0 8px rgba(106, 13, 255, 0.6);
         }
         
         .progress-bar::after {
@@ -431,15 +433,14 @@
             border-radius: 50%;
             opacity: 0;
             transition: opacity 0.2s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            box-shadow: 0 0 8px rgba(106, 13, 255, 0.8);
         }
         
-        .progress-container:hover .progress-bar::after,
-        .progress-container:active .progress-bar::after {
+        .progress-container:hover .progress-bar::after {
             opacity: 1;
         }
         
-        /* FIXED: Volume Controls - NO HIDING BEHIND */
+        /* Volume Controls */
         .volume-controls {
             display: flex;
             align-items: center;
@@ -456,13 +457,13 @@
             left: 100%;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(10, 2, 25, 0.95);
+            background: rgba(26, 4, 58, 0.98);
             border-radius: 20px;
             padding: 12px;
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(138, 79, 255, 0.3);
+            border: var(--glass-border);
             z-index: 2147483647;
-            box-shadow: var(--glow);
+            box-shadow: var(--glass-shadow);
             opacity: 0;
             pointer-events: none;
         }
@@ -480,7 +481,7 @@
             height: 4px;
             -webkit-appearance: none;
             appearance: none;
-            background: rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.2);
             border-radius: 2px;
             outline: none;
             cursor: pointer;
@@ -494,22 +495,11 @@
             border-radius: 50%;
             background: white;
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            box-shadow: 0 0 8px rgba(106, 13, 255, 0.8);
             border: 2px solid var(--primary);
         }
         
-        .volume-slider::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: white;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            border: 2px solid var(--primary);
-        }
-        
-        /* Floating Widgets - FIXED */
+        /* Floating Widgets */
         .floating-widgets {
             position: absolute;
             top: 15px;
@@ -525,29 +515,28 @@
         }
         
         .widget-icon {
-            width: 48px;
-            height: 48px;
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
-            background: rgba(26, 4, 58, 0.9);
+            background: rgba(138, 79, 255, 0.15);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: var(--shadow);
             transition: var(--transition);
-            border: none;
+            border: var(--glass-border);
             color: white;
-            font-size: 18px;
+            font-size: 20px;
             position: relative;
             z-index: 1001;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(138, 79, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         
         .widget-icon:hover {
-            transform: scale(1.05);
-            background: var(--primary);
-            box-shadow: var(--glow);
+            background: rgba(138, 79, 255, 0.3);
+            transform: scale(1.1);
+            border-color: rgba(138, 79, 255, 0.5);
         }
         
         .widget-icon:active {
@@ -555,26 +544,26 @@
         }
         
         .widget-icon.active {
-            background: radial-gradient(circle at top left, #D300FF 0%, #6A0DFF 100%);
+            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
             transform: scale(1.1);
-            box-shadow: var(--glow);
+            box-shadow: 0 0 25px rgba(211, 0, 255, 0.9);
         }
         
         .widget-content {
             position: absolute;
             top: 0;
-            right: 52px;
+            right: 58px;
             background: rgba(26, 4, 58, 0.98);
             border-radius: var(--border-radius);
-            padding: 16px;
-            box-shadow: var(--shadow);
-            width: 280px;
+            padding: 20px;
+            box-shadow: var(--glass-shadow);
+            width: 300px;
             max-height: 400px;
             overflow-y: auto;
             display: none;
             z-index: 1000;
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(138, 79, 255, 0.3);
+            border: var(--glass-border);
         }
         
         .widget-content.active {
@@ -591,20 +580,20 @@
             position: absolute;
             top: -5px;
             right: -5px;
-            background: linear-gradient(to right, #D300FF, #6A0DFF);
+            background: var(--danger);
             color: white;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: bold;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
         
-        /* Sidebar Menu - NO HOME BUTTON */
+        /* Sidebar Menu */
         .sidebar-menu {
             position: absolute;
             top: 15px;
@@ -616,27 +605,26 @@
         }
         
         .menu-btn {
-            width: 48px;
-            height: 48px;
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
-            background: rgba(26, 4, 58, 0.9);
+            background: rgba(138, 79, 255, 0.15);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: var(--shadow);
             transition: var(--transition);
-            border: none;
+            border: var(--glass-border);
             color: white;
-            font-size: 18px;
+            font-size: 20px;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(138, 79, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         
         .menu-btn:hover {
-            background: var(--primary);
-            transform: scale(1.05);
-            box-shadow: var(--glow);
+            background: rgba(138, 79, 255, 0.3);
+            transform: scale(1.1);
+            border-color: rgba(138, 79, 255, 0.5);
         }
         
         .menu-btn:active {
@@ -649,110 +637,139 @@
             display: grid;
             grid-template-columns: 1fr 380px;
             gap: 0;
-            height: 50vh;
+            height: 60vh;
             overflow: hidden;
         }
         
         .control-panel {
             background: var(--card-bg);
+            backdrop-filter: blur(18px);
             padding: 20px;
             overflow-y: auto;
-            border-right: 1px solid var(--glass-bg);
-            backdrop-filter: blur(18px);
+            border-right: 1px solid rgba(138, 79, 255, 0.2);
+            display: flex;
+            flex-direction: column;
         }
         
         .sidebar-panel {
             background: var(--sidebar-bg);
+            backdrop-filter: blur(18px);
             padding: 20px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 20px;
-            backdrop-filter: blur(18px);
         }
         
         /* Section Headers */
         .section-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 16px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--glass-bg);
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(138, 79, 255, 0.2);
         }
         
         .section-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: linear-gradient(to right, #6A0DFF, #D300FF);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: rgba(138, 79, 255, 0.15);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 16px;
+            font-size: 18px;
             flex-shrink: 0;
-            box-shadow: 0 0 12px rgba(106, 13, 255, 0.6);
+            border: var(--glass-border);
+            backdrop-filter: blur(10px);
         }
         
         .section-title {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 600;
             color: var(--text-color);
+            flex: 1;
+        }
+        
+        /* Status Indicator in Controls Section */
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(138, 79, 255, 0.15);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            border: var(--glass-border);
+            margin-left: auto;
+            white-space: nowrap;
+            backdrop-filter: blur(10px);
+        }
+        
+        .status-indicator.host {
+            color: #6A0DFF;
+        }
+        
+        .status-indicator.viewer {
+            color: #CBB2FF;
         }
         
         /* Control Grids */
         .controls-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 16px;
+            gap: 12px;
+            margin-bottom: 20px;
         }
         
         .control-card {
-            background: var(--input-bg);
-            border: 1px solid var(--glass-bg);
+            background: rgba(138, 79, 255, 0.08);
+            border: var(--glass-border);
             border-radius: var(--border-radius-sm);
-            padding: 12px;
+            padding: 16px;
             cursor: pointer;
             transition: var(--transition);
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            gap: 10px;
             text-align: center;
-            min-height: 80px;
+            min-height: 90px;
             backdrop-filter: blur(10px);
         }
         
         .control-card:hover {
-            transform: translateY(-2px);
-            border-color: var(--primary);
-            box-shadow: 0 8px 20px rgba(106, 13, 255, 0.3);
+            transform: translateY(-4px);
+            border-color: rgba(138, 79, 255, 0.5);
+            background: rgba(138, 79, 255, 0.15);
         }
         
         .control-card:active {
-            transform: translateY(0);
+            transform: translateY(-2px);
         }
         
         .control-card.active {
-            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 40%, #CBB2FF 100%);
-            border-color: var(--primary);
+            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
+            border-color: transparent;
             color: white;
-            box-shadow: 0 0 12px rgba(106, 13, 255, 0.6);
         }
         
         .control-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
             background: rgba(255,255,255,0.1);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 18px;
             transition: var(--transition);
             flex-shrink: 0;
+            backdrop-filter: blur(5px);
+            border: var(--glass-border);
         }
         
         .control-card.active .control-icon {
@@ -760,52 +777,52 @@
         }
         
         .control-label {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 500;
             line-height: 1.3;
         }
         
         /* Speed Control */
         .speed-control {
-            background: var(--input-bg);
+            background: rgba(138, 79, 255, 0.08);
             border-radius: var(--border-radius-sm);
-            padding: 14px;
-            border: 1px solid var(--glass-bg);
-            margin-bottom: 16px;
+            padding: 16px;
+            border: var(--glass-border);
+            margin-bottom: 20px;
             backdrop-filter: blur(10px);
         }
         
         .speed-label {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-            font-size: 13px;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 14px;
             font-weight: 500;
         }
         
         .speed-select {
             width: 100%;
-            padding: 10px 14px;
+            padding: 12px 16px;
             border-radius: var(--border-radius-sm);
-            border: 1px solid var(--glass-bg);
-            background: var(--card-bg);
+            border: var(--glass-border);
+            background: rgba(26, 4, 58, 0.6);
             color: var(--text-color);
-            font-size: 13px;
+            font-size: 14px;
             transition: var(--transition);
+            backdrop-filter: blur(10px);
         }
         
         .speed-select:focus {
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(106, 13, 255, 0.2);
+            border-color: rgba(138, 79, 255, 0.5);
         }
         
         /* Chat Section */
         .chat-container {
-            background: var(--input-bg);
+            background: rgba(138, 79, 255, 0.08);
             border-radius: var(--border-radius-sm);
-            border: 1px solid var(--glass-bg);
+            border: var(--glass-border);
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -816,16 +833,16 @@
         .chat-messages {
             flex: 1;
             overflow-y: auto;
-            padding: 14px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             min-height: 0;
         }
         
         .message {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             max-width: 100%;
             animation: messageSlide 0.3s ease-out;
         }
@@ -841,40 +858,41 @@
         }
         
         .message-avatar {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             object-fit: cover;
             flex-shrink: 0;
-            background: linear-gradient(to right, #6A0DFF, #D300FF);
+            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
+            border: var(--glass-border);
         }
         
         .message-content {
-            padding: 10px 14px;
-            border-radius: 16px;
-            background-color: var(--glass-bg);
-            font-size: 13px;
+            padding: 12px 16px;
+            border-radius: 18px;
+            background-color: rgba(138, 79, 255, 0.1);
+            font-size: 14px;
             line-height: 1.4;
             max-width: 80%;
-            backdrop-filter: blur(10px);
+            border: var(--glass-border);
         }
         
         .message.self .message-content {
-            background: linear-gradient(to right, #6A0DFF, #D300FF);
+            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
             color: white;
-            box-shadow: 0 0 12px rgba(106, 13, 255, 0.4);
+            border-color: transparent;
         }
         
         .message-meta {
-            font-size: 10px;
+            font-size: 11px;
             color: var(--secondary);
-            margin-top: 3px;
+            margin-top: 4px;
             display: flex;
             justify-content: space-between;
         }
@@ -882,66 +900,64 @@
         .chat-input-container {
             display: flex;
             gap: 10px;
-            padding: 14px;
-            border-top: 1px solid var(--glass-bg);
+            padding: 16px;
+            border-top: 1px solid rgba(138, 79, 255, 0.2);
         }
         
         .chat-input {
             flex: 1;
-            padding: 10px 14px;
+            padding: 12px 16px;
             border-radius: 25px;
-            border: 1px solid var(--glass-bg);
-            background-color: var(--card-bg);
+            border: var(--glass-border);
+            background-color: rgba(26, 4, 58, 0.6);
             color: var(--text-color);
             outline: none;
             transition: var(--transition);
-            font-size: 13px;
+            font-size: 14px;
             backdrop-filter: blur(10px);
         }
         
         .chat-input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(106, 13, 255, 0.2);
+            border-color: rgba(138, 79, 255, 0.5);
         }
         
         .send-btn {
-            width: 42px;
-            height: 42px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            background: linear-gradient(to right, #6A0DFF, #D300FF);
+            background: rgba(138, 79, 255, 0.15);
             color: white;
-            border: none;
+            border: var(--glass-border);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: var(--transition);
-            box-shadow: 0 0 12px rgba(106, 13, 255, 0.4);
         }
         
         .send-btn:hover {
-            background: var(--primary-dark);
+            background: rgba(138, 79, 255, 0.3);
             transform: scale(1.05);
-            box-shadow: var(--glow);
+            border-color: rgba(138, 79, 255, 0.5);
         }
         
         .send-btn:active {
             transform: scale(0.95);
         }
         
-        /* FIXED: Voice Controls - WORKING WITH AGORA */
+        /* Voice Controls */
         .voice-controls {
-            background: var(--input-bg);
+            background: rgba(138, 79, 255, 0.08);
             border-radius: var(--border-radius-sm);
-            padding: 16px;
-            border: 1px solid var(--glass-bg);
+            padding: 20px;
+            border: var(--glass-border);
             text-align: center;
             backdrop-filter: blur(10px);
         }
         
         .voice-btn {
             width: 100%;
-            padding: 14px;
+            padding: 16px;
             border-radius: var(--border-radius-sm);
             border: none;
             font-weight: 600;
@@ -950,19 +966,19 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            background: linear-gradient(to right, #6A0DFF, #D300FF);
+            gap: 10px;
+            background: rgba(138, 79, 255, 0.15);
             color: white;
-            font-size: 14px;
+            font-size: 15px;
             touch-action: manipulation;
             user-select: none;
-            box-shadow: 0 0 12px rgba(106, 13, 255, 0.4);
+            border: var(--glass-border);
         }
         
         .voice-btn:hover {
-            background: var(--primary-dark);
+            background: rgba(138, 79, 255, 0.3);
             transform: translateY(-2px);
-            box-shadow: var(--glow);
+            border-color: rgba(138, 79, 255, 0.5);
         }
         
         .voice-btn:active {
@@ -970,66 +986,65 @@
         }
         
         .voice-btn.talking {
-            background: linear-gradient(to right, #D300FF, #FF0066);
+            background: linear-gradient(145deg, #ff4757 0%, #ff6b7a 100%);
             animation: pulse 1.5s infinite;
         }
         
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(211, 0, 255, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(211, 0, 255, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(211, 0, 255, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 71, 87, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
         }
         
         .voice-status {
-            font-size: 13px;
+            font-size: 14px;
             color: var(--secondary);
             text-align: center;
-            padding: 10px;
-            background: var(--card-bg);
+            padding: 12px;
+            background: rgba(26, 4, 58, 0.6);
             border-radius: var(--border-radius-sm);
-            margin-top: 10px;
-            min-height: 36px;
+            margin-top: 12px;
+            min-height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
             backdrop-filter: blur(10px);
+            border: var(--glass-border);
         }
         
         /* Reactions Section */
         .reactions-section {
-            background: var(--input-bg);
+            background: rgba(138, 79, 255, 0.08);
             border-radius: var(--border-radius-sm);
-            padding: 16px;
-            border: 1px solid var(--glass-bg);
+            padding: 20px;
+            border: var(--glass-border);
             backdrop-filter: blur(10px);
         }
         
         .reactions-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
+            gap: 10px;
         }
         
         .reaction-btn {
-            padding: 10px;
+            padding: 12px;
             border-radius: var(--border-radius-sm);
-            background: var(--card-bg);
-            border: 1px solid var(--glass-bg);
+            background: rgba(26, 4, 58, 0.6);
+            border: var(--glass-border);
             cursor: pointer;
             transition: var(--transition);
-            font-size: 18px;
+            font-size: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             aspect-ratio: 1;
-            backdrop-filter: blur(10px);
         }
         
         .reaction-btn:hover {
-            background: var(--primary);
-            transform: scale(1.1);
-            border-color: var(--primary);
-            filter: drop-shadow(0 0 8px rgba(255, 201, 60, 0.6));
+            background: rgba(138, 79, 255, 0.3);
+            transform: scale(1.15);
+            border-color: rgba(138, 79, 255, 0.5);
         }
         
         .reaction-btn:active {
@@ -1038,41 +1053,40 @@
         
         /* Interactive Section */
         .interactive-section {
-            background: var(--input-bg);
+            background: rgba(138, 79, 255, 0.08);
             border-radius: var(--border-radius-sm);
-            padding: 16px;
-            border: 1px solid var(--glass-bg);
+            padding: 20px;
+            border: var(--glass-border);
             backdrop-filter: blur(10px);
         }
         
         .interactive-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 12px;
         }
         
         .interactive-btn {
-            padding: 12px;
+            padding: 14px;
             border-radius: var(--border-radius-sm);
-            background: var(--card-bg);
-            border: 1px solid var(--glass-bg);
+            background: rgba(26, 4, 58, 0.6);
+            border: var(--glass-border);
             cursor: pointer;
             transition: var(--transition);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            font-size: 13px;
+            gap: 8px;
+            font-size: 14px;
             font-weight: 500;
             backdrop-filter: blur(10px);
         }
         
         .interactive-btn:hover {
-            background: linear-gradient(to right, #6A0DFF, #D300FF);
-            border-color: var(--primary);
+            background: rgba(138, 79, 255, 0.3);
+            border-color: rgba(138, 79, 255, 0.5);
             color: white;
             transform: translateY(-2px);
-            box-shadow: 0 0 12px rgba(106, 13, 255, 0.4);
         }
         
         .interactive-btn:active {
@@ -1081,27 +1095,27 @@
         
         /* Share Section */
         .share-section {
-            background: var(--input-bg);
+            background: rgba(138, 79, 255, 0.08);
             border-radius: var(--border-radius-sm);
-            padding: 16px;
-            border: 1px solid var(--glass-bg);
+            padding: 20px;
+            border: var(--glass-border);
             backdrop-filter: blur(10px);
         }
         
         .share-link-container {
             display: flex;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 12px;
+            margin-bottom: 16px;
         }
         
         .share-link {
             flex: 1;
-            padding: 10px 14px;
+            padding: 12px 16px;
             border-radius: var(--border-radius-sm);
-            border: 1px solid var(--glass-bg);
-            background-color: var(--card-bg);
+            border: var(--glass-border);
+            background-color: rgba(26, 4, 58, 0.6);
             color: var(--text-color);
-            font-size: 13px;
+            font-size: 14px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -1109,26 +1123,25 @@
         }
         
         .copy-btn {
-            padding: 10px 16px;
+            padding: 12px 20px;
             border-radius: var(--border-radius-sm);
-            background: linear-gradient(to right, #6A0DFF, #D300FF);
+            background: rgba(138, 79, 255, 0.15);
             color: white;
-            border: none;
+            border: var(--glass-border);
             font-weight: 500;
             cursor: pointer;
             transition: var(--transition);
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 13px;
+            gap: 8px;
+            font-size: 14px;
             white-space: nowrap;
-            box-shadow: 0 0 12px rgba(106, 13, 255, 0.4);
         }
         
         .copy-btn:hover {
-            background: var(--primary-dark);
+            background: rgba(138, 79, 255, 0.3);
             transform: translateY(-2px);
-            box-shadow: var(--glow);
+            border-color: rgba(138, 79, 255, 0.5);
         }
         
         .copy-btn:active {
@@ -1136,7 +1149,7 @@
         }
         
         .copy-btn.copied {
-            background: linear-gradient(to right, #10b981, #059669);
+            background: var(--success);
         }
         
         /* Reactions Animation */
@@ -1154,13 +1167,12 @@
         
         .reaction-bubble {
             background: rgba(255, 255, 255, 0.95);
-            padding: 8px 14px;
+            padding: 10px 18px;
             border-radius: 25px;
-            font-size: 20px;
+            font-size: 24px;
             animation: floatUp 3s ease forwards;
-            box-shadow: var(--shadow);
-            margin-bottom: 10px;
-            filter: drop-shadow(0 0 8px rgba(255, 201, 60, 0.6));
+            box-shadow: var(--glass-shadow);
+            margin-bottom: 12px;
         }
         
         @keyframes floatUp {
@@ -1186,87 +1198,56 @@
         }
         
         .resize-btn {
-            width: 38px;
-            height: 38px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
-            background: rgba(10, 2, 25, 0.7);
+            background: rgba(26, 4, 58, 0.9);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 15px;
+            font-size: 16px;
             cursor: pointer;
             border: none;
             transition: var(--transition);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(138, 79, 255, 0.3);
+            border: var(--glass-border);
         }
         
         .resize-btn:hover {
-            background: var(--primary);
+            background: rgba(138, 79, 255, 0.3);
             transform: scale(1.1);
-            box-shadow: var(--glow);
+            border-color: rgba(138, 79, 255, 0.5);
         }
         
         .resize-btn:active {
             transform: scale(0.95);
         }
         
-        /* FIXED: Detailed View Header - Optimized for Mobile */
+        /* Detailed View Header - FIXED LAYOUT */
         .detailed-header {
-            background: rgba(26, 4, 58, 0.95);
-            padding: 12px 15px;
+            background: rgba(26, 4, 58, 0.9);
+            backdrop-filter: blur(20px);
+            padding: 16px 20px;
             border-bottom: 1px solid rgba(138, 79, 255, 0.3);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
             flex-shrink: 0;
-            gap: 10px;
-            backdrop-filter: blur(20px);
+            gap: 15px;
             flex-wrap: wrap;
-            min-height: 60px;
-        }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .header-center {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 2;
-            justify-content: center;
-            min-width: 0;
-        }
-        
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-            justify-content: flex-end;
-            min-width: 0;
         }
         
         .detailed-logo {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 18px;
+            gap: 10px;
+            font-size: 22px;
             font-weight: 700;
-            color: white;
+            color: #CBB2FF;
             flex-shrink: 0;
-            white-space: nowrap;
-        }
-        
-        .detailed-logo i {
-            background: linear-gradient(to right, #6A0DFF, #D300FF);
+            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -1275,144 +1256,106 @@
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 8px;
-            flex-wrap: nowrap;
+            gap: 10px;
+            flex-shrink: 0;
+            order: 1;
         }
 
         .back-to-player {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             color: white;
             text-decoration: none;
             font-weight: 500;
-            padding: 8px 12px;
+            padding: 10px 16px;
             border-radius: var(--border-radius-sm);
             transition: var(--transition);
-            background: linear-gradient(to right, #6A0DFF, #D300FF);
-            border: 1px solid rgba(138, 79, 255, 0.3);
+            background: rgba(138, 79, 255, 0.15);
+            border: var(--glass-border);
             cursor: pointer;
-            font-size: 12px;
+            font-size: 14px;
             white-space: nowrap;
-            box-shadow: 0 0 8px rgba(106, 13, 255, 0.4);
+            backdrop-filter: blur(10px);
         }
         
         .back-to-player:hover {
-            background: var(--primary-dark);
+            background: rgba(138, 79, 255, 0.3);
+            color: white;
             transform: translateY(-2px);
-            box-shadow: var(--glow);
+            border-color: rgba(138, 79, 255, 0.5);
         }
         
         .back-to-player:active {
             transform: translateY(0);
         }
 
+        .back-to-player.glow {
+            animation: button-glow 2s ease-in-out 3;
+        }
+
         /* Home Button in Detailed View */
         .home-btn {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             color: white;
             text-decoration: none;
             font-weight: 500;
-            padding: 8px 12px;
+            padding: 10px 16px;
             border-radius: var(--border-radius-sm);
             transition: var(--transition);
-            background: linear-gradient(to right, #6A0DFF, #8A4FFF);
-            border: 1px solid rgba(138, 79, 255, 0.3);
+            background: rgba(138, 79, 255, 0.15);
+            border: var(--glass-border);
             cursor: pointer;
-            font-size: 12px;
+            font-size: 14px;
             white-space: nowrap;
-            box-shadow: 0 0 8px rgba(106, 13, 255, 0.4);
+            backdrop-filter: blur(10px);
         }
         
         .home-btn:hover {
-            background: var(--primary-dark);
+            background: rgba(138, 79, 255, 0.3);
+            color: white;
             transform: translateY(-2px);
-            box-shadow: var(--glow);
+            border-color: rgba(138, 79, 255, 0.5);
         }
         
         .home-btn:active {
             transform: translateY(0);
         }
         
-        /* Room Info - Moved to Controls Section */
+        /* Room Info - FIXED POSITION */
         .room-info {
             display: flex;
             align-items: center;
-            gap: 8px;
-            flex-wrap: nowrap;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            flex: 1;
             min-width: 0;
-            background: rgba(138, 79, 255, 0.2);
-            padding: 6px 12px;
-            border-radius: var(--border-radius-sm);
-            border: 1px solid rgba(138, 79, 255, 0.3);
-            backdrop-filter: blur(10px);
+            order: 2;
         }
         
         .participant-count {
             display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 6px 10px;
+            gap: 8px;
+            background: rgba(138, 79, 255, 0.15);
+            padding: 8px 16px;
             border-radius: var(--border-radius-sm);
-            font-size: 12px;
+            font-size: 14px;
+            border: var(--glass-border);
             white-space: nowrap;
             cursor: pointer;
             transition: var(--transition);
-            background: transparent;
-            border: none;
-            color: var(--secondary);
+            backdrop-filter: blur(10px);
         }
         
         .participant-count:hover {
             background: rgba(138, 79, 255, 0.3);
             color: white;
-        }
-        
-        /* Status Display - MOVED TO CONTROLS */
-        .status-display {
-            background: linear-gradient(to right, #6A0DFF, #8A4FFF);
-            color: white;
-            padding: 6px 12px;
-            border-radius: var(--border-radius-sm);
-            font-size: 12px;
-            font-weight: 500;
-            white-space: nowrap;
-            box-shadow: 0 0 8px rgba(106, 13, 255, 0.4);
-            border: 1px solid rgba(138, 79, 255, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .status-display i {
-            font-size: 10px;
-        }
-        
-        /* Control Status Display - NEW position beside video controls */
-        .control-status {
-            position: absolute;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            z-index: 2147483646;
-            opacity: 0;
-            transition: var(--transition);
-            background: rgba(10, 2, 25, 0.95);
-            padding: 8px 16px;
-            border-radius: 20px;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(138, 79, 255, 0.3);
-            box-shadow: var(--glow);
-        }
-        
-        .control-status.visible {
-            opacity: 1;
+            transform: translateY(-2px);
+            border-color: rgba(138, 79, 255, 0.5);
         }
         
         /* Rotation Hint Animation */
@@ -1422,7 +1365,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(10, 2, 25, 0.98);
+            background: rgba(5, 0, 22, 0.95);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -1434,7 +1377,7 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.5s ease;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(20px);
         }
 
         .rotation-hint.show {
@@ -1446,10 +1389,7 @@
             font-size: 70px;
             margin-bottom: 25px;
             animation: rotate-device 3s ease-in-out infinite;
-            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 40%, #CBB2FF 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #8A4FFF;
         }
 
         @keyframes rotate-device {
@@ -1460,19 +1400,16 @@
         }
 
         .rotation-text {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             margin-bottom: 12px;
             font-weight: 600;
-            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 40%, #CBB2FF 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #CBB2FF;
         }
 
         .rotation-subtext {
-            font-size: 0.9rem;
+            font-size: 1rem;
             opacity: 0.8;
-            max-width: 280px;
+            max-width: 300px;
             line-height: 1.4;
             color: var(--secondary);
         }
@@ -1482,11 +1419,11 @@
             position: absolute;
             top: 10px;
             left: 10px;
-            background: rgba(10, 2, 25, 0.7);
+            background: rgba(26, 4, 58, 0.9);
             color: white;
-            padding: 5px 10px;
-            border-radius: 10px;
-            font-size: 11px;
+            padding: 8px 12px;
+            border-radius: var(--border-radius-sm);
+            font-size: 12px;
             z-index: 100;
             backdrop-filter: blur(10px);
             display: none;
@@ -1494,7 +1431,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            border: 1px solid rgba(138, 79, 255, 0.3);
+            border: var(--glass-border);
         }
 
         /* Resize Options Menu */
@@ -1505,15 +1442,15 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            background: rgba(10, 2, 25, 0.95);
-            padding: 12px;
+            background: rgba(26, 4, 58, 0.98);
+            padding: 16px;
             border-radius: var(--border-radius);
             z-index: 1000;
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(138, 79, 255, 0.3);
+            border: var(--glass-border);
             display: none;
-            min-width: 160px;
-            box-shadow: var(--glow);
+            min-width: 180px;
+            box-shadow: var(--glass-shadow);
         }
 
         .video-resize-options.show {
@@ -1523,23 +1460,27 @@
         .resize-option {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
             color: white;
-            padding: 10px;
+            padding: 12px;
             border-radius: var(--border-radius-sm);
             cursor: pointer;
             transition: var(--transition);
-            font-size: 13px;
+            font-size: 14px;
+            background: rgba(138, 79, 255, 0.1);
+            border: var(--glass-border);
         }
 
         .resize-option:hover {
-            background: rgba(138, 79, 255, 0.2);
+            background: rgba(138, 79, 255, 0.3);
+            border-color: rgba(138, 79, 255, 0.5);
+            transform: translateX(-4px);
         }
 
         .resize-option i {
-            width: 22px;
+            width: 24px;
             text-align: center;
-            font-size: 14px;
+            font-size: 16px;
         }
 
         /* Participants Modal */
@@ -1549,7 +1490,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(10, 2, 25, 0.98);
+            background: rgba(5, 0, 22, 0.95);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1557,7 +1498,7 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(20px);
         }
 
         .participants-modal.show {
@@ -1566,16 +1507,16 @@
         }
 
         .participants-content {
-            background: var(--card-bg);
+            background: rgba(26, 4, 58, 0.95);
+            backdrop-filter: blur(20px);
             border-radius: var(--border-radius);
             padding: 25px;
             width: 90%;
             max-width: 500px;
             max-height: 80vh;
             overflow-y: auto;
-            box-shadow: var(--shadow);
-            border: 1px solid rgba(138, 79, 255, 0.3);
-            backdrop-filter: blur(18px);
+            box-shadow: var(--glass-shadow);
+            border: var(--glass-border);
         }
 
         .participants-header {
@@ -1584,13 +1525,13 @@
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 15px;
-            border-bottom: 1px solid var(--glass-bg);
+            border-bottom: 1px solid rgba(138, 79, 255, 0.3);
         }
 
         .participants-title {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 600;
-            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 40%, #CBB2FF 100%);
+            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -1599,18 +1540,15 @@
         .close-participants {
             background: none;
             border: none;
-            color: var(--text-color);
-            font-size: 20px;
+            color: var(--secondary);
+            font-size: 22px;
             cursor: pointer;
             padding: 5px;
             transition: var(--transition);
         }
 
         .close-participants:hover {
-            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 40%, #CBB2FF 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--primary);
             transform: scale(1.1);
         }
 
@@ -1624,71 +1562,70 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 15px;
-            background: var(--input-bg);
+            padding: 14px 18px;
+            background: rgba(138, 79, 255, 0.1);
             border-radius: var(--border-radius-sm);
-            border: 1px solid var(--glass-bg);
+            border: var(--glass-border);
             transition: var(--transition);
             backdrop-filter: blur(10px);
         }
 
         .participant-item:hover {
             transform: translateY(-2px);
-            border-color: var(--primary);
-            box-shadow: 0 5px 15px rgba(106, 13, 255, 0.2);
+            border-color: rgba(138, 79, 255, 0.5);
         }
 
         .participant-info {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
         }
 
         .participant-avatar {
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            background: linear-gradient(to right, #6A0DFF, #D300FF);
+            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 600;
+            border: var(--glass-border);
         }
 
         .participant-name {
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 500;
         }
 
         .participant-role {
-            font-size: 12px;
+            font-size: 13px;
             color: var(--secondary);
             margin-top: 2px;
         }
 
         .friend-request-btn {
-            padding: 8px 15px;
+            padding: 10px 18px;
             border-radius: var(--border-radius-sm);
-            background: linear-gradient(to right, #6A0DFF, #D300FF);
+            background: rgba(138, 79, 255, 0.15);
             color: white;
-            border: none;
-            font-size: 13px;
+            border: var(--glass-border);
+            font-size: 14px;
             font-weight: 500;
             cursor: pointer;
             transition: var(--transition);
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             white-space: nowrap;
-            box-shadow: 0 0 8px rgba(106, 13, 255, 0.4);
         }
 
         .friend-request-btn:hover {
-            background: var(--primary-dark);
+            background: rgba(138, 79, 255, 0.3);
             transform: translateY(-2px);
-            box-shadow: var(--glow);
+            border-color: rgba(138, 79, 255, 0.5);
         }
 
         .friend-request-btn:active {
@@ -1696,14 +1633,7 @@
         }
 
         .friend-request-btn.sent {
-            background: linear-gradient(to right, #10b981, #059669);
-        }
-
-        .friend-request-btn.sent:hover {
-            background: linear-gradient(to right, #10b981, #059669);
-            cursor: default;
-            transform: none;
-            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+            background: var(--success);
         }
 
         /* Pinch and drag styles */
@@ -1716,14 +1646,6 @@
             transition: transform 0.1s ease;
         }
 
-        body.pinch-mode #player-container {
-            cursor: grab;
-        }
-
-        body.pinch-mode #player-container:active {
-            cursor: grabbing;
-        }
-
         /* Mobile Responsive */
         @media (max-width: 1024px) {
             .detailed-content {
@@ -1733,7 +1655,7 @@
             
             .control-panel {
                 border-right: none;
-                border-bottom: 1px solid var(--glass-bg);
+                border-bottom: 1px solid rgba(138, 79, 255, 0.2);
                 max-height: 45vh;
             }
             
@@ -1745,15 +1667,12 @@
                 grid-template-columns: repeat(4, 1fr);
             }
             
-            .header-center {
-                order: 3;
-                width: 100%;
-                justify-content: center;
-                margin-top: 10px;
+            .detailed-view .video-container {
+                height: 35vh;
             }
             
-            .header-left, .header-right {
-                flex: initial;
+            .detailed-content {
+                height: 65vh;
             }
         }
         
@@ -1771,18 +1690,144 @@
             }
             
             .widget-icon, .menu-btn {
+                width: 48px;
+                height: 48px;
+                font-size: 18px;
+            }
+            
+            .custom-controls {
+                bottom: 90px;
+                padding: 14px 20px;
+                gap: 8px;
+                min-width: 300px;
+                max-width: 92%;
+                border-radius: 22px;
+            }
+            
+            .control-btn-lg {
+                width: 44px;
+                height: 44px;
+                font-size: 16px;
+            }
+            
+            .skip-btn {
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+            
+            .time-display {
+                font-size: 12px;
+                min-width: 70px;
+            }
+            
+            .detailed-header {
+                padding: 14px 16px;
+                flex-wrap: wrap;
+                gap: 12px;
+                justify-content: space-between;
+            }
+            
+            .detailed-logo {
+                font-size: 20px;
+                order: 1;
+                flex: 1;
+                min-width: 120px;
+            }
+            
+            .room-info {
+                order: 2;
+                margin-left: 0;
+                justify-content: flex-end;
+                flex: none;
+            }
+            
+            .header-actions {
+                order: 3;
+                width: 100%;
+                justify-content: center;
+                margin-top: 10px;
+            }
+            
+            .control-panel, .sidebar-panel {
+                padding: 16px;
+            }
+            
+            .controls-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+            
+            .reactions-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+            }
+            
+            .detailed-view .video-container {
+                height: 30vh;
+                min-height: 200px;
+            }
+            
+            .detailed-content {
+                height: 70vh;
+            }
+            
+            .widget-content {
+                width: 280px;
+                right: 52px;
+                padding: 16px;
+            }
+            
+            .progress-container {
+                bottom: 150px;
+                width: 85%;
+                height: 5px;
+            }
+
+            .video-resize-options {
+                bottom: 190px;
+                right: 12px;
+            }
+
+            .section-header {
+                flex-wrap: wrap;
+            }
+            
+            .status-indicator {
+                order: 3;
+                width: 100%;
+                justify-content: center;
+                margin-top: 8px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .floating-widgets {
+                top: 10px;
+                right: 10px;
+                gap: 8px;
+            }
+            
+            .sidebar-menu {
+                top: 10px;
+                left: 10px;
+                gap: 6px;
+            }
+            
+            .widget-icon, .menu-btn {
                 width: 44px;
                 height: 44px;
                 font-size: 17px;
             }
             
             .custom-controls {
-                bottom: 90px;
-                padding: 10px 16px;
+                bottom: 100px;
+                padding: 12px 16px;
                 gap: 6px;
                 min-width: 280px;
-                max-width: 92%;
+                max-width: 90%;
                 border-radius: 20px;
+                flex-wrap: wrap;
+                justify-content: space-around;
             }
             
             .control-btn-lg {
@@ -1801,36 +1846,28 @@
                 min-width: 65px;
             }
             
-            .detailed-header {
-                padding: 10px 12px;
-                gap: 8px;
-                min-height: 55px;
-            }
-            
-            .detailed-logo {
-                font-size: 16px;
-            }
-            
-            .control-panel, .sidebar-panel {
-                padding: 16px;
-            }
-            
             .controls-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 8px;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
             }
             
             .reactions-grid {
                 grid-template-columns: repeat(4, 1fr);
-                gap: 6px;
+                gap: 8px;
+            }
+            
+            .interactive-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
             }
             
             .detailed-view .video-container {
-                height: 45vh;
+                height: 28vh;
+                min-height: 180px;
             }
             
             .detailed-content {
-                height: 55vh;
+                height: 72vh;
             }
             
             .widget-content {
@@ -1840,177 +1877,42 @@
             }
             
             .progress-container {
-                bottom: 150px;
-                width: 85%;
-                height: 5px;
-            }
-
-            .video-resize-options {
-                bottom: 190px;
-                right: 12px;
-            }
-
-            .header-center {
-                order: 2;
-                flex: 1 1 100%;
-                margin-top: 5px;
-                justify-content: flex-start;
-            }
-            
-            .header-left, .header-right {
-                flex: 1;
-            }
-            
-            .back-to-player, .home-btn {
-                padding: 6px 10px;
-                font-size: 11px;
-            }
-            
-            .status-display {
-                padding: 5px 10px;
-                font-size: 11px;
-            }
-            
-            .control-status {
-                top: 70px;
-                padding: 6px 12px;
-                font-size: 11px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .floating-widgets {
-                top: 10px;
-                right: 10px;
-                gap: 8px;
-            }
-            
-            .sidebar-menu {
-                top: 10px;
-                left: 10px;
-                gap: 6px;
-            }
-            
-            .widget-icon, .menu-btn {
-                width: 42px;
-                height: 42px;
-                font-size: 16px;
-            }
-            
-            .custom-controls {
-                bottom: 100px;
-                padding: 8px 14px;
-                gap: 4px;
-                min-width: 260px;
-                max-width: 90%;
-                border-radius: 18px;
-            }
-            
-            .control-btn-lg {
-                width: 38px;
-                height: 38px;
-                font-size: 14px;
-            }
-            
-            .skip-btn {
-                font-size: 10px;
-                padding: 4px 6px;
-            }
-            
-            .time-display {
-                font-size: 10px;
-                min-width: 60px;
-            }
-            
-            .controls-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
-            }
-            
-            .reactions-grid {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 6px;
-            }
-            
-            .interactive-grid {
-                grid-template-columns: 1fr;
-                gap: 8px;
-            }
-            
-            .detailed-view .video-container {
-                height: 40vh;
-            }
-            
-            .detailed-content {
-                height: 60vh;
-            }
-            
-            .widget-content {
-                width: 240px;
-                right: 45px;
-                padding: 12px;
-            }
-            
-            .progress-container {
                 bottom: 160px;
                 width: 80%;
             }
 
             .detailed-header {
-                padding: 8px 10px;
-                gap: 6px;
-                min-height: 50px;
+                padding: 12px 14px;
+                gap: 8px;
             }
 
             .detailed-logo {
-                font-size: 14px;
-                gap: 6px;
+                font-size: 18px;
+                min-width: 100px;
             }
 
             .back-to-player, .home-btn {
-                padding: 5px 8px;
-                font-size: 10px;
-                gap: 4px;
+                padding: 8px 12px;
+                font-size: 13px;
             }
 
             .section-title {
-                font-size: 14px;
+                font-size: 16px;
             }
 
             .control-label {
-                font-size: 10px;
+                font-size: 11px;
             }
 
             .video-resize-options {
                 bottom: 200px;
                 right: 10px;
-                min-width: 140px;
+                min-width: 160px;
             }
             
-            .header-left, .header-right {
-                flex: none;
-            }
-            
-            .header-center {
-                flex: 1;
-                justify-content: center;
-                margin-top: 0;
-            }
-            
-            .status-display {
-                padding: 4px 8px;
-                font-size: 10px;
-            }
-            
-            .control-status {
-                top: 65px;
-                padding: 5px 10px;
-                font-size: 10px;
-            }
-            
-            .room-info {
-                padding: 5px 10px;
-                font-size: 11px;
+            .participant-count {
+                padding: 6px 12px;
+                font-size: 13px;
             }
         }
 
@@ -2021,11 +1923,11 @@
             }
             
             .detailed-view .video-container {
-                height: 60vh;
+                height: 50vh;
             }
             
             .detailed-content {
-                height: 40vh;
+                height: 50vh;
             }
             
             .floating-widgets {
@@ -2035,16 +1937,16 @@
             }
             
             .widget-icon, .menu-btn {
-                width: 40px;
-                height: 40px;
-                font-size: 15px;
+                width: 44px;
+                height: 44px;
+                font-size: 17px;
             }
             
             .custom-controls {
                 bottom: 60px;
-                padding: 6px 12px;
+                padding: 12px 20px;
                 min-width: 350px;
-                gap: 8px;
+                gap: 10px;
             }
             
             .progress-container {
@@ -2052,58 +1954,44 @@
             }
 
             .control-panel {
-                max-height: 35vh;
+                max-height: 40vh;
             }
             
             .sidebar-panel {
-                max-height: 45vh;
+                max-height: 50vh;
             }
 
-            /* Ensure YouTube controls are visible */
-            .ytp-chrome-bottom {
-                z-index: 2147483647 !important;
+            .detailed-view .video-container {
+                height: 40vh;
             }
             
-            .ytp-right-controls {
-                z-index: 2147483647 !important;
-            }
-
-            .video-resize-options {
-                bottom: 150px;
+            .detailed-content {
+                height: 60vh;
             }
             
             .detailed-header {
-                padding: 8px 12px;
-                min-height: 45px;
+                flex-wrap: nowrap;
+            }
+            
+            .header-actions {
+                order: 2;
+                width: auto;
+                margin-top: 0;
+            }
+            
+            .room-info {
+                order: 3;
+            }
+            
+            .detailed-logo {
+                order: 1;
             }
         }
 
-        /* Fullscreen fixes - FIXED OVERLAP */
+        /* Fullscreen fixes */
         .app-container:fullscreen .custom-controls,
         .app-container:fullscreen .progress-container,
-        .app-container:fullscreen .video-resize-controls,
-        .app-container:fullscreen .control-status {
-            z-index: 2147483647;
-        }
-        
-        .app-container:-webkit-full-screen .custom-controls,
-        .app-container:-webkit-full-screen .progress-container,
-        .app-container:-webkit-full-screen .video-resize-controls,
-        .app-container:-webkit-full-screen .control-status {
-            z-index: 2147483647;
-        }
-        
-        .app-container:-moz-full-screen .custom-controls,
-        .app-container:-moz-full-screen .progress-container,
-        .app-container:-moz-full-screen .video-resize-controls,
-        .app-container:-moz-full-screen .control-status {
-            z-index: 2147483647;
-        }
-        
-        .app-container:-ms-fullscreen .custom-controls,
-        .app-container:-ms-fullscreen .progress-container,
-        .app-container:-ms-fullscreen .video-resize-controls,
-        .app-container:-ms-fullscreen .control-status {
+        .app-container:fullscreen .video-resize-controls {
             z-index: 2147483647;
         }
 
@@ -2133,22 +2021,8 @@
             transform: scale(0.95);
         }
 
-        /* Button focus states for accessibility */
-        button:focus-visible,
-        .control-btn-lg:focus-visible,
-        .skip-btn:focus-visible,
-        .resize-btn:focus-visible {
-            outline: 2px solid var(--primary);
-            outline-offset: 2px;
-        }
-
         /* iPhone-specific fixes */
         @supports (-webkit-touch-callout: none) {
-            /* iOS Safari specific */
-            body {
-                -webkit-font-smoothing: antialiased;
-            }
-            
             .custom-controls {
                 bottom: 100px !important;
                 backdrop-filter: saturate(180%) blur(20px);
@@ -2164,12 +2038,10 @@
                 -webkit-backdrop-filter: saturate(180%) blur(10px);
             }
             
-            /* Fix for iOS video controls */
             video::-webkit-media-controls {
                 display: none !important;
             }
             
-            /* Better touch targets */
             .control-btn-lg, .menu-btn, .widget-icon {
                 min-height: 44px;
                 min-width: 44px;
@@ -2179,13 +2051,9 @@
                 min-height: 36px;
                 padding: 10px 14px;
             }
-            
-            .detailed-header {
-                padding-top: max(12px, env(safe-area-inset-top));
-            }
         }
 
-        /* Very small phones (iPhone SE, etc.) */
+        /* Very small phones */
         @media (max-width: 375px) and (max-height: 667px) {
             .floating-widgets {
                 top: 8px;
@@ -2200,24 +2068,24 @@
             }
             
             .widget-icon, .menu-btn {
-                width: 38px;
-                height: 38px;
-                font-size: 15px;
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
             }
             
             .custom-controls {
                 bottom: 110px;
-                padding: 6px 10px;
+                padding: 10px 14px;
                 gap: 4px;
-                min-width: 240px;
+                min-width: 260px;
                 max-width: 88%;
-                border-radius: 16px;
+                border-radius: 18px;
             }
             
             .control-btn-lg {
                 width: 36px;
                 height: 36px;
-                font-size: 13px;
+                font-size: 14px;
             }
             
             .skip-btn {
@@ -2227,7 +2095,7 @@
             
             .time-display {
                 font-size: 10px;
-                min-width: 50px;
+                min-width: 60px;
             }
             
             .progress-container {
@@ -2236,66 +2104,40 @@
             }
             
             .detailed-header {
-                padding: 8px 10px;
-                gap: 4px;
+                padding: 10px 12px;
             }
             
             .detailed-logo {
-                font-size: 13px;
+                font-size: 16px;
             }
             
             .back-to-player, .home-btn {
-                padding: 4px 6px;
-                font-size: 10px;
+                padding: 6px 10px;
+                font-size: 12px;
             }
             
             .controls-grid {
                 grid-template-columns: repeat(2, 1fr);
-                gap: 6px;
+                gap: 8px;
             }
             
             .control-card {
-                min-height: 70px;
-                padding: 8px;
+                min-height: 75px;
+                padding: 10px;
             }
             
             .control-icon {
-                width: 32px;
-                height: 32px;
-                font-size: 14px;
+                width: 34px;
+                height: 34px;
+                font-size: 15px;
             }
             
             .control-label {
-                font-size: 9px;
-            }
-            
-            .header-left, .header-right {
-                flex: none;
-            }
-            
-            .header-center {
-                flex: 1;
-                min-width: 0;
-            }
-            
-            .room-info {
-                max-width: 120px;
-                overflow: hidden;
-            }
-            
-            .status-display {
-                font-size: 9px;
-                padding: 4px 8px;
-            }
-            
-            .control-status {
-                top: 60px;
-                padding: 4px 8px;
-                font-size: 9px;
+                font-size: 10px;
             }
         }
 
-        /* Tall phones (iPhone X/11/12 Pro Max, etc.) */
+        /* Tall phones */
         @media (min-width: 375px) and (max-width: 428px) and (min-height: 812px) {
             .custom-controls {
                 bottom: 120px;
@@ -2306,11 +2148,11 @@
             }
             
             .detailed-view .video-container {
-                height: 35vh;
+                height: 30vh;
             }
             
             .detailed-content {
-                height: 65vh;
+                height: 70vh;
             }
             
             .floating-widgets {
@@ -2322,81 +2164,25 @@
                 top: env(safe-area-inset-top, 15px);
                 left: env(safe-area-inset-left, 15px);
             }
-            
-            .detailed-header {
-                padding-top: max(12px, env(safe-area-inset-top));
-            }
         }
 
-        /* Samsung Fold and other foldables */
-        @media (max-width: 717px) and (max-height: 512px) {
-            .custom-controls {
-                flex-direction: row;
-                flex-wrap: nowrap;
-                bottom: 70px;
-                padding: 10px;
-            }
-            
-            .progress-container {
-                bottom: 130px;
-            }
-            
-            .detailed-content {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto 1fr;
-                height: 60vh;
-            }
-            
-            .detailed-header {
-                flex-wrap: nowrap;
-                gap: 8px;
-            }
-            
-            .header-left, .header-center, .header-right {
-                flex: 1;
-            }
-        }
-
-        /* Better button spacing for small devices */
+        /* Better button spacing for mobile */
         @media (max-width: 768px) {
             .header-actions {
-                flex-wrap: nowrap;
-                gap: 6px;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px;
             }
             
-            .detailed-header {
-                flex-wrap: wrap;
-                gap: 8px;
+            .room-info {
+                display: flex;
+                justify-content: flex-end;
+                min-width: 0;
             }
             
             .detailed-logo {
-                order: 1;
-            }
-            
-            .header-left {
-                order: 2;
-            }
-            
-            .header-right {
-                order: 3;
-            }
-            
-            .header-center {
-                order: 4;
-                width: 100%;
-                margin-top: 5px;
-            }
-            
-            .widget-content {
-                max-width: 280px;
-                width: calc(100vw - 80px);
-                right: 60px;
-            }
-            
-            /* Improve chat input */
-            .chat-input {
-                font-size: 16px !important; /* iOS doesn't allow smaller than 16px without zoom */
-                padding: 12px;
+                min-width: 0;
             }
         }
 
@@ -2414,19 +2200,15 @@
             }
             
             .section-title {
-                font-size: 14px;
+                font-size: 15px;
             }
             
             .message-content {
-                font-size: 14px;
+                font-size: 13px;
             }
             
             .chat-input, .sidebar-chat-input {
-                font-size: 14px;
-            }
-            
-            .speed-select, .control-label {
-                font-size: 13px;
+                font-size: 16px;
             }
         }
 
@@ -2437,7 +2219,7 @@
 
         /* Better focus states for accessibility */
         button:focus {
-            outline: 2px solid var(--primary);
+            outline: 2px solid rgba(138, 79, 255, 0.5);
             outline-offset: 2px;
         }
 
@@ -2448,17 +2230,68 @@
         }
 
         ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(138, 79, 255, 0.1);
             border-radius: 3px;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: linear-gradient(to bottom, #6A0DFF, #D300FF);
+            background: rgba(138, 79, 255, 0.3);
             border-radius: 3px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(to bottom, #5A0CE0, #C900F0);
+            background: rgba(138, 79, 255, 0.5);
+        }
+
+        /* Animated background for video container */
+        .video-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, 
+                rgba(106, 13, 255, 0.1) 0%,
+                rgba(211, 0, 255, 0.05) 25%,
+                rgba(138, 79, 255, 0.1) 50%,
+                rgba(106, 13, 255, 0.05) 75%,
+                rgba(138, 79, 255, 0.1) 100%);
+            animation: gradient-shift 10s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Glass effect improvements */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Subtle animation for buttons */
+        @keyframes subtle-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .animated-button {
+            animation: subtle-pulse 3s ease-in-out infinite;
+        }
+
+        /* Notification animation for participant changes */
+        @keyframes participant-change {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .participant-change {
+            animation: participant-change 0.5s ease 3;
         }
     </style>
 </head>
@@ -2488,18 +2321,6 @@
             </div>
         </div>
 
-        <!-- Control Status Display -->
-        <div class="control-status" id="control-status">
-            <div class="participant-count" id="participant-count-btn">
-                <i class="fas fa-users"></i>
-                <span id="participant-count">1</span> watching
-            </div>
-            <div class="status-display" id="status-display">
-                <i class="fas fa-user"></i>
-                Loading...
-            </div>
-        </div>
-
         <!-- Player View -->
         <div class="player-view" id="player-view">
             <div class="video-container">
@@ -2516,7 +2337,7 @@
                                 <div class="popcorn">🍿</div>
                                 <div class="popcorn">🍿</div>
                             </div>
-                            <div>Grab your popcorn....</div>
+                            <div>Loading video from party...</div>
                             <div class="loading-dots">
                                 <span></span>
                                 <span></span>
@@ -2568,9 +2389,9 @@
                     </div>
                 </div>
                 
-                <!-- FIXED: Custom Controls with proper z-index -->
+                <!-- Custom Controls - FIXED LAYOUT -->
                 <div class="custom-controls" id="custom-controls">
-                    <button class="control-btn-lg touch-feedback" id="custom-play-pause">
+                    <button class="control-btn-lg touch-feedback animated-button" id="custom-play-pause">
                         <i class="fas fa-play"></i>
                     </button>
                     <button class="skip-btn touch-feedback" id="skip-back">
@@ -2581,7 +2402,7 @@
                         30s <i class="fas fa-forward"></i>
                     </button>
                     
-                    <!-- FIXED: Volume Controls - visible in fullscreen -->
+                    <!-- Volume Controls -->
                     <div class="volume-controls">
                         <button class="control-btn-lg touch-feedback" id="volume-btn">
                             <i class="fas fa-volume-up"></i>
@@ -2601,9 +2422,9 @@
                 </div>
             </div>
             
-            <!-- Sidebar Menu WITHOUT Home Button -->
+            <!-- Sidebar Menu -->
             <div class="sidebar-menu">
-                <button class="menu-btn touch-feedback" id="menu-btn" title="Open Controls">
+                <button class="menu-btn touch-feedback animated-button" id="menu-btn" title="Open Controls">
                     <i class="fas fa-th-large"></i>
                 </button>
             </div>
@@ -2612,7 +2433,7 @@
             <div class="floating-widgets">
                 <!-- Voice Widget -->
                 <div class="widget-container">
-                    <button class="widget-icon touch-feedback" id="voice-widget" title="Voice Chat">
+                    <button class="widget-icon touch-feedback animated-button" id="voice-widget" title="Voice Chat">
                         <i class="fas fa-microphone"></i>
                     </button>
                     <div class="widget-content" id="voice-content">
@@ -2625,7 +2446,7 @@
                 
                 <!-- Reactions Widget -->
                 <div class="widget-container">
-                    <button class="widget-icon touch-feedback" id="reactions-widget" title="Send Reactions">
+                    <button class="widget-icon touch-feedback animated-button" id="reactions-widget" title="Send Reactions">
                         <i class="fas fa-smile"></i>
                     </button>
                     <div class="widget-content" id="reactions-content">
@@ -2644,7 +2465,7 @@
                 
                 <!-- Chat Widget -->
                 <div class="widget-container">
-                    <button class="widget-icon touch-feedback" id="chat-widget" title="Group Chat">
+                    <button class="widget-icon touch-feedback animated-button" id="chat-widget" title="Group Chat">
                         <i class="fas fa-comment"></i>
                         <div class="widget-badge" id="chat-badge" style="display: none;">0</div>
                     </button>
@@ -2672,7 +2493,7 @@
                 
                 <!-- Share Widget -->
                 <div class="widget-container">
-                    <button class="widget-icon touch-feedback" id="share-widget" title="Share Party">
+                    <button class="widget-icon touch-feedback animated-button" id="share-widget" title="Share Party">
                         <i class="fas fa-share-alt"></i>
                     </button>
                     <div class="widget-content" id="share-content">
@@ -2689,39 +2510,30 @@
         
         <!-- Detailed View -->
         <div class="detailed-view" id="detailed-view">
-            <!-- FIXED: Optimized Header Layout -->
             <div class="detailed-header">
-                <div class="header-left">
-                    <div class="detailed-logo">
-                        <i class="fas fa-film"></i>
-                        Let's Watch
+                <div class="detailed-logo">
+                    <i class="fas fa-film"></i>
+                    Let's Watch
+                </div>
+                <div class="room-info">
+                    <div class="participant-count" id="participant-count-btn">
+                        <i class="fas fa-users"></i>
+                        <span id="participant-count">1</span> watching
                     </div>
                 </div>
-                
-                <div class="header-center">
-                    <div class="room-info">
-                        <div class="participant-count" id="detailed-participant-count-btn">
-                            <i class="fas fa-users"></i>
-                            <span id="detailed-participant-count">1</span> watching
-                        </div>
-                        <div class="status-display" id="detailed-status-display">
-                            <i class="fas fa-user"></i>
-                            Loading...
-                        </div>
+                <div class="header-actions">
+                    <div class="participant-count-mobile" id="participant-count-mobile" style="display: none;">
+                        <i class="fas fa-users"></i>
+                        <span id="participant-count-mobile-text">1</span>
                     </div>
-                </div>
-                
-                <div class="header-right">
-                    <div class="header-actions">
-                        <a href="home.html" class="home-btn touch-feedback" id="home-btn-detailed">
-                            <i class="fas fa-home"></i>
-                            <span class="btn-text">Home</span>
-                        </a>
-                        <button class="back-to-player touch-feedback" id="back-to-player">
-                            <i class="fas fa-arrow-left"></i>
-                            <span class="btn-text">Back to Player</span>
-                        </button>
-                    </div>
+                    <a href="home.html" class="home-btn touch-feedback" id="home-btn-detailed">
+                        <i class="fas fa-home"></i>
+                        Home
+                    </a>
+                    <button class="back-to-player touch-feedback" id="back-to-player">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Player
+                    </button>
                 </div>
             </div>
             
@@ -2772,6 +2584,10 @@
                             <i class="fas fa-sliders-h"></i>
                         </div>
                         <h3 class="section-title">Video Controls</h3>
+                        <div class="status-indicator" id="status-indicator">
+                            <i class="fas fa-user"></i>
+                            <span id="status-display">Host</span>
+                        </div>
                     </div>
                     
                     <div class="controls-grid">
@@ -2939,7 +2755,7 @@
                                 <i class="fas fa-copy"></i> Copy
                             </button>
                         </div>
-                        <p style="font-size: 12px; color: var(--secondary); text-align: center;">
+                        <p style="font-size: 13px; color: var(--secondary); text-align: center; margin-top: 8px;">
                             Share this link to invite friends
                         </p>
                     </div>
@@ -2966,6 +2782,7 @@
             console.log("Firebase initialized successfully");
         } catch (error) {
             console.error("Firebase initialization error:", error);
+            alert("Firebase configuration error. Please check firebase-config.js");
         }
 
         // Global variables
@@ -2983,6 +2800,7 @@
         // Participants tracking
         let participants = {};
         let participantCount = 0;
+        let previousParticipantCount = 0;
         
         // Video resize variables
         let currentScale = 1;
@@ -3029,21 +2847,62 @@
                 
                 // Join the room
                 joinRoom();
-            }).catch(console.warn);
+            }).catch(error => {
+                console.error("Auth error:", error);
+                alert("Authentication failed. Please refresh the page.");
+            });
         } else {
-            console.log("Using demo mode without Firebase");
+            console.log("Firebase not available - using demo mode");
+            // Create mock Firebase references for demo
+            createMockFirebase();
+        }
+
+        function createMockFirebase() {
+            console.log("Creating mock Firebase for demo");
             roomRef = {
-                once: () => Promise.resolve({ val: () => null }),
-                update: () => console.log("Demo: Room updated"),
-                set: () => console.log("Demo: Room created"),
-                on: () => console.log("Demo: Room listener added"),
-                child: () => ({ 
-                    update: () => console.log("Demo: Child updated"),
-                    set: () => console.log("Demo: Child set"),
-                    on: () => console.log("Demo: Child listener added"),
-                    push: () => ({ key: 'demo', set: () => console.log("Demo: Push set") })
-                })
+                once: () => Promise.resolve({ val: () => ({ 
+                    videoLink: '',
+                    createdAt: Date.now(),
+                    host: true,
+                    status: 'pause',
+                    currentTime: 0,
+                    drawingEnabled: false
+                }) }),
+                update: (data) => console.log("Mock: Room updated", data),
+                set: (data) => console.log("Mock: Room created", data),
+                on: (event, callback) => {
+                    console.log("Mock: Room listener added for", event);
+                    if (event === 'value') {
+                        setTimeout(() => callback({ val: () => ({ 
+                            videoLink: '',
+                            videoState: { isPlaying: false, currentTime: 0 }
+                        }) }), 100);
+                    }
+                    return () => console.log("Mock: Listener removed");
+                },
+                child: (path) => {
+                    console.log("Mock: Child reference", path);
+                    return { 
+                        update: (data) => console.log("Mock: Child updated", path, data),
+                        set: (data) => console.log("Mock: Child set", path, data),
+                        on: (event, callback) => {
+                            console.log("Mock: Child listener added for", path, event);
+                            return () => console.log("Mock: Child listener removed");
+                        },
+                        push: () => ({ 
+                            key: 'demo-key', 
+                            set: (data) => console.log("Mock: Push set", data)
+                        }),
+                        remove: () => console.log("Mock: Child removed")
+                    };
+                }
             };
+            
+            // Set current user for demo
+            currentUser = 'demo-user-' + Date.now();
+            isHost = true;
+            createUserProfile();
+            joinRoom();
         }
 
         // DOM elements
@@ -3052,10 +2911,11 @@
         const participantsList = document.getElementById('participants-list');
         const closeParticipantsBtn = document.getElementById('close-participants');
         const participantCountBtn = document.getElementById('participant-count-btn');
-        const detailedParticipantCountBtn = document.getElementById('detailed-participant-count-btn');
         const participantCountElement = document.getElementById('participant-count');
-        const detailedParticipantCountElement = document.getElementById('detailed-participant-count');
-        const controlStatus = document.getElementById('control-status');
+        const participantCountMobile = document.getElementById('participant-count-mobile');
+        const participantCountMobileText = document.getElementById('participant-count-mobile-text');
+        const statusIndicator = document.getElementById('status-indicator');
+        const statusDisplay = document.getElementById('status-display');
         const resizeIndicator = document.getElementById('resize-indicator');
         const resetSizeBtn = document.getElementById('reset-size-btn');
         const resizeMenuBtn = document.getElementById('resize-menu-btn');
@@ -3072,8 +2932,6 @@
         const ctx = canvas.getContext('2d');
         const reactionsBox = document.getElementById('reactions');
         const detailedPlayerContainer = document.getElementById('detailed-player-container');
-        const statusDisplay = document.getElementById('status-display');
-        const detailedStatusDisplay = document.getElementById('detailed-status-display');
         const timeDisplay = document.getElementById('time-display');
         const detailedTimeDisplay = document.getElementById('detailed-time-display');
 
@@ -3171,271 +3029,29 @@
         let rotationHintShown = false;
         let syncManager = null;
         let userProfile = null;
-        let isVideoLoaded = false;
-
-        // Enhanced Teleparty-style Sync Manager
-        class TelepartySyncManager {
-            constructor(isHost, roomRef, videoPlayer) {
-                this.isHost = isHost;
-                this.roomRef = roomRef;
-                this.video = videoPlayer;
-                this.lastSyncTime = 0;
-                this.syncInterval = 4000; // 4-6 seconds for heartbeat
-                this.maxDrift = 1.0; // 1 second max drift
-                this.isSyncing = false;
-                this.heartbeatInterval = null;
-                this.isLocalAction = false;
-                this.lastHostUpdate = 0;
-                this.videoPausedBySystem = false;
-                
-                // State from Firebase
-                this.hostState = {
-                    isPlaying: false,
-                    currentTime: 0,
-                    lastUpdate: Date.now(),
-                    hostId: ''
-                };
-            }
-            
-            // ================= HOST FUNCTIONS =================
-            
-            sendPlayEvent() {
-                if (!this.isHost) return;
-                
-                const videoTime = this.video.getCurrentTime();
-                this.updateFirebaseState({
-                    isPlaying: true,
-                    currentTime: videoTime,
-                    lastUpdate: Date.now(),
-                    hostId: currentUser
-                });
-                
-                console.log(`[Host] Play event at ${videoTime.toFixed(2)}s`);
-            }
-            
-            sendPauseEvent() {
-                if (!this.isHost) return;
-                
-                const videoTime = this.video.getCurrentTime();
-                this.updateFirebaseState({
-                    isPlaying: false,
-                    currentTime: videoTime,
-                    lastUpdate: Date.now(),
-                    hostId: currentUser
-                });
-                
-                console.log(`[Host] Pause event at ${videoTime.toFixed(2)}s`);
-            }
-            
-            sendSeekEvent() {
-                if (!this.isHost) return;
-                
-                const videoTime = this.video.getCurrentTime();
-                this.updateFirebaseState({
-                    isPlaying: false, // Assume pause on seek
-                    currentTime: videoTime,
-                    lastUpdate: Date.now(),
-                    hostId: currentUser
-                });
-                
-                console.log(`[Host] Seek event to ${videoTime.toFixed(2)}s`);
-            }
-            
-            sendHeartbeat() {
-                if (!this.isHost || !this.video.isPlaying()) return;
-                
-                const videoTime = this.video.getCurrentTime();
-                this.updateFirebaseState({
-                    currentTime: videoTime,
-                    lastUpdate: Date.now()
-                }, true); // Partial update
-                
-                console.log(`[Host] Heartbeat at ${videoTime.toFixed(2)}s`);
-            }
-            
-            updateFirebaseState(state, partial = false) {
-                if (!this.isHost || !firebaseInitialized) return;
-                
-                try {
-                    if (partial) {
-                        this.roomRef.child('videoState').update(state);
-                    } else {
-                        this.roomRef.child('videoState').set(state);
-                    }
-                } catch (error) {
-                    console.error('Firebase update error:', error);
-                }
-            }
-            
-            startHostSync() {
-                if (!this.isHost) return;
-                
-                // Initial state
-                this.sendPauseEvent();
-                
-                // Start heartbeat
-                this.heartbeatInterval = setInterval(() => {
-                    this.sendHeartbeat();
-                }, this.syncInterval + Math.random() * 2000); // Random interval between 4-6 seconds
-                
-                console.log('[Host] Sync manager started');
-            }
-            
-            // ================= VIEWER FUNCTIONS =================
-            
-            startViewerSync() {
-                if (this.isHost) return;
-                
-                // Listen to Firebase changes
-                this.roomRef.child('videoState').on('value', (snapshot) => {
-                    if (this.isLocalAction) {
-                        this.isLocalAction = false;
-                        return;
-                    }
-                    
-                    const data = snapshot.val();
-                    if (!data) return;
-                    
-                    this.hostState = data;
-                    this.lastHostUpdate = Date.now();
-                    
-                    // Don't sync if video is paused by system (like when tab is background)
-                    if (this.videoPausedBySystem) {
-                        console.log('[Sync] Skipping sync - video paused by system');
-                        this.videoPausedBySystem = false;
-                        return;
-                    }
-                    
-                    this.syncToHost();
-                });
-                
-                console.log('[Viewer] Sync manager started');
-            }
-            
-            syncToHost() {
-                if (this.isHost || this.isSyncing) return;
-                
-                this.isSyncing = true;
-                
-                // Calculate real host time with network latency
-                const now = Date.now();
-                const latency = Math.max(0, now - this.hostState.lastUpdate);
-                const hostRealTime = this.hostState.currentTime + (latency / 1000);
-                
-                // Get local time
-                const localTime = this.video.getCurrentTime();
-                
-                // Calculate drift
-                const drift = localTime - hostRealTime;
-                const absDrift = Math.abs(drift);
-                
-                console.log(`[Sync] Drift: ${drift.toFixed(2)}s, Host: ${hostRealTime.toFixed(2)}s, Local: ${localTime.toFixed(2)}s`);
-                
-                // ===== DRIFT CORRECTION RULES =====
-                
-                // A) Ignore small drift (< 1 second)
-                if (absDrift < 1.0) {
-                    console.log(`[Sync] Small drift (${absDrift.toFixed(2)}s), ignoring`);
-                    this.syncPlayPause();
-                    this.isSyncing = false;
-                    return;
-                }
-                
-                // B) Soft Sync (1.0–2.5 seconds drift)
-                if (absDrift >= 1.0 && absDrift < 2.5) {
-                    console.log(`[Sync] Medium drift (${absDrift.toFixed(2)}s), soft syncing`);
-                    this.softSync(drift);
-                    this.syncPlayPause();
-                    this.isSyncing = false;
-                    return;
-                }
-                
-                // C) Hard Sync (>= 2.5 seconds drift)
-                if (absDrift >= 2.5) {
-                    console.log(`[Sync] Large drift (${absDrift.toFixed(2)}s), hard syncing`);
-                    this.hardSync(hostRealTime);
-                    this.syncPlayPause();
-                    this.isSyncing = false;
-                    return;
-                }
-                
-                this.isSyncing = false;
-            }
-            
-            softSync(drift) {
-                // Gently adjust playback rate
-                if (drift > 0) {
-                    // Local is ahead of host, slow down
-                    this.video.setPlaybackRate(0.99);
-                    console.log('[Sync] Slowing down (0.99x)');
-                } else {
-                    // Local is behind host, speed up
-                    this.video.setPlaybackRate(1.01);
-                    console.log('[Sync] Speeding up (1.01x)');
-                }
-                
-                // Reset playback rate after 3 seconds
-                setTimeout(() => {
-                    this.video.setPlaybackRate(1.0);
-                    console.log('[Sync] Reset to normal speed');
-                }, 3000);
-            }
-            
-            hardSync(targetTime) {
-                // Jump to correct time
-                this.video.setPlaybackRate(1.0);
-                this.video.seekTo(targetTime);
-                console.log(`[Sync] Jumped to ${targetTime.toFixed(2)}s`);
-            }
-            
-            syncPlayPause() {
-                if (this.isHost) return;
-                
-                const shouldPlay = this.hostState.isPlaying;
-                const isPlaying = this.video.isPlaying();
-                
-                if (shouldPlay && !isPlaying) {
-                    console.log('[Sync] Host is playing, starting playback');
-                    this.video.play();
-                } else if (!shouldPlay && isPlaying) {
-                    console.log('[Sync] Host paused, stopping playback');
-                    this.video.pause();
-                }
-            }
-            
-            // ================= UTILITIES =================
-            
-            stopSync() {
-                if (this.heartbeatInterval) {
-                    clearInterval(this.heartbeatInterval);
-                    this.heartbeatInterval = null;
-                }
-                
-                if (firebaseInitialized && !this.isHost) {
-                    this.roomRef.child('videoState').off('value');
-                }
-                
-                console.log('[Sync] Manager stopped');
-            }
-            
-            markLocalAction() {
-                this.isLocalAction = true;
-                setTimeout(() => {
-                    this.isLocalAction = false;
-                }, 1000);
-            }
-            
-            // Handle system pause (like when tab goes background)
-            handleSystemPause() {
-                if (!this.isHost) {
-                    this.videoPausedBySystem = true;
-                }
-            }
-        }
+        let videoLoaded = false;
+        let participantLeaveTimeout = null;
 
         // USER PROFILE MANAGEMENT
         function createUserProfile() {
-            if (!firebaseInitialized || !currentUser) return;
+            if (!currentUser) return;
+            
+            if (!firebaseInitialized) {
+                // Demo user profile
+                const randomNames = ['MovieLover', 'PopcornFan', 'ScreenStar', 'WatchBuddy', 'Cinephile', 'FilmFanatic'];
+                const randomName = randomNames[Math.floor(Math.random() * randomNames.length)] + Math.floor(Math.random() * 1000);
+                
+                userProfile = {
+                    uid: currentUser,
+                    displayName: randomName,
+                    createdAt: Date.now(),
+                    lastSeen: Date.now()
+                };
+                
+                console.log("Demo user profile created:", userProfile);
+                updateStatusDisplay();
+                return;
+            }
             
             const userRef = db.ref('users/' + currentUser);
             userRef.once('value').then(snap => {
@@ -3457,54 +3073,122 @@
                     userProfile = snap.val();
                     userRef.update({ lastSeen: firebase.database.ServerValue.TIMESTAMP });
                 }
+                
+                // Update status display
+                updateStatusDisplay();
+            }).catch(error => {
+                console.error("Error creating user profile:", error);
             });
+        }
+
+        // Update status display
+        function updateStatusDisplay() {
+            if (statusIndicator && statusDisplay) {
+                if (isHost) {
+                    statusIndicator.className = 'status-indicator host';
+                    statusDisplay.textContent = 'Host';
+                    statusIndicator.innerHTML = '<i class="fas fa-crown"></i> <span id="status-display">Host</span>';
+                } else {
+                    statusIndicator.className = 'status-indicator viewer';
+                    statusDisplay.textContent = 'Viewer';
+                    statusIndicator.innerHTML = '<i class="fas fa-user"></i> <span id="status-display">Viewer</span>';
+                }
+            }
         }
 
         // ROOM PARTICIPANTS MANAGEMENT
         function joinRoom() {
-            if (!firebaseInitialized || !currentUser || !participantsRef) return;
+            if (!currentUser || !participantsRef) return;
             
             // Add user to participants
-            const userParticipantRef = participantsRef.child(currentUser);
-            userParticipantRef.set({
-                uid: currentUser,
-                joinedAt: firebase.database.ServerValue.TIMESTAMP,
-                isHost: isHost,
-                lastActive: firebase.database.ServerValue.TIMESTAMP,
-                displayName: userProfile?.displayName || 'User'
-            });
-            
-            // Listen for participant changes
-            participantsRef.on('child_added', (snap) => {
-                const participant = snap.val();
-                participants[participant.uid] = participant;
+            const userParticipantRef = participantsRef ? participantsRef.child(currentUser) : null;
+            if (userParticipantRef) {
+                userParticipantRef.set({
+                    uid: currentUser,
+                    displayName: userProfile?.displayName || 'User',
+                    joinedAt: firebaseInitialized ? firebase.database.ServerValue.TIMESTAMP : Date.now(),
+                    isHost: isHost,
+                    lastActive: firebaseInitialized ? firebase.database.ServerValue.TIMESTAMP : Date.now()
+                });
+                
+                // Listen for participant changes
+                participantsRef.on('child_added', (snap) => {
+                    const participant = snap.val();
+                    participants[participant.uid] = participant;
+                    updateParticipantCount();
+                    updateParticipantsList();
+                });
+                
+                participantsRef.on('child_removed', (snap) => {
+                    const participant = snap.val();
+                    delete participants[participant.uid];
+                    updateParticipantCount();
+                    updateParticipantsList();
+                    
+                    // Trigger glow animation when someone leaves
+                    if (previousParticipantCount > Object.keys(participants).length) {
+                        triggerParticipantLeaveAnimation();
+                    }
+                });
+                
+                // Update last active every 30 seconds
+                setInterval(() => {
+                    if (userParticipantRef) {
+                        userParticipantRef.update({ 
+                            lastActive: firebaseInitialized ? firebase.database.ServerValue.TIMESTAMP : Date.now()
+                        });
+                    }
+                }, 30000);
+            } else {
+                // Demo mode participants
+                participants[currentUser] = {
+                    uid: currentUser,
+                    displayName: userProfile?.displayName || 'Demo User',
+                    isHost: isHost
+                };
                 updateParticipantCount();
                 updateParticipantsList();
-            });
-            
-            participantsRef.on('child_removed', (snap) => {
-                const participant = snap.val();
-                delete participants[participant.uid];
-                updateParticipantCount();
-                updateParticipantsList();
-            });
-            
-            // Update last active every 30 seconds
-            setInterval(() => {
-                if (userParticipantRef) {
-                    userParticipantRef.update({ lastActive: firebase.database.ServerValue.TIMESTAMP });
-                }
-            }, 30000);
+            }
         }
 
         function updateParticipantCount() {
+            previousParticipantCount = participantCount;
             const count = Object.keys(participants).length;
             participantCount = count;
+            
             if (participantCountElement) {
                 participantCountElement.textContent = count;
             }
-            if (detailedParticipantCountElement) {
-                detailedParticipantCountElement.textContent = count;
+            if (participantCountMobileText) {
+                participantCountMobileText.textContent = count;
+            }
+            
+            // Show mobile participant count on small screens
+            if (window.innerWidth <= 768 && participantCountMobile) {
+                participantCountMobile.style.display = 'flex';
+            }
+        }
+
+        function triggerParticipantLeaveAnimation() {
+            // Add glow animation to back-to-player button
+            const backButton = document.getElementById('back-to-player');
+            if (backButton && !backButton.classList.contains('glow')) {
+                backButton.classList.add('glow');
+                
+                // Remove the class after animation completes (2s * 3 iterations = 6s)
+                setTimeout(() => {
+                    backButton.classList.remove('glow');
+                }, 6000);
+            }
+            
+            // Also add animation to menu button in player view
+            const menuButton = document.getElementById('menu-btn');
+            if (menuButton && !menuButton.classList.contains('glow')) {
+                menuButton.classList.add('glow');
+                
+                setTimeout(() => {
+                    menuButton.classList.remove('glow');
+                }, 6000);
             }
         }
 
@@ -3548,7 +3232,9 @@
                 friendRequestBtn.dataset.userId = participant.uid;
                 
                 // Check if friend request already sent
-                checkFriendRequestStatus(participant.uid, friendRequestBtn);
+                if (firebaseInitialized) {
+                    checkFriendRequestStatus(participant.uid, friendRequestBtn);
+                }
                 
                 friendRequestBtn.addEventListener('click', () => {
                     sendFriendRequest(participant.uid, participant.displayName, friendRequestBtn);
@@ -3627,6 +3313,13 @@
                     return;
                 }
 
+                if (!agoraConfig || !agoraConfig.appId) {
+                    console.warn("Agora config not available");
+                    setVoiceStatus("Voice chat disabled");
+                    setupDemoVoice();
+                    return;
+                }
+
                 // Create Agora client
                 agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
                 
@@ -3660,11 +3353,7 @@
                 setVoiceStatus("Voice chat unavailable");
                 
                 // Fallback for demo mode
-                if (!agoraConfig || !agoraConfig.appId) {
-                    console.log("Using demo voice mode");
-                    // Set up fallback voice simulation
-                    setupDemoVoice();
-                }
+                setupDemoVoice();
             }
         }
 
@@ -3678,6 +3367,20 @@
                 });
                 
                 holdTalkBtn.addEventListener('mouseup', () => {
+                    setVoiceStatus("Voice ready - Hold to talk");
+                    holdTalkBtn.classList.remove('talking');
+                    sidebarHoldTalkBtn?.classList.remove('talking');
+                });
+                
+                holdTalkBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    setVoiceStatus("<span class='recording-indicator'></span> Talking... (Demo)");
+                    holdTalkBtn.classList.add('talking');
+                    sidebarHoldTalkBtn?.classList.add('talking');
+                });
+                
+                holdTalkBtn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
                     setVoiceStatus("Voice ready - Hold to talk");
                     holdTalkBtn.classList.remove('talking');
                     sidebarHoldTalkBtn?.classList.remove('talking');
@@ -3953,35 +3656,7 @@
             }
         }
 
-        // FIX YOUTUBE CONTROLS IN LANDSCAPE
-        function ensureYouTubeControls() {
-            if (!usingYT || !ytPlayer) return;
-            
-            try {
-                const iframe = document.querySelector('#ytPlayerIframe iframe');
-                if (iframe) {
-                    iframe.style.zIndex = '2147483647';
-                    
-                    const src = iframe.src;
-                    if (!src.includes('controls=1')) {
-                        const newSrc = src.includes('?') ? 
-                            src.replace('controls=0', 'controls=1') : 
-                            src + '&controls=1';
-                        iframe.src = newSrc;
-                    }
-                }
-            } catch (e) {
-                console.warn("Could not modify YouTube iframe:", e);
-            }
-        }
-
         // Core functions
-        function setStatus(text) { 
-            if (statusDisplay) statusDisplay.innerHTML = `<i class="fas fa-user"></i> ${text}`; 
-            if (detailedStatusDisplay) detailedStatusDisplay.innerHTML = `<i class="fas fa-user"></i> ${text}`;
-            console.log('[Status]', text);
-        }
-
         function setVoiceStatus(text) { 
             if (voiceStatus) voiceStatus.innerHTML = text; 
             if (sidebarVoiceStatus) sidebarVoiceStatus.innerHTML = text;
@@ -4035,7 +3710,6 @@
             if (progressContainer) progressContainer.classList.add('visible');
             if (detailedProgressContainer) detailedProgressContainer.classList.add('visible');
             if (videoResizeControls) videoResizeControls.classList.add('visible');
-            if (controlStatus) controlStatus.classList.add('visible');
             
             resetControlsTimeout();
         }
@@ -4049,7 +3723,6 @@
             if (progressContainer) progressContainer.classList.remove('visible');
             if (detailedProgressContainer) detailedProgressContainer.classList.remove('visible');
             if (videoResizeControls) videoResizeControls.classList.remove('visible');
-            if (controlStatus) controlStatus.classList.remove('visible');
         }
 
         function resetControlsTimeout() {
@@ -4058,7 +3731,7 @@
             }
             
             controlsTimeout = setTimeout(() => {
-                if (!isDragging && !isPinching && !isTalking && !isDetailedView) {
+                if (!isDragging && !isPinching && !isTalking) {
                     hideControls();
                 }
             }, 3000);
@@ -4100,62 +3773,104 @@
             resetControlsTimeout();
         }
 
-        // Optimized video loading functions
+        // Video loading functions - REMOVED DEMO VIDEO FALLBACK
         function loadVideoFromFirebase() {
+            // Show loading screen
+            overlayBlock.classList.remove('hidden');
+            overlayBlock.innerHTML = `
+                <div class="popcorn-loading">
+                    <div class="popcorn-container">
+                        <div class="popcorn">🍿</div>
+                        <div class="popcorn">🍿</div>
+                        <div class="popcorn">🍿</div>
+                    </div>
+                    <div>Loading video from party...</div>
+                    <div class="loading-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            `;
+            
             if (!firebaseInitialized) {
-                console.log("Firebase not initialized, using demo mode");
-                loadDemoVideo();
+                console.log("Firebase not initialized");
+                showNoVideoMessage();
                 return;
             }
             
-            // Show loading screen
-            overlayBlock.classList.remove('hidden');
-            
             // Get room data with timeout
             const loadTimeout = setTimeout(() => {
-                if (!ready) {
-                    console.log("Firebase load timeout, trying fallback");
-                    loadDemoVideo();
+                if (!videoLoaded) {
+                    console.log("Firebase load timeout");
+                    showNoVideoMessage();
                 }
-            }, 5000);
+            }, 10000); // 10 second timeout
             
             roomRef.once('value').then(snap => {
                 clearTimeout(loadTimeout);
                 const data = snap.val();
+                
                 if (!data) {
+                    console.log("No room data found");
                     if (isHost) {
+                        // Create room if host
                         roomRef.set({
                             videoLink: '',
                             createdAt: firebase.database.ServerValue.TIMESTAMP,
-                            host: true,
+                            host: currentUser,
                             status: 'pause',
                             currentTime: 0,
-                            drawingEnabled: false
+                            drawingEnabled: false,
+                            videoState: {
+                                isPlaying: false,
+                                currentTime: 0,
+                                lastUpdate: Date.now(),
+                                hostId: currentUser
+                            }
                         });
                     }
-                    loadDemoVideo();
+                    showNoVideoMessage();
                     return;
                 }
                 
                 if (data.videoLink && data.videoLink.trim() !== '') {
                     loadVideoWithOptimizations(data.videoLink, isHost);
                 } else {
-                    loadDemoVideo();
+                    showNoVideoMessage();
                 }
             }).catch(err => {
                 console.error("Firebase error:", err);
                 clearTimeout(loadTimeout);
-                loadDemoVideo();
+                showNoVideoMessage();
             });
         }
 
+        function showNoVideoMessage() {
+            overlayBlock.innerHTML = `
+                <div style="text-align: center; color: white; padding: 20px;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">🎬</div>
+                    <div style="font-size: 1.2rem; margin-bottom: 10px;">No video in this party yet</div>
+                    <div style="margin-bottom: 20px; color: var(--secondary);">
+                        ${isHost ? 'As the host, you can add a video link in the room settings.' : 'Wait for the host to add a video.'}
+                    </div>
+                </div>
+            `;
+            videoLoaded = false;
+        }
+
         function loadVideoWithOptimizations(link, isHostUser) {
+            console.log("Loading video:", link);
+            
             if (isYouTubeLink(link)) {
-                // YouTube optimization
                 const id = extractYoutubeID(link);
-                loadYouTubeWithOptimizations(id, isHostUser);
+                if (id) {
+                    loadYouTubeWithOptimizations(id, isHostUser);
+                } else {
+                    console.error("Invalid YouTube URL");
+                    showNoVideoMessage();
+                }
             } else {
-                // HTML5 video optimization
                 loadHTML5VideoWithOptimizations(link, isHostUser);
             }
         }
@@ -4165,48 +3880,33 @@
             ytContainer.style.display = 'none';
             html5video.style.display = 'block';
             
-            // Preconnect to video domain
-            try {
-                const videoDomain = new URL(link).origin;
-                const preconnect = document.createElement('link');
-                preconnect.rel = 'preconnect';
-                preconnect.href = videoDomain;
-                document.head.appendChild(preconnect);
-            } catch (e) {
-                console.log("Could not preconnect to video domain:", e);
-            }
-            
             // Optimize video loading
             html5video.preload = 'auto';
             html5video.playsInline = true;
             html5video.crossOrigin = 'anonymous';
             html5video.controls = false;
             
-            // Add event listeners for optimized loading
             const loadingTimeout = setTimeout(() => {
                 if (html5video.readyState < 1) {
-                    console.log("Video taking too long to load, showing play button");
+                    console.log("Video taking time to load");
                     overlayBlock.innerHTML = `
                         <div style="text-align: center; color: white;">
-                            <div style="font-size: 48px; margin-bottom: 20px;">🎬</div>
-                            <div style="font-size: 1.2rem; margin-bottom: 10px;">Ready to Watch</div>
-                            <button style="padding: 12px 24px; background: linear-gradient(to right, #6A0DFF, #D300FF); color: white; border: none; border-radius: 25px; font-size: 1rem; cursor: pointer; margin-top: 20px;">
-                                Tap to Play
-                            </button>
+                            <div style="font-size: 48px; margin-bottom: 20px;">⏳</div>
+                            <div style="font-size: 1.2rem; margin-bottom: 10px;">Loading video...</div>
+                            <div class="loading-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
                         </div>
                     `;
-                    overlayBlock.querySelector('button').addEventListener('click', () => {
-                        overlayBlock.classList.add('hidden');
-                        html5video.src = link;
-                        html5video.load();
-                    });
                 }
-            }, 3000);
+            }, 5000);
             
             html5video.addEventListener('loadedmetadata', () => {
                 clearTimeout(loadingTimeout);
                 ready = true;
-                isVideoLoaded = true;
+                videoLoaded = true;
                 fitCanvas();
                 
                 // Initialize sync system
@@ -4221,75 +3921,57 @@
                 // Auto-play if host
                 if (isHostUser) {
                     setTimeout(() => {
-                        html5video.play().then(() => {
-                            isPlaying = true;
-                            updatePlayPauseButton();
-                        }).catch(e => {
+                        html5video.play().catch(e => {
                             console.log("Auto-play prevented:", e);
-                            // Show play button overlay
-                            overlayBlock.innerHTML = `
-                                <div style="text-align: center; color: white;">
-                                    <div style="font-size: 48px; margin-bottom: 20px;">▶️</div>
-                                    <div style="font-size: 1.2rem; margin-bottom: 10px;">Tap to Play</div>
-                                    <button style="padding: 12px 24px; background: linear-gradient(to right, #6A0DFF, #D300FF); color: white; border: none; border-radius: 25px; font-size: 1rem; cursor: pointer; margin-top: 20px;">
-                                        Play Video
-                                    </button>
-                                </div>
-                            `;
-                            overlayBlock.classList.remove('hidden');
-                            overlayBlock.querySelector('button').addEventListener('click', () => {
-                                html5video.play();
-                                overlayBlock.classList.add('hidden');
-                            });
+                            // Show play button if autoplay is blocked
+                            showPlayButton();
                         });
                     }, 500);
                 }
-            });
-            
-            html5video.addEventListener('play', () => {
-                isPlaying = true;
-                updatePlayPauseButton();
-                if (syncManager && isHost) syncManager.sendPlayEvent();
-            });
-            
-            html5video.addEventListener('pause', () => {
-                isPlaying = false;
-                updatePlayPauseButton();
-                if (syncManager && isHost) syncManager.sendPauseEvent();
-            });
-            
-            html5video.addEventListener('seeking', () => {
-                if (syncManager && isHost) syncManager.sendSeekEvent();
+                
+                console.log("HTML5 video loaded successfully");
             });
             
             html5video.addEventListener('error', (e) => {
                 clearTimeout(loadingTimeout);
                 console.error("Video loading error:", e);
-                fallbackToDemoVideo();
+                overlayBlock.innerHTML = `
+                    <div style="text-align: center; color: white;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
+                        <div style="font-size: 1.2rem; margin-bottom: 10px;">Failed to load video</div>
+                        <div style="margin-bottom: 20px; color: var(--secondary);">
+                            The video link may be invalid or unavailable.
+                        </div>
+                    </div>
+                `;
+                videoLoaded = false;
             });
             
             // Start loading the video
             html5video.src = link;
+            html5video.load();
+        }
+
+        function showPlayButton() {
+            overlayBlock.innerHTML = `
+                <div style="text-align: center; color: white;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">▶️</div>
+                    <div style="font-size: 1.2rem; margin-bottom: 10px;">Ready to Watch</div>
+                    <button style="padding: 12px 24px; background: rgba(138, 79, 255, 0.3); color: white; border: 1px solid rgba(138, 79, 255, 0.5); border-radius: 25px; font-size: 1rem; cursor: pointer; margin-top: 20px; backdrop-filter: blur(10px);" class="touch-feedback">
+                        Tap to Play
+                    </button>
+                </div>
+            `;
+            overlayBlock.querySelector('button').addEventListener('click', () => {
+                overlayBlock.classList.add('hidden');
+                html5video.play();
+            });
         }
 
         function loadYouTubeWithOptimizations(videoId, isHostUser) {
             usingYT = true;
             ytContainer.style.display = 'block';
             html5video.style.display = 'none';
-            
-            // Preconnect to YouTube domains
-            const preconnects = [
-                'https://www.youtube.com',
-                'https://www.google.com',
-                'https://www.gstatic.com'
-            ];
-            
-            preconnects.forEach(domain => {
-                const link = document.createElement('link');
-                link.rel = 'preconnect';
-                link.href = domain;
-                document.head.appendChild(link);
-            });
             
             // Load YouTube iframe with optimized parameters
             window._pendingYTCreate = window._pendingYTCreate || [];
@@ -4316,72 +3998,15 @@
                     console.log("YouTube loading timeout");
                     overlayBlock.innerHTML = `
                         <div style="text-align: center; color: white;">
-                            <div style="font-size: 48px; margin-bottom: 20px;">🎬</div>
-                            <div style="font-size: 1.2rem; margin-bottom: 10px;">YouTube Player Loading</div>
-                            <button style="padding: 12px 24px; background: linear-gradient(to right, #6A0DFF, #D300FF); color: white; border: none; border-radius: 25px; font-size: 1rem; cursor: pointer; margin-top: 20px;" onclick="location.reload()">
+                            <div style="font-size: 48px; margin-bottom: 20px;">⏳</div>
+                            <div style="font-size: 1.2rem; margin-bottom: 10px;">Loading YouTube player...</div>
+                            <button style="padding: 12px 24px; background: rgba(138, 79, 255, 0.3); color: white; border: 1px solid rgba(138, 79, 255, 0.5); border-radius: 25px; font-size: 1rem; cursor: pointer; margin-top: 20px; backdrop-filter: blur(10px);" class="touch-feedback" onclick="location.reload()">
                                 Retry Loading
                             </button>
                         </div>
                     `;
                 }
-            }, 10000);
-        }
-
-        function loadDemoVideo() {
-            console.log("Loading demo video");
-            usingYT = false;
-            ytContainer.style.display = 'none';
-            html5video.style.display = 'block';
-            
-            // Use a small, optimized demo video
-            html5video.src = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
-            html5video.preload = 'auto';
-            html5video.crossOrigin = 'anonymous';
-            
-            html5video.addEventListener('loadedmetadata', () => {
-                ready = true;
-                isVideoLoaded = true;
-                fitCanvas();
-                initializeSyncSystem(isHost);
-                setInterval(updateTimeDisplay, 1000);
-                overlayBlock.classList.add('hidden');
-                
-                // Set status
-                setStatus(isHost ? 'Host — you control playback' : 'Viewer — following host');
-            });
-            
-            html5video.addEventListener('play', () => {
-                isPlaying = true;
-                updatePlayPauseButton();
-                if (syncManager && isHost) syncManager.sendPlayEvent();
-            });
-            
-            html5video.addEventListener('pause', () => {
-                isPlaying = false;
-                updatePlayPauseButton();
-                if (syncManager && isHost) syncManager.sendPauseEvent();
-            });
-            
-            html5video.addEventListener('seeking', () => {
-                if (syncManager && isHost) syncManager.sendSeekEvent();
-            });
-        }
-
-        function fallbackToDemoVideo() {
-            console.log("Falling back to demo video");
-            overlayBlock.innerHTML = `
-                <div style="text-align: center; color: white;">
-                    <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
-                    <div style="font-size: 1.2rem; margin-bottom: 10px;">Couldn't load the video</div>
-                    <div style="margin-bottom: 20px;">Loading demo video instead...</div>
-                    <div class="loading-dots">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                </div>
-            `;
-            setTimeout(loadDemoVideo, 1000);
+            }, 15000);
         }
 
         function startVideo() {
@@ -4392,54 +4017,31 @@
                 return;
             }
             
-            if (usingYT && ytPlayer) {
-                ytPlayer.playVideo();
+            html5video.play().then(() => {
+                overlayBlock.classList.add('hidden');
                 isPlaying = true;
                 updatePlayPauseButton();
-            } else {
-                html5video.play().then(() => {
-                    overlayBlock.classList.add('hidden');
-                    isPlaying = true;
-                    updatePlayPauseButton();
-                    showControls();
-                }).catch(error => {
-                    console.error('Error playing video:', error);
-                    // Show play button overlay
-                    overlayBlock.innerHTML = `
-                        <div style="text-align: center; color: white;">
-                            <div style="font-size: 48px; margin-bottom: 20px;">▶️</div>
-                            <div style="font-size: 1.2rem; margin-bottom: 10px;">Tap to Play</div>
-                            <button style="padding: 12px 24px; background: linear-gradient(to right, #6A0DFF, #D300FF); color: white; border: none; border-radius: 25px; font-size: 1rem; cursor: pointer; margin-top: 20px;">
-                                Play Video
-                            </button>
-                        </div>
-                    `;
-                    overlayBlock.classList.remove('hidden');
-                    overlayBlock.querySelector('button').addEventListener('click', () => {
-                        html5video.play();
-                        overlayBlock.classList.add('hidden');
-                    });
-                });
-            }
+                showControls();
+            }).catch(error => {
+                console.error('Error playing video:', error);
+                showPlayButton();
+            });
         }
 
         function togglePlayPause() {
-            if (!html5video && !ytPlayer) return;
+            if (!html5video) return;
             
-            if (usingYT && ytPlayer) {
-                if (isPlaying) {
-                    ytPlayer.pauseVideo();
-                } else {
-                    ytPlayer.playVideo();
-                }
+            if (isPlaying) {
+                html5video.pause();
+                isPlaying = false;
+                if (syncManager && isHost) syncManager.sendPauseEvent();
             } else {
-                if (isPlaying) {
-                    html5video.pause();
-                    isPlaying = false;
-                } else {
-                    html5video.play();
+                html5video.play().then(() => {
                     isPlaying = true;
-                }
+                    if (syncManager && isHost) syncManager.sendPlayEvent();
+                }).catch(error => {
+                    console.error("Play error:", error);
+                });
             }
             updatePlayPauseButton();
             resetControlsTimeout();
@@ -4452,52 +4054,35 @@
         }
 
         function skipBackward() {
-            if (!html5video && !ytPlayer) return;
+            if (!html5video) return;
             
-            if (usingYT && ytPlayer) {
-                ytPlayer.seekTo(ytPlayer.getCurrentTime() - 10, true);
-            } else {
-                html5video.currentTime = Math.max(0, html5video.currentTime - 10);
-            }
+            html5video.currentTime = Math.max(0, html5video.currentTime - 10);
             if (syncManager && isHost) syncManager.sendSeekEvent();
             resetControlsTimeout();
         }
 
         function skipForward() {
-            if (!html5video && !ytPlayer) return;
+            if (!html5video) return;
             
-            if (usingYT && ytPlayer) {
-                ytPlayer.seekTo(ytPlayer.getCurrentTime() + 30, true);
-            } else {
-                const duration = html5video.duration || 0;
-                html5video.currentTime = Math.min(duration, html5video.currentTime + 30);
-            }
+            html5video.currentTime = Math.min(html5video.duration, html5video.currentTime + 30);
             if (syncManager && isHost) syncManager.sendSeekEvent();
             resetControlsTimeout();
         }
 
         function toggleFullscreen() {
-            const elem = isDetailedView ? detailedView : playerView;
-            
             if (!document.fullscreenElement) {
-                if (elem.requestFullscreen) {
-                    elem.requestFullscreen();
-                } else if (elem.webkitRequestFullscreen) {
-                    elem.webkitRequestFullscreen();
-                } else if (elem.mozRequestFullScreen) {
-                    elem.mozRequestFullScreen();
-                } else if (elem.msRequestFullscreen) {
-                    elem.msRequestFullscreen();
+                if (isDetailedView && detailedView) {
+                    detailedView.requestFullscreen().catch(err => {
+                        console.error('Error attempting to enable fullscreen:', err);
+                    });
+                } else if (playerView) {
+                    playerView.requestFullscreen().catch(err => {
+                        console.error('Error attempting to enable fullscreen:', err);
+                    });
                 }
             } else {
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
                 }
             }
             resetControlsTimeout();
@@ -4533,7 +4118,7 @@
             return m && m[1] ? m[1] : null; 
         }
 
-        // Update onYouTubeIframeAPIReady with optimizations
+        // YouTube API
         window.onYouTubeIframeAPIReady = function(){
             const list = window._pendingYTCreate || [];
             while(list.length){
@@ -4557,7 +4142,7 @@
                     events:{
                         onReady:()=>{
                             ready=true;
-                            isVideoLoaded = true;
+                            videoLoaded = true;
                             fitCanvas();
                             
                             // Initialize sync system
@@ -4568,28 +4153,30 @@
                             
                             if (item.isHost) {
                                 ytPlayer.playVideo();
-                                isPlaying = true;
-                                updatePlayPauseButton();
                             }
                             
-                            // Set status
-                            setStatus(item.isHost ? 'Host — you control playback' : 'Viewer — following host');
+                            // Update status display
+                            updateStatusDisplay();
+                            console.log("YouTube player loaded successfully");
                         },
                         onStateChange:(e)=>{ 
-                            if(ytPlayer) {
-                                if(e.data === YT.PlayerState.PLAYING) {
-                                    isPlaying = true;
-                                    if(item.isHost && syncManager) syncManager.sendPlayEvent();
-                                } else if(e.data === YT.PlayerState.PAUSED) {
-                                    isPlaying = false;
-                                    if(item.isHost && syncManager) syncManager.sendPauseEvent();
-                                }
-                                updatePlayPauseButton();
-                            }
+                            if(!item.isHost || !ytPlayer) return; 
+                            const t = ytPlayer.getCurrentTime(); 
+                            if(e.data===YT.PlayerState.PLAYING) syncManager.sendPlayEvent(); 
+                            if(e.data===YT.PlayerState.PAUSED) syncManager.sendPauseEvent(); 
                         },
                         onError: (e) => {
                             console.error("YouTube player error:", e);
-                            fallbackToDemoVideo();
+                            overlayBlock.innerHTML = `
+                                <div style="text-align: center; color: white;">
+                                    <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
+                                    <div style="font-size: 1.2rem; margin-bottom: 10px;">YouTube Error</div>
+                                    <div style="margin-bottom: 20px; color: var(--secondary);">
+                                        Could not load YouTube video. It may be private or unavailable.
+                                    </div>
+                                </div>
+                            `;
+                            videoLoaded = false;
                         }
                     }
                 });
@@ -4704,7 +4291,7 @@
             
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar';
-            avatar.textContent = isHost ? 'H' : 'Y';
+            avatar.textContent = isHost ? 'H' : (userProfile?.displayName?.charAt(0) || 'Y');
             
             const content = document.createElement('div');
             content.className = 'message-content';
@@ -4716,7 +4303,7 @@
             const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             
             meta.innerHTML = `
-                <span>${isHost ? 'Host' : 'You'}</span>
+                <span>${isHost ? 'Host' : (userProfile?.displayName || 'You')}</span>
                 <span>${timeStr}</span>
             `;
             
@@ -4741,6 +4328,7 @@
                     text: text,
                     userLabel: isHost ? 'Host' : 'Viewer',
                     uid: currentUser,
+                    displayName: userProfile?.displayName,
                     at: firebase.database.ServerValue.TIMESTAMP
                 });
             }
@@ -4776,6 +4364,7 @@
                 const reactionsRef = db.ref('rooms/' + roomId + '/reactions').push();
                 reactionsRef.set({
                     emoji: emoji,
+                    uid: currentUser,
                     at: firebase.database.ServerValue.TIMESTAMP
                 });
             }
@@ -4814,8 +4403,6 @@
             canvas.addEventListener('touchstart', onDown, {passive:false}); 
             canvas.addEventListener('touchmove', onMove, {passive:false}); 
             canvas.addEventListener('touchend', onUp); 
-
-            setStatus("Drawing enabled - Click and drag to draw");
         }
         
         function disableDrawing(){ 
@@ -4829,8 +4416,6 @@
             canvas.removeEventListener('touchstart', onDown); 
             canvas.removeEventListener('touchmove', onMove); 
             canvas.removeEventListener('touchend', onUp); 
-
-            setStatus(isHost ? 'Host — you control playback' : 'Viewer — following host');
         }
         
         function getCanvasPos(e){ 
@@ -4854,7 +4439,7 @@
             if(!drawing || !isHost || !drawingEnabled) return; 
             e.preventDefault(); 
             const pos = getCanvasPos(e); 
-            const color = '#ff4757'; 
+            const color = '#8A4FFF'; 
             const thickness = 3; 
             ctx.strokeStyle = color; 
             ctx.lineWidth = thickness; 
@@ -4892,7 +4477,7 @@
             const w = canvas.clientWidth, h = canvas.clientHeight; 
             strokes.forEach(st=>{ 
                 try{ 
-                    ctx.strokeStyle = st.color || '#ff4757'; 
+                    ctx.strokeStyle = st.color || '#8A4FFF'; 
                     ctx.lineWidth = st.thickness || 3; 
                     ctx.lineCap='round'; 
                     ctx.beginPath(); 
@@ -4903,9 +4488,245 @@
             }); 
         }
 
+        // Enhanced Teleparty-style Sync Manager - FIXED VIEWER PAUSING
+        class TelepartySyncManager {
+            constructor(isHost, roomRef, videoPlayer) {
+                this.isHost = isHost;
+                this.roomRef = roomRef;
+                this.video = videoPlayer;
+                this.lastSyncTime = 0;
+                this.syncInterval = 4000;
+                this.maxDrift = 1.0;
+                this.isSyncing = false;
+                this.heartbeatInterval = null;
+                this.isLocalAction = false;
+                this.lastHostUpdate = 0;
+                this.syncEnabled = true;
+                
+                this.hostState = {
+                    isPlaying: false,
+                    currentTime: 0,
+                    lastUpdate: Date.now(),
+                    hostId: ''
+                };
+            }
+            
+            sendPlayEvent() {
+                if (!this.isHost || !this.syncEnabled) return;
+                
+                const videoTime = this.video.getCurrentTime();
+                this.updateFirebaseState({
+                    isPlaying: true,
+                    currentTime: videoTime,
+                    lastUpdate: Date.now(),
+                    hostId: currentUser
+                });
+                
+                console.log(`[Host] Play event at ${videoTime.toFixed(2)}s`);
+            }
+            
+            sendPauseEvent() {
+                if (!this.isHost || !this.syncEnabled) return;
+                
+                const videoTime = this.video.getCurrentTime();
+                this.updateFirebaseState({
+                    isPlaying: false,
+                    currentTime: videoTime,
+                    lastUpdate: Date.now(),
+                    hostId: currentUser
+                });
+                
+                console.log(`[Host] Pause event at ${videoTime.toFixed(2)}s`);
+            }
+            
+            sendSeekEvent() {
+                if (!this.isHost || !this.syncEnabled) return;
+                
+                const videoTime = this.video.getCurrentTime();
+                this.updateFirebaseState({
+                    isPlaying: this.video.isPlaying(),
+                    currentTime: videoTime,
+                    lastUpdate: Date.now(),
+                    hostId: currentUser
+                });
+                
+                console.log(`[Host] Seek event to ${videoTime.toFixed(2)}s`);
+            }
+            
+            sendHeartbeat() {
+                if (!this.isHost || !this.syncEnabled || !this.video.isPlaying()) return;
+                
+                const videoTime = this.video.getCurrentTime();
+                this.updateFirebaseState({
+                    currentTime: videoTime,
+                    lastUpdate: Date.now()
+                }, true);
+            }
+            
+            updateFirebaseState(state, partial = false) {
+                if (!this.isHost || !firebaseInitialized || !this.syncEnabled) return;
+                
+                try {
+                    if (partial) {
+                        this.roomRef.child('videoState').update(state);
+                    } else {
+                        this.roomRef.child('videoState').set(state);
+                    }
+                } catch (error) {
+                    console.error('Firebase update error:', error);
+                }
+            }
+            
+            startHostSync() {
+                if (!this.isHost) return;
+                
+                // Send initial state
+                this.sendPauseEvent();
+                
+                // Set up heartbeat for periodic updates
+                this.heartbeatInterval = setInterval(() => {
+                    this.sendHeartbeat();
+                }, this.syncInterval);
+                
+                console.log('[Host] Sync manager started');
+            }
+            
+            startViewerSync() {
+                if (this.isHost) return;
+                
+                this.roomRef.child('videoState').on('value', (snapshot) => {
+                    if (!this.syncEnabled || this.isLocalAction) {
+                        this.isLocalAction = false;
+                        return;
+                    }
+                    
+                    const data = snapshot.val();
+                    if (!data) return;
+                    
+                    this.hostState = data;
+                    this.lastHostUpdate = Date.now();
+                    
+                    // Only sync if the update is recent (within 10 seconds)
+                    if (Date.now() - this.lastHostUpdate < 10000) {
+                        this.syncToHost();
+                    }
+                });
+                
+                console.log('[Viewer] Sync manager started');
+            }
+            
+            syncToHost() {
+                if (this.isHost || this.isSyncing || !this.syncEnabled) return;
+                
+                this.isSyncing = true;
+                
+                const now = Date.now();
+                const latency = Math.max(0, now - this.hostState.lastUpdate);
+                const hostRealTime = this.hostState.currentTime + (latency / 1000);
+                
+                const localTime = this.video.getCurrentTime();
+                const drift = localTime - hostRealTime;
+                const absDrift = Math.abs(drift);
+                
+                console.log(`[Sync] Drift: ${drift.toFixed(2)}s, Host: ${hostRealTime.toFixed(2)}s, Local: ${localTime.toFixed(2)}s`);
+                
+                // Only sync if drift is significant
+                if (absDrift < 0.5) {
+                    console.log(`[Sync] Small drift (${absDrift.toFixed(2)}s), ignoring`);
+                    this.syncPlayPause();
+                    this.isSyncing = false;
+                    return;
+                }
+                
+                if (absDrift >= 0.5 && absDrift < 2.5) {
+                    console.log(`[Sync] Medium drift (${absDrift.toFixed(2)}s), soft syncing`);
+                    this.softSync(drift);
+                    this.syncPlayPause();
+                    this.isSyncing = false;
+                    return;
+                }
+                
+                if (absDrift >= 2.5) {
+                    console.log(`[Sync] Large drift (${absDrift.toFixed(2)}s), hard syncing`);
+                    this.hardSync(hostRealTime);
+                    this.syncPlayPause();
+                    this.isSyncing = false;
+                    return;
+                }
+                
+                this.isSyncing = false;
+            }
+            
+            softSync(drift) {
+                if (drift > 0) {
+                    this.video.setPlaybackRate(0.99);
+                    console.log('[Sync] Slowing down (0.99x)');
+                } else {
+                    this.video.setPlaybackRate(1.01);
+                    console.log('[Sync] Speeding up (1.01x)');
+                }
+                
+                setTimeout(() => {
+                    this.video.setPlaybackRate(1.0);
+                    console.log('[Sync] Reset to normal speed');
+                }, 3000);
+            }
+            
+            hardSync(targetTime) {
+                this.video.setPlaybackRate(1.0);
+                this.video.seekTo(targetTime);
+                console.log(`[Sync] Jumped to ${targetTime.toFixed(2)}s`);
+            }
+            
+            syncPlayPause() {
+                if (this.isHost || !this.syncEnabled) return;
+                
+                const shouldPlay = this.hostState.isPlaying;
+                const isPlaying = this.video.isPlaying();
+                
+                if (shouldPlay && !isPlaying) {
+                    console.log('[Sync] Host is playing, starting playback');
+                    this.video.play();
+                } else if (!shouldPlay && isPlaying) {
+                    console.log('[Sync] Host paused, stopping playback');
+                    this.video.pause();
+                }
+            }
+            
+            stopSync() {
+                this.syncEnabled = false;
+                if (this.heartbeatInterval) {
+                    clearInterval(this.heartbeatInterval);
+                    this.heartbeatInterval = null;
+                }
+                
+                if (firebaseInitialized && !this.isHost) {
+                    this.roomRef.child('videoState').off('value');
+                }
+                
+                console.log('[Sync] Manager stopped');
+            }
+            
+            markLocalAction() {
+                this.isLocalAction = true;
+                setTimeout(() => {
+                    this.isLocalAction = false;
+                }, 1000);
+            }
+            
+            enableSync() {
+                this.syncEnabled = true;
+                console.log('[Sync] Sync enabled');
+            }
+            
+            disableSync() {
+                this.syncEnabled = false;
+                console.log('[Sync] Sync disabled');
+            }
+        }
+
         // Initialize sync system
         function initializeSyncSystem(isHostUser) {
-            // Create video player interface
             const videoPlayer = {
                 getCurrentTime: () => {
                     if (usingYT && ytPlayer) {
@@ -4931,47 +4752,33 @@
                 play: () => {
                     if (usingYT && ytPlayer) {
                         ytPlayer.playVideo();
-                        isPlaying = true;
-                        updatePlayPauseButton();
                     } else {
-                        html5video.play().then(() => {
-                            isPlaying = true;
-                            updatePlayPauseButton();
-                        }).catch(e => {
-                            console.log("Play failed:", e);
-                        });
+                        html5video.play();
                     }
                 },
                 pause: () => {
                     if (usingYT && ytPlayer) {
                         ytPlayer.pauseVideo();
-                        isPlaying = false;
-                        updatePlayPauseButton();
                     } else {
                         html5video.pause();
-                        isPlaying = false;
-                        updatePlayPauseButton();
                     }
                 },
                 isPlaying: () => {
                     if (usingYT && ytPlayer) {
-                        return ytPlayer.getPlayerState() === 1; // YT.PlayerState.PLAYING
+                        return ytPlayer.getPlayerState() === 1;
                     } else {
                         return !html5video.paused;
                     }
                 }
             };
             
-            // Initialize sync manager
             syncManager = new TelepartySyncManager(isHostUser, roomRef, videoPlayer);
             
-            // Hook up video events for host
             if (isHostUser) {
-                // Play/pause events
                 if (usingYT && ytPlayer) {
                     ytPlayer.addEventListener('onStateChange', (e) => {
-                        if (e.data === 1) syncManager.sendPlayEvent(); // Playing
-                        if (e.data === 2) syncManager.sendPauseEvent(); // Paused
+                        if (e.data === 1) syncManager.sendPlayEvent();
+                        if (e.data === 2) syncManager.sendPauseEvent();
                     });
                 } else {
                     html5video.addEventListener('play', () => syncManager.sendPlayEvent());
@@ -4984,7 +4791,6 @@
                 syncManager.startViewerSync();
             }
             
-            // Update existing video controls to mark local actions
             function wrapLocalAction(callback) {
                 return function() {
                     if (syncManager && !syncManager.isHost) {
@@ -4994,7 +4800,6 @@
                 };
             }
             
-            // Wrap existing controls
             const originalTogglePlayPause = togglePlayPause;
             togglePlayPause = wrapLocalAction(originalTogglePlayPause);
             
@@ -5009,8 +4814,6 @@
 
         // Host controls
         function hostStart() { 
-            setStatus('Host — you control playback');
-            
             if (pauseDiscussBtn) {
                 pauseDiscussBtn.addEventListener('click', () => { 
                     if (usingYT && ytPlayer) {
@@ -5031,7 +4834,6 @@
                     toggleDrawBtn.classList.toggle('active', drawingEnabled);
                     if (drawingEnabled) {
                         enableDrawing();
-                        setStatus("Drawing enabled - Click and drag on video");
                     } else {
                         disableDrawing();
                     }
@@ -5042,9 +4844,6 @@
                     
                     console.log("Drawing enabled:", drawingEnabled);
                 });
-                
-                // Add CSS class to make toggle button visible
-                toggleDrawBtn.classList.add('draw-toggle');
             }
             
             if (clearDrawBtn) {
@@ -5080,15 +4879,15 @@
 
         // Viewer controls
         function viewerStart() { 
-            setStatus('Viewer — following host');
-            
             if (syncBtn) {
                 syncBtn.addEventListener('click', () => {
                     if (syncManager) {
-                        roomRef.once('value').then(snap => {
+                        syncManager.enableSync();
+                        roomRef.child('videoState').once('value').then(snap => {
                             const data = snap.val()||{};
                             const hostTime = data.currentTime||0;
                             syncManager.hardSync(hostTime);
+                            alert("Video synced with host");
                         });
                     }
                     console.log("Sync requested");
@@ -5102,36 +4901,13 @@
             if (menuBtn) menuBtn.addEventListener('click', toggleToDetailedView);
             if (backToPlayerBtn) backToPlayerBtn.addEventListener('click', toggleToPlayerView);
             
-            // Video controls - FIXED: Ensure proper event binding
-            if (playPauseBtn) {
-                playPauseBtn.addEventListener('click', () => {
-                    togglePlayPause();
-                    showControls();
-                });
-            }
-            if (detailedPlayPauseBtn) {
-                detailedPlayPauseBtn.addEventListener('click', () => {
-                    togglePlayPause();
-                    showControls();
-                });
-            }
-            
-            if (skipBackBtn) skipBackBtn.addEventListener('click', () => {
-                skipBackward();
-                showControls();
-            });
-            if (detailedSkipBackBtn) detailedSkipBackBtn.addEventListener('click', () => {
-                skipBackward();
-                showControls();
-            });
-            if (skipForwardBtn) skipForwardBtn.addEventListener('click', () => {
-                skipForward();
-                showControls();
-            });
-            if (detailedSkipForwardBtn) detailedSkipForwardBtn.addEventListener('click', () => {
-                skipForward();
-                showControls();
-            });
+            // Video controls
+            if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
+            if (detailedPlayPauseBtn) detailedPlayPauseBtn.addEventListener('click', togglePlayPause);
+            if (skipBackBtn) skipBackBtn.addEventListener('click', skipBackward);
+            if (detailedSkipBackBtn) detailedSkipBackBtn.addEventListener('click', skipBackward);
+            if (skipForwardBtn) skipForwardBtn.addEventListener('click', skipForward);
+            if (detailedSkipForwardBtn) detailedSkipForwardBtn.addEventListener('click', skipForward);
             if (fullscreenBtn) fullscreenBtn.addEventListener('click', toggleFullscreen);
             if (detailedFullscreenBtn) detailedFullscreenBtn.addEventListener('click', toggleFullscreen);
             if (fitScreenBtn) fitScreenBtn.addEventListener('click', fitToScreen);
@@ -5142,7 +4918,6 @@
             if (resizeMenuBtn) {
                 resizeMenuBtn.addEventListener('click', () => {
                     videoResizeOptions.classList.toggle('show');
-                    showControls();
                 });
             }
             
@@ -5151,26 +4926,19 @@
                 option.addEventListener('click', () => {
                     const scale = parseFloat(option.getAttribute('data-scale'));
                     setPlayerSize(scale);
-                    showControls();
                 });
             });
             
             // Volume controls
-            if (volumeBtn) volumeBtn.addEventListener('click', () => {
-                toggleMute();
-                showControls();
-            });
-            if (detailedVolumeBtn) detailedVolumeBtn.addEventListener('click', () => {
-                toggleMute();
-                showControls();
-            });
+            if (volumeBtn) volumeBtn.addEventListener('click', toggleMute);
+            if (detailedVolumeBtn) detailedVolumeBtn.addEventListener('click', toggleMute);
             if (volumeSlider) volumeSlider.addEventListener('input', updateVolume);
             if (detailedVolumeSlider) detailedVolumeSlider.addEventListener('input', updateVolume);
             
             // Overlay tap to play
             if (overlayBlock) overlayBlock.addEventListener('click', startVideo);
             
-            // Voice controls - HOLD TO TALK
+            // Voice controls
             if (holdTalkBtn) {
                 holdTalkBtn.addEventListener('mousedown', startTalking);
                 holdTalkBtn.addEventListener('mouseup', stopTalking);
@@ -5225,7 +4993,6 @@
                     const emoji = e.target.getAttribute('data-emoji') || e.target.textContent;
                     sendReaction(emoji);
                     closeWidget('reactions');
-                    showControls();
                 });
             });
             
@@ -5254,10 +5021,6 @@
                 participantCountBtn.addEventListener('click', showParticipantsModal);
             }
             
-            if (detailedParticipantCountBtn) {
-                detailedParticipantCountBtn.addEventListener('click', showParticipantsModal);
-            }
-            
             if (closeParticipantsBtn) {
                 closeParticipantsBtn.addEventListener('click', hideParticipantsModal);
             }
@@ -5272,7 +5035,12 @@
             // Handle window resize
             window.addEventListener('resize', () => {
                 fitCanvas();
-                ensureYouTubeControls();
+                // Update mobile participant count visibility
+                if (window.innerWidth <= 768 && participantCountMobile) {
+                    participantCountMobile.style.display = 'flex';
+                } else if (participantCountMobile) {
+                    participantCountMobile.style.display = 'none';
+                }
             });
             
             // Orientation change
@@ -5338,13 +5106,6 @@
             // Initialize video resize
             initVideoResize();
             
-            // Handle page visibility (prevent unwanted pauses)
-            document.addEventListener('visibilitychange', () => {
-                if (document.hidden && syncManager) {
-                    syncManager.handleSystemPause();
-                }
-            });
-            
             console.log("All event listeners set up successfully");
         }
 
@@ -5385,27 +5146,32 @@
             if (shareLink) shareLink.value = currentUrl;
             if (sidebarShareLink) sidebarShareLink.value = currentUrl;
             
-            setStatus(isHost ? 'Host — you control playback' : 'Viewer — following host');
-            
-            // Initialize host or viewer controls
-            if (isHost) {
-                hostStart();
-            } else {
-                viewerStart();
-            }
+            updateStatusDisplay();
             
             // Initialize Agora voice chat with delay
             setTimeout(() => {
                 initAgoraVoice();
             }, 1500);
             
-            // Load video immediately (no delay)
+            // Load video immediately
             loadVideoFromFirebase();
             
             // Show controls initially
             setTimeout(() => {
                 showControls();
             }, 500);
+            
+            // Initialize host/viewer controls
+            if (isHost) {
+                hostStart();
+            } else {
+                viewerStart();
+            }
+            
+            // Set up mobile participant count
+            if (window.innerWidth <= 768 && participantCountMobile) {
+                participantCountMobile.style.display = 'flex';
+            }
             
             console.log("Let's Watch initialized successfully");
         }

@@ -264,7 +264,7 @@
             border-radius: 20px;
             opacity: 0;
             transition: var(--transition);
-            z-index: 9999;
+            z-index: 10002;
             backdrop-filter: blur(20px);
             border: 1px solid rgba(138, 79, 255, 0.2);
             width: 95%;
@@ -295,7 +295,7 @@
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             flex-shrink: 0;
             position: relative;
-            z-index: 9999;
+            z-index: 10002;
         }
         
         .control-btn-lg:hover {
@@ -333,7 +333,7 @@
             flex-shrink: 0;
             white-space: nowrap;
             position: relative;
-            z-index: 9999;
+            z-index: 10002;
         }
         
         .skip-btn:hover {
@@ -357,7 +357,7 @@
             padding: 0 6px;
             flex-shrink: 0;
             position: relative;
-            z-index: 9999;
+            z-index: 10002;
         }
         
         .progress-container {
@@ -371,7 +371,7 @@
             background: rgba(255,255,255,0.1);
             border-radius: 2px;
             overflow: hidden;
-            z-index: 9998;
+            z-index: 10001;
             opacity: 0;
             transition: var(--transition);
             backdrop-filter: blur(10px);
@@ -418,7 +418,7 @@
             align-items: center;
             gap: 6px;
             position: relative;
-            z-index: 9999;
+            z-index: 10002;
         }
         
         .volume-slider-container {
@@ -435,7 +435,7 @@
             padding: 10px;
             backdrop-filter: blur(20px);
             border: 1px solid rgba(138, 79, 255, 0.3);
-            z-index: 9999;
+            z-index: 10002;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             opacity: 0;
             pointer-events: none;
@@ -497,7 +497,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            z-index: 1000;
+            z-index: 10000;
         }
         
         .widget-container {
@@ -520,7 +520,7 @@
             color: rgba(255, 255, 255, 0.95);
             font-size: 18px;
             position: relative;
-            z-index: 1001;
+            z-index: 10001;
         }
         
         .widget-icon:hover {
@@ -558,7 +558,7 @@
             max-height: 400px;
             overflow-y: auto;
             display: none;
-            z-index: 1000;
+            z-index: 10000;
             border: 1px solid rgba(138, 79, 255, 0.25);
             transform-origin: right center;
             animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -595,7 +595,7 @@
             font-weight: 700;
             box-shadow: 0 2px 10px rgba(255, 71, 87, 0.4);
             border: 2px solid rgba(26, 4, 58, 0.8);
-            z-index: 1002;
+            z-index: 10002;
         }
         
         /* Voice Widget */
@@ -882,12 +882,12 @@
             box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
         }
         
-        /* Home Button */
+        /* Home Button - Fixed to be outside fullscreen */
         .home-button {
-            position: absolute;
+            position: fixed;
             top: 15px;
             left: 15px;
-            z-index: 1000;
+            z-index: 10001;
             width: 44px;
             height: 44px;
             border-radius: 50%;
@@ -916,11 +916,22 @@
             box-shadow: 0 0 20px rgba(106, 13, 255, 0.4);
         }
         
+        /* Hide home button in fullscreen unless in detailed view */
+        .app-container:fullscreen .home-button:not(.always-visible) {
+            display: none;
+        }
+        
+        .detailed-view .home-button {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+        }
+        
         .sidebar-menu {
             position: absolute;
             top: 15px;
             left: 70px;
-            z-index: 1000;
+            z-index: 10000;
             display: flex;
             gap: 10px;
             align-items: center;
@@ -1459,7 +1470,7 @@
             backdrop-filter: blur(20px);
             border-radius: var(--border-radius);
             padding: 14px;
-            z-index: 1000;
+            z-index: 10000;
             border: 1px solid rgba(138, 79, 255, 0.2);
             display: none;
             min-width: 180px;
@@ -1888,12 +1899,13 @@
                 gap: 8px;
             }
             
-            .home-button, .sidebar-menu {
+            .home-button {
                 top: 12px;
                 left: 12px;
             }
             
             .sidebar-menu {
+                top: 12px;
                 left: 65px;
             }
             
@@ -2028,12 +2040,13 @@
                 gap: 6px;
             }
             
-            .home-button, .sidebar-menu {
+            .home-button {
                 top: 10px;
                 left: 10px;
             }
             
             .sidebar-menu {
+                top: 10px;
                 left: 60px;
             }
             
@@ -2183,10 +2196,39 @@
             }
         }
 
-        /* Fullscreen fixes */
-        .app-container:fullscreen .custom-controls,
+        /* Fullscreen fixes - Android controls safe area */
+        .app-container:fullscreen .custom-controls {
+            bottom: calc(20px + env(safe-area-inset-bottom, 20px));
+            padding: 12px 20px;
+        }
+        
         .app-container:fullscreen .progress-container {
-            z-index: 9999;
+            bottom: calc(70px + env(safe-area-inset-bottom, 20px));
+        }
+        
+        .app-container:fullscreen .detailed-view .custom-controls {
+            bottom: calc(20px + env(safe-area-inset-bottom, 20px));
+        }
+        
+        .app-container:fullscreen .detailed-view .progress-container {
+            bottom: calc(70px + env(safe-area-inset-bottom, 20px));
+        }
+        
+        .app-container:fullscreen .home-button.always-visible {
+            display: flex !important;
+            top: calc(15px + env(safe-area-inset-top, 15px));
+            left: calc(15px + env(safe-area-inset-left, 15px));
+            z-index: 10003;
+        }
+        
+        .app-container:fullscreen .floating-widgets {
+            top: calc(15px + env(safe-area-inset-top, 15px));
+            right: calc(15px + env(safe-area-inset-right, 15px));
+        }
+        
+        .app-container:fullscreen .sidebar-menu {
+            top: calc(15px + env(safe-area-inset-top, 15px));
+            left: calc(70px + env(safe-area-inset-left, 15px));
         }
 
         /* Touch feedback improvements */
@@ -2200,19 +2242,22 @@
 
         /* iPhone-specific fixes */
         @supports (-webkit-touch-callout: none) {
-            .custom-controls {
-                bottom: 25px !important;
+            .app-container:fullscreen .custom-controls {
+                bottom: calc(25px + env(safe-area-inset-bottom, 25px));
                 backdrop-filter: saturate(180%) blur(20px);
                 -webkit-backdrop-filter: saturate(180%) blur(20px);
             }
             
-            .progress-container {
-                bottom: 70px !important;
+            .app-container:fullscreen .progress-container {
+                bottom: calc(75px + env(safe-area-inset-bottom, 25px));
             }
             
-            .widget-icon, .menu-btn, .home-button {
-                backdrop-filter: saturate(180%) blur(15px);
-                -webkit-backdrop-filter: saturate(180%) blur(15px);
+            .app-container:fullscreen .detailed-view .custom-controls {
+                bottom: calc(25px + env(safe-area-inset-bottom, 25px));
+            }
+            
+            .app-container:fullscreen .detailed-view .progress-container {
+                bottom: calc(75px + env(safe-area-inset-bottom, 25px));
             }
             
             video::-webkit-media-controls {
@@ -2307,10 +2352,29 @@
         .widget-icon.active::after {
             opacity: 1;
         }
+        
+        /* Loading animation */
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        /* Prevent text selection */
+        .no-select {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
     </style>
 </head>
 <body>
     <div class="app-container">
+        <!-- Home Button (Outside player, fixed position) -->
+        <a href="home.html" class="home-button touch-feedback always-visible" title="Go to Home">
+            <i class="fas fa-home"></i>
+        </a>
+        
         <!-- Resize Tutorial Overlay -->
         <div class="resize-tutorial" id="resize-tutorial">
             <div class="resize-tutorial-icon">
@@ -2366,11 +2430,6 @@
 
         <!-- Player View -->
         <div class="player-view" id="player-view">
-            <!-- Home Button -->
-            <a href="home.html" class="home-button touch-feedback" title="Go to Home">
-                <i class="fas fa-home"></i>
-            </a>
-            
             <div class="video-container">
                 <div id="player-container">
                     <video id="html5video" playsinline preload="auto"></video>
@@ -4061,7 +4120,7 @@
             }
         }
 
-        // View toggle functions - FIXED: Don't pause when host leaves player view
+        // View toggle functions
         function toggleToDetailedView() {
             isDetailedView = true;
             hostIsInPlayerView = false;
@@ -4422,7 +4481,7 @@
             }); 
         }
 
-        // Enhanced Sync Manager - FIXED: Don't auto-pause when host leaves player view
+        // Enhanced Sync Manager
         class TelepartySyncManager {
             constructor(isHost, roomRef, videoPlayer) {
                 this.isHost = isHost;

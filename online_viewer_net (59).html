@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watch Together | Home</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset & Base */
+        :root {
+            --primary-purple: #6A0DFF;
+            --secondary-purple: #8A4FFF;
+            --light-purple: #CBB2FF;
+            --neon-magenta: #D300FF;
+            --dark-bg-1: #1A043A;
+            --dark-bg-2: #09001F;
+            --dark-bg-3: #050016;
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --border-light: rgba(255, 255, 255, 0.12);
+            --text-primary: #F8F8FF;
+            --text-secondary: #C8C8D9;
+            --text-accent: #CBB2FF;
+            --green-accent: #00FF88;
+            --red-accent: #FF4757;
+            --yellow-accent: #FFD700;
+            --blue-accent: #3498db;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(160deg, var(--dark-bg-1) 0%, var(--dark-bg-2) 50%, var(--dark-bg-3) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Animated Background */
+        .bg-particle {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: 0;
+            animation: floatParticle 20s infinite ease-in-out;
+        }
+
+        .particle-1 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--primary-purple) 0%, transparent 70%);
+            top: -200px;
+            left: -200px;
+        }
+
+        .particle-2 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--neon-magenta) 0%, transparent 70%);
+            bottom: -150px;
+            right: -150px;
+            animation-delay: 5s;
+        }
+
+        .particle-3 {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--light-purple) 0%, transparent 70%);
+            top: 40%;
+            left: 70%;
+            animation-delay: 10s;
+        }
+
+        /* Main Container - Horizontal Scroll */
+        .main-container {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            height: 100vh;
+            scroll-behavior: smooth;
+            position: relative;
+            z-index: 1;
+        }
+
+        .main-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Sections */
+        .section {
+            flex: 0 0 100vw;
+            scroll-snap-align: start;
+            padding: 80px 20px 100px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(5, 0, 22, 0.85);
+            backdrop-filter: blur(25px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .search-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background: rgba(106, 13, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .notification-btn {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 10px;
+            height: 10px;
+            background: var(--red-accent);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .notification-btn:hover {
+            background: rgba(106, 13, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        /* Search Overlay */
+        .search-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(5, 0, 22, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 2000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .search-container {
+            padding: 100px 20px 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .search-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .search-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 15px 20px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 2px rgba(106, 13, 255, 0.3);
+        }
+
+        .close-search {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--text-primary);
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close-search:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        /* Section Indicators */
+        .section-indicators {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 500;
+        }
+
+        .section-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .section-indicator.active {
+            background: var(--primary-purple);
+            transform: scale(1.3);
+            box-shadow: 0 0 10px var(--primary-purple);
+        }
+
+        /* Movies Section */
+        .section-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, var(--text-primary), var(--light-purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .movie-card {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            aspect-ratio: 2/3;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .movie-card:hover {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .movie-poster {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .movie-card:hover .movie-poster {
+            transform: scale(1.1);
+        }
+
+        .movie-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            padding: 20px 15px 15px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .movie-card:hover .movie-overlay {
+            transform: translateY(0);
+        }
+
+        .movie-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .movie-genre {
+            font-size: 11px;
+            color: var(--light-purple);
+        }
+
+        /* Games Section */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .game-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .game-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--secondary-purple);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 24px;
+            color: white;
+        }
+
+        .game-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+        }
+
+        .game-players {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .play-btn {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .play-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(106, 13, 255, 0.4);
+        }
+
+        /* Friends Section */
+        .friends-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .friend-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .friend-card:hover {
+            transform: translateX(10px);
+            border-color: var(--secondary-purple);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .friend-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .friend-info h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+        }
+
+        .friend-info p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .friend-status {
+            margin-left: auto;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .status-online {
+            background: var(--green-accent);
+            box-shadow: 0 0 10px var(--green-accent);
+        }
+
+        .status-offline {
+            background: var(--text-secondary);
+        }
+
+        /* Random Party Section */
+        .party-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .party-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .party-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--secondary-purple);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .party-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+
+        .party-content {
+            padding: 15px;
+        }
+
+        .party-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+        }
+
+        .party-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .party-btn {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .party-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(106, 13, 255, 0.4);
+        }
+
+        /* Floating Action Button */
+        .fab-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+
+        .fab-main {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(106, 13, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fab-main:hover {
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 10px 30px rgba(106, 13, 255, 0.7);
+        }
+
+        .fab-menu {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 15px;
+            min-width: 200px;
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+
+        .fab-menu.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .fab-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            width: 100%;
+            text-align: left;
+        }
+
+        .fab-item:hover {
+            background: rgba(106, 13, 255, 0.2);
+            transform: translateX(-5px);
+        }
+
+        .fab-item i {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .coming-soon-badge {
+            display: inline-block;
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--yellow-accent);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-left: auto;
+        }
+
+        /* Popup Modal */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 3000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .popup-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: var(--card-bg);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .popup-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            font-size: 36px;
+            color: white;
+            animation: bounce 2s infinite;
+        }
+
+        .popup-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--text-primary), var(--light-purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .popup-text {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .popup-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .popup-btn {
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .popup-btn.primary {
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            border: none;
+            color: white;
+        }
+
+        .popup-btn.secondary {
+            background: transparent;
+            border: 2px solid var(--border-light);
+            color: var(--text-primary);
+        }
+
+        .popup-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .popup-btn.primary:hover {
+            box-shadow: 0 10px 20px rgba(106, 13, 255, 0.4);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(5, 0, 22, 0.85);
+            backdrop-filter: blur(25px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 15px 20px;
+        }
+
+        .nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            padding: 10px;
+            border-radius: 15px;
+            min-width: 70px;
+        }
+
+        .nav-item.active {
+            color: var(--primary-purple);
+            background: rgba(106, 13, 255, 0.15);
+            transform: translateY(-5px);
+        }
+
+        .nav-item i {
+            font-size: 22px;
+        }
+
+        .nav-item:hover {
+            color: var(--text-primary);
+            transform: translateY(-3px);
+        }
+
+        /* Login Overlay */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--dark-bg-3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            padding: 40px 30px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .login-logo {
+            font-size: 36px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .login-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .login-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(106, 13, 255, 0.4);
+        }
+
+        /* Animations */
+        @keyframes floatParticle {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(120deg); }
+            66% { transform: translate(-20px, 20px) rotate(240deg); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes scaleIn {
+            from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        /* Swipe Hint */
+        .swipe-hint {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            z-index: 500;
+            animation: fadeIn 1s ease;
+        }
+
+        .swipe-hint i {
+            animation: slideIn 1s infinite alternate;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .movies-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+            
+            .section-title {
+                font-size: 24px;
+            }
+            
+            .popup-container {
+                padding: 30px 20px;
+            }
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .visible {
+            display: block !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Overlay -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-container">
+            <div class="login-logo">
+                <i class="fas fa-film"></i> WatchTogether
+            </div>
+            <h1 class="login-title">Welcome Back!</h1>
+            <p class="login-subtitle">Sign in to join watch parties and play games with friends</p>
+            <button class="login-btn" id="googleLogin">
+                <i class="fab fa-google"></i> Continue with Google
+            </button>
+            <button class="login-btn" id="emailLogin">
+                <i class="fas fa-envelope"></i> Continue with Email
+            </button>
+            <button class="login-btn" id="demoLogin" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                <i class="fas fa-bolt"></i> Try Demo Mode
+            </button>
+        </div>
+    </div>
+
+    <!-- Animated Background -->
+    <div class="bg-particle particle-1"></div>
+    <div class="bg-particle particle-2"></div>
+    <div class="bg-particle particle-3"></div>
+
+    <!-- Main App (Hidden until logged in) -->
+    <div id="mainApp" class="hidden">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-film"></i>
+                </div>
+                <span>WatchTogether</span>
+            </div>
+            <div class="header-right">
+                <button class="search-btn" id="searchBtn">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button class="notification-btn" id="notificationBtn">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge"></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Search Overlay -->
+        <div class="search-overlay" id="searchOverlay">
+            <div class="search-container">
+                <div class="search-header">
+                    <input type="text" class="search-input" placeholder="Search movies, games, or friends..." id="searchInput">
+                    <button class="close-search" id="closeSearch">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="searchResults" style="color: var(--text-secondary); text-align: center; padding: 20px;">
+                    Search results will appear here
+                </div>
+            </div>
+        </div>
+
+        <!-- Swipe Hint -->
+        <div class="swipe-hint" id="swipeHint">
+            <i class="fas fa-arrow-left"></i>
+            <span>Swipe to explore</span>
+            <i class="fas fa-arrow-right"></i>
+        </div>
+
+        <!-- Section Indicators -->
+        <div class="section-indicators" id="sectionIndicators">
+            <div class="section-indicator active" data-index="0"></div>
+            <div class="section-indicator" data-index="1"></div>
+            <div class="section-indicator" data-index="2"></div>
+            <div class="section-indicator" data-index="3"></div>
+        </div>
+
+        <!-- Main Container with Horizontal Scroll -->
+        <div class="main-container" id="mainContainer">
+            <!-- Movies Section -->
+            <section class="section" id="movies">
+                <h2 class="section-title">🎬 Movies Tonight</h2>
+                <div class="movies-grid" id="moviesGrid">
+                    <!-- Movies will be dynamically added -->
+                </div>
+            </section>
+
+            <!-- Games Section -->
+            <section class="section" id="games">
+                <h2 class="section-title">🎮 Popular Games</h2>
+                <div class="games-grid" id="gamesGrid">
+                    <!-- Games will be dynamically added -->
+                </div>
+            </section>
+
+            <!-- Friends Section -->
+            <section class="section" id="friends">
+                <h2 class="section-title">👥 Friends Online</h2>
+                <div class="friends-list" id="friendsList">
+                    <!-- Friends will be dynamically added -->
+                </div>
+            </section>
+
+            <!-- Random Party Section -->
+            <section class="section" id="random">
+                <h2 class="section-title">🎉 Random Parties</h2>
+                <div class="party-grid" id="partyGrid">
+                    <!-- Parties will be dynamically added -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <div class="nav-items">
+                <a href="#" class="nav-item active" data-target="movies">
+                    <i class="fas fa-film"></i>
+                    <span>Movies</span>
+                </a>
+                <a href="#" class="nav-item" data-target="games">
+                    <i class="fas fa-gamepad"></i>
+                    <span>Games</span>
+                </a>
+                <a href="#" class="nav-item" data-target="friends">
+                    <i class="fas fa-user-friends"></i>
+                    <span>Friends</span>
+                </a>
+                <a href="#" class="nav-item" data-target="random">
+                    <i class="fas fa-random"></i>
+                    <span>Random</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Floating Action Button -->
+        <div class="fab-container">
+            <button class="fab-main" id="fabMain">
+                <i class="fas fa-plus"></i>
+            </button>
+            <div class="fab-menu" id="fabMenu">
+                <button class="fab-item" id="watchPartyBtn">
+                    <i class="fas fa-play-circle"></i>
+                    Start Watch Party
+                </button>
+                <button class="fab-item" id="groupCallBtn">
+                    <i class="fas fa-phone-alt"></i>
+                    Group Call
+                    <span class="coming-soon-badge">SOON</span>
+                </button>
+                <button class="fab-item" id="createGameBtn">
+                    <i class="fas fa-plus-circle"></i>
+                    Create Game
+                    <span class="coming-soon-badge">SOON</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Popup Modal -->
+        <div class="popup-overlay" id="popupOverlay">
+            <div class="popup-container" id="popupContainer">
+                <div class="popup-icon" id="popupIcon">
+                    <!-- Icon set by JS -->
+                </div>
+                <h2 class="popup-title" id="popupTitle">Coming Soon!</h2>
+                <p class="popup-text" id="popupText">This feature is coming soon. Stay tuned!</p>
+                <div class="popup-buttons" id="popupButtons">
+                    <!-- Buttons set by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- External Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="agora.js"></script>
+
+    <!-- Main Application Script -->
+    <script>
+        // IMMEDIATE LOGIN CHECK - Redirect if not logged in
+        (function() {
+            const userData = localStorage.getItem('watchTogetherUser');
+            const isLoggedIn = userData && JSON.parse(userData).expires > Date.now();
+            
+            if (!isLoggedIn) {
+                // Instantly redirect to login page
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Show main app
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('loginOverlay').style.display = 'none';
+        })();
+
+        // Sample Data
+        const movies = [
+            { id: 1, title: "Interstellar", genre: "Sci-Fi", color: "#1a1a2e" },
+            { id: 2, title: "Inception", genre: "Thriller", color: "#16213e" },
+            { id: 3, title: "The Dark Knight", genre: "Action", color: "#0f3460" },
+            { id: 4, title: "Parasite", genre: "Drama", color: "#3a0ca3" },
+            { id: 5, title: "Spirited Away", genre: "Anime", color: "#4361ee" },
+            { id: 6, title: "Pulp Fiction", genre: "Crime", color: "#4cc9f0" },
+            { id: 7, title: "The Matrix", genre: "Action", color: "#7209b7" },
+            { id: 8, title: "Avengers: Endgame", genre: "Superhero", color: "#f72585" },
+            { id: 9, title: "La La Land", genre: "Musical", color: "#b5179e" },
+            { id: 10, title: "Get Out", genre: "Horror", color: "#560bad" }
+        ];
+
+        const games = [
+            { id: 1, name: "Truth or Dare", players: "127 playing", icon: "fa-star", color: "#00b894" },
+            { id: 2, name: "Movie Trivia", players: "89 playing", icon: "fa-question-circle", color: "#00cec9" },
+            { id: 3, name: "Uno Chaos", players: "156 playing", icon: "fa-gamepad", color: "#0984e3" },
+            { id: 4, name: "Charades", players: "72 playing", icon: "fa-theater-masks", color: "#6c5ce7" },
+            { id: 5, name: "Guess the Song", players: "98 playing", icon: "fa-music", color: "#fd79a8" },
+            { id: 6, name: "Would You Rather", players: "113 playing", icon: "fa-question", color: "#e17055" }
+        ];
+
+        const friends = [
+            { id: 1, name: "Alex Johnson", status: "Watching Interstellar", avatar: "A", online: true },
+            { id: 2, name: "Sam Wilson", status: "Playing Uno", avatar: "S", online: true },
+            { id: 3, name: "Taylor Swift", status: "Offline", avatar: "T", online: false },
+            { id: 4, name: "Jordan Lee", status: "In a party", avatar: "J", online: true },
+            { id: 5, name: "Casey Kim", status: "Available", avatar: "C", online: true },
+            { id: 6, name: "Morgan Rose", status: "Offline", avatar: "M", online: false }
+        ];
+
+        const parties = [
+            { id: 1, name: "Horror Night", players: "24/50", imageColor: "#1a1a2e" },
+            { id: 2, name: "Comedy Central", players: "18/30", imageColor: "#3a0ca3" },
+            { id: 3, name: "Anime Lovers", players: "32/40", imageColor: "#7209b7" },
+            { id: 4, name: "90s Throwback", players: "28/35", imageColor: "#f72585" },
+            { id: 5, name: "Sci-Fi Marathon", players: "21/25", imageColor: "#4cc9f0" },
+            { id: 6, name: "Rom-Com Chill", players: "15/20", imageColor: "#fd79a8" }
+        ];
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', function() {
+            // Demo Login
+            document.getElementById('demoLogin').addEventListener('click', function() {
+                const demoUser = {
+                    username: "Demo User",
+                    email: "demo@watchtogether.com",
+                    avatar: "D",
+                    expires: Date.now() + 24 * 60 * 60 * 1000
+                };
+                localStorage.setItem('watchTogetherUser', JSON.stringify(demoUser));
+                window.location.reload();
+            });
+
+            // Only run if user is logged in
+            if (document.getElementById('mainApp').classList.contains('hidden')) {
+                return;
+            }
+
+            // Initialize UI
+            initializeMovies();
+            initializeGames();
+            initializeFriends();
+            initializeParties();
+            setupEventListeners();
+            setupSwipeNavigation();
+            
+            // Hide swipe hint after 5 seconds
+            setTimeout(() => {
+                document.getElementById('swipeHint').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('swipeHint').style.display = 'none';
+                }, 300);
+            }, 5000);
+        });
+
+        // Initialize Movies Section
+        function initializeMovies() {
+            const moviesGrid = document.getElementById('moviesGrid');
+            moviesGrid.innerHTML = '';
+            
+            movies.forEach(movie => {
+                const movieCard = document.createElement('div');
+                movieCard.className = 'movie-card';
+                movieCard.dataset.id = movie.id;
+                movieCard.innerHTML = `
+                    <div class="movie-poster" style="background: linear-gradient(45deg, ${movie.color}, #000);"></div>
+                    <div class="movie-overlay">
+                        <div class="movie-title">${movie.title}</div>
+                        <div class="movie-genre">${movie.genre}</div>
+                    </div>
+                `;
+                moviesGrid.appendChild(movieCard);
+            });
+        }
+
+        // Initialize Games Section
+        function initializeGames() {
+            const gamesGrid = document.getElementById('gamesGrid');
+            gamesGrid.innerHTML = '';
+            
+            games.forEach(game => {
+                const gameCard = document.createElement('div');
+                gameCard.className = 'game-card';
+                gameCard.dataset.id = game.id;
+                gameCard.innerHTML = `
+                    <div class="game-icon" style="background: linear-gradient(135deg, ${game.color}, ${game.color}99);">
+                        <i class="fas ${game.icon}"></i>
+                    </div>
+                    <div class="game-title">${game.name}</div>
+                    <div class="game-players">${game.players}</div>
+                    <button class="play-btn" data-game="${game.name}">PLAY NOW</button>
+                `;
+                gamesGrid.appendChild(gameCard);
+            });
+        }
+
+        // Initialize Friends Section
+        function initializeFriends() {
+            const friendsList = document.getElementById('friendsList');
+            friendsList.innerHTML = '';
+            
+            friends.forEach(friend => {
+                const friendCard = document.createElement('div');
+                friendCard.className = 'friend-card';
+                friendCard.dataset.id = friend.id;
+                friendCard.innerHTML = `
+                    <div class="friend-avatar">${friend.avatar}</div>
+                    <div class="friend-info">
+                        <h4>${friend.name}</h4>
+                        <p>${friend.status}</p>
+                    </div>
+                    <div class="friend-status ${friend.online ? 'status-online' : 'status-offline'}"></div>
+                `;
+                friendsList.appendChild(friendCard);
+            });
+        }
+
+        // Initialize Parties Section
+        function initializeParties() {
+            const partyGrid = document.getElementById('partyGrid');
+            partyGrid.innerHTML = '';
+            
+            parties.forEach(party => {
+                const partyCard = document.createElement('div');
+                partyCard.className = 'party-card';
+                partyCard.dataset.id = party.id;
+                partyCard.innerHTML = `
+                    <div class="party-image" style="background: linear-gradient(45deg, ${party.imageColor}, #000);"></div>
+                    <div class="party-content">
+                        <div class="party-title">${party.name}</div>
+                        <div class="party-info">
+                            <span>${party.players} players</span>
+                            <span><i class="fas fa-wifi"></i> Stable</span>
+                        </div>
+                        <button class="party-btn">JOIN PARTY</button>
+                    </div>
+                `;
+                partyGrid.appendChild(partyCard);
+            });
+        }
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            // Search
+            document.getElementById('searchBtn').addEventListener('click', () => {
+                const overlay = document.getElementById('searchOverlay');
+                overlay.style.display = 'block';
+                setTimeout(() => {
+                    overlay.style.opacity = '1';
+                    document.getElementById('searchInput').focus();
+                }, 10);
+            });
+
+            document.getElementById('closeSearch').addEventListener('click', () => {
+                const overlay = document.getElementById('searchOverlay');
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 300);
+            });
+
+            // FAB Menu
+            const fabMain = document.getElementById('fabMain');
+            const fabMenu = document.getElementById('fabMenu');
+
+            fabMain.addEventListener('click', (e) => {
+                e.stopPropagation();
+                fabMenu.classList.toggle('show');
+            });
+
+            // Close FAB menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!fabMain.contains(e.target) && !fabMenu.contains(e.target)) {
+                    fabMenu.classList.remove('show');
+                }
+            });
+
+            // FAB Menu Items
+            document.getElementById('watchPartyBtn').addEventListener('click', () => {
+                fabMenu.classList.remove('show');
+                showPopup('watch-party');
+            });
+
+            document.getElementById('groupCallBtn').addEventListener('click', () => {
+                fabMenu.classList.remove('show');
+                showPopup('group-call');
+            });
+
+            document.getElementById('createGameBtn').addEventListener('click', () => {
+                fabMenu.classList.remove('show');
+                showPopup('create-game');
+            });
+
+            // Movie Cards
+            document.querySelectorAll('.movie-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    showPopup('movie');
+                });
+            });
+
+            // Game Cards
+            document.querySelectorAll('.game-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('play-btn')) {
+                        showPopup('game');
+                    }
+                });
+            });
+
+            // Play Buttons
+            document.querySelectorAll('.play-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const gameName = e.target.dataset.game;
+                    showPopup('play-game', gameName);
+                });
+            });
+
+            // Friend Cards
+            document.querySelectorAll('.friend-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    showPopup('friend');
+                });
+            });
+
+            // Party Cards
+            document.querySelectorAll('.party-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('party-btn')) {
+                        showPopup('party');
+                    }
+                });
+            });
+
+            // Party Join Buttons
+            document.querySelectorAll('.party-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showPopup('join-party');
+                });
+            });
+
+            // Navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const target = item.dataset.target;
+                    navigateToSection(target);
+                    
+                    // Update active state
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                });
+            });
+
+            // Section Indicators
+            document.querySelectorAll('.section-indicator').forEach(indicator => {
+                indicator.addEventListener('click', () => {
+                    const index = parseInt(indicator.dataset.index);
+                    navigateToIndex(index);
+                });
+            });
+        }
+
+        // Setup Swipe Navigation
+        function setupSwipeNavigation() {
+            const container = document.getElementById('mainContainer');
+            let startX = 0;
+            let currentX = 0;
+            let isSwiping = false;
+
+            container.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                currentX = startX;
+                isSwiping = true;
+            }, { passive: true });
+
+            container.addEventListener('touchmove', (e) => {
+                if (!isSwiping) return;
+                currentX = e.touches[0].clientX;
+            }, { passive: true });
+
+            container.addEventListener('touchend', () => {
+                if (!isSwiping) return;
+                
+                const diff = startX - currentX;
+                const threshold = 50;
+                
+                if (Math.abs(diff) > threshold) {
+                    if (diff > 0) {
+                        // Swipe left - next section
+                        navigateToNext();
+                    } else {
+                        // Swipe right - previous section
+                        navigateToPrev();
+                    }
+                }
+                
+                isSwiping = false;
+            });
+
+            // Also support mouse drag for desktop
+            container.addEventListener('mousedown', (e) => {
+                startX = e.clientX;
+                currentX = startX;
+                isSwiping = true;
+            });
+
+            container.addEventListener('mousemove', (e) => {
+                if (!isSwiping) return;
+                currentX = e.clientX;
+            });
+
+            container.addEventListener('mouseup', () => {
+                if (!isSwiping) return;
+                
+                const diff = startX - currentX;
+                const threshold = 50;
+                
+                if (Math.abs(diff) > threshold) {
+                    if (diff > 0) {
+                        navigateToNext();
+                    } else {
+                        navigateToPrev();
+                    }
+                }
+                
+                isSwiping = false;
+            });
+
+            container.addEventListener('mouseleave', () => {
+                isSwiping = false;
+            });
+        }
+
+        // Navigation Functions
+        function navigateToSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (!section) return;
+            
+            section.scrollIntoView({ behavior: 'smooth' });
+            updateSectionIndicators(sectionId);
+        }
+
+        function navigateToIndex(index) {
+            const sections = document.querySelectorAll('.section');
+            if (index >= 0 && index < sections.length) {
+                sections[index].scrollIntoView({ behavior: 'smooth' });
+                updateActiveNav(index);
+            }
+        }
+
+        function navigateToNext() {
+            const sections = document.querySelectorAll('.section');
+            const currentIndex = getCurrentSectionIndex();
+            const nextIndex = (currentIndex + 1) % sections.length;
+            navigateToIndex(nextIndex);
+        }
+
+        function navigateToPrev() {
+            const sections = document.querySelectorAll('.section');
+            const currentIndex = getCurrentSectionIndex();
+            const prevIndex = (currentIndex - 1 + sections.length) % sections.length;
+            navigateToIndex(prevIndex);
+        }
+
+        function getCurrentSectionIndex() {
+            const container = document.getElementById('mainContainer');
+            const scrollLeft = container.scrollLeft;
+            const sectionWidth = container.clientWidth;
+            return Math.round(scrollLeft / sectionWidth);
+        }
+
+        function updateSectionIndicators(sectionId) {
+            const sections = ['movies', 'games', 'friends', 'random'];
+            const index = sections.indexOf(sectionId);
+            if (index !== -1) {
+                updateActiveIndicator(index);
+                updateActiveNav(index);
+            }
+        }
+
+        function updateActiveIndicator(index) {
+            document.querySelectorAll('.section-indicator').forEach((indicator, i) => {
+                indicator.classList.toggle('active', i === index);
+            });
+        }
+
+        function updateActiveNav(index) {
+            const sections = ['movies', 'games', 'friends', 'random'];
+            document.querySelectorAll('.nav-item').forEach((item, i) => {
+                item.classList.toggle('active', sections[i] === sections[index]);
+            });
+        }
+
+        // Update indicators on scroll
+        document.getElementById('mainContainer').addEventListener('scroll', () => {
+            const index = getCurrentSectionIndex();
+            updateActiveIndicator(index);
+            updateActiveNav(index);
+        });
+
+        // Show Popup Function
+        function showPopup(type, data = null) {
+            const overlay = document.getElementById('popupOverlay');
+            const container = document.getElementById('popupContainer');
+            const icon = document.getElementById('popupIcon');
+            const title = document.getElementById('popupTitle');
+            const text = document.getElementById('popupText');
+            const buttons = document.getElementById('popupButtons');
+            
+            let popupConfig = {};
+            
+            switch(type) {
+                case 'watch-party':
+                    popupConfig = {
+                        icon: '<i class="fas fa-play-circle"></i>',
+                        title: 'Watch Party',
+                        text: 'Start a synchronized movie night with friends. Everyone watches together in perfect sync!',
+                        buttons: [
+                            { text: 'Try It Now', type: 'primary', action: 'watch' },
+                            { text: 'Later', type: 'secondary', action: 'close' }
+                        ]
+                    };
+                    break;
+                    
+                case 'movie':
+                    popupConfig = {
+                        icon: '<i class="fas fa-film"></i>',
+                        title: 'Coming Soon!',
+                        text: 'Movie watch parties are launching next week. Get ready for synchronized viewing with friends!',
+                        buttons: [
+                            { text: 'Notify Me', type: 'primary', action: 'notify' },
+                            { text: 'Close', type: 'secondary', action: 'close' }
+                        ]
+                    };
+                    break;
+                    
+                case 'game':
+                    popupConfig = {
+                        icon: '<i class="fas fa-gamepad"></i>',
+                        title: 'Game Rooms',
+                        text: 'Interactive game rooms with live chat and reactions. Coming in the next update!',
+                        buttons: [
+                            { text: 'Notify Me', type: 'primary', action: 'notify' },
+                            { text: 'Close', type: secondary', action: 'close' }
+                        ]
+                    };
+                    break;
+                    
+                case 'play-game':
+                    popupConfig = {
+                        icon: '<i class="fas fa-gamepad"></i>',
+                        title: `Join ${data}`,
+                        text: 'This game is launching soon! Be the first to play when it goes live.',
+                        buttons: [
+                            { text: 'Notify Me', type: 'primary', action: 'notify' },
+                            { text: 'Close', type: 'secondary', action: 'close' }
+                        ]
+                    };
+                    break;
+                    
+                case 'group-call':
+                    popupConfig = {
+                        icon: '<i class="fas fa-phone-alt"></i>',
+                        title: 'Group Calls',
+                        text: 'Crystal clear group video calls with screen sharing. Launching next month!',
+                        buttons: [
+                            { text: 'Notify Me', type: 'primary', action: 'notify' },
+                            { text: 'Close', type: 'secondary', action: 'close' }
+                        ]
+                    };
+                    break;
+                    
+                case 'create-game':
+                    popupConfig = {
+                        icon: '<i class="fas fa-plus-circle"></i>',
+                        title: 'Create Games',
+                        text: 'Design your own interactive games and challenges. Coming soon!',
+                        buttons: [
+                            { text: 'Notify Me', type: 'primary', action: 'notify' },
+                            { text: 'Close', type: 'secondary', action: 'close' }
+                        ]
+                    };
+                    break;
+                    
+                case 'friend':
+                    popupConfig = {
+                        icon: '<i class="fas fa-user-friends"></i>',
+                        title: 'Friend Features',
+                        text: 'Enhanced friend system with activity feeds and private rooms. Coming soon!',
+                        buttons: [
+                            { text: 'Notify Me', type: 'primary', action: 'notify' },
+                            { text: 'Close', type: 'secondary', action: 'close' }
+                        ]
+                    };
+                    break;
+                    
+                case 'party':
+                    popupConfig = {
+                        icon: '<i class="fas fa-random"></i>',
+                        title: 'Random Parties',
+                        text: 'Join spontaneous watch parties with cool people. Feature launching soon!',
+                        buttons: [
+                            { text: 'Notify Me', type: 'primary', action: 'notify' },
+                            { text: 'Close', type: 'secondary', action: 'close' }
+                        ]
+                    };
+                    break;
+                    
+                case 'join-party':
+                    popupConfig = {
+                        icon: '<i class="fas fa-users"></i>',
+                        title: 'Join Party',
+                        text: 'This feature is coming soon! Join parties instantly with one click.',
+                        buttons: [
+                            { text: 'Notify Me', type: 'primary', action: 'notify' },
+                            { text: 'Close', type: 'secondary', action: 'close' }
+                        ]
+                    };
+                    break;
+                    
+                default:
+                    popupConfig = {
+                        icon: '<i class="fas fa-rocket"></i>',
+                        title: 'Coming Soon!',
+                        text: 'This amazing feature is under development. Stay tuned for updates!',
+                        buttons: [
+                            { text: 'Notify Me', type: 'primary', action: 'notify' },
+                            { text: 'Close', type: 'secondary', action: 'close' }
+                        ]
+                    };
+            }
+            
+            // Set popup content
+            icon.innerHTML = popupConfig.icon;
+            title.textContent = popupConfig.title;
+            text.textContent = popupConfig.text;
+            
+            // Create buttons
+            buttons.innerHTML = '';
+            popupConfig.buttons.forEach(btnConfig => {
+                const button = document.createElement('button');
+                button.className = `popup-btn ${btnConfig.type}`;
+                button.textContent = btnConfig.text;
+                button.onclick = () => handlePopupAction(btnConfig.action, type);
+                buttons.appendChild(button);
+            });
+            
+            // Show popup with animation
+            overlay.style.display = 'block';
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+                container.style.transform = 'translate(-50%, -50%) scale(1)';
+                container.style.opacity = '1';
+            }, 10);
+        }
+
+        // Handle Popup Actions
+        function handlePopupAction(action, type) {
+            const overlay = document.getElementById('popupOverlay');
+            const container = document.getElementById('popupContainer');
+            
+            // Close animation
+            overlay.style.opacity = '0';
+            container.style.transform = 'translate(-50%, -50%) scale(0.8)';
+            container.style.opacity = '0';
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                
+                // Handle action
+                switch(action) {
+                    case 'watch':
+                        // Redirect to watch.html
+                        window.location.href = 'watch.html';
+                        break;
+                        
+                    case 'notify':
+                        // Show notification success
+                        alert('You\'ll be notified when this feature launches!');
+                        break;
+                        
+                    case 'close':
+                        // Just close
+                        break;
+                }
+            }, 300);
+        }
+
+        // Close popup when clicking outside
+        document.getElementById('popupOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                const overlay = document.getElementById('popupOverlay');
+                const container = document.getElementById('popupContainer');
+                
+                overlay.style.opacity = '0';
+                container.style.transform = 'translate(-50%, -50%) scale(0.8)';
+                container.style.opacity = '0';
+                
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 300);
+            }
+        });
+
+        // Initialize with first section active
+        setTimeout(() => {
+            updateActiveIndicator(0);
+            updateActiveNav(0);
+        }, 100);
+    </script>
+</body>
+</html>

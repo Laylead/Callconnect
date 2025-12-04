@@ -251,11 +251,12 @@
             50% { transform: scale(1.3); opacity: 1; }
         }
         
+        /* UPDATED: Fixed position controls above system UI */
         .custom-controls {
-            position: absolute;
-            bottom: max(20px, env(safe-area-inset-bottom, 20px));
-            left: 50%;
-            transform: translateX(-50%);
+            position: fixed !important;
+            bottom: max(20px, env(safe-area-inset-bottom, 20px)) !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
             display: flex;
             gap: 8px;
             align-items: center;
@@ -264,7 +265,7 @@
             border-radius: 20px;
             opacity: 0;
             transition: var(--transition);
-            z-index: 9999;
+            z-index: 2147483647 !important; /* Maximum z-index */
             backdrop-filter: blur(20px);
             border: 1px solid rgba(138, 79, 255, 0.2);
             width: 95%;
@@ -273,31 +274,89 @@
             justify-content: space-between;
             flex-wrap: nowrap;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            pointer-events: auto !important;
         }
         
         .custom-controls.visible {
-            opacity: 1;
+            opacity: 1 !important;
         }
         
-        /* FIXED: Raise controls higher in fullscreen mode */
+        /* UPDATED: Fixed fullscreen controls */
         .app-container:fullscreen .custom-controls {
             bottom: max(80px, env(safe-area-inset-bottom, 80px)) !important;
             padding: 12px 20px;
             border-radius: 24px;
             max-width: 600px;
+            z-index: 2147483647 !important;
         }
         
         .app-container:fullscreen .detailed-view .custom-controls {
             bottom: max(80px, env(safe-area-inset-bottom, 80px)) !important;
+            z-index: 2147483647 !important;
         }
         
-        /* Adjust progress bar position for fullscreen */
+        /* UPDATED: Fixed progress bar position */
+        .progress-container {
+            position: fixed !important;
+            bottom: calc(65px + env(safe-area-inset-bottom, 0px)) !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            width: 95%;
+            max-width: 500px;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            z-index: 2147483646 !important;
+            opacity: 0;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+            touch-action: none;
+            border: 1px solid rgba(138, 79, 255, 0.1);
+            pointer-events: auto !important;
+        }
+        
+        .progress-container.visible {
+            opacity: 1 !important;
+        }
+        
         .app-container:fullscreen .progress-container {
             bottom: calc(130px + env(safe-area-inset-bottom, 0px)) !important;
+            z-index: 2147483646 !important;
         }
         
         .app-container:fullscreen .detailed-view .progress-container {
             bottom: calc(130px + env(safe-area-inset-bottom, 0px)) !important;
+            z-index: 2147483646 !important;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, #6A0DFF, #8A4FFF);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.1s linear;
+            position: relative;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.2s;
+            box-shadow: 0 0 6px rgba(106, 13, 255, 0.6);
+        }
+        
+        .progress-container:hover .progress-bar::after {
+            opacity: 1;
         }
         
         .control-btn-lg {
@@ -316,7 +375,7 @@
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             flex-shrink: 0;
             position: relative;
-            z-index: 9999;
+            z-index: 2147483647;
         }
         
         .control-btn-lg:hover {
@@ -354,7 +413,7 @@
             flex-shrink: 0;
             white-space: nowrap;
             position: relative;
-            z-index: 9999;
+            z-index: 2147483647;
         }
         
         .skip-btn:hover {
@@ -378,59 +437,7 @@
             padding: 0 6px;
             flex-shrink: 0;
             position: relative;
-            z-index: 9999;
-        }
-        
-        .progress-container {
-            position: absolute;
-            bottom: calc(65px + env(safe-area-inset-bottom, 0px));
-            left: 50%;
-            transform: translateX(-50%);
-            width: 95%;
-            max-width: 500px;
-            height: 4px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 2px;
-            overflow: hidden;
-            z-index: 9998;
-            opacity: 0;
-            transition: var(--transition);
-            backdrop-filter: blur(10px);
-            cursor: pointer;
-            touch-action: none;
-            border: 1px solid rgba(138, 79, 255, 0.1);
-        }
-        
-        .progress-container.visible {
-            opacity: 1;
-        }
-        
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(to right, #6A0DFF, #8A4FFF);
-            border-radius: 2px;
-            width: 0%;
-            transition: width 0.1s linear;
-            position: relative;
-        }
-        
-        .progress-bar::after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 10px;
-            height: 10px;
-            background: white;
-            border-radius: 50%;
-            opacity: 0;
-            transition: opacity 0.2s;
-            box-shadow: 0 0 6px rgba(106, 13, 255, 0.6);
-        }
-        
-        .progress-container:hover .progress-bar::after {
-            opacity: 1;
+            z-index: 2147483647;
         }
         
         /* Volume Controls */
@@ -439,7 +446,7 @@
             align-items: center;
             gap: 6px;
             position: relative;
-            z-index: 9999;
+            z-index: 2147483647;
         }
         
         .volume-slider-container {
@@ -456,7 +463,7 @@
             padding: 10px;
             backdrop-filter: blur(20px);
             border: 1px solid rgba(138, 79, 255, 0.3);
-            z-index: 9999;
+            z-index: 2147483647;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             opacity: 0;
             pointer-events: none;
@@ -714,7 +721,7 @@
             transform: scale(1.05) translateY(-2px);
         }
         
-        /* Chat Widget - REDESIGNED */
+        /* Chat Widget */
         .chat-messages {
             height: 250px;
             overflow-y: auto;
@@ -930,7 +937,7 @@
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             flex-shrink: 0;
             position: relative;
-            z-index: 9999;
+            z-index: 2147483647;
             width: 36px;
             height: 36px;
             border-radius: 50%;
@@ -1058,6 +1065,7 @@
             color: #C8C8D9;
         }
         
+        /* UPDATED: Home button now first in grid */
         .controls-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -1935,7 +1943,7 @@
             }
             
             .custom-controls {
-                bottom: max(15px, env(safe-area-inset-bottom, 15px));
+                bottom: max(15px, env(safe-area-inset-bottom, 15px)) !important;
                 padding: 8px 12px;
                 gap: 6px;
                 width: 96%;
@@ -2013,7 +2021,7 @@
             }
             
             .progress-container {
-                bottom: calc(55px + env(safe-area-inset-bottom, 0px));
+                bottom: calc(55px + env(safe-area-inset-bottom, 0px)) !important;
                 width: 96%;
                 height: 4px;
             }
@@ -2071,7 +2079,7 @@
             }
             
             .custom-controls {
-                bottom: max(10px, env(safe-area-inset-bottom, 10px));
+                bottom: max(10px, env(safe-area-inset-bottom, 10px)) !important;
                 padding: 6px 10px;
                 gap: 4px;
                 width: 98%;
@@ -2120,7 +2128,7 @@
             }
             
             .progress-container {
-                bottom: calc(50px + env(safe-area-inset-bottom, 0px));
+                bottom: calc(50px + env(safe-area-inset-bottom, 0px)) !important;
                 width: 98%;
             }
 
@@ -2210,30 +2218,28 @@
             }
         }
 
-        /* Fullscreen fixes - UPDATED for better positioning */
-        .app-container:fullscreen .custom-controls,
-        .app-container:fullscreen .progress-container {
-            z-index: 9999;
-            padding-bottom: env(safe-area-inset-bottom, 20px);
-        }
-
+        /* Fullscreen fixes - UPDATED with fixed positioning */
         .app-container:fullscreen .custom-controls {
             bottom: max(80px, env(safe-area-inset-bottom, 80px)) !important;
             padding: 12px 20px;
             border-radius: 24px;
             max-width: 600px;
+            z-index: 2147483647 !important;
         }
 
         .app-container:fullscreen .detailed-view .custom-controls {
             bottom: max(80px, env(safe-area-inset-bottom, 80px)) !important;
+            z-index: 2147483647 !important;
         }
 
         .app-container:fullscreen .progress-container {
             bottom: calc(130px + env(safe-area-inset-bottom, 0px)) !important;
+            z-index: 2147483646 !important;
         }
 
         .app-container:fullscreen .detailed-view .progress-container {
             bottom: calc(130px + env(safe-area-inset-bottom, 0px)) !important;
+            z-index: 2147483646 !important;
         }
         
         /* Adjust floating widgets and sidebar for fullscreen */
@@ -2327,11 +2333,11 @@
         /* Android system controls safe area */
         @media (max-height: 700px) {
             .custom-controls {
-                bottom: max(15px, env(safe-area-inset-bottom, 15px));
+                bottom: max(15px, env(safe-area-inset-bottom, 15px)) !important;
             }
             
             .progress-container {
-                bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+                bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
             }
             
             .app-container:fullscreen .custom-controls {
@@ -2400,9 +2406,12 @@
             opacity: 1;
         }
 
-        /* Safe area fallback JavaScript */
-        .safe-area-fallback {
-            padding-bottom: 20px !important;
+        /* Performance optimizations */
+        .performance-optimized {
+            will-change: transform, opacity;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            -webkit-font-smoothing: antialiased;
         }
     </style>
 </head>
@@ -2511,7 +2520,7 @@
                     </div>
                 </div>
                 
-                <!-- Custom Controls -->
+                <!-- Custom Controls - UPDATED: Fixed positioned -->
                 <div class="custom-controls" id="custom-controls">
                     <button class="home-btn touch-feedback" id="home-btn" title="Go Home">
                         <i class="fas fa-home"></i>
@@ -2661,6 +2670,7 @@
                     <div class="progress-bar" id="detailed-progress-bar"></div>
                 </div>
                 
+                <!-- UPDATED: Fixed positioned controls for detailed view -->
                 <div class="custom-controls" id="detailed-custom-controls">
                     <button class="home-btn touch-feedback" id="detailed-home-btn" title="Go Home">
                         <i class="fas fa-home"></i>
@@ -2707,7 +2717,15 @@
                         </div>
                     </div>
                     
+                    <!-- UPDATED: Home button now first in grid -->
                     <div class="controls-grid">
+                        <div class="control-card touch-feedback" id="control-panel-home-btn">
+                            <div class="control-icon">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <div class="control-label">Go Home</div>
+                        </div>
+                        
                         <div class="control-card touch-feedback" id="pauseDiscussBtn">
                             <div class="control-icon">
                                 <i class="fas fa-pause"></i>
@@ -2748,14 +2766,6 @@
                                 <i class="fas fa-sync"></i>
                             </div>
                             <div class="control-label">Sync Video</div>
-                        </div>
-                        
-                        <!-- ADDED: Home Button in Control Panel -->
-                        <div class="control-card touch-feedback" id="control-panel-home-btn">
-                            <div class="control-icon">
-                                <i class="fas fa-home"></i>
-                            </div>
-                            <div class="control-label">Go Home</div>
                         </div>
                     </div>
                     
@@ -2809,6 +2819,19 @@
     <script src="https://www.youtube.com/iframe_api"></script>
 
     <script>
+        // Performance optimization: Debounce function
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
         // Initialize Firebase
         let firebaseInitialized = false;
         try {
@@ -2862,6 +2885,13 @@
         let hostIsInPlayerView = true;
         let viewerAutoPaused = false;
         
+        // Performance optimizations
+        let isInitialized = false;
+        let videoLoadTimeout = null;
+        let firebaseListeners = [];
+        let activeIntervals = [];
+        let activeTimeouts = [];
+
         // Initialize Firebase services if Firebase is available
         if (firebaseInitialized) {
             db = firebase.database();
@@ -3014,17 +3044,77 @@
         let isLocalAction = false;
         let videoLoadStartTime = null;
 
-        // Safe area fallback function
-        function fixSafeArea() {
-            const controls = [customControls, detailedCustomControls];
-            controls.forEach(control => {
-                if (!control) return;
-                
-                const computed = parseInt(window.getComputedStyle(control).paddingBottom);
-                if (computed < 5) {
-                    control.classList.add('safe-area-fallback');
-                }
-            });
+        // Performance optimization: Clean up function
+        function cleanup() {
+            // Clear all timeouts and intervals
+            activeTimeouts.forEach(timeout => clearTimeout(timeout));
+            activeIntervals.forEach(interval => clearInterval(interval));
+            activeTimeouts = [];
+            activeIntervals = [];
+            
+            // Clear video timeout
+            if (videoLoadTimeout) {
+                clearTimeout(videoLoadTimeout);
+                videoLoadTimeout = null;
+            }
+            
+            // Clear controls timeout
+            if (controlsTimeout) {
+                clearTimeout(controlsTimeout);
+                controlsTimeout = null;
+            }
+            
+            // Clear widget timeout
+            if (widgetTimeout) {
+                clearTimeout(widgetTimeout);
+                widgetTimeout = null;
+            }
+            
+            // Clear discussion interval
+            if (discussionInterval) {
+                clearInterval(discussionInterval);
+                discussionInterval = null;
+            }
+            
+            // Stop sync manager
+            if (syncManager) {
+                syncManager.stopSync();
+                syncManager = null;
+            }
+            
+            // Remove Firebase listeners
+            if (firebaseInitialized) {
+                firebaseListeners.forEach(listener => {
+                    if (listener && typeof listener === 'function') {
+                        listener();
+                    }
+                });
+                firebaseListeners = [];
+            }
+            
+            // Leave Agora channels
+            if (agoraClient) {
+                agoraClient.leave().catch(console.error);
+                agoraClient = null;
+            }
+            
+            if (agoraDiscussionClient) {
+                agoraDiscussionClient.leave().catch(console.error);
+                agoraDiscussionClient = null;
+            }
+            
+            // Release audio tracks
+            if (agoraLocalAudioTrack) {
+                agoraLocalAudioTrack.close();
+                agoraLocalAudioTrack = null;
+            }
+            
+            if (agoraDiscussionAudioTrack) {
+                agoraDiscussionAudioTrack.close();
+                agoraDiscussionAudioTrack = null;
+            }
+            
+            console.log("Cleanup completed");
         }
 
         // Enhanced video loading
@@ -3073,7 +3163,7 @@
             });
             
             // Listen for participant changes
-            participantsRef.on('child_added', (snap) => {
+            const participantAddedListener = participantsRef.on('child_added', (snap) => {
                 const participant = snap.val();
                 participants[participant.uid] = participant;
                 updateParticipantCount();
@@ -3086,14 +3176,14 @@
                 }
             });
             
-            participantsRef.on('child_changed', (snap) => {
+            const participantChangedListener = participantsRef.on('child_changed', (snap) => {
                 const participant = snap.val();
                 participants[participant.uid] = participant;
                 updateTalkingStatus();
                 updateParticipantsModal();
             });
             
-            participantsRef.on('child_removed', (snap) => {
+            const participantRemovedListener = participantsRef.on('child_removed', (snap) => {
                 const participant = snap.val();
                 delete participants[participant.uid];
                 updateParticipantCount();
@@ -3104,11 +3194,18 @@
                 showNotification(`${participant.username} left the party`);
             });
             
+            // Store listeners for cleanup
+            firebaseListeners.push(() => {
+                participantsRef.off('child_added', participantAddedListener);
+                participantsRef.off('child_changed', participantChangedListener);
+                participantsRef.off('child_removed', participantRemovedListener);
+            });
+            
             // Load friend requests
             loadFriendRequests();
             
             // Update last active every 30 seconds
-            setInterval(() => {
+            const lastActiveInterval = setInterval(() => {
                 if (userParticipantRef) {
                     userParticipantRef.update({ 
                         lastActive: firebase.database.ServerValue.TIMESTAMP,
@@ -3116,6 +3213,8 @@
                     });
                 }
             }, 30000);
+            
+            activeIntervals.push(lastActiveInterval);
         }
 
         function updateParticipantCount() {
@@ -3271,11 +3370,15 @@
             if (!firebaseInitialized) return;
             
             const friendRequestsRef = db.ref(`users/${currentUser}/friendRequests`);
-            friendRequestsRef.on('value', (snapshot) => {
+            const friendRequestsListener = friendRequestsRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     friendRequests = data;
                 }
+            });
+            
+            firebaseListeners.push(() => {
+                friendRequestsRef.off('value', friendRequestsListener);
             });
         }
 
@@ -3308,7 +3411,7 @@
                 padding: 10px 16px;
                 border-radius: var(--border-radius-sm);
                 box-shadow: 0 4px 15px rgba(106, 13, 255, 0.3);
-                z-index: 9999;
+                z-index: 2147483647;
                 animation: slideInRight 0.3s ease, slideOutRight 0.3s ease 2.7s;
                 max-width: 280px;
                 font-size: 13px;
@@ -3320,9 +3423,11 @@
             document.body.appendChild(notification);
             
             // Remove after animation
-            setTimeout(() => {
+            const timeoutId = setTimeout(() => {
                 notification.remove();
             }, 3000);
+            
+            activeTimeouts.push(timeoutId);
         }
 
         function getRandomColor() {
@@ -3566,9 +3671,11 @@
             isPinching = false;
             playerContainer.classList.remove('pinch-resizing');
             
-            setTimeout(() => {
+            const timeoutId = setTimeout(() => {
                 resizeIndicator.style.display = 'none';
             }, 2000);
+            
+            activeTimeouts.push(timeoutId);
             
             resetControlsTimeout();
         }
@@ -3625,9 +3732,11 @@
             resizeIndicator.textContent = `Reset to default`;
             resizeIndicator.style.display = 'block';
             
-            setTimeout(() => {
+            const timeoutId = setTimeout(() => {
                 resizeIndicator.style.display = 'none';
             }, 2000);
+            
+            activeTimeouts.push(timeoutId);
         }
 
         function showResizeTutorial() {
@@ -3705,11 +3814,14 @@
                 clearTimeout(controlsTimeout);
             }
             
-            controlsTimeout = setTimeout(() => {
+            const timeoutId = setTimeout(() => {
                 if (!isDragging && !isPinching && !isTalking) {
                     hideControls();
                 }
             }, 3000);
+            
+            activeTimeouts.push(timeoutId);
+            controlsTimeout = timeoutId;
         }
 
         function updateVolumeUI() {
@@ -3748,7 +3860,7 @@
             resetControlsTimeout();
         }
 
-        // Enhanced video loading
+        // Enhanced video loading with timeout
         function loadVideoFromFirebase() {
             if (!firebaseInitialized) {
                 console.error("Firebase not initialized - cannot load video");
@@ -3765,7 +3877,12 @@
             overlayBlock.classList.remove('hidden');
             videoLoadStartTime = Date.now();
             
-            const loadTimeout = setTimeout(() => {
+            // Clear any existing timeout
+            if (videoLoadTimeout) {
+                clearTimeout(videoLoadTimeout);
+            }
+            
+            videoLoadTimeout = setTimeout(() => {
                 if (!ready) {
                     console.log("Firebase load timeout");
                     overlayBlock.innerHTML = `
@@ -3778,8 +3895,12 @@
                 }
             }, 8000);
             
+            activeTimeouts.push(videoLoadTimeout);
+            
             roomRef.once('value').then(snap => {
-                clearTimeout(loadTimeout);
+                clearTimeout(videoLoadTimeout);
+                videoLoadTimeout = null;
+                
                 const data = snap.val();
                 
                 if (!data) {
@@ -3838,7 +3959,8 @@
                 }
             }).catch(err => {
                 console.error("Firebase error:", err);
-                clearTimeout(loadTimeout);
+                clearTimeout(videoLoadTimeout);
+                videoLoadTimeout = null;
                 overlayBlock.innerHTML = `
                     <div style="text-align: center; color: white;">
                         <div style="font-size: 40px; margin-bottom: 16px;">⚠️</div>
@@ -3878,6 +4000,8 @@
                 }
             }, 2000);
             
+            activeTimeouts.push(loadingTimeout);
+            
             html5video.addEventListener('loadedmetadata', () => {
                 clearTimeout(loadingTimeout);
                 ready = true;
@@ -3885,7 +4009,8 @@
                 
                 initializeSyncSystem(isHostUser);
                 
-                setInterval(updateTimeDisplay, 1000);
+                const updateInterval = setInterval(updateTimeDisplay, 1000);
+                activeIntervals.push(updateInterval);
                 
                 overlayBlock.classList.add('hidden');
                 cachingIndicator.style.display = 'none';
@@ -3898,7 +4023,7 @@
                         html5video.play().catch(e => console.log("Auto-play prevented:", e));
                     }, 500);
                 }
-            });
+            }, { once: true });
             
             html5video.addEventListener('progress', () => {
                 if (html5video.buffered.length > 0) {
@@ -3923,7 +4048,7 @@
                     </div>
                 `;
                 cachingIndicator.style.display = 'none';
-            });
+            }, { once: true });
             
             html5video.src = link;
         }
@@ -3955,6 +4080,8 @@
                     console.log("YouTube loading timeout");
                 }
             }, 8000);
+            
+            activeTimeouts.push(youtubeTimeout);
         }
 
         function startVideo() {
@@ -4096,7 +4223,9 @@
                             
                             initializeSyncSystem(item.isHost);
                             
-                            setInterval(updateTimeDisplay, 1000);
+                            const updateInterval = setInterval(updateTimeDisplay, 1000);
+                            activeIntervals.push(updateInterval);
+                            
                             overlayBlock.classList.add('hidden');
                             cachingIndicator.style.display = 'none';
                             
@@ -4162,6 +4291,7 @@
                     widgetTimeout = setTimeout(() => {
                         closeWidget('reactions');
                     }, 5000);
+                    activeTimeouts.push(widgetTimeout);
                 }
             }
         }
@@ -4185,7 +4315,7 @@
             }
         }
 
-        // View toggle functions - FIXED: Don't pause when host leaves player view
+        // View toggle functions
         function toggleToDetailedView() {
             isDetailedView = true;
             hostIsInPlayerView = false;
@@ -4313,9 +4443,11 @@
             bubble.textContent = emoji;
             reactionsBox.appendChild(bubble);
             
-            setTimeout(() => {
+            const timeoutId = setTimeout(() => {
                 bubble.remove();
             }, 3000);
+            
+            activeTimeouts.push(timeoutId);
             
             if (firebaseInitialized) {
                 const reactionsRef = db.ref('rooms/' + roomId + '/reactions').push();
@@ -4344,10 +4476,12 @@
                     button.innerHTML = '<i class="fas fa-check"></i> Copied!';
                     button.classList.add('copied');
                     
-                    setTimeout(() => {
+                    const timeoutId = setTimeout(() => {
                         button.innerHTML = originalText;
                         button.classList.remove('copied');
                     }, 2000);
+                    
+                    activeTimeouts.push(timeoutId);
                     
                     console.log("Link copied to clipboard");
                 }).catch(err => {
@@ -4355,20 +4489,24 @@
                     button.innerHTML = '<i class="fas fa-check"></i> Copied!';
                     button.classList.add('copied');
                     
-                    setTimeout(() => {
+                    const timeoutId = setTimeout(() => {
                         button.innerHTML = originalText;
                         button.classList.remove('copied');
                     }, 2000);
+                    
+                    activeTimeouts.push(timeoutId);
                 });
             } catch (err) {
                 document.execCommand('copy');
                 button.innerHTML = '<i class="fas fa-check"></i> Copied!';
                 button.classList.add('copied');
                 
-                setTimeout(() => {
+                const timeoutId = setTimeout(() => {
                     button.innerHTML = originalText;
                     button.classList.remove('copied');
                 }, 2000);
+                
+                activeTimeouts.push(timeoutId);
             }
         }
 
@@ -4395,6 +4533,8 @@
                     `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             }, 1000);
             
+            activeIntervals.push(discussionInterval);
+            
             // Update participants circle
             updateDiscussionParticipants();
             
@@ -4417,6 +4557,7 @@
             discussionModal.classList.remove('active');
             
             clearInterval(discussionInterval);
+            discussionInterval = null;
             
             // Leave discussion voice channel
             if (agoraDiscussionClient) {
@@ -4546,7 +4687,7 @@
             }); 
         }
 
-        // Enhanced Sync Manager - FIXED: Don't auto-pause when host leaves player view
+        // Enhanced Sync Manager
         class TelepartySyncManager {
             constructor(isHost, roomRef, videoPlayer) {
                 this.isHost = isHost;
@@ -4645,13 +4786,15 @@
                     }
                 }, this.syncInterval);
                 
+                activeIntervals.push(this.heartbeatInterval);
+                
                 console.log('[Host] Sync manager started');
             }
             
             startViewerSync() {
                 if (this.isHost) return;
                 
-                this.roomRef.child('videoState').on('value', (snapshot) => {
+                const videoStateListener = this.roomRef.child('videoState').on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (!data) return;
                     
@@ -4680,7 +4823,11 @@
                     }
                 });
                 
-                console.log('[Viewer] Sync manager started - Only sync on actual play/pause changes');
+                firebaseListeners.push(() => {
+                    this.roomRef.child('videoState').off('value', videoStateListener);
+                });
+                
+                console.log('[Viewer] Sync manager started');
             }
             
             syncToHost() {
@@ -4725,10 +4872,6 @@
                 if (this.heartbeatInterval) {
                     clearInterval(this.heartbeatInterval);
                     this.heartbeatInterval = null;
-                }
-                
-                if (firebaseInitialized && !this.isHost) {
-                    this.roomRef.child('videoState').off('value');
                 }
                 
                 console.log('[Sync] Manager stopped');
@@ -4785,14 +4928,12 @@
             syncManager = new TelepartySyncManager(isHostUser, roomRef, videoPlayer);
             
             if (isHostUser) {
-                // Only sync when host intentionally plays/pauses via controls
-                // Don't sync when host switches views
                 syncManager.startHostSync();
             } else {
                 syncManager.startViewerSync();
             }
             
-            console.log('Sync system initialized - Fixed auto-pause issue');
+            console.log('Sync system initialized');
         }
 
         // Host controls
@@ -5006,11 +5147,12 @@
                 }
             });
             
-            // Handle window resize
-            window.addEventListener('resize', () => {
+            // Handle window resize with debounce
+            const debouncedFitCanvas = debounce(() => {
                 fitCanvas();
-                fixSafeArea();
-            });
+            }, 250);
+            
+            window.addEventListener('resize', debouncedFitCanvas);
             
             // Fullscreen change
             document.addEventListener('fullscreenchange', () => {
@@ -5018,7 +5160,6 @@
                 if (!isFullscreen) {
                     screenResizeMenu.classList.remove('show');
                 }
-                fixSafeArea();
             });
             
             // Progress bar click to seek
@@ -5080,7 +5221,7 @@
             if (!firebaseInitialized) return;
             
             // Listen for chat messages
-            chatRef.on('child_added', (snapshot) => {
+            const chatListener = chatRef.on('child_added', (snapshot) => {
                 const message = snapshot.val();
                 
                 // Don't show own messages twice
@@ -5097,7 +5238,7 @@
             });
             
             // Listen for reactions
-            reactionsRef.on('child_added', (snapshot) => {
+            const reactionsListener = reactionsRef.on('child_added', (snapshot) => {
                 const reaction = snapshot.val();
                 
                 // Don't show own reactions twice
@@ -5107,14 +5248,14 @@
             });
             
             // Listen for drawing
-            drawRef.on('child_added', (snapshot) => {
+            const drawListener = drawRef.on('child_added', (snapshot) => {
                 const stroke = snapshot.val();
                 strokes.push(stroke);
                 redrawAllStrokes();
             });
             
             // Listen for discussion state
-            roomRef.child('discussionActive').on('value', (snapshot) => {
+            const discussionListener = roomRef.child('discussionActive').on('value', (snapshot) => {
                 const isDiscussionActive = snapshot.val();
                 
                 if (isDiscussionActive && !discussionActive && isHost) {
@@ -5127,11 +5268,20 @@
             });
             
             // Listen for host play state changes
-            roomRef.child('hostIsPlaying').on('value', (snapshot) => {
+            const playStateListener = roomRef.child('hostIsPlaying').on('value', (snapshot) => {
                 const hostPlaying = snapshot.val();
                 if (!isHost && hostPlaying !== undefined) {
                     console.log(`Host play state: ${hostPlaying}`);
                 }
+            });
+            
+            // Store listeners for cleanup
+            firebaseListeners.push(() => {
+                chatRef.off('child_added', chatListener);
+                reactionsRef.off('child_added', reactionsListener);
+                drawRef.off('child_added', drawListener);
+                roomRef.child('discussionActive').off('value', discussionListener);
+                roomRef.child('hostIsPlaying').off('value', playStateListener);
             });
         }
 
@@ -5174,6 +5324,9 @@
 
         // Initialize the app
         function initApp() {
+            if (isInitialized) return;
+            isInitialized = true;
+            
             console.log("Initializing Let's Watch...");
             
             // Update status display
@@ -5195,10 +5348,12 @@
             const currentUrl = window.location.href;
             if (shareLink) shareLink.value = currentUrl;
             
-            // Initialize Agora voice chat
-            setTimeout(() => {
+            // Initialize Agora voice chat with delay
+            const agoraTimeout = setTimeout(() => {
                 initAgoraVoice();
             }, 1500);
+            
+            activeTimeouts.push(agoraTimeout);
             
             // Initialize Firebase listeners
             initFirebaseListeners();
@@ -5207,9 +5362,11 @@
             loadVideoFromFirebase();
             
             // Show controls initially
-            setTimeout(() => {
+            const initialControlsTimeout = setTimeout(() => {
                 showControls();
             }, 500);
+            
+            activeTimeouts.push(initialControlsTimeout);
             
             // Initialize host/viewer controls
             if (isHost) {
@@ -5218,13 +5375,14 @@
                 viewerStart();
             }
             
-            // Apply safe area fixes
-            fixSafeArea();
-            window.addEventListener('resize', fixSafeArea);
-            
             console.log("Let's Watch initialized successfully");
+            
+            // Setup cleanup on page unload
+            window.addEventListener('beforeunload', cleanup);
+            window.addEventListener('pagehide', cleanup);
         }
 
+        // Initialize when DOM is ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initApp);
         } else {

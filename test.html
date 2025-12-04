@@ -2819,6 +2819,299 @@
     <script src="https://www.youtube.com/iframe_api"></script>
 
     <script>
+        // =======================================================
+        // UNIVERSAL VIDEO LOADER - ADDED AT THE BEGINNING
+        // =======================================================
+        
+        // ✅ STEP 1 — Create a Function That Detects the Video Type
+        function detectVideoType(url) { 
+            try { 
+                const u = new URL(url); 
+                
+                // YouTube 
+                if (u.hostname.includes("youtube.com") || u.hostname.includes("youtu.be")) { 
+                    return "youtube"; 
+                } 
+                
+                // Vimeo 
+                if (u.hostname.includes("vimeo.com")) { 
+                    return "vimeo"; 
+                } 
+                
+                // Dropbox direct link 
+                if (u.hostname.includes("dropbox.com")) { 
+                    return "dropbox"; 
+                } 
+                
+                // Google Drive 
+                if (u.hostname.includes("drive.google.com")) { 
+                    return "gdrive"; 
+                } 
+                
+                // Dailymotion 
+                if (u.hostname.includes("dailymotion.com") || u.hostname.includes("dai.ly")) { 
+                    return "dailymotion"; 
+                } 
+                
+                // MP4 / WebM / M3U8 / MOV / MKV etc. 
+                if (/\.(mp4|webm|mkv|mov|m3u8|avi|flv|wmv|mpg|mpeg)$/i.test(u.pathname)) { 
+                    return "html5"; 
+                } 
+                
+                // TikTok 
+                if (u.hostname.includes("tiktok.com")) { 
+                    return "tiktok"; 
+                } 
+                
+                // Instagram 
+                if (u.hostname.includes("instagram.com")) { 
+                    return "instagram"; 
+                } 
+                
+                // Unknown 
+                return "unknown"; 
+            } catch (e) { 
+                // If URL parsing fails, try to detect from string
+                const lowerUrl = url.toLowerCase();
+                if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) return "youtube";
+                if (lowerUrl.includes('vimeo.com')) return "vimeo";
+                if (lowerUrl.includes('drive.google.com')) return "gdrive";
+                if (lowerUrl.includes('dropbox.com')) return "dropbox";
+                if (lowerUrl.includes('dailymotion.com') || lowerUrl.includes('dai.ly')) return "dailymotion";
+                if (lowerUrl.includes('tiktok.com')) return "tiktok";
+                if (lowerUrl.includes('instagram.com')) return "instagram";
+                if (/\.(mp4|webm|mkv|mov|m3u8)$/i.test(url)) return "html5";
+                
+                return "unknown"; 
+            } 
+        }
+        
+        // ✅ STEP 2 — Build a MASTER Loader to Route Videos Correctly
+        function loadVideoUniversal(url, isHost) {
+            const type = detectVideoType(url);
+            console.log(`Detected video type: ${type} for URL: ${url}`);
+            
+            switch (type) {
+                case "youtube":
+                    const videoId = extractYouTubeID(url);
+                    if (videoId) {
+                        loadYouTubeWithOptimizations(videoId, isHost);
+                    } else {
+                        overlayError("Invalid YouTube URL");
+                    }
+                    break;
+                    
+                case "html5":
+                    loadHTML5VideoWithOptimizations(url, isHost);
+                    break;
+                    
+                case "gdrive":
+                    loadGoogleDriveVideo(url, isHost);
+                    break;
+                    
+                case "dropbox":
+                    loadDropboxVideo(url, isHost);
+                    break;
+                    
+                case "vimeo":
+                    loadVimeoVideo(url, isHost);
+                    break;
+                    
+                case "dailymotion":
+                    loadDailymotionVideo(url, isHost);
+                    break;
+                    
+                case "tiktok":
+                case "instagram":
+                    loadSocialEmbed(url, isHost);
+                    break;
+                    
+                default:
+                    overlayBlock.innerHTML = `
+                        <div style="text-align:center;color:white;">
+                            <div style="font-size:40px;margin-bottom:16px;">❌</div>
+                            Unsupported Video Link<br>
+                            <small style="opacity:0.7;">${url}</small>
+                        </div>
+                    `;
+                    break;
+            }
+        }
+        
+        // ✅ STEP 3 — Add the Missing Loaders
+        
+        // A. Google Drive Direct Stream
+        function loadGoogleDriveVideo(url, isHost) {
+            console.log("Loading Google Drive video:", url);
+            
+            // Extract file ID from Google Drive URL
+            let fileId = '';
+            
+            // Pattern 1: /d/{fileId}/view or /d/{fileId}/
+            const match1 = url.match(/\/d\/([^\/]+)/);
+            if (match1) {
+                fileId = match1[1];
+            }
+            // Pattern 2: id={fileId}
+            else {
+                const match2 = url.match(/id=([^&]+)/);
+                if (match2) {
+                    fileId = match2[1];
+                }
+            }
+            
+            if (!fileId) {
+                overlayError("Invalid Google Drive link. Could not extract file ID.");
+                return;
+            }
+            
+            const direct = `https://drive.google.com/uc?export=download&id=${fileId}`;
+            console.log("Converted Google Drive link:", direct);
+            loadHTML5VideoWithOptimizations(direct, isHost);
+        }
+        
+        // B. Dropbox Direct Link
+        function loadDropboxVideo(url, isHost) {
+            console.log("Loading Dropbox video:", url);
+            
+            // Convert Dropbox preview links to direct download links
+            let direct = url;
+            
+            if (url.includes('?dl=0')) {
+                direct = url.replace('?dl=0', '?raw=1');
+            } else if (url.includes('?dl=1')) {
+                direct = url.replace('?dl=1', '?raw=1');
+            } else if (!url.includes('?raw=1')) {
+                direct = url + (url.includes('?') ? '&' : '?') + 'raw=1';
+            }
+            
+            console.log("Converted Dropbox link:", direct);
+            loadHTML5VideoWithOptimizations(direct, isHost);
+        }
+        
+        // C. Vimeo Loader
+        function loadVimeoVideo(url, isHost) {
+            console.log("Loading Vimeo video:", url);
+            
+            // Extract video ID from Vimeo URL
+            let videoId = '';
+            
+            // Pattern: vimeo.com/123456789
+            const match = url.match(/vimeo\.com\/(\d+)/);
+            if (match) {
+                videoId = match[1];
+            }
+            
+            if (!videoId) {
+                overlayError("Invalid Vimeo URL");
+                return;
+            }
+            
+            usingYT = true; // treat like iframe
+            ytContainer.style.display = "block";
+            html5video.style.display = "none";
+            document.getElementById("ytPlayerIframe").src = `https://player.vimeo.com/video/${videoId}?autoplay=${isHost ? 1 : 0}&title=0&byline=0&portrait=0`;
+            
+            console.log("Vimeo iframe loaded with ID:", videoId);
+        }
+        
+        // D. Dailymotion Loader
+        function loadDailymotionVideo(url, isHost) {
+            console.log("Loading Dailymotion video:", url);
+            
+            // Extract video ID from Dailymotion URL
+            let videoId = '';
+            
+            // Pattern 1: /video/{videoId}
+            const match1 = url.match(/\/video\/([^_]+)/);
+            if (match1) {
+                videoId = match1[1];
+            }
+            // Pattern 2: dai.ly/{videoId}
+            else {
+                const match2 = url.match(/dai\.ly\/([^\/]+)/);
+                if (match2) {
+                    videoId = match2[1];
+                }
+            }
+            
+            if (!videoId) {
+                overlayError("Invalid Dailymotion URL");
+                return;
+            }
+            
+            usingYT = true;
+            ytContainer.style.display = "block";
+            html5video.style.display = "none";
+            document.getElementById("ytPlayerIframe").src = `https://www.dailymotion.com/embed/video/${videoId}?autoplay=${isHost ? 1 : 0}&queue-enable=false`;
+            
+            console.log("Dailymotion iframe loaded with ID:", videoId);
+        }
+        
+        // E. TikTok / Instagram Loader (Embed Mode)
+        function loadSocialEmbed(url, isHost) {
+            console.log("Loading social embed:", url);
+            
+            usingYT = true;
+            ytContainer.style.display = "block";
+            html5video.style.display = "none";
+            
+            // For TikTok and Instagram, we use a simple iframe embed
+            // Note: These platforms have strict embedding policies
+            const iframeSrc = url.includes('tiktok.com') 
+                ? `https://www.tiktok.com/embed/v2/${url.split('/').pop()}` 
+                : url;
+            
+            document.getElementById("ytPlayerIframe").src = iframeSrc;
+            console.log("Social embed iframe loaded");
+        }
+        
+        // Helper function to show error in overlay
+        function overlayError(message) {
+            overlayBlock.innerHTML = `
+                <div style="text-align:center;color:white;">
+                    <div style="font-size:40px;margin-bottom:16px;">⚠️</div>
+                    ${message}
+                </div>
+            `;
+        }
+        
+        // Enhanced YouTube ID extractor
+        function extractYouTubeID(url) {
+            if (!url) return null;
+            
+            try {
+                const u = new URL(url);
+                
+                // YouTube share links: youtu.be/VIDEO_ID
+                if (u.hostname.includes('youtu.be')) {
+                    return u.pathname.substring(1).split('?')[0];
+                }
+                
+                // YouTube watch links: youtube.com/watch?v=VIDEO_ID
+                if (u.hostname.includes('youtube.com')) {
+                    if (u.pathname.includes('/embed/')) {
+                        return u.pathname.split('/embed/')[1].split('?')[0];
+                    }
+                    if (u.pathname.includes('/v/')) {
+                        return u.pathname.split('/v/')[1].split('?')[0];
+                    }
+                    return u.searchParams.get('v') || null;
+                }
+            } catch (e) {
+                // Fallback regex extraction
+                const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+                const match = url.match(regExp);
+                return (match && match[7].length === 11) ? match[7] : null;
+            }
+            
+            return null;
+        }
+        
+        // =======================================================
+        // END OF UNIVERSAL VIDEO LOADER
+        // =======================================================
+
         // Performance optimization: Debounce function
         function debounce(func, wait) {
             let timeout;
@@ -3876,7 +4169,7 @@
             resetControlsTimeout();
         }
 
-        // Enhanced video loading with timeout
+        // ✅ STEP 4 — MODIFIED: Enhanced video loading with universal loader
         function loadVideoFromFirebase() {
             if (!firebaseInitialized) {
                 console.error("Firebase not initialized - cannot load video");
@@ -3953,7 +4246,8 @@
                 }
                 
                 if (data.videoLink && data.videoLink.trim() !== '') {
-                    loadVideoWithOptimizations(data.videoLink, isHost);
+                    // ✅ MODIFIED: Use universal loader instead of old detection
+                    loadVideoUniversal(data.videoLink, isHost);
                 } else {
                     if (isHost) {
                         overlayBlock.innerHTML = `
@@ -3987,16 +4281,15 @@
             });
         }
 
+        // ✅ MODIFIED: Keep the original function for backward compatibility
         function loadVideoWithOptimizations(link, isHostUser) {
-            if (isYouTubeLink(link)) {
-                const id = extractYoutubeID(link);
-                loadYouTubeWithOptimizations(id, isHostUser);
-            } else {
-                loadHTML5VideoWithOptimizations(link, isHostUser);
-            }
+            console.log("loadVideoWithOptimizations called with:", link);
+            loadVideoUniversal(link, isHostUser);
         }
 
         function loadHTML5VideoWithOptimizations(link, isHostUser) {
+            console.log("Loading HTML5 video:", link);
+            
             usingYT = false;
             ytContainer.style.display = 'none';
             html5video.style.display = 'block';
@@ -4070,6 +4363,8 @@
         }
 
         function loadYouTubeWithOptimizations(videoId, isHostUser) {
+            console.log("Loading YouTube video with ID:", videoId);
+            
             usingYT = true;
             ytContainer.style.display = 'block';
             html5video.style.display = 'none';
@@ -4251,29 +4546,14 @@
             resetControlsTimeout();
         }
 
-        // YouTube helpers
+        // YouTube helpers - Keep for backward compatibility
         function isYouTubeLink(url){ 
             if(!url) return false; 
             return /youtube\.com|youtu\.be|youtube-nocookie\.com/i.test(url); 
         }
 
         function extractYoutubeID(url){ 
-            if(!url) return null; 
-            try {
-                const u = new URL(url); 
-                if(u.hostname.includes('youtube.com') || u.hostname.includes('youtube-nocookie.com')) {
-                    const v = u.searchParams.get('v'); 
-                    if(v) return v; 
-                    const parts = u.pathname.split('/'); 
-                    if(parts.includes('embed') && parts[parts.length-1]) return parts[parts.length-1];
-                } 
-                if(u.hostname.includes('youtu.be')) {
-                    const parts = u.pathname.split('/'); 
-                    if(parts[1]) return parts[1];
-                } 
-            } catch(e) {} 
-            const m = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?&]+)/); 
-            return m && m[1] ? m[1] : null; 
+            return extractYouTubeID(url); // Use the enhanced version from universal loader
         }
 
         // FIXED: Widget management with proper classList methods

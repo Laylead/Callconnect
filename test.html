@@ -2895,7 +2895,7 @@
                 case "youtube":
                     const videoId = extractYouTubeID(url);
                     if (videoId) {
-                        loadYouTubeWithOptimizations(videoId, isHost);
+                        ensureYTPlayer(videoId, isHost);
                     } else {
                         overlayError("Invalid YouTube URL");
                     }
@@ -3111,6 +3111,13 @@
         // =======================================================
         // END OF UNIVERSAL VIDEO LOADER
         // =======================================================
+
+        // ---------- lifecycle guards & trackers ----------
+        let listenersInitialized = false;
+        let ytPlayerCreated = false;
+        let namedListeners = {};
+        // activeIntervals & activeTimeouts already exist in your file
+        // firebaseListeners already exists: we will store cleanup functions there
 
         // Performance optimization: Debounce function
         function debounce(func, wait) {
@@ -3337,76 +3344,133 @@
         let isLocalAction = false;
         let videoLoadStartTime = null;
 
-        // Performance optimization: Clean up function
-        function cleanup() {
-            // Clear all timeouts and intervals
-            activeTimeouts.forEach(timeout => clearTimeout(timeout));
-            activeIntervals.forEach(interval => clearInterval(interval));
-            activeTimeouts = [];
+        // 4) Create a safe YT-player factory (create once, reuse)
+        function ensureYTPlayer(videoId, isHost) {
+            // If player exists, load new videoId instead of creating new instance
+            if (ytPlayer && ytPlayer.getVideoData) {
+                const currentId = ytPlayer.getVideoData().video_id;
+                if (currentId !== videoId) {
+                    try { 
+                        ytPlayer.loadVideoById(videoId); 
+                    } catch(e){ 
+                        console.warn(e); 
+                    }
+                }
+                return;
+            }
+
+            // create only once
+            ytPlayerCreated = true;
+            ytPlayer = new YT.Player('ytPlayerIframe', {
+                videoId: videoId,
+                width: '100%',
+                height: '100%',
+                playerVars: {
+                    rel:0, 
+                    modestbranding:1, 
+                    playsinline:1, 
+                    iv_load_policy:3, 
+                    controls:0, 
+                    enablejsapi:1, 
+                    autoplay: isHost ? 1 : 0, 
+                    origin: window.location.origin
+                },
+                events: {
+                    onReady: (e) => {
+                        // normal onReady actions
+                        ready = true;
+                        fitCanvas();
+                        initializeSyncSystem(isHost);
+                        const updateInterval = setInterval(updateTimeDisplay, 1000);
+                        activeIntervals.push(updateInterval);
+
+                        overlayBlock.classList.add('hidden');
+                        cachingIndicator.style.display = 'none';
+
+                        if (isHost) {
+                            try { 
+                                ytPlayer.playVideo(); 
+                            } catch(e){
+                                console.warn(e);
+                            }
+                        }
+                    },
+                    onStateChange: (e) => {
+                        if (!isHost) return;
+                        if (e.data === YT.PlayerState.PLAYING) syncManager.sendPlayEvent();
+                        if (e.data === YT.PlayerState.PAUSED) syncManager.sendPauseEvent();
+                    },
+                    onError: (e) => { 
+                        console.error('YT error', e); 
+                    }
+                }
+            });
+        }
+
+        // 5) Implement safeDestroyPlayer() and call it only for full teardown
+        function safeDestroyPlayer(fullTeardown = false) {
+            console.log('safeDestroyPlayer called with fullTeardown:', fullTeardown);
+            
+            // clear intervals/timeouts
+            activeIntervals.forEach(i => clearInterval(i));
             activeIntervals = [];
-            
-            // Clear video timeout
-            if (videoLoadTimeout) {
-                clearTimeout(videoLoadTimeout);
-                videoLoadTimeout = null;
+            activeTimeouts.forEach(t => clearTimeout(t));
+            activeTimeouts = [];
+
+            // destroy YT player if full teardown
+            if (fullTeardown && ytPlayer && typeof ytPlayer.destroy === 'function') {
+                try { 
+                    ytPlayer.destroy(); 
+                } catch(e){ 
+                    console.warn(e); 
+                }
+                ytPlayer = null;
+                ytPlayerCreated = false;
             }
-            
-            // Clear controls timeout
-            if (controlsTimeout) {
-                clearTimeout(controlsTimeout);
-                controlsTimeout = null;
-            }
-            
-            // Clear widget timeout
-            if (widgetTimeout) {
-                clearTimeout(widgetTimeout);
-                widgetTimeout = null;
-            }
-            
-            // Clear discussion interval
-            if (discussionInterval) {
-                clearInterval(discussionInterval);
-                discussionInterval = null;
-            }
-            
-            // Stop sync manager
-            if (syncManager) {
+
+            // Stop sync manager (but if you want playback to continue across views, don't stop sync on simple toggle)
+            if (syncManager && typeof syncManager.stopSync === 'function') {
                 syncManager.stopSync();
                 syncManager = null;
             }
-            
-            // Remove Firebase listeners
-            if (firebaseInitialized) {
-                firebaseListeners.forEach(listener => {
-                    if (listener && typeof listener === 'function') {
-                        listener();
-                    }
+
+            // If fullTeardown is true, remove firebase listeners and leave Agora channels
+            if (fullTeardown && firebaseInitialized) {
+                firebaseListeners.forEach(fn => { 
+                    try { 
+                        if (typeof fn === 'function') fn(); 
+                    } catch(e){} 
                 });
                 firebaseListeners = [];
+
+                if (agoraClient) { 
+                    agoraClient.leave().catch(()=>{}); 
+                    agoraClient = null; 
+                }
+                if (agoraDiscussionClient) { 
+                    agoraDiscussionClient.leave().catch(()=>{}); 
+                    agoraDiscussionClient = null; 
+                }
             }
-            
-            // Leave Agora channels
-            if (agoraClient) {
-                agoraClient.leave().catch(console.error);
-                agoraClient = null;
+
+            // Remove DOM event listeners
+            if (fullTeardown) {
+                Object.keys(namedListeners).forEach(key => {
+                    const listener = namedListeners[key];
+                    if (listener && listener.element && listener.handler) {
+                        listener.element.removeEventListener(listener.event, listener.handler);
+                    }
+                });
+                namedListeners = {};
+                listenersInitialized = false;
             }
-            
-            if (agoraDiscussionClient) {
-                agoraDiscussionClient.leave().catch(console.error);
-                agoraDiscussionClient = null;
-            }
-            
-            // Release audio tracks
-            if (agoraLocalAudioTrack) {
-                agoraLocalAudioTrack.close();
-                agoraLocalAudioTrack = null;
-            }
-            
-            if (agoraDiscussionAudioTrack) {
-                agoraDiscussionAudioTrack.close();
-                agoraDiscussionAudioTrack = null;
-            }
-            
+
+            console.log('safeDestroyPlayer done', { fullTeardown });
+        }
+
+        // Performance optimization: Clean up function
+        function cleanup() {
+            safeDestroyPlayer(true);
             console.log("Cleanup completed");
         }
 
@@ -3456,8 +3520,8 @@
                     isInPlayerView: true
                 });
                 
-                // Listen for participant changes
-                const participantAddedListener = participantsRef.on('child_added', (snap) => {
+                // Listen for participant changes - using named listener for cleanup
+                const onParticipantAdded = (snap) => {
                     const participant = snap.val();
                     participants[participant.uid] = participant;
                     updateParticipantCount();
@@ -3468,16 +3532,16 @@
                     if (participant.uid !== currentUser) {
                         showNotification(`${participant.username} joined the party!`);
                     }
-                });
+                };
                 
-                const participantChangedListener = participantsRef.on('child_changed', (snap) => {
+                const onParticipantChanged = (snap) => {
                     const participant = snap.val();
                     participants[participant.uid] = participant;
                     updateTalkingStatus();
                     updateParticipantsModal();
-                });
+                };
                 
-                const participantRemovedListener = participantsRef.on('child_removed', (snap) => {
+                const onParticipantRemoved = (snap) => {
                     const participant = snap.val();
                     delete participants[participant.uid];
                     updateParticipantCount();
@@ -3486,13 +3550,17 @@
                     
                     // Show notification
                     showNotification(`${participant.username} left the party`);
-                });
+                };
+                
+                participantsRef.on('child_added', onParticipantAdded);
+                participantsRef.on('child_changed', onParticipantChanged);
+                participantsRef.on('child_removed', onParticipantRemoved);
                 
                 // Store listeners for cleanup
                 firebaseListeners.push(() => {
-                    participantsRef.off('child_added', participantAddedListener);
-                    participantsRef.off('child_changed', participantChangedListener);
-                    participantsRef.off('child_removed', participantRemovedListener);
+                    participantsRef.off('child_added', onParticipantAdded);
+                    participantsRef.off('child_changed', onParticipantChanged);
+                    participantsRef.off('child_removed', onParticipantRemoved);
                 });
                 
                 // Load friend requests
@@ -3668,15 +3736,17 @@
             
             try {
                 const friendRequestsRef = db.ref(`users/${currentUser}/friendRequests`);
-                const friendRequestsListener = friendRequestsRef.on('value', (snapshot) => {
+                const onFriendRequestsValue = (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
                         friendRequests = data;
                     }
-                });
+                };
+                
+                friendRequestsRef.on('value', onFriendRequestsValue);
                 
                 firebaseListeners.push(() => {
-                    friendRequestsRef.off('value', friendRequestsListener);
+                    friendRequestsRef.off('value', onFriendRequestsValue);
                 });
             } catch (error) {
                 console.error("Error loading friend requests:", error);
@@ -4362,102 +4432,45 @@
             html5video.src = link;
         }
 
-        function loadYouTubeWithOptimizations(videoId, isHostUser) {
-            console.log("Loading YouTube video with ID:", videoId);
+        // 3) Stop reparenting the <video> / iframe every toggle — use CSS show/hide instead
+        function toggleToDetailedView() {
+            isDetailedView = true;
+            hostIsInPlayerView = false;
             
-            usingYT = true;
-            ytContainer.style.display = 'block';
-            html5video.style.display = 'none';
-            
-            window._pendingYTCreate = window._pendingYTCreate || [];
-            window._pendingYTCreate.push({
-                id: videoId, 
-                isHost: isHostUser,
-                width: '100%',
-                height: '100%'
-            });
-            
-            if (!window.YT) {
-                const tag = document.createElement('script');
-                tag.src = "https://www.youtube.com/iframe_api";
-                const firstScriptTag = document.getElementsByTagName('script')[0];
-                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-            } else if (window.YT && window.YT.Player) {
-                window.onYouTubeIframeAPIReady();
+            if (isHost && firebaseInitialized) {
+                roomRef.update({ hostIsInPlayerView: false });
             }
             
-            const youtubeTimeout = setTimeout(() => {
-                if (!ready) {
-                    console.log("YouTube loading timeout");
-                }
-            }, 8000);
+            // DO NOT move HTML elements between containers repeatedly.
+            // Instead use CSS classes to change layout and visibility.
+            playerView.classList.add('hidden');
+            detailedView.classList.add('active');
             
-            activeTimeouts.push(youtubeTimeout);
+            showControls();
+            console.log('Switched to detailed view');
         }
 
-        // FIXED: YouTube API Ready function
-        window.onYouTubeIframeAPIReady = function() {
-            const list = window._pendingYTCreate || [];
-            if (list.length === 0) return;
+        function toggleToPlayerView() {
+            isDetailedView = false;
+            hostIsInPlayerView = true;
             
-            const item = list.shift();
-            
-            try {
-                ytPlayer = new YT.Player('ytPlayerIframe', {
-                    videoId: item.id,
-                    width: '100%',
-                    height: '100%',
-                    playerVars: {
-                        rel: 0,
-                        modestbranding: 1,
-                        playsinline: 1,
-                        iv_load_policy: 3,
-                        controls: 0,
-                        enablejsapi: 1,
-                        autoplay: item.isHost ? 1 : 0,
-                        origin: window.location.origin
-                    },
-                    events: {
-                        onReady: () => {
-                            ready = true;
-                            fitCanvas();
-                            
-                            initializeSyncSystem(item.isHost);
-                            
-                            const updateInterval = setInterval(updateTimeDisplay, 1000);
-                            activeIntervals.push(updateInterval);
-                            
-                            overlayBlock.classList.add('hidden');
-                            cachingIndicator.style.display = 'none';
-                            
-                            if (item.isHost) {
-                                ytPlayer.playVideo();
-                            }
-                        },
-                        onStateChange: (e) => {
-                            if (!item.isHost || !ytPlayer) return;
-                            
-                            if (e.data === YT.PlayerState.PLAYING) {
-                                syncManager.sendPlayEvent();
-                            } else if (e.data === YT.PlayerState.PAUSED) {
-                                syncManager.sendPauseEvent();
-                            }
-                        },
-                        onError: (e) => {
-                            console.error("YouTube player error:", e);
-                            overlayBlock.innerHTML = `
-                                <div style="text-align: center; color: white;">
-                                    <div style="font-size: 40px; margin-bottom: 16px;">⚠️</div>
-                                    <div style="font-size: 1rem; margin-bottom: 8px;">YouTube Error</div>
-                                    <div>Could not load YouTube video.</div>
-                                </div>
-                            `;
-                        }
-                    }
-                });
-            } catch (error) {
-                console.error("Error creating YouTube player:", error);
+            if (isHost && firebaseInitialized) {
+                roomRef.update({ hostIsInPlayerView: true });
             }
+            
+            detailedView.classList.remove('active');
+            setTimeout(() => { 
+                playerView.classList.remove('hidden'); 
+            }, 400);
+            
+            showControls();
+            console.log('Switched to player view');
+        }
+
+        // YouTube API Ready function
+        window.onYouTubeIframeAPIReady = function() {
+            // We now use ensureYTPlayer instead of creating new players
+            console.log("YouTube API ready");
         };
 
         function startVideo() {
@@ -4556,7 +4569,7 @@
             return extractYouTubeID(url); // Use the enhanced version from universal loader
         }
 
-        // FIXED: Widget management with proper classList methods
+        // Widget management
         function toggleWidget(widgetName) {
             if (widgetTimeout) {
                 clearTimeout(widgetTimeout);
@@ -4618,66 +4631,6 @@
                 clearTimeout(widgetTimeout);
                 widgetTimeout = null;
             }
-        }
-
-        // View toggle functions
-        function toggleToDetailedView() {
-            isDetailedView = true;
-            hostIsInPlayerView = false;
-            
-            // Update Firebase with host's view state
-            if (isHost && firebaseInitialized) {
-                try {
-                    roomRef.update({ hostIsInPlayerView: false });
-                } catch (error) {
-                    console.error("Error updating host view state:", error);
-                }
-            }
-            
-            if (detailedPlayerContainer) {
-                detailedPlayerContainer.appendChild(html5video);
-                detailedPlayerContainer.appendChild(ytContainer);
-                detailedPlayerContainer.appendChild(canvas);
-                detailedPlayerContainer.appendChild(reactionsBox);
-            }
-            
-            playerView.classList.add('hidden');
-            detailedView.classList.add('active');
-            
-            showControls();
-            
-            console.log('Switched to detailed view');
-        }
-
-        function toggleToPlayerView() {
-            isDetailedView = false;
-            hostIsInPlayerView = true;
-            
-            // Update Firebase with host's view state
-            if (isHost && firebaseInitialized) {
-                try {
-                    roomRef.update({ hostIsInPlayerView: true });
-                } catch (error) {
-                    console.error("Error updating host view state:", error);
-                }
-            }
-            
-            const playerContainer = document.getElementById('player-container');
-            if (playerContainer) {
-                playerContainer.appendChild(html5video);
-                playerContainer.appendChild(ytContainer);
-                playerContainer.appendChild(canvas);
-                playerContainer.appendChild(reactionsBox);
-            }
-            
-            detailedView.classList.remove('active');
-            setTimeout(() => {
-                playerView.classList.remove('hidden');
-            }, 400);
-            
-            showControls();
-            
-            console.log('Switched to player view');
         }
 
         // Chat functionality
@@ -5018,7 +4971,7 @@
             }); 
         }
 
-        // FIXED: Enhanced Sync Manager with proper drift clearing
+        // Enhanced Sync Manager with proper drift clearing
         class TelepartySyncManager {
             constructor(isHost, roomRef, videoPlayer) {
                 this.isHost = isHost;
@@ -5170,7 +5123,7 @@
             startViewerSync() {
                 if (this.isHost) return;
                 
-                const videoStateListener = this.roomRef.child('videoState').on('value', (snapshot) => {
+                const onVideoStateValue = (snapshot) => {
                     const data = snapshot.val();
                     if (!data) return;
                     
@@ -5210,10 +5163,12 @@
                             this.driftSamples = [];
                         }
                     }
-                });
+                };
+                
+                this.roomRef.child('videoState').on('value', onVideoStateValue);
                 
                 firebaseListeners.push(() => {
-                    this.roomRef.child('videoState').off('value', videoStateListener);
+                    this.roomRef.child('videoState').off('value', onVideoStateValue);
                 });
                 
                 console.log('[Viewer] Sync manager started');
@@ -5326,7 +5281,7 @@
             console.log('Sync system initialized');
         }
 
-        // FIXED: Host controls with proper event handlers
+        // Host controls with proper event handlers
         function hostStart() { 
             if (pauseDiscussBtn) {
                 pauseDiscussBtn.addEventListener('click', () => { 
@@ -5395,7 +5350,7 @@
             }
         }
 
-        // FIXED: Viewer controls with proper event handlers
+        // Viewer controls with proper event handlers
         function viewerStart() { 
             if (syncBtn) {
                 syncBtn.addEventListener('click', () => {
@@ -5412,40 +5367,50 @@
             }
         }
 
-        // Set up all event listeners with proper null checks
+        // 2) Guard setupEventListeners so it runs only once
         function setupEventListeners() {
+            if (listenersInitialized) return;
+            listenersInitialized = true;
+            
             // View toggle
-            if (menuBtn) menuBtn.addEventListener('click', toggleToDetailedView);
-            if (backToPlayerBtn) backToPlayerBtn.addEventListener('click', toggleToPlayerView);
+            namedListeners.onMenuClick = toggleToDetailedView;
+            if (menuBtn) menuBtn.addEventListener('click', namedListeners.onMenuClick);
+            
+            namedListeners.onBackToPlayer = toggleToPlayerView;
+            if (backToPlayerBtn) backToPlayerBtn.addEventListener('click', namedListeners.onBackToPlayer);
+            
+            // play/pause btn
+            namedListeners.onPlayPause = togglePlayPause;
+            if (playPauseBtn) playPauseBtn.addEventListener('click', namedListeners.onPlayPause);
+            if (detailedPlayPauseBtn) detailedPlayPauseBtn.addEventListener('click', namedListeners.onPlayPause);
+            
+            // skip buttons
+            namedListeners.onSkipBack = skipBackward;
+            if (skipBackBtn) skipBackBtn.addEventListener('click', namedListeners.onSkipBack);
+            if (detailedSkipBackBtn) detailedSkipBackBtn.addEventListener('click', namedListeners.onSkipBack);
+            
+            namedListeners.onSkipForward = skipForward;
+            if (skipForwardBtn) skipForwardBtn.addEventListener('click', namedListeners.onSkipForward);
+            if (detailedSkipForwardBtn) detailedSkipForwardBtn.addEventListener('click', namedListeners.onSkipForward);
             
             // Home buttons
-            if (homeBtn) homeBtn.addEventListener('click', () => {
-                window.location.href = 'home.html';
-            });
-            if (detailedHomeBtn) detailedHomeBtn.addEventListener('click', () => {
-                window.location.href = 'home.html';
-            });
-            if (controlPanelHomeBtn) controlPanelHomeBtn.addEventListener('click', () => {
-                window.location.href = 'home.html';
-            });
-            
-            // Video controls
-            if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
-            if (detailedPlayPauseBtn) detailedPlayPauseBtn.addEventListener('click', togglePlayPause);
-            if (skipBackBtn) skipBackBtn.addEventListener('click', skipBackward);
-            if (detailedSkipBackBtn) detailedSkipBackBtn.addEventListener('click', skipBackward);
-            if (skipForwardBtn) skipForwardBtn.addEventListener('click', skipForward);
-            if (detailedSkipForwardBtn) detailedSkipForwardBtn.addEventListener('click', skipForward);
+            namedListeners.onHomeClick = () => { window.location.href = 'home.html'; };
+            if (homeBtn) homeBtn.addEventListener('click', namedListeners.onHomeClick);
+            if (detailedHomeBtn) detailedHomeBtn.addEventListener('click', namedListeners.onHomeClick);
+            if (controlPanelHomeBtn) controlPanelHomeBtn.addEventListener('click', namedListeners.onHomeClick);
             
             // Screen resize menu
-            if (fullscreenResizeBtn) fullscreenResizeBtn.addEventListener('click', openScreenResizeMenu);
-            if (detailedFullscreenResizeBtn) detailedFullscreenResizeBtn.addEventListener('click', openScreenResizeMenu);
+            namedListeners.onFullscreenResize = openScreenResizeMenu;
+            if (fullscreenResizeBtn) fullscreenResizeBtn.addEventListener('click', namedListeners.onFullscreenResize);
+            if (detailedFullscreenResizeBtn) detailedFullscreenResizeBtn.addEventListener('click', namedListeners.onFullscreenResize);
+            
             if (resizeOptionBtn) {
                 resizeOptionBtn.addEventListener('click', () => {
                     screenResizeMenu.classList.remove('show');
                     showResizeTutorial();
                 });
             }
+            
             if (fullscreenOptionBtn) {
                 fullscreenOptionBtn.addEventListener('click', () => {
                     screenResizeMenu.classList.remove('show');
@@ -5461,10 +5426,13 @@
             }
             
             // Volume controls
-            if (volumeBtn) volumeBtn.addEventListener('click', toggleMute);
-            if (detailedVolumeBtn) detailedVolumeBtn.addEventListener('click', toggleMute);
-            if (volumeSlider) volumeSlider.addEventListener('input', updateVolume);
-            if (detailedVolumeSlider) detailedVolumeSlider.addEventListener('input', updateVolume);
+            namedListeners.onVolumeBtn = toggleMute;
+            if (volumeBtn) volumeBtn.addEventListener('click', namedListeners.onVolumeBtn);
+            if (detailedVolumeBtn) detailedVolumeBtn.addEventListener('click', namedListeners.onVolumeBtn);
+            
+            namedListeners.onVolumeSlider = updateVolume;
+            if (volumeSlider) volumeSlider.addEventListener('input', namedListeners.onVolumeSlider);
+            if (detailedVolumeSlider) detailedVolumeSlider.addEventListener('input', namedListeners.onVolumeSlider);
             
             // Overlay tap to play
             if (overlayBlock) overlayBlock.addEventListener('click', startVideo);
@@ -5507,7 +5475,8 @@
             });
             
             // Chat send buttons
-            if (chatSendBtn) chatSendBtn.addEventListener('click', () => sendChatMessage(chatInput, chatMessages));
+            namedListeners.onChatSend = () => sendChatMessage(chatInput, chatMessages);
+            if (chatSendBtn) chatSendBtn.addEventListener('click', namedListeners.onChatSend);
             
             if (chatInput) {
                 chatInput.addEventListener('keypress', (e) => {
@@ -5516,7 +5485,8 @@
             }
             
             // Copy buttons
-            if (copyBtn) copyBtn.addEventListener('click', () => copyToClipboard(shareLink, copyBtn));
+            namedListeners.onCopyBtn = () => copyToClipboard(shareLink, copyBtn);
+            if (copyBtn) copyBtn.addEventListener('click', namedListeners.onCopyBtn);
             
             // Discussion controls
             if (endDiscussionBtn) endDiscussionBtn.addEventListener('click', endDiscussion);
@@ -5620,13 +5590,13 @@
             if (detailedProgressContainer) detailedProgressContainer.addEventListener('mousemove', resetControlsTimeout);
         }
 
-        // Initialize Firebase listeners for real-time updates
+        // 6) Make Firebase .on() listeners removable and track them
         function initFirebaseListeners() {
             if (!firebaseInitialized) return;
             
             try {
                 // Listen for chat messages
-                const chatListener = chatRef.on('child_added', (snapshot) => {
+                const onChatChildAdded = (snapshot) => {
                     const message = snapshot.val();
                     
                     // Don't show own messages twice
@@ -5640,27 +5610,36 @@
                         unreadChatCount++;
                         updateChatBadge();
                     }
-                });
+                };
+                
+                chatRef.on('child_added', onChatChildAdded);
+                firebaseListeners.push(() => chatRef.off('child_added', onChatChildAdded));
                 
                 // Listen for reactions
-                const reactionsListener = reactionsRef.on('child_added', (snapshot) => {
+                const onReactionsChildAdded = (snapshot) => {
                     const reaction = snapshot.val();
                     
                     // Don't show own reactions twice
                     if (reaction.userId === currentUser) return;
                     
                     sendReaction(reaction.emoji);
-                });
+                };
+                
+                reactionsRef.on('child_added', onReactionsChildAdded);
+                firebaseListeners.push(() => reactionsRef.off('child_added', onReactionsChildAdded));
                 
                 // Listen for drawing
-                const drawListener = drawRef.on('child_added', (snapshot) => {
+                const onDrawChildAdded = (snapshot) => {
                     const stroke = snapshot.val();
                     strokes.push(stroke);
                     redrawAllStrokes();
-                });
+                };
+                
+                drawRef.on('child_added', onDrawChildAdded);
+                firebaseListeners.push(() => drawRef.off('child_added', onDrawChildAdded));
                 
                 // Listen for discussion state
-                const discussionListener = roomRef.child('discussionActive').on('value', (snapshot) => {
+                const onDiscussionActiveValue = (snapshot) => {
                     const isDiscussionActive = snapshot.val();
                     
                     if (isDiscussionActive && !discussionActive && isHost) {
@@ -5670,23 +5649,24 @@
                         // End discussion if host ended it
                         endDiscussion();
                     }
+                };
+                
+                roomRef.child('discussionActive').on('value', onDiscussionActiveValue);
+                firebaseListeners.push(() => {
+                    roomRef.child('discussionActive').off('value', onDiscussionActiveValue);
                 });
                 
                 // Listen for host play state changes
-                const playStateListener = roomRef.child('hostIsPlaying').on('value', (snapshot) => {
+                const onHostIsPlayingValue = (snapshot) => {
                     const hostPlaying = snapshot.val();
                     if (!isHost && hostPlaying !== undefined) {
                         console.log(`Host play state: ${hostPlaying}`);
                     }
-                });
+                };
                 
-                // Store listeners for cleanup
+                roomRef.child('hostIsPlaying').on('value', onHostIsPlayingValue);
                 firebaseListeners.push(() => {
-                    chatRef.off('child_added', chatListener);
-                    reactionsRef.off('child_added', reactionsListener);
-                    drawRef.off('child_added', drawListener);
-                    roomRef.child('discussionActive').off('value', discussionListener);
-                    roomRef.child('hostIsPlaying').off('value', playStateListener);
+                    roomRef.child('hostIsPlaying').off('value', onHostIsPlayingValue);
                 });
             } catch (error) {
                 console.error("Error initializing Firebase listeners:", error);
@@ -5786,8 +5766,8 @@
             console.log("Let's Watch initialized successfully");
             
             // Setup cleanup on page unload
-            window.addEventListener('beforeunload', cleanup);
-            window.addEventListener('pagehide', cleanup);
+            window.addEventListener('beforeunload', () => safeDestroyPlayer(true));
+            window.addEventListener('pagehide', () => safeDestroyPlayer(true));
         }
 
         // Initialize when DOM is ready

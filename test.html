@@ -253,7 +253,7 @@
         
         .custom-controls {
             position: absolute;
-            bottom: 0;
+            bottom: max(20px, env(safe-area-inset-bottom, 20px));
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -261,20 +261,18 @@
             align-items: center;
             background: rgba(26, 4, 58, 0.95);
             padding: 10px 16px;
-            padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-            border-radius: 20px 20px 0 0;
+            border-radius: 20px;
             opacity: 0;
             transition: var(--transition);
             z-index: 9999;
             backdrop-filter: blur(20px);
             border: 1px solid rgba(138, 79, 255, 0.2);
-            border-bottom: none;
             width: 95%;
             max-width: 500px;
             min-width: unset;
             justify-content: space-between;
             flex-wrap: nowrap;
-            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
         
         .custom-controls.visible {
@@ -556,7 +554,7 @@
             border-radius: 20px;
             padding: 16px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 8px 32px rgba(106, 13, 255, 0.15);
-            width: 300px;
+            width: 320px;
             max-height: 400px;
             overflow-y: auto;
             display: none;
@@ -695,17 +693,14 @@
             transform: scale(1.05) translateY(-2px);
         }
         
-        /* Chat Widget - PROFESSIONAL REDESIGN */
+        /* Chat Widget - REDESIGNED */
         .chat-messages {
-            height: 280px;
+            height: 250px;
             overflow-y: auto;
             margin-bottom: 16px;
             padding-right: 8px;
             scrollbar-width: thin;
             scrollbar-color: rgba(138, 79, 255, 0.3) transparent;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
         }
         
         .chat-messages::-webkit-scrollbar {
@@ -728,17 +723,8 @@
         .message {
             display: flex;
             gap: 10px;
+            margin-bottom: 16px;
             animation: messageAppear 0.3s ease;
-            max-width: 100%;
-        }
-        
-        .message:not(.self) {
-            align-self: flex-start;
-        }
-        
-        .message.self {
-            align-self: flex-end;
-            flex-direction: row-reverse;
         }
         
         @keyframes messageAppear {
@@ -770,50 +756,49 @@
         
         .message-content {
             background: rgba(255, 255, 255, 0.08);
-            padding: 12px 16px;
-            border-radius: 18px;
-            max-width: calc(100% - 46px);
+            padding: 12px;
+            border-radius: 16px;
+            border-top-left-radius: 4px;
+            max-width: 85%;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(138, 79, 255, 0.15);
             word-break: break-word;
             position: relative;
         }
         
-        .message.self .message-content {
-            background: linear-gradient(145deg, rgba(106, 13, 255, 0.25), rgba(138, 79, 255, 0.2));
-            border-color: rgba(138, 79, 255, 0.25);
-            border-top-right-radius: 4px;
+        .message.self {
+            flex-direction: row-reverse;
         }
         
-        .message:not(.self) .message-content {
-            border-top-left-radius: 4px;
+        .message.self .message-content {
+            background: linear-gradient(145deg, rgba(106, 13, 255, 0.2), rgba(138, 79, 255, 0.15));
+            border-top-left-radius: 16px;
+            border-top-right-radius: 4px;
+            border-color: rgba(138, 79, 255, 0.25);
+        }
+        
+        .message.self .message-avatar {
+            margin-left: 0;
+            margin-right: 0;
         }
         
         .message-meta {
             display: flex;
             justify-content: space-between;
-            align-items: center;
             font-size: 11px;
             opacity: 0.7;
             margin-top: 6px;
             font-weight: 500;
         }
         
-        .message-sender {
-            font-weight: 600;
-            color: rgba(203, 178, 255, 0.9);
-        }
-        
-        .message-time {
-            font-variant-numeric: tabular-nums;
+        .message.self .message-meta {
+            flex-direction: row-reverse;
         }
         
         .chat-input-container {
             display: flex;
             gap: 8px;
             align-items: center;
-            padding-top: 12px;
-            border-top: 1px solid rgba(138, 79, 255, 0.1);
         }
         
         #chat-input {
@@ -911,46 +896,34 @@
             box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
         }
         
-        /* Global Home Button (only shown when not in fullscreen) */
-        .global-home-button {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: rgba(26, 4, 58, 0.8);
-            backdrop-filter: blur(15px);
+        .home-btn {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(138, 79, 255, 0.2);
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(106, 13, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid rgba(138, 79, 255, 0.3);
-            color: rgba(255, 255, 255, 0.95);
-            font-size: 18px;
-            z-index: 9998;
-            opacity: 1;
-            transform: scale(1);
-            text-decoration: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+            position: relative;
+            z-index: 9999;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
         }
         
-        .global-home-button:hover {
-            background: rgba(138, 79, 255, 0.25);
-            transform: translateY(-2px) scale(1.05);
+        .home-btn:hover {
+            background: rgba(138, 79, 255, 0.2);
+            transform: scale(1.05);
             color: white;
-            border-color: rgba(138, 79, 255, 0.5);
         }
         
-        .global-home-button:active {
-            transform: translateY(0) scale(0.98);
-        }
-        
-        .global-home-button.hidden {
-            opacity: 0;
-            transform: scale(0.8);
-            pointer-events: none;
+        .home-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 20px rgba(106, 13, 255, 0.4);
         }
         
         .sidebar-menu {
@@ -1909,12 +1882,12 @@
             }
             
             .widget-content {
-                width: 280px;
+                width: 300px;
                 right: 52px;
             }
             
             .chat-messages {
-                height: 240px;
+                height: 220px;
             }
         }
         
@@ -1925,16 +1898,13 @@
                 gap: 8px;
             }
             
-            .global-home-button {
+            .sidebar-menu {
                 top: 12px;
                 left: 12px;
-                width: 40px;
-                height: 40px;
-                font-size: 16px;
             }
             
             .sidebar-menu {
-                left: 65px;
+                left: 12px;
             }
             
             .widget-icon, .menu-btn {
@@ -1944,16 +1914,15 @@
             }
             
             .custom-controls {
-                bottom: 0;
+                bottom: max(15px, env(safe-area-inset-bottom, 15px));
                 padding: 8px 12px;
-                padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
                 gap: 6px;
                 width: 96%;
                 max-width: 450px;
-                border-radius: 16px 16px 0 0;
+                border-radius: 16px;
             }
             
-            .control-btn-lg {
+            .control-btn-lg, .home-btn {
                 width: 32px;
                 height: 32px;
                 font-size: 12px;
@@ -2017,7 +1986,7 @@
             }
             
             .widget-content {
-                width: 260px;
+                width: 280px;
                 right: 48px;
                 padding: 14px;
             }
@@ -2053,7 +2022,7 @@
             }
             
             .chat-messages {
-                height: 220px;
+                height: 200px;
             }
             
             .reactions-grid {
@@ -2069,16 +2038,9 @@
                 gap: 6px;
             }
             
-            .global-home-button {
+            .sidebar-menu {
                 top: 10px;
                 left: 10px;
-                width: 38px;
-                height: 38px;
-                font-size: 15px;
-            }
-            
-            .sidebar-menu {
-                left: 60px;
             }
             
             .widget-icon, .menu-btn {
@@ -2088,18 +2050,17 @@
             }
             
             .custom-controls {
-                bottom: 0;
+                bottom: max(10px, env(safe-area-inset-bottom, 10px));
                 padding: 6px 10px;
-                padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
                 gap: 4px;
                 width: 98%;
                 max-width: 400px;
-                border-radius: 14px 14px 0 0;
+                border-radius: 14px;
                 flex-wrap: nowrap;
                 justify-content: space-between;
             }
             
-            .control-btn-lg {
+            .control-btn-lg, .home-btn {
                 width: 30px;
                 height: 30px;
                 font-size: 11px;
@@ -2132,7 +2093,7 @@
             }
             
             .widget-content {
-                width: 240px;
+                width: 260px;
                 right: 46px;
                 padding: 12px;
             }
@@ -2199,7 +2160,7 @@
             }
             
             .chat-messages {
-                height: 200px;
+                height: 180px;
             }
             
             .reactions-grid {
@@ -2219,7 +2180,7 @@
             }
             
             .message-content {
-                padding: 10px 14px;
+                padding: 10px;
                 font-size: 13px;
             }
             
@@ -2232,10 +2193,15 @@
         .app-container:fullscreen .custom-controls,
         .app-container:fullscreen .progress-container {
             z-index: 9999;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
         }
 
-        .app-container:fullscreen .global-home-button {
-            display: none !important;
+        .app-container:fullscreen .custom-controls {
+            bottom: max(20px, env(safe-area-inset-bottom, 20px));
+        }
+
+        .app-container:fullscreen .progress-container {
+            bottom: calc(65px + env(safe-area-inset-bottom, 0px));
         }
 
         /* Touch feedback improvements */
@@ -2259,16 +2225,11 @@
                 -webkit-backdrop-filter: saturate(180%) blur(10px);
             }
             
-            .widget-icon, .menu-btn, .global-home-button {
-                backdrop-filter: saturate(180%) blur(15px);
-                -webkit-backdrop-filter: saturate(180%) blur(15px);
-            }
-            
             video::-webkit-media-controls {
                 display: none !important;
             }
             
-            .control-btn-lg, .menu-btn, .widget-icon, .global-home-button {
+            .control-btn-lg, .menu-btn, .widget-icon, .home-btn {
                 min-height: 44px;
                 min-width: 44px;
             }
@@ -2291,6 +2252,10 @@
 
         /* Android system controls safe area */
         @media (max-height: 700px) {
+            .custom-controls {
+                bottom: max(15px, env(safe-area-inset-bottom, 15px));
+            }
+            
             .progress-container {
                 bottom: calc(60px + env(safe-area-inset-bottom, 0px));
             }
@@ -2353,122 +2318,67 @@
             opacity: 1;
         }
 
-        /* Detailed view controls */
-        .detailed-custom-controls {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            background: rgba(26, 4, 58, 0.95);
-            padding: 10px 16px;
-            padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-            border-radius: 20px 20px 0 0;
-            opacity: 0;
-            transition: var(--transition);
-            z-index: 9999;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(138, 79, 255, 0.2);
-            border-bottom: none;
-            width: 95%;
-            max-width: 500px;
-            min-width: unset;
-            justify-content: space-between;
-            flex-wrap: nowrap;
-            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
-        }
-        
-        .detailed-custom-controls.visible {
-            opacity: 1;
-        }
-
-        .detailed-progress-container {
-            position: absolute;
-            bottom: calc(65px + env(safe-area-inset-bottom, 0px));
-            left: 50%;
-            transform: translateX(-50%);
-            width: 95%;
-            max-width: 500px;
-            height: 4px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 2px;
-            overflow: hidden;
-            z-index: 9998;
-            opacity: 0;
-            transition: var(--transition);
-            backdrop-filter: blur(10px);
-            cursor: pointer;
-            touch-action: none;
-            border: 1px solid rgba(138, 79, 255, 0.1);
-        }
-        
-        .detailed-progress-container.visible {
-            opacity: 1;
+        /* Safe area fallback JavaScript */
+        .safe-area-fallback {
+            padding-bottom: 20px !important;
         }
     </style>
 </head>
 <body>
-    <!-- Global Home Button (outside player, visible when not in fullscreen) -->
-    <a href="home.html" class="global-home-button touch-feedback" id="global-home-button" title="Go to Home">
-        <i class="fas fa-home"></i>
-    </a>
-
-    <!-- Resize Tutorial Overlay -->
-    <div class="resize-tutorial" id="resize-tutorial">
-        <div class="resize-tutorial-icon">
-            <i class="fas fa-hand-pinch"></i>
-        </div>
-        <div class="resize-tutorial-text">Pinch to Resize</div>
-        <div class="resize-tutorial-subtext">Use two fingers to pinch and zoom the video. Drag with one finger to move it around.</div>
-        <button class="back-to-player" style="margin-top: 25px;" id="close-tutorial-btn">
-            <i class="fas fa-check"></i>
-            Got it!
-        </button>
-    </div>
-
-    <!-- Discussion Modal -->
-    <div class="discussion-modal" id="discussion-modal">
-        <div class="discussion-content">
-            <div class="discussion-header">
-                <h1 class="discussion-title">Discussion Time 🎤</h1>
-                <p class="discussion-subtitle">Take turns talking about the movie with everyone</p>
-            </div>
-            
-            <div class="participants-circle" id="participants-circle">
-                <!-- Participants will be arranged in a circle here -->
-            </div>
-            
-            <div class="discussion-controls">
-                <div class="discussion-timer">
-                    <i class="fas fa-clock"></i>
-                    <span id="discussion-timer">00:00</span>
-                </div>
-                <button class="end-discussion-btn touch-feedback" id="end-discussion-btn">
-                    <i class="fas fa-stop"></i>
-                    End Discussion
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Participants Modal -->
-    <div class="participants-modal" id="participants-modal">
-        <div class="participants-content">
-            <div class="participants-header">
-                <h2 class="participants-title">People Watching</h2>
-                <button class="close-participants" id="close-participants">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="participants-list" id="participants-list">
-                <!-- Participants will be added here dynamically -->
-            </div>
-        </div>
-    </div>
-
     <div class="app-container">
+        <!-- Resize Tutorial Overlay -->
+        <div class="resize-tutorial" id="resize-tutorial">
+            <div class="resize-tutorial-icon">
+                <i class="fas fa-hand-pinch"></i>
+            </div>
+            <div class="resize-tutorial-text">Pinch to Resize</div>
+            <div class="resize-tutorial-subtext">Use two fingers to pinch and zoom the video. Drag with one finger to move it around.</div>
+            <button class="back-to-player" style="margin-top: 25px;" id="close-tutorial-btn">
+                <i class="fas fa-check"></i>
+                Got it!
+            </button>
+        </div>
+
+        <!-- Discussion Modal -->
+        <div class="discussion-modal" id="discussion-modal">
+            <div class="discussion-content">
+                <div class="discussion-header">
+                    <h1 class="discussion-title">Discussion Time 🎤</h1>
+                    <p class="discussion-subtitle">Take turns talking about the movie with everyone</p>
+                </div>
+                
+                <div class="participants-circle" id="participants-circle">
+                    <!-- Participants will be arranged in a circle here -->
+                </div>
+                
+                <div class="discussion-controls">
+                    <div class="discussion-timer">
+                        <i class="fas fa-clock"></i>
+                        <span id="discussion-timer">00:00</span>
+                    </div>
+                    <button class="end-discussion-btn touch-feedback" id="end-discussion-btn">
+                        <i class="fas fa-stop"></i>
+                        End Discussion
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Participants Modal -->
+        <div class="participants-modal" id="participants-modal">
+            <div class="participants-content">
+                <div class="participants-header">
+                    <h2 class="participants-title">People Watching</h2>
+                    <button class="close-participants" id="close-participants">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="participants-list" id="participants-list">
+                    <!-- Participants will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+
         <!-- Player View -->
         <div class="player-view" id="player-view">
             <div class="video-container">
@@ -2521,6 +2431,9 @@
                 
                 <!-- Custom Controls -->
                 <div class="custom-controls" id="custom-controls">
+                    <button class="home-btn touch-feedback" id="home-btn" title="Go Home">
+                        <i class="fas fa-home"></i>
+                    </button>
                     <button class="control-btn-lg touch-feedback" id="custom-play-pause">
                         <i class="fas fa-play"></i>
                     </button>
@@ -2603,8 +2516,8 @@
                                 <div class="message-content">
                                     Welcome to the watch party! 🎉
                                     <div class="message-meta">
-                                        <span class="message-sender">Host</span>
-                                        <span class="message-time">Just now</span>
+                                        <span>Host</span>
+                                        <span>Just now</span>
                                     </div>
                                 </div>
                             </div>
@@ -2662,11 +2575,14 @@
                 </div>
                 
                 <!-- Progress Bar for Detailed View -->
-                <div class="detailed-progress-container" id="detailed-progress-container">
+                <div class="progress-container" id="detailed-progress-container">
                     <div class="progress-bar" id="detailed-progress-bar"></div>
                 </div>
                 
-                <div class="detailed-custom-controls" id="detailed-custom-controls">
+                <div class="custom-controls" id="detailed-custom-controls">
+                    <button class="home-btn touch-feedback" id="detailed-home-btn" title="Go Home">
+                        <i class="fas fa-home"></i>
+                    </button>
                     <button class="control-btn-lg touch-feedback" id="detailed-play-pause">
                         <i class="fas fa-play"></i>
                     </button>
@@ -2890,7 +2806,6 @@
         }
 
         // DOM elements
-        const globalHomeButton = document.getElementById('global-home-button');
         const resizeTutorial = document.getElementById('resize-tutorial');
         const closeTutorialBtn = document.getElementById('close-tutorial-btn');
         const discussionModal = document.getElementById('discussion-modal');
@@ -2943,6 +2858,10 @@
         const detailedSkipBackBtn = document.getElementById('detailed-skip-back');
         const skipForwardBtn = document.getElementById('skip-forward');
         const detailedSkipForwardBtn = document.getElementById('detailed-skip-forward');
+
+        // Home buttons
+        const homeBtn = document.getElementById('home-btn');
+        const detailedHomeBtn = document.getElementById('detailed-home-btn');
 
         // Volume controls
         const volumeBtn = document.getElementById('volume-btn');
@@ -3003,6 +2922,19 @@
         let syncManager = null;
         let isLocalAction = false;
         let videoLoadStartTime = null;
+
+        // Safe area fallback function
+        function fixSafeArea() {
+            const controls = [customControls, detailedCustomControls];
+            controls.forEach(control => {
+                if (!control) return;
+                
+                const computed = parseInt(window.getComputedStyle(control).paddingBottom);
+                if (computed < 5) {
+                    control.classList.add('safe-area-fallback');
+                }
+            });
+        }
 
         // Enhanced video loading
         function optimizeVideoLoading() {
@@ -4237,11 +4169,9 @@
             const now = new Date();
             const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             
-            const senderName = participants[currentUser]?.username || (isHost ? 'Host' : 'Viewer');
-            
             meta.innerHTML = `
-                <span class="message-sender">${senderName}</span>
-                <span class="message-time">${timeStr}</span>
+                <span>${participants[currentUser]?.username || (isHost ? 'Host' : 'Viewer')}</span>
+                <span>${timeStr}</span>
             `;
             
             const body = document.createElement('div');
@@ -4854,6 +4784,14 @@
             if (menuBtn) menuBtn.addEventListener('click', toggleToDetailedView);
             if (backToPlayerBtn) backToPlayerBtn.addEventListener('click', toggleToPlayerView);
             
+            // Home buttons
+            if (homeBtn) homeBtn.addEventListener('click', () => {
+                window.location.href = 'home.html';
+            });
+            if (detailedHomeBtn) detailedHomeBtn.addEventListener('click', () => {
+                window.location.href = 'home.html';
+            });
+            
             // Video controls
             if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
             if (detailedPlayPauseBtn) detailedPlayPauseBtn.addEventListener('click', togglePlayPause);
@@ -4977,21 +4915,16 @@
             // Handle window resize
             window.addEventListener('resize', () => {
                 fitCanvas();
+                fixSafeArea();
             });
             
             // Fullscreen change
             document.addEventListener('fullscreenchange', () => {
                 isFullscreen = !!document.fullscreenElement;
-                if (globalHomeButton) {
-                    if (isFullscreen) {
-                        globalHomeButton.classList.add('hidden');
-                    } else {
-                        globalHomeButton.classList.remove('hidden');
-                    }
-                }
                 if (!isFullscreen) {
                     screenResizeMenu.classList.remove('show');
                 }
+                fixSafeArea();
             });
             
             // Progress bar click to seek
@@ -5128,8 +5061,8 @@
             const timeStr = time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             
             meta.innerHTML = `
-                <span class="message-sender">${message.username || 'User'}</span>
-                <span class="message-time">${timeStr}</span>
+                <span>${message.username || 'User'}</span>
+                <span>${timeStr}</span>
             `;
             
             const body = document.createElement('div');
@@ -5190,6 +5123,10 @@
             } else {
                 viewerStart();
             }
+            
+            // Apply safe area fixes
+            fixSafeArea();
+            window.addEventListener('resize', fixSafeArea);
             
             console.log("Let's Watch initialized successfully");
         }

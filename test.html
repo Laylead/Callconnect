@@ -3149,72 +3149,76 @@
         function joinRoom() {
             if (!firebaseInitialized || !currentUser) return;
             
-            // Add user to participants
-            const userParticipantRef = participantsRef.child(currentUser);
-            userParticipantRef.set({
-                uid: currentUser,
-                username: isHost ? 'Host' : 'Viewer' + Math.floor(Math.random() * 1000),
-                joinedAt: firebase.database.ServerValue.TIMESTAMP,
-                isHost: isHost,
-                lastActive: firebase.database.ServerValue.TIMESTAMP,
-                isTalking: false,
-                avatarColor: getRandomColor(),
-                isInPlayerView: true
-            });
-            
-            // Listen for participant changes
-            const participantAddedListener = participantsRef.on('child_added', (snap) => {
-                const participant = snap.val();
-                participants[participant.uid] = participant;
-                updateParticipantCount();
-                updateDiscussionParticipants();
-                updateParticipantsModal();
+            try {
+                // Add user to participants
+                const userParticipantRef = participantsRef.child(currentUser);
+                userParticipantRef.set({
+                    uid: currentUser,
+                    username: isHost ? 'Host' : 'Viewer' + Math.floor(Math.random() * 1000),
+                    joinedAt: firebase.database.ServerValue.TIMESTAMP,
+                    isHost: isHost,
+                    lastActive: firebase.database.ServerValue.TIMESTAMP,
+                    isTalking: false,
+                    avatarColor: getRandomColor(),
+                    isInPlayerView: true
+                });
                 
-                // Show notification
-                if (participant.uid !== currentUser) {
-                    showNotification(`${participant.username} joined the party!`);
-                }
-            });
-            
-            const participantChangedListener = participantsRef.on('child_changed', (snap) => {
-                const participant = snap.val();
-                participants[participant.uid] = participant;
-                updateTalkingStatus();
-                updateParticipantsModal();
-            });
-            
-            const participantRemovedListener = participantsRef.on('child_removed', (snap) => {
-                const participant = snap.val();
-                delete participants[participant.uid];
-                updateParticipantCount();
-                updateDiscussionParticipants();
-                updateParticipantsModal();
+                // Listen for participant changes
+                const participantAddedListener = participantsRef.on('child_added', (snap) => {
+                    const participant = snap.val();
+                    participants[participant.uid] = participant;
+                    updateParticipantCount();
+                    updateDiscussionParticipants();
+                    updateParticipantsModal();
+                    
+                    // Show notification
+                    if (participant.uid !== currentUser) {
+                        showNotification(`${participant.username} joined the party!`);
+                    }
+                });
                 
-                // Show notification
-                showNotification(`${participant.username} left the party`);
-            });
-            
-            // Store listeners for cleanup
-            firebaseListeners.push(() => {
-                participantsRef.off('child_added', participantAddedListener);
-                participantsRef.off('child_changed', participantChangedListener);
-                participantsRef.off('child_removed', participantRemovedListener);
-            });
-            
-            // Load friend requests
-            loadFriendRequests();
-            
-            // Update last active every 30 seconds
-            const lastActiveInterval = setInterval(() => {
-                if (userParticipantRef) {
-                    userParticipantRef.update({ 
-                        lastActive: firebase.database.ServerValue.TIMESTAMP,
-                        isInPlayerView: !isDetailedView
-                    });
-                }
-            }, 30000);
-            
-            activeIntervals.push(lastActiveInterval);
+                const participantChangedListener = participantsRef.on('child_changed', (snap) => {
+                    const participant = snap.val();
+                    participants[participant.uid] = participant;
+                    updateTalkingStatus();
+                    updateParticipantsModal();
+                });
+                
+                const participantRemovedListener = participantsRef.on('child_removed', (snap) => {
+                    const participant = snap.val();
+                    delete participants[participant.uid];
+                    updateParticipantCount();
+                    updateDiscussionParticipants();
+                    updateParticipantsModal();
+                    
+                    // Show notification
+                    showNotification(`${participant.username} left the party`);
+                });
+                
+                // Store listeners for cleanup
+                firebaseListeners.push(() => {
+                    participantsRef.off('child_added', participantAddedListener);
+                    participantsRef.off('child_changed', participantChangedListener);
+                    participantsRef.off('child_removed', participantRemovedListener);
+                });
+                
+                // Load friend requests
+                loadFriendRequests();
+                
+                // Update last active every 30 seconds
+                const lastActiveInterval = setInterval(() => {
+                    if (userParticipantRef) {
+                        userParticipantRef.update({ 
+                            lastActive: firebase.database.ServerValue.TIMESTAMP,
+                            isInPlayerView: !isDetailedView
+                        });
+                    }
+                }, 30000);
+                
+                activeIntervals.push(lastActiveInterval);
+            } catch (error) {
+                console.error("Error joining room:", error);
+            }
         }
 
         function updateParticipantCount() {
@@ -3369,34 +3373,42 @@
         function loadFriendRequests() {
             if (!firebaseInitialized) return;
             
-            const friendRequestsRef = db.ref(`users/${currentUser}/friendRequests`);
-            const friendRequestsListener = friendRequestsRef.on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    friendRequests = data;
-                }
-            });
-            
-            firebaseListeners.push(() => {
-                friendRequestsRef.off('value', friendRequestsListener);
-            });
+            try {
+                const friendRequestsRef = db.ref(`users/${currentUser}/friendRequests`);
+                const friendRequestsListener = friendRequestsRef.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        friendRequests = data;
+                    }
+                });
+                
+                firebaseListeners.push(() => {
+                    friendRequestsRef.off('value', friendRequestsListener);
+                });
+            } catch (error) {
+                console.error("Error loading friend requests:", error);
+            }
         }
 
         function sendFriendRequest(targetUid) {
             if (!firebaseInitialized) return;
             
-            const friendRequestRef = db.ref(`users/${targetUid}/friendRequests/${currentUser}`);
-            friendRequestRef.set({
-                from: currentUser,
-                fromName: participants[currentUser]?.username || 'Anonymous',
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                status: 'pending'
-            });
-            
-            // Update local state
-            friendRequests[targetUid] = true;
-            
-            showNotification('Friend request sent!');
+            try {
+                const friendRequestRef = db.ref(`users/${targetUid}/friendRequests/${currentUser}`);
+                friendRequestRef.set({
+                    from: currentUser,
+                    fromName: participants[currentUser]?.username || 'Anonymous',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    status: 'pending'
+                });
+                
+                // Update local state
+                friendRequests[targetUid] = true;
+                
+                showNotification('Friend request sent!');
+            } catch (error) {
+                console.error("Error sending friend request:", error);
+            }
         }
 
         function showNotification(message) {
@@ -3574,8 +3586,12 @@
         function updateTalkingState(isTalkingState) {
             if (!firebaseInitialized || !discussionActive) return;
             
-            const userParticipantRef = participantsRef.child(currentUser);
-            userParticipantRef.update({ isTalking: isTalkingState });
+            try {
+                const userParticipantRef = participantsRef.child(currentUser);
+                userParticipantRef.update({ isTalking: isTalkingState });
+            } catch (error) {
+                console.error("Error updating talking state:", error);
+            }
         }
 
         // VIDEO RESIZE AND PINCH-TO-ZOOM FUNCTIONS
@@ -4084,6 +4100,71 @@
             activeTimeouts.push(youtubeTimeout);
         }
 
+        // FIXED: YouTube API Ready function
+        window.onYouTubeIframeAPIReady = function() {
+            const list = window._pendingYTCreate || [];
+            if (list.length === 0) return;
+            
+            const item = list.shift();
+            
+            try {
+                ytPlayer = new YT.Player('ytPlayerIframe', {
+                    videoId: item.id,
+                    width: '100%',
+                    height: '100%',
+                    playerVars: {
+                        rel: 0,
+                        modestbranding: 1,
+                        playsinline: 1,
+                        iv_load_policy: 3,
+                        controls: 0,
+                        enablejsapi: 1,
+                        autoplay: item.isHost ? 1 : 0,
+                        origin: window.location.origin
+                    },
+                    events: {
+                        onReady: () => {
+                            ready = true;
+                            fitCanvas();
+                            
+                            initializeSyncSystem(item.isHost);
+                            
+                            const updateInterval = setInterval(updateTimeDisplay, 1000);
+                            activeIntervals.push(updateInterval);
+                            
+                            overlayBlock.classList.add('hidden');
+                            cachingIndicator.style.display = 'none';
+                            
+                            if (item.isHost) {
+                                ytPlayer.playVideo();
+                            }
+                        },
+                        onStateChange: (e) => {
+                            if (!item.isHost || !ytPlayer) return;
+                            
+                            if (e.data === YT.PlayerState.PLAYING) {
+                                syncManager.sendPlayEvent();
+                            } else if (e.data === YT.PlayerState.PAUSED) {
+                                syncManager.sendPauseEvent();
+                            }
+                        },
+                        onError: (e) => {
+                            console.error("YouTube player error:", e);
+                            overlayBlock.innerHTML = `
+                                <div style="text-align: center; color: white;">
+                                    <div style="font-size: 40px; margin-bottom: 16px;">⚠️</div>
+                                    <div style="font-size: 1rem; margin-bottom: 8px;">YouTube Error</div>
+                                    <div>Could not load YouTube video.</div>
+                                </div>
+                            `;
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Error creating YouTube player:", error);
+            }
+        };
+
         function startVideo() {
             if (!html5video) return;
             
@@ -4195,66 +4276,7 @@
             return m && m[1] ? m[1] : null; 
         }
 
-        // YouTube API
-        window.onYouTubeIframeAPIReady = function(){
-            const list = window._pendingYTCreate || [];
-            while(list.length){
-                const item = list.shift();
-                if(ytPlayer){ try{ ytPlayer.destroy(); }catch(e){} }
-                
-                ytPlayer = new YT.Player('ytPlayerIframe',{
-                    videoId: item.id,
-                    width: '100%',
-                    height: '100%',
-                    playerVars:{
-                        rel:0,
-                        modestbranding:1,
-                        playsinline:1,
-                        iv_load_policy:3,
-                        controls: 0,
-                        enablejsapi:1,
-                        autoplay: item.isHost ? 1 : 0,
-                        origin: window.location.origin
-                    },
-                    events:{
-                        onReady:()=>{
-                            ready=true;
-                            fitCanvas();
-                            
-                            initializeSyncSystem(item.isHost);
-                            
-                            const updateInterval = setInterval(updateTimeDisplay, 1000);
-                            activeIntervals.push(updateInterval);
-                            
-                            overlayBlock.classList.add('hidden');
-                            cachingIndicator.style.display = 'none';
-                            
-                            if (item.isHost) {
-                                ytPlayer.playVideo();
-                            }
-                        },
-                        onStateChange:(e)=>{ 
-                            if(!item.isHost || !ytPlayer) return; 
-                            const t = ytPlayer.getCurrentTime(); 
-                            if(e.data===YT.PlayerState.PLAYING) syncManager.sendPlayEvent(); 
-                            if(e.data===YT.PlayerState.PAUSED) syncManager.sendPauseEvent(); 
-                        },
-                        onError: (e) => {
-                            console.error("YouTube player error:", e);
-                            overlayBlock.innerHTML = `
-                                <div style="text-align: center; color: white;">
-                                    <div style="font-size: 40px; margin-bottom: 16px;">⚠️</div>
-                                    <div style="font-size: 1rem; margin-bottom: 8px;">YouTube Error</div>
-                                    <div>Could not load YouTube video.</div>
-                                </div>
-                            `;
-                        }
-                    }
-                });
-            }
-        };
-
-        // Widget management
+        // FIXED: Widget management with proper classList methods
         function toggleWidget(widgetName) {
             if (widgetTimeout) {
                 clearTimeout(widgetTimeout);
@@ -4283,7 +4305,10 @@
                     updateChatBadge();
                     // Scroll to bottom when opening chat
                     setTimeout(() => {
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                        const chatMessages = document.getElementById('chat-messages');
+                        if (chatMessages) {
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                        }
                     }, 100);
                 }
                 
@@ -4322,7 +4347,11 @@
             
             // Update Firebase with host's view state
             if (isHost && firebaseInitialized) {
-                roomRef.update({ hostIsInPlayerView: false });
+                try {
+                    roomRef.update({ hostIsInPlayerView: false });
+                } catch (error) {
+                    console.error("Error updating host view state:", error);
+                }
             }
             
             if (detailedPlayerContainer) {
@@ -4346,7 +4375,11 @@
             
             // Update Firebase with host's view state
             if (isHost && firebaseInitialized) {
-                roomRef.update({ hostIsInPlayerView: true });
+                try {
+                    roomRef.update({ hostIsInPlayerView: true });
+                } catch (error) {
+                    console.error("Error updating host view state:", error);
+                }
             }
             
             const playerContainer = document.getElementById('player-container');
@@ -4411,13 +4444,17 @@
             input.value = '';
             
             if (firebaseInitialized) {
-                const chatRef = db.ref('rooms/' + roomId + '/chat').push();
-                chatRef.set({
-                    text: text,
-                    userId: currentUser,
-                    username: participants[currentUser]?.username || (isHost ? 'Host' : 'Viewer'),
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                });
+                try {
+                    const chatRef = db.ref('rooms/' + roomId + '/chat').push();
+                    chatRef.set({
+                        text: text,
+                        userId: currentUser,
+                        username: participants[currentUser]?.username || (isHost ? 'Host' : 'Viewer'),
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    });
+                } catch (error) {
+                    console.error("Error sending chat message:", error);
+                }
             }
             
             console.log("Chat message sent:", text);
@@ -4450,13 +4487,17 @@
             activeTimeouts.push(timeoutId);
             
             if (firebaseInitialized) {
-                const reactionsRef = db.ref('rooms/' + roomId + '/reactions').push();
-                reactionsRef.set({
-                    emoji: emoji,
-                    userId: currentUser,
-                    username: participants[currentUser]?.username || (isHost ? 'Host' : 'Viewer'),
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                });
+                try {
+                    const reactionsRef = db.ref('rooms/' + roomId + '/reactions').push();
+                    reactionsRef.set({
+                        emoji: emoji,
+                        userId: currentUser,
+                        username: participants[currentUser]?.username || (isHost ? 'Host' : 'Viewer'),
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    });
+                } catch (error) {
+                    console.error("Error sending reaction:", error);
+                }
             }
             
             console.log("Reaction sent:", emoji);
@@ -4529,8 +4570,10 @@
                 discussionTimer++;
                 const minutes = Math.floor(discussionTimer / 60);
                 const seconds = discussionTimer % 60;
-                discussionTimerElement.textContent = 
-                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                if (discussionTimerElement) {
+                    discussionTimerElement.textContent = 
+                        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
             }, 1000);
             
             activeIntervals.push(discussionInterval);
@@ -4543,10 +4586,14 @@
             
             // Notify participants
             if (firebaseInitialized) {
-                roomRef.update({
-                    discussionActive: true,
-                    discussionStartedAt: firebase.database.ServerValue.TIMESTAMP
-                });
+                try {
+                    roomRef.update({
+                        discussionActive: true,
+                        discussionStartedAt: firebase.database.ServerValue.TIMESTAMP
+                    });
+                } catch (error) {
+                    console.error("Error starting discussion:", error);
+                }
             }
             
             console.log("Discussion started");
@@ -4574,7 +4621,11 @@
             
             // Notify participants
             if (firebaseInitialized) {
-                roomRef.update({ discussionActive: false });
+                try {
+                    roomRef.update({ discussionActive: false });
+                } catch (error) {
+                    console.error("Error ending discussion:", error);
+                }
             }
             
             console.log("Discussion ended");
@@ -4687,7 +4738,7 @@
             }); 
         }
 
-        // Enhanced Sync Manager
+        // FIXED: Enhanced Sync Manager with proper drift clearing
         class TelepartySyncManager {
             constructor(isHost, roomRef, videoPlayer) {
                 this.isHost = isHost;
@@ -4702,6 +4753,10 @@
                 this.hostPlaybackRate = 1.0;
                 this.hostLastPlayState = false;
                 this.hostLastViewState = true;
+                this.lastSeekTime = 0;
+                this.accumulatedDrift = 0;
+                this.driftSamples = [];
+                this.maxDriftSamples = 10;
                 
                 this.hostState = {
                     isPlaying: false,
@@ -4712,10 +4767,51 @@
                 };
             }
             
+            getCurrentTime() {
+                if (usingYT && ytPlayer) {
+                    return ytPlayer.getCurrentTime();
+                } else {
+                    return html5video.currentTime || 0;
+                }
+            }
+            
+            seekTo(time) {
+                if (usingYT && ytPlayer) {
+                    ytPlayer.seekTo(time, true);
+                } else {
+                    html5video.currentTime = time;
+                }
+                this.lastSeekTime = Date.now();
+            }
+            
+            play() {
+                if (usingYT && ytPlayer) {
+                    ytPlayer.playVideo();
+                } else {
+                    html5video.play();
+                }
+            }
+            
+            pause() {
+                if (usingYT && ytPlayer) {
+                    ytPlayer.pauseVideo();
+                } else {
+                    html5video.pause();
+                }
+            }
+            
+            isPlaying() {
+                if (usingYT && ytPlayer) {
+                    return ytPlayer.getPlayerState() === 1;
+                } else {
+                    return !html5video.paused;
+                }
+            }
+            
             sendPlayEvent() {
                 if (!this.isHost) return;
                 
-                const videoTime = this.video.getCurrentTime();
+                const videoTime = this.getCurrentTime();
                 this.updateFirebaseState({
                     isPlaying: true,
                     currentTime: videoTime,
@@ -4730,7 +4826,7 @@
             sendPauseEvent() {
                 if (!this.isHost) return;
                 
-                const videoTime = this.video.getCurrentTime();
+                const videoTime = this.getCurrentTime();
                 this.updateFirebaseState({
                     isPlaying: false,
                     currentTime: videoTime,
@@ -4745,7 +4841,7 @@
             sendSeekEvent() {
                 if (!this.isHost) return;
                 
-                const videoTime = this.video.getCurrentTime();
+                const videoTime = this.getCurrentTime();
                 this.updateFirebaseState({
                     currentTime: videoTime,
                     lastUpdate: Date.now(),
@@ -4776,8 +4872,8 @@
                 this.sendPauseEvent();
                 
                 this.heartbeatInterval = setInterval(() => {
-                    if (this.video.isPlaying()) {
-                        const videoTime = this.video.getCurrentTime();
+                    if (this.isPlaying()) {
+                        const videoTime = this.getCurrentTime();
                         this.roomRef.child('videoState').update({
                             currentTime: videoTime,
                             lastUpdate: Date.now(),
@@ -4815,10 +4911,23 @@
                     }
                     // If host seeked, sync it regardless of view state
                     else if (data.currentTime !== undefined) {
-                        const localTime = this.video.getCurrentTime();
-                        const drift = Math.abs(localTime - data.currentTime);
-                        if (drift > 5.0) { // Only sync if drift is significant
+                        const localTime = this.getCurrentTime();
+                        const drift = localTime - data.currentTime;
+                        
+                        // Add to drift samples
+                        this.driftSamples.push(drift);
+                        if (this.driftSamples.length > this.maxDriftSamples) {
+                            this.driftSamples.shift();
+                        }
+                        
+                        // Calculate average drift
+                        const avgDrift = this.driftSamples.reduce((a, b) => a + b, 0) / this.driftSamples.length;
+                        
+                        // Only sync if drift is significant and we haven't recently seeked
+                        if (Math.abs(avgDrift) > this.maxDrift && Date.now() - this.lastSeekTime > 2000) {
                             this.syncToHost();
+                            // Clear drift samples after syncing
+                            this.driftSamples = [];
                         }
                     }
                 });
@@ -4839,7 +4948,7 @@
                 const latency = Math.max(0, now - this.hostState.lastUpdate);
                 const estimatedHostTime = this.hostState.currentTime + (latency / 1000);
                 
-                const localTime = this.video.getCurrentTime();
+                const localTime = this.getCurrentTime();
                 const drift = localTime - estimatedHostTime;
                 const absDrift = Math.abs(drift);
                 
@@ -4848,21 +4957,22 @@
                 // Only sync if drift is significant
                 if (absDrift > this.maxDrift) {
                     console.log(`[Sync] Large drift (${absDrift.toFixed(2)}s), hard syncing`);
-                    this.video.seekTo(estimatedHostTime);
+                    this.seekTo(estimatedHostTime);
+                    this.lastSeekTime = Date.now();
                 }
                 
                 // Sync play/pause state - only if host is actually playing/pausing
                 const shouldPlay = this.hostState.isPlaying;
-                const isPlaying = this.video.isPlaying();
+                const isPlaying = this.isPlaying();
                 
                 // Don't auto-pause just because host left player view
                 if (shouldPlay && !isPlaying) {
                     console.log('[Sync] Host is playing, starting playback');
-                    this.video.play();
+                    this.play();
                     viewerAutoPaused = false;
                 } else if (!shouldPlay && isPlaying && !viewerAutoPaused) {
                     console.log('[Sync] Host paused, stopping playback');
-                    this.video.pause();
+                    this.pause();
                 }
                 
                 this.isSyncing = false;
@@ -4936,7 +5046,7 @@
             console.log('Sync system initialized');
         }
 
-        // Host controls
+        // FIXED: Host controls with proper event handlers
         function hostStart() { 
             if (pauseDiscussBtn) {
                 pauseDiscussBtn.addEventListener('click', () => { 
@@ -4947,7 +5057,7 @@
             if (toggleDrawBtn) {
                 toggleDrawBtn.addEventListener('click', () => { 
                     drawingEnabled = !drawingEnabled; 
-                    toggleDrawBtn.classList.toggle('active', drawingEnabled);
+                    toggleDrawBtn.classList.toggle('active');
                     if (drawingEnabled) {
                         enableDrawing();
                     } else {
@@ -4955,7 +5065,11 @@
                     }
                     
                     if (firebaseInitialized) {
-                        roomRef.update({drawingEnabled});
+                        try {
+                            roomRef.update({drawingEnabled});
+                        } catch (error) {
+                            console.error("Error updating drawing state:", error);
+                        }
                     }
                     
                     console.log("Drawing enabled:", drawingEnabled);
@@ -4968,7 +5082,11 @@
                     strokes=[]; 
                     
                     if (firebaseInitialized) {
-                        drawRef.remove().catch(()=>{});
+                        try {
+                            drawRef.remove().catch(()=>{});
+                        } catch (error) {
+                            console.error("Error clearing drawing:", error);
+                        }
                     }
                     
                     console.log("Drawing cleared");
@@ -4985,7 +5103,11 @@
                     }
                     
                     if (firebaseInitialized) {
-                        roomRef.child('hostPowers').update({speed:sp});
+                        try {
+                            roomRef.child('hostPowers').update({speed:sp});
+                        } catch (error) {
+                            console.error("Error updating playback speed:", error);
+                        }
                     }
                     
                     console.log("Playback speed set to:", sp);
@@ -4993,16 +5115,16 @@
             }
         }
 
-        // Viewer controls
+        // FIXED: Viewer controls with proper event handlers
         function viewerStart() { 
             if (syncBtn) {
                 syncBtn.addEventListener('click', () => {
                     if (syncManager && lastHostState) {
-                        syncManager.video.seekTo(lastHostState.currentTime || 0);
+                        syncManager.seekTo(lastHostState.currentTime || 0);
                         if (lastHostState.isPlaying) {
-                            syncManager.video.play();
+                            syncManager.play();
                         } else {
-                            syncManager.video.pause();
+                            syncManager.pause();
                         }
                     }
                     console.log("Manual sync requested");
@@ -5010,7 +5132,7 @@
             }
         }
 
-        // Set up all event listeners
+        // Set up all event listeners with proper null checks
         function setupEventListeners() {
             // View toggle
             if (menuBtn) menuBtn.addEventListener('click', toggleToDetailedView);
@@ -5124,11 +5246,13 @@
             if (closeParticipantsBtn) closeParticipantsBtn.addEventListener('click', hideParticipantsModal);
             
             // Close participants modal when clicking outside
-            participantsModal.addEventListener('click', (e) => {
-                if (e.target === participantsModal) {
-                    hideParticipantsModal();
-                }
-            });
+            if (participantsModal) {
+                participantsModal.addEventListener('click', (e) => {
+                    if (e.target === participantsModal) {
+                        hideParticipantsModal();
+                    }
+                });
+            }
             
             // Close screen resize menu when clicking outside
             document.addEventListener('click', (e) => {
@@ -5220,69 +5344,73 @@
         function initFirebaseListeners() {
             if (!firebaseInitialized) return;
             
-            // Listen for chat messages
-            const chatListener = chatRef.on('child_added', (snapshot) => {
-                const message = snapshot.val();
+            try {
+                // Listen for chat messages
+                const chatListener = chatRef.on('child_added', (snapshot) => {
+                    const message = snapshot.val();
+                    
+                    // Don't show own messages twice
+                    if (message.userId === currentUser) return;
+                    
+                    // Add to chat widget
+                    addChatMessage(message, chatMessages);
+                    
+                    // Update badge if chat widget is not active
+                    if (!chatWidget.classList.contains('active')) {
+                        unreadChatCount++;
+                        updateChatBadge();
+                    }
+                });
                 
-                // Don't show own messages twice
-                if (message.userId === currentUser) return;
+                // Listen for reactions
+                const reactionsListener = reactionsRef.on('child_added', (snapshot) => {
+                    const reaction = snapshot.val();
+                    
+                    // Don't show own reactions twice
+                    if (reaction.userId === currentUser) return;
+                    
+                    sendReaction(reaction.emoji);
+                });
                 
-                // Add to chat widget
-                addChatMessage(message, chatMessages);
+                // Listen for drawing
+                const drawListener = drawRef.on('child_added', (snapshot) => {
+                    const stroke = snapshot.val();
+                    strokes.push(stroke);
+                    redrawAllStrokes();
+                });
                 
-                // Update badge if chat widget is not active
-                if (!chatWidget.classList.contains('active')) {
-                    unreadChatCount++;
-                    updateChatBadge();
-                }
-            });
-            
-            // Listen for reactions
-            const reactionsListener = reactionsRef.on('child_added', (snapshot) => {
-                const reaction = snapshot.val();
+                // Listen for discussion state
+                const discussionListener = roomRef.child('discussionActive').on('value', (snapshot) => {
+                    const isDiscussionActive = snapshot.val();
+                    
+                    if (isDiscussionActive && !discussionActive && isHost) {
+                        // Host starts discussion
+                        startDiscussion();
+                    } else if (!isDiscussionActive && discussionActive) {
+                        // End discussion if host ended it
+                        endDiscussion();
+                    }
+                });
                 
-                // Don't show own reactions twice
-                if (reaction.userId === currentUser) return;
+                // Listen for host play state changes
+                const playStateListener = roomRef.child('hostIsPlaying').on('value', (snapshot) => {
+                    const hostPlaying = snapshot.val();
+                    if (!isHost && hostPlaying !== undefined) {
+                        console.log(`Host play state: ${hostPlaying}`);
+                    }
+                });
                 
-                sendReaction(reaction.emoji);
-            });
-            
-            // Listen for drawing
-            const drawListener = drawRef.on('child_added', (snapshot) => {
-                const stroke = snapshot.val();
-                strokes.push(stroke);
-                redrawAllStrokes();
-            });
-            
-            // Listen for discussion state
-            const discussionListener = roomRef.child('discussionActive').on('value', (snapshot) => {
-                const isDiscussionActive = snapshot.val();
-                
-                if (isDiscussionActive && !discussionActive && isHost) {
-                    // Host starts discussion
-                    startDiscussion();
-                } else if (!isDiscussionActive && discussionActive) {
-                    // End discussion if host ended it
-                    endDiscussion();
-                }
-            });
-            
-            // Listen for host play state changes
-            const playStateListener = roomRef.child('hostIsPlaying').on('value', (snapshot) => {
-                const hostPlaying = snapshot.val();
-                if (!isHost && hostPlaying !== undefined) {
-                    console.log(`Host play state: ${hostPlaying}`);
-                }
-            });
-            
-            // Store listeners for cleanup
-            firebaseListeners.push(() => {
-                chatRef.off('child_added', chatListener);
-                reactionsRef.off('child_added', reactionsListener);
-                drawRef.off('child_added', drawListener);
-                roomRef.child('discussionActive').off('value', discussionListener);
-                roomRef.child('hostIsPlaying').off('value', playStateListener);
-            });
+                // Store listeners for cleanup
+                firebaseListeners.push(() => {
+                    chatRef.off('child_added', chatListener);
+                    reactionsRef.off('child_added', reactionsListener);
+                    drawRef.off('child_added', drawListener);
+                    roomRef.child('discussionActive').off('value', discussionListener);
+                    roomRef.child('hostIsPlaying').off('value', playStateListener);
+                });
+            } catch (error) {
+                console.error("Error initializing Firebase listeners:", error);
+            }
         }
 
         function addChatMessage(message, container) {

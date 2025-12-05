@@ -3320,6 +3320,269 @@
             }
         }
 
+        // =======================================================
+        // TELEPARTY SYNC MANAGER CLASS
+        // =======================================================
+        
+        class TelepartySyncManager {
+            constructor(isHost, roomId, userId, syncInterval = 3000) {
+                this.isHost = isHost;
+                this.roomId = roomId;
+                this.userId = userId;
+                this.syncInterval = syncInterval;
+                this.heartbeatInterval = null;
+                this.firebaseListeners = [];
+                this.lastUpdateTime = 0;
+                this.lastHostState = null;
+                this.driftThreshold = 2.0;
+                this.isYouTube = false;
+                this.isHTML5 = false;
+                this.currentVideoType = null;
+                this.syncEnabled = true;
+                this.isSyncing = false;
+                this.initializeFirebase();
+            }
+            
+            initializeFirebase() {
+                if (!firebase.apps.length) {
+                    console.error("Firebase not initialized");
+                    return;
+                }
+                this.db = firebase.database();
+                this.roomRef = this.db.ref('rooms/' + this.roomId);
+                this.videoStateRef = this.roomRef.child('videoState');
+            }
+            
+            start() {
+                if (this.isHost) {
+                    this.startHostBroadcast();
+                } else {
+                    this.startViewerSync();
+                }
+            }
+            
+            startHostBroadcast() {
+                // Host continuously broadcasts state
+                this.heartbeatInterval = setInterval(() => {
+                    this.broadcastState();
+                }, this.syncInterval);
+                
+                if (window.app?.memoryManager) {
+                    window.app.memoryManager.trackInterval(this.heartbeatInterval);
+                }
+                
+                // Setup event listeners for play/pause/seek
+                this.setupEventListeners();
+                
+                // Initial broadcast
+                setTimeout(() => this.broadcastState(), 1000);
+            }
+            
+            startViewerSync() {
+                // Viewer listens for host updates
+                const listener = this.videoStateRef.on('value', (snapshot) => {
+                    this.onHostStateUpdate(snapshot.val());
+                });
+                
+                this.firebaseListeners.push(() => {
+                    this.videoStateRef.off('value', listener);
+                });
+                
+                if (window.app?.memoryManager) {
+                    window.app.memoryManager.trackListener(this.videoStateRef, 'value', listener);
+                }
+            }
+            
+            broadcastState() {
+                if (!this.isHost || !this.syncEnabled) return;
+                
+                const state = this.getCurrentState();
+                if (!state) return;
+                
+                this.videoStateRef.set({
+                    ...state,
+                    hostId: this.userId,
+                    lastUpdate: Date.now()
+                }).catch(error => {
+                    console.error("Error broadcasting state:", error);
+                });
+            }
+            
+            getCurrentState() {
+                const video = getActiveVideoElement();
+                if (!video) return null;
+                
+                let currentTime = 0;
+                let isPlaying = false;
+                let duration = 0;
+                
+                if (video.pause && video.play) {
+                    // HTML5 video
+                    currentTime = video.currentTime;
+                    isPlaying = !video.paused;
+                    duration = video.duration || 0;
+                } else if (window.ytPlayer && typeof window.ytPlayer.getCurrentTime === 'function') {
+                    // YouTube player
+                    try {
+                        currentTime = window.ytPlayer.getCurrentTime();
+                        isPlaying = window.ytPlayer.getPlayerState() === 1; // YT.PlayerState.PLAYING
+                        duration = window.ytPlayer.getDuration() || 0;
+                    } catch (e) {
+                        console.warn("YouTube player not ready:", e);
+                        return null;
+                    }
+                } else {
+                    return null;
+                }
+                
+                return {
+                    currentTime,
+                    isPlaying,
+                    duration,
+                    timestamp: Date.now()
+                };
+            }
+            
+            onHostStateUpdate(hostState) {
+                if (!hostState || this.isHost || !this.syncEnabled || this.isSyncing) return;
+                
+                this.lastHostState = hostState;
+                const latency = Date.now() - hostState.lastUpdate;
+                const estimatedHostTime = hostState.currentTime + (latency / 1000);
+                
+                this.syncToHost(hostState, estimatedHostTime);
+            }
+            
+            syncToHost(hostState, estimatedHostTime) {
+                if (!this.syncEnabled) return;
+                
+                this.isSyncing = true;
+                const video = getActiveVideoElement();
+                if (!video) {
+                    this.isSyncing = false;
+                    return;
+                }
+                
+                let localTime = 0;
+                let localPlaying = false;
+                
+                if (video.pause && video.play) {
+                    // HTML5 video
+                    localTime = video.currentTime;
+                    localPlaying = !video.paused;
+                } else if (window.ytPlayer && typeof window.ytPlayer.getCurrentTime === 'function') {
+                    // YouTube player
+                    try {
+                        localTime = window.ytPlayer.getCurrentTime();
+                        localPlaying = window.ytPlayer.getPlayerState() === 1; // YT.PlayerState.PLAYING
+                    } catch (e) {
+                        this.isSyncing = false;
+                        return;
+                    }
+                }
+                
+                // Sync play/pause state
+                if (hostState.isPlaying && !localPlaying) {
+                    this.play();
+                } else if (!hostState.isPlaying && localPlaying) {
+                    this.pause();
+                }
+                
+                // Sync time if drift is beyond threshold
+                if (Math.abs(localTime - estimatedHostTime) > this.driftThreshold) {
+                    this.seekTo(estimatedHostTime);
+                }
+                
+                setTimeout(() => {
+                    this.isSyncing = false;
+                }, 100);
+            }
+            
+            play() {
+                const video = getActiveVideoElement();
+                if (!video) return;
+                
+                if (video.play && typeof video.play === 'function') {
+                    video.play().catch(e => console.error("Error playing video:", e));
+                } else if (window.ytPlayer && typeof window.ytPlayer.playVideo === 'function') {
+                    window.ytPlayer.playVideo();
+                }
+            }
+            
+            pause() {
+                const video = getActiveVideoElement();
+                if (!video) return;
+                
+                if (video.pause && typeof video.pause === 'function') {
+                    video.pause();
+                } else if (window.ytPlayer && typeof window.ytPlayer.pauseVideo === 'function') {
+                    window.ytPlayer.pauseVideo();
+                }
+            }
+            
+            seekTo(time) {
+                const video = getActiveVideoElement();
+                if (!video) return;
+                
+                if (video.currentTime !== undefined) {
+                    video.currentTime = time;
+                } else if (window.ytPlayer && typeof window.ytPlayer.seekTo === 'function') {
+                    window.ytPlayer.seekTo(time, true);
+                }
+            }
+            
+            setupEventListeners() {
+                // Listen to video events to trigger immediate sync updates
+                const video = getActiveVideoElement();
+                if (!video) return;
+                
+                const broadcastOnEvent = () => {
+                    if (this.isHost) {
+                        this.broadcastState();
+                    }
+                };
+                
+                if (video.addEventListener) {
+                    const events = ['play', 'pause', 'seeked'];
+                    events.forEach(event => {
+                        video.addEventListener(event, broadcastOnEvent);
+                        if (window.app?.memoryManager) {
+                            window.app.memoryManager.trackListener(video, event, broadcastOnEvent);
+                        }
+                    });
+                }
+            }
+            
+            manualSync() {
+                if (this.isHost) {
+                    this.broadcastState();
+                } else if (this.lastHostState) {
+                    const latency = Date.now() - this.lastHostState.lastUpdate;
+                    const estimatedHostTime = this.lastHostState.currentTime + (latency / 1000);
+                    this.syncToHost(this.lastHostState, estimatedHostTime);
+                }
+            }
+            
+            stop() {
+                if (this.heartbeatInterval) {
+                    clearInterval(this.heartbeatInterval);
+                    this.heartbeatInterval = null;
+                }
+                
+                // Cleanup Firebase listeners
+                this.firebaseListeners.forEach(cleanup => {
+                    try {
+                        cleanup();
+                    } catch (e) {
+                        console.warn('Error cleaning up Firebase listener:', e);
+                    }
+                });
+                this.firebaseListeners = [];
+                
+                this.syncEnabled = false;
+            }
+        }
+
         class UniversalVideoLoader {
             constructor() {
                 this.currentVideoType = null;
@@ -3395,7 +3658,7 @@
                 return null;
             }
             
-            loadVideo(url, isHost) {
+            loadVideo(url, isHost, onReady = null) {
                 const type = this.detectVideoType(url);
                 console.log(`Loading ${type} video: ${url}`);
                 
@@ -3405,25 +3668,25 @@
                     case "youtube":
                         const videoId = this.extractYouTubeID(url);
                         if (videoId) {
-                            this.loadYouTube(videoId, isHost);
+                            this.loadYouTube(videoId, isHost, onReady);
                         } else {
                             this.showError("Invalid YouTube URL");
                         }
                         break;
                     case "html5":
-                        this.loadHTML5Video(url, isHost);
+                        this.loadHTML5Video(url, isHost, onReady);
                         break;
                     case "gdrive":
-                        this.loadGoogleDriveVideo(url, isHost);
+                        this.loadGoogleDriveVideo(url, isHost, onReady);
                         break;
                     case "dropbox":
-                        this.loadDropboxVideo(url, isHost);
+                        this.loadDropboxVideo(url, isHost, onReady);
                         break;
                     case "vimeo":
-                        this.loadVimeoVideo(url, isHost);
+                        this.loadVimeoVideo(url, isHost, onReady);
                         break;
                     case "dailymotion":
-                        this.loadDailymotionVideo(url, isHost);
+                        this.loadDailymotionVideo(url, isHost, onReady);
                         break;
                     default:
                         this.showError("Unsupported video format");
@@ -3433,7 +3696,7 @@
                 this.currentVideoType = type;
             }
             
-            loadYouTube(videoId, isHost) {
+            loadYouTube(videoId, isHost, onReady = null) {
                 this.currentVideoId = videoId;
                 
                 if (window.ytPlayer && typeof window.ytPlayer.destroy === 'function') {
@@ -3471,6 +3734,7 @@
                         onReady: (e) => {
                             console.log('YouTube player ready');
                             document.getElementById('overlay-block').classList.add('hidden');
+                            if (onReady) onReady();
                         },
                         onStateChange: (e) => {
                             console.log('YouTube player state change:', e.data);
@@ -3482,7 +3746,7 @@
                 });
             }
             
-            loadHTML5Video(url, isHost) {
+            loadHTML5Video(url, isHost, onReady = null) {
                 const html5videoPlayer = document.getElementById('html5video-player');
                 const html5videoDetailed = document.getElementById('html5video-detailed');
                 const ytContainer = document.getElementById('ytContainer-player');
@@ -3504,13 +3768,20 @@
                 if (ytContainerDetailed) ytContainerDetailed.style.display = 'none';
                 
                 if (html5videoPlayer) {
-                    html5videoPlayer.addEventListener('loadedmetadata', () => {
+                    const onLoaded = () => {
                         document.getElementById('overlay-block').classList.add('hidden');
-                    }, { once: true });
+                        if (onReady) onReady();
+                    };
+                    
+                    if (html5videoPlayer.readyState >= 3) {
+                        onLoaded();
+                    } else {
+                        html5videoPlayer.addEventListener('loadedmetadata', onLoaded, { once: true });
+                    }
                 }
             }
             
-            loadGoogleDriveVideo(url, isHost) {
+            loadGoogleDriveVideo(url, isHost, onReady = null) {
                 let fileId = '';
                 const match1 = url.match(/\/d\/([^\/]+)/);
                 if (match1) {
@@ -3528,10 +3799,10 @@
                 }
                 
                 const direct = `https://drive.google.com/uc?export=download&id=${fileId}`;
-                this.loadHTML5Video(direct, isHost);
+                this.loadHTML5Video(direct, isHost, onReady);
             }
             
-            loadDropboxVideo(url, isHost) {
+            loadDropboxVideo(url, isHost, onReady = null) {
                 let direct = url;
                 
                 if (url.includes('?dl=0')) {
@@ -3542,10 +3813,10 @@
                     direct = url + (url.includes('?') ? '&' : '?') + 'raw=1';
                 }
                 
-                this.loadHTML5Video(direct, isHost);
+                this.loadHTML5Video(direct, isHost, onReady);
             }
             
-            loadVimeoVideo(url, isHost) {
+            loadVimeoVideo(url, isHost, onReady = null) {
                 let videoId = '';
                 const match = url.match(/vimeo\.com\/(\d+)/);
                 if (match) {
@@ -3575,9 +3846,11 @@
                 
                 if (html5videoPlayer) html5videoPlayer.style.display = 'none';
                 if (html5videoDetailed) html5videoDetailed.style.display = 'none';
+                
+                if (onReady) setTimeout(onReady, 1000);
             }
             
-            loadDailymotionVideo(url, isHost) {
+            loadDailymotionVideo(url, isHost, onReady = null) {
                 let videoId = '';
                 const match1 = url.match(/\/video\/([^_]+)/);
                 if (match1) {
@@ -3612,6 +3885,8 @@
                 
                 if (html5videoPlayer) html5videoPlayer.style.display = 'none';
                 if (html5videoDetailed) html5videoDetailed.style.display = 'none';
+                
+                if (onReady) setTimeout(onReady, 1000);
             }
             
             showError(message) {
@@ -3640,7 +3915,6 @@
             }
             
             restoreState() {
-                // Restore video playback state if needed
                 console.log('Restoring video state');
             }
             
@@ -3815,6 +4089,12 @@
                     videoLoader.destroy();
                 }
                 
+                // Cleanup sync manager
+                if (appState.syncManager) {
+                    appState.syncManager.stop();
+                    appState.syncManager = null;
+                }
+                
                 // Cleanup Agora
                 if (appState.agoraClient) {
                     appState.agoraClient.leave().catch(() => {});
@@ -3880,6 +4160,9 @@
             
             // Setup event listeners with memory tracking
             setupEventListenersWithTracking();
+            
+            // Setup progress update
+            setupProgressUpdate();
             
             // Hide loading screen
             setTimeout(() => {
@@ -3994,8 +4277,134 @@
                 });
                 
                 appState.firebaseRefs.push(participantsRef);
+                
+                // Setup chat listener
+                setupChatListener();
+                
+                // Setup reactions listener
+                setupReactionsListener();
+                
             } catch (error) {
                 console.error("Error joining room:", error);
+            }
+        }
+        
+        function setupChatListener() {
+            if (!appState.firebaseInitialized) return;
+            
+            try {
+                const db = firebase.database();
+                const chatRef = db.ref('rooms/' + appState.roomId + '/chat');
+                
+                const onChatAdded = (snap) => {
+                    const message = snap.val();
+                    if (message && message.userId !== appState.currentUser) {
+                        addChatMessage(message);
+                        updateUnreadChatCount();
+                    }
+                };
+                
+                chatRef.limitToLast(50).on('child_added', onChatAdded);
+                
+                appState.firebaseListeners.push(() => {
+                    chatRef.off('child_added', onChatAdded);
+                });
+                
+                appState.firebaseRefs.push(chatRef);
+            } catch (error) {
+                console.error("Error setting up chat listener:", error);
+            }
+        }
+        
+        function setupReactionsListener() {
+            if (!appState.firebaseInitialized) return;
+            
+            try {
+                const db = firebase.database();
+                const reactionsRef = db.ref('rooms/' + appState.roomId + '/reactions');
+                
+                const onReactionAdded = (snap) => {
+                    const reaction = snap.val();
+                    if (reaction && reaction.userId !== appState.currentUser) {
+                        showReaction(reaction.emoji);
+                    }
+                };
+                
+                reactionsRef.limitToLast(10).on('child_added', onReactionAdded);
+                
+                appState.firebaseListeners.push(() => {
+                    reactionsRef.off('child_added', onReactionAdded);
+                });
+                
+                appState.firebaseRefs.push(reactionsRef);
+            } catch (error) {
+                console.error("Error setting up reactions listener:", error);
+            }
+        }
+        
+        function addChatMessage(message) {
+            const container = document.getElementById('chat-messages');
+            if (!container) return;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            if (message.userId === appState.currentUser) {
+                messageDiv.classList.add('self');
+            }
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = message.username ? message.username.charAt(0).toUpperCase() : '?';
+            
+            const content = document.createElement('div');
+            content.className = 'message-content';
+            
+            const meta = document.createElement('div');
+            meta.className = 'message-meta';
+            
+            const now = new Date(message.timestamp || Date.now());
+            const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            meta.innerHTML = `
+                <span>${message.username || 'Unknown'}</span>
+                <span>${timeStr}</span>
+            `;
+            
+            const body = document.createElement('div');
+            body.textContent = message.text;
+            
+            content.appendChild(body);
+            content.appendChild(meta);
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function showReaction(emoji) {
+            const reactionsBox = document.getElementById('reactions');
+            if (!reactionsBox) return;
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'reaction-bubble';
+            bubble.textContent = emoji;
+            reactionsBox.appendChild(bubble);
+            
+            setTimeout(() => {
+                bubble.remove();
+            }, 3000);
+        }
+        
+        function updateUnreadChatCount() {
+            if (appState.activeWidget === 'chat') return;
+            
+            appState.unreadChatCount++;
+            const chatBadge = document.getElementById('chat-badge');
+            if (chatBadge) {
+                chatBadge.textContent = appState.unreadChatCount;
+                chatBadge.style.display = 'block';
             }
         }
         
@@ -4087,9 +4496,18 @@
                 }
                 
                 if (data.videoLink && data.videoLink.trim() !== '') {
-                    if (videoLoader) {
-                        videoLoader.loadVideo(data.videoLink, appState.isHost);
-                    }
+                    const onVideoReady = () => {
+                        // Initialize sync manager after video is loaded
+                        initializeSyncManager();
+                        
+                        // Update share link
+                        updateShareLink();
+                        
+                        // Update status display
+                        updateStatusDisplay();
+                    };
+                    
+                    videoLoader.loadVideo(data.videoLink, appState.isHost, onVideoReady);
                 } else {
                     if (appState.isHost) {
                         if (overlayBlock) {
@@ -4125,6 +4543,115 @@
                     `;
                 }
             });
+        }
+        
+        function initializeSyncManager() {
+            if (appState.syncManager) {
+                appState.syncManager.stop();
+            }
+            
+            appState.syncManager = new TelepartySyncManager(
+                appState.isHost,
+                appState.roomId,
+                appState.currentUser,
+                3000 // sync interval
+            );
+            
+            appState.syncManager.start();
+            console.log('Sync manager initialized');
+        }
+        
+        function updateShareLink() {
+            const shareLinkInput = document.getElementById('share-link');
+            if (shareLinkInput) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('room', appState.roomId);
+                if (appState.isHost) {
+                    url.searchParams.set('host', 'true');
+                }
+                shareLinkInput.value = url.toString();
+            }
+        }
+        
+        function updateStatusDisplay() {
+            const statusIndicator = document.getElementById('status-indicator');
+            const statusDisplay = document.getElementById('status-display');
+            
+            if (statusIndicator && statusDisplay) {
+                if (appState.isHost) {
+                    statusIndicator.classList.add('host');
+                    statusIndicator.classList.remove('viewer');
+                    statusDisplay.textContent = 'Host';
+                } else {
+                    statusIndicator.classList.add('viewer');
+                    statusIndicator.classList.remove('host');
+                    statusDisplay.textContent = 'Viewer';
+                }
+            }
+        }
+        
+        function setupProgressUpdate() {
+            // Update progress bar and time display periodically
+            const updateInterval = setInterval(() => {
+                updateVideoProgress();
+            }, 500);
+            
+            if (memoryManager) {
+                memoryManager.trackInterval(updateInterval);
+            }
+        }
+        
+        function updateVideoProgress() {
+            const video = getActiveVideoElement();
+            if (!video) return;
+            
+            let currentTime = 0;
+            let duration = 0;
+            let isPlaying = false;
+            
+            if (video.pause && video.play) {
+                currentTime = video.currentTime;
+                duration = video.duration || 0;
+                isPlaying = !video.paused;
+                appState.isPlaying = isPlaying;
+            } else if (window.ytPlayer && typeof window.ytPlayer.getCurrentTime === 'function') {
+                try {
+                    currentTime = window.ytPlayer.getCurrentTime();
+                    duration = window.ytPlayer.getDuration() || 0;
+                    isPlaying = window.ytPlayer.getPlayerState() === 1;
+                    appState.isPlaying = isPlaying;
+                } catch (e) {
+                    return;
+                }
+            }
+            
+            // Update progress bar
+            const progressBar = appState.isDetailedView ? 
+                document.getElementById('detailed-progress-bar') : 
+                document.getElementById('progress-bar');
+            
+            if (progressBar && duration > 0) {
+                const percent = (currentTime / duration) * 100;
+                progressBar.style.width = percent + '%';
+            }
+            
+            // Update time display
+            const timeDisplay = appState.isDetailedView ?
+                document.getElementById('detailed-time-display') :
+                document.getElementById('time-display');
+            
+            if (timeDisplay) {
+                const formatTime = (seconds) => {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = Math.floor(seconds % 60);
+                    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                };
+                
+                timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+            }
+            
+            // Update play/pause button
+            updatePlayPauseButton();
         }
         
         function setupEventListenersWithTracking() {
@@ -4263,7 +4790,15 @@
             }
             
             if (chatWidget) {
-                memoryManager.trackListener(chatWidget, 'click', () => toggleWidget('chat'));
+                memoryManager.trackListener(chatWidget, 'click', () => {
+                    toggleWidget('chat');
+                    // Reset unread count when opening chat
+                    appState.unreadChatCount = 0;
+                    const chatBadge = document.getElementById('chat-badge');
+                    if (chatBadge) {
+                        chatBadge.style.display = 'none';
+                    }
+                });
             }
             
             if (shareWidget) {
@@ -4304,12 +4839,12 @@
             const chatInput = document.getElementById('chat-input');
             
             if (chatSendBtn) {
-                memoryManager.trackListener(chatSendBtn, 'click', () => sendChatMessage(chatInput, document.getElementById('chat-messages')));
+                memoryManager.trackListener(chatSendBtn, 'click', () => sendChatMessage(chatInput));
             }
             
             if (chatInput) {
                 memoryManager.trackListener(chatInput, 'keypress', (e) => {
-                    if (e.key === 'Enter') sendChatMessage(chatInput, document.getElementById('chat-messages'));
+                    if (e.key === 'Enter') sendChatMessage(chatInput);
                 });
             }
             
@@ -4372,27 +4907,53 @@
             }
             
             if (syncBtn) {
-                memoryManager.trackListener(syncBtn, 'click', syncVideo);
+                memoryManager.trackListener(syncBtn, 'click', () => {
+                    if (appState.syncManager) {
+                        appState.syncManager.manualSync();
+                    }
+                });
             }
             
             // Progress bar click to seek
             const progressContainer = document.getElementById('progress-container');
-            if (progressContainer) {
-                memoryManager.trackListener(progressContainer, 'click', (e) => {
-                    const video = getActiveVideoElement();
-                    if (!video || !video.duration) return;
-                    
-                    const rect = progressContainer.getBoundingClientRect();
-                    const percent = (e.clientX - rect.left) / rect.width;
-                    const time = percent * video.duration;
-                    
-                    if (video.currentTime !== undefined) {
-                        video.currentTime = time;
-                    } else if (window.ytPlayer && typeof window.ytPlayer.seekTo === 'function') {
-                        window.ytPlayer.seekTo(time, true);
-                    }
-                });
-            }
+            const detailedProgressContainer = document.getElementById('detailed-progress-container');
+            
+            [progressContainer, detailedProgressContainer].forEach(container => {
+                if (container) {
+                    memoryManager.trackListener(container, 'click', (e) => {
+                        const video = getActiveVideoElement();
+                        if (!video) return;
+                        
+                        let duration = 0;
+                        if (video.pause && video.play) {
+                            duration = video.duration || 0;
+                        } else if (window.ytPlayer && typeof window.ytPlayer.getDuration === 'function') {
+                            try {
+                                duration = window.ytPlayer.getDuration();
+                            } catch (e) {
+                                return;
+                            }
+                        }
+                        
+                        if (duration <= 0) return;
+                        
+                        const rect = container.getBoundingClientRect();
+                        const percent = (e.clientX - rect.left) / rect.width;
+                        const time = percent * duration;
+                        
+                        if (video.currentTime !== undefined) {
+                            video.currentTime = time;
+                        } else if (window.ytPlayer && typeof window.ytPlayer.seekTo === 'function') {
+                            window.ytPlayer.seekTo(time, true);
+                        }
+                        
+                        // If host, broadcast the seek
+                        if (appState.isHost && appState.syncManager) {
+                            appState.syncManager.broadcastState();
+                        }
+                    });
+                }
+            });
             
             // Auto-hide controls
             setupAutoHideControls();
@@ -4495,6 +5056,11 @@
             
             updatePlayPauseButton();
             resetControlsTimeout();
+            
+            // If host, broadcast the state change
+            if (appState.isHost && appState.syncManager) {
+                appState.syncManager.broadcastState();
+            }
         }
         
         function updatePlayPauseButton() {
@@ -4518,6 +5084,11 @@
             }
             
             resetControlsTimeout();
+            
+            // If host, broadcast the seek
+            if (appState.isHost && appState.syncManager) {
+                setTimeout(() => appState.syncManager.broadcastState(), 100);
+            }
         }
         
         function skipForward() {
@@ -4533,6 +5104,11 @@
             }
             
             resetControlsTimeout();
+            
+            // If host, broadcast the seek
+            if (appState.isHost && appState.syncManager) {
+                setTimeout(() => appState.syncManager.broadcastState(), 100);
+            }
         }
         
         function toggleMute() {
@@ -4747,62 +5323,53 @@
         }
         
         function sendReaction(emoji) {
-            const reactionsBox = document.getElementById('reactions');
-            if (!reactionsBox) return;
+            // Show locally
+            showReaction(emoji);
             
-            const bubble = document.createElement('div');
-            bubble.className = 'reaction-bubble';
-            bubble.textContent = emoji;
-            reactionsBox.appendChild(bubble);
-            
-            const timeoutId = setTimeout(() => {
-                bubble.remove();
-            }, 3000);
-            
-            if (memoryManager) {
-                memoryManager.trackTimeout(timeoutId);
+            // Send to Firebase
+            if (appState.firebaseInitialized) {
+                try {
+                    const db = firebase.database();
+                    const reactionsRef = db.ref('rooms/' + appState.roomId + '/reactions');
+                    reactionsRef.push({
+                        emoji: emoji,
+                        userId: appState.currentUser,
+                        username: appState.participants[appState.currentUser]?.username || (appState.isHost ? 'Host' : 'Viewer'),
+                        timestamp: Date.now()
+                    }).catch(console.error);
+                } catch (error) {
+                    console.error("Error sending reaction:", error);
+                }
             }
         }
         
-        function sendChatMessage(input, container) {
-            if (!input || !container) return;
+        function sendChatMessage(input) {
+            if (!input) return;
             
             const text = input.value.trim();
             if (!text) return;
             
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message self';
+            // Add to local chat
+            const message = {
+                text: text,
+                userId: appState.currentUser,
+                username: appState.participants[appState.currentUser]?.username || (appState.isHost ? 'Host' : 'Viewer'),
+                timestamp: Date.now()
+            };
             
-            const avatar = document.createElement('div');
-            avatar.className = 'message-avatar';
-            avatar.textContent = appState.participants[appState.currentUser]?.username?.charAt(0) || (appState.isHost ? 'H' : 'Y');
-            
-            const content = document.createElement('div');
-            content.className = 'message-content';
-            
-            const meta = document.createElement('div');
-            meta.className = 'message-meta';
-            
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            
-            meta.innerHTML = `
-                <span>${appState.participants[appState.currentUser]?.username || (appState.isHost ? 'Host' : 'Viewer')}</span>
-                <span>${timeStr}</span>
-            `;
-            
-            const body = document.createElement('div');
-            body.textContent = text;
-            
-            content.appendChild(body);
-            content.appendChild(meta);
-            
-            messageDiv.appendChild(avatar);
-            messageDiv.appendChild(content);
-            
-            container.appendChild(messageDiv);
-            container.scrollTop = container.scrollHeight;
+            addChatMessage(message);
             input.value = '';
+            
+            // Send to Firebase
+            if (appState.firebaseInitialized) {
+                try {
+                    const db = firebase.database();
+                    const chatRef = db.ref('rooms/' + appState.roomId + '/chat');
+                    chatRef.push(message).catch(console.error);
+                } catch (error) {
+                    console.error("Error sending chat message:", error);
+                }
+            }
         }
         
         function copyToClipboard(input, button) {
@@ -4868,11 +5435,36 @@
                 appState.isPlaying = false;
                 updatePlayPauseButton();
             }
+            
+            // Start discussion timer
+            startDiscussionTimer();
         }
         
         function endDiscussion() {
             appState.discussionActive = false;
             document.getElementById('discussion-modal').classList.remove('active');
+        }
+        
+        function startDiscussionTimer() {
+            let seconds = 0;
+            const timerElement = document.getElementById('discussion-timer');
+            if (!timerElement) return;
+            
+            const timerInterval = setInterval(() => {
+                if (!appState.discussionActive) {
+                    clearInterval(timerInterval);
+                    return;
+                }
+                
+                seconds++;
+                const minutes = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+            
+            if (memoryManager) {
+                memoryManager.trackInterval(timerInterval);
+            }
         }
         
         function showParticipantsModal() {
@@ -4923,11 +5515,6 @@
             } else if (window.ytPlayer && typeof window.ytPlayer.setPlaybackRate === 'function') {
                 window.ytPlayer.setPlaybackRate(speed);
             }
-        }
-        
-        function syncVideo() {
-            console.log('Sync video requested');
-            // Implement sync logic here
         }
         
         function startTalking() {

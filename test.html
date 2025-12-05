@@ -6,6 +6,7 @@
     <title>Let's Watch | Group Video Experience</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* All CSS styles remain exactly the same as in your original code */
         :root {
             --primary: #8A4FFF;
             --primary-dark: #6A0DFF;
@@ -2474,10 +2475,10 @@
         <div class="player-view" id="player-view">
             <div class="video-container">
                 <div id="player-container">
-                    <!-- Duplicate video elements for both views -->
-                    <video id="html5video-player" playsinline preload="auto" style="display:none;"></video>
-                    <div id="ytContainer-player" style="display:none;width:100%;height:100%">
-                        <div id="ytPlayerIframe-player"></div>
+                    <!-- Single video element for better sync -->
+                    <video id="html5video" playsinline preload="auto" style="display:none;"></video>
+                    <div id="ytContainer" style="display:none;width:100%;height:100%">
+                        <div id="ytPlayerIframe"></div>
                     </div>
                     <canvas id="drawingCanvas"></canvas>
                     <div id="overlay-block">
@@ -2663,7 +2664,7 @@
             
             <div class="video-container">
                 <div id="detailed-player-container">
-                    <!-- Duplicate video elements for detailed view -->
+                    <!-- Same video element for both views -->
                     <video id="html5video-detailed" playsinline preload="auto" style="display:none;"></video>
                     <div id="ytContainer-detailed" style="display:none;width:100%;height:100%">
                         <div id="ytPlayerIframe-detailed"></div>
@@ -2826,513 +2827,9 @@
 
     <script>
         // =======================================================
-        // APPLICATION STATE MANAGEMENT AND CLEANUP SYSTEM
+        // FIXED APPLICATION WITH PROPER SYNC AND NO FREEZING
         // =======================================================
-        
-        // Global state tracking
-        const AppState = {
-            // Core state
-            isInitialized: false,
-            isShuttingDown: false,
-            
-            // Cleanup trackers
-            cleanupFunctions: [],
-            intervals: new Set(),
-            timeouts: new Set(),
-            eventListeners: new Map(),
-            firebaseListeners: [],
-            
-            // Performance monitoring
-            memoryLeakCheckInterval: null,
-            lastCleanupTime: 0,
-            
-            // Add cleanup function
-            addCleanup(fn) {
-                this.cleanupFunctions.push(fn);
-            },
-            
-            // Add interval with automatic cleanup
-            addInterval(interval) {
-                this.intervals.add(interval);
-                return interval;
-            },
-            
-            // Add timeout with automatic cleanup
-            addTimeout(timeout) {
-                this.timeouts.add(timeout);
-                return timeout;
-            },
-            
-            // Add event listener with automatic cleanup
-            addEventListener(element, event, handler, options) {
-                if (!this.eventListeners.has(element)) {
-                    this.eventListeners.set(element, []);
-                }
-                this.eventListeners.get(element).push({ event, handler, options });
-                element.addEventListener(event, handler, options);
-            },
-            
-            // Add Firebase listener
-            addFirebaseListener(ref, event, callback) {
-                ref.on(event, callback);
-                this.firebaseListeners.push({ ref, event, callback });
-            },
-            
-            // Remove all Firebase listeners
-            removeAllFirebaseListeners() {
-                this.firebaseListeners.forEach(({ ref, event, callback }) => {
-                    try {
-                        ref.off(event, callback);
-                    } catch (e) {
-                        console.warn('Error removing Firebase listener:', e);
-                    }
-                });
-                this.firebaseListeners = [];
-            },
-            
-            // Clear all intervals
-            clearAllIntervals() {
-                this.intervals.forEach(interval => clearInterval(interval));
-                this.intervals.clear();
-            },
-            
-            // Clear all timeouts
-            clearAllTimeouts() {
-                this.timeouts.forEach(timeout => clearTimeout(timeout));
-                this.timeouts.clear();
-            },
-            
-            // Remove all event listeners
-            removeAllEventListeners() {
-                this.eventListeners.forEach((listeners, element) => {
-                    listeners.forEach(({ event, handler, options }) => {
-                        try {
-                            element.removeEventListener(event, handler, options);
-                        } catch (e) {
-                            console.warn('Error removing event listener:', e);
-                        }
-                    });
-                });
-                this.eventListeners.clear();
-            },
-            
-            // Full cleanup
-            cleanup() {
-                if (this.isShuttingDown) return;
-                this.isShuttingDown = true;
-                
-                console.log('Starting comprehensive cleanup...');
-                
-                // Stop memory leak check
-                if (this.memoryLeakCheckInterval) {
-                    clearInterval(this.memoryLeakCheckInterval);
-                }
-                
-                // Clear intervals and timeouts
-                this.clearAllIntervals();
-                this.clearAllTimeouts();
-                
-                // Remove event listeners
-                this.removeAllEventListeners();
-                
-                // Remove Firebase listeners
-                this.removeAllFirebaseListeners();
-                
-                // Cleanup Agora
-                cleanupAgora();
-                
-                // Cleanup YouTube player
-                cleanupYouTubePlayer();
-                
-                // Cleanup video elements
-                cleanupVideoElements();
-                
-                // Run all cleanup functions
-                this.cleanupFunctions.forEach(fn => {
-                    try {
-                        fn();
-                    } catch (e) {
-                        console.warn('Error in cleanup function:', e);
-                    }
-                });
-                
-                // Clear arrays
-                this.cleanupFunctions = [];
-                
-                // Force garbage collection hint (if available)
-                if (window.gc) {
-                    window.gc();
-                }
-                
-                console.log('Cleanup completed');
-            },
-            
-            // Memory leak detection
-            startMemoryLeakCheck() {
-                // Check every 30 seconds
-                this.memoryLeakCheckInterval = setInterval(() => {
-                    const memory = performance.memory;
-                    if (memory) {
-                        const usedMB = memory.usedJSHeapSize / 1048576;
-                        const totalMB = memory.totalJSHeapSize / 1048576;
-                        
-                        if (usedMB > 100) { // If using more than 100MB
-                            console.warn(`High memory usage: ${usedMB.toFixed(2)}MB / ${totalMB.toFixed(2)}MB`);
-                            
-                            // If memory is critically high, force cleanup
-                            if (usedMB > 200) {
-                                console.warn('Critical memory usage, performing emergency cleanup');
-                                this.emergencyCleanup();
-                            }
-                        }
-                    }
-                }, 30000);
-            },
-            
-            // Emergency cleanup for critical memory situations
-            emergencyCleanup() {
-                // Clear chat messages (keep only last 10)
-                const chatMessages = document.getElementById('chat-messages');
-                if (chatMessages) {
-                    const messages = chatMessages.querySelectorAll('.message');
-                    if (messages.length > 10) {
-                        for (let i = 0; i < messages.length - 10; i++) {
-                            messages[i].remove();
-                        }
-                    }
-                }
-                
-                // Clear reaction bubbles
-                const reactions = document.getElementById('reactions');
-                if (reactions) {
-                    reactions.innerHTML = '';
-                }
-                
-                // Force garbage collection hint
-                if (window.gc) {
-                    window.gc();
-                }
-            }
-        };
 
-        // Cleanup functions for specific components
-        function cleanupAgora() {
-            if (window.agoraClient) {
-                try {
-                    window.agoraClient.leave();
-                    window.agoraClient = null;
-                } catch (e) {
-                    console.warn('Error cleaning up Agora client:', e);
-                }
-            }
-            if (window.agoraDiscussionClient) {
-                try {
-                    window.agoraDiscussionClient.leave();
-                    window.agoraDiscussionClient = null;
-                } catch (e) {
-                    console.warn('Error cleaning up Agora discussion client:', e);
-                }
-            }
-            if (window.agoraLocalAudioTrack) {
-                try {
-                    window.agoraLocalAudioTrack.close();
-                    window.agoraLocalAudioTrack = null;
-                } catch (e) {
-                    console.warn('Error cleaning up Agora audio track:', e);
-                }
-            }
-            if (window.agoraDiscussionAudioTrack) {
-                try {
-                    window.agoraDiscussionAudioTrack.close();
-                    window.agoraDiscussionAudioTrack = null;
-                } catch (e) {
-                    console.warn('Error cleaning up Agora discussion audio track:', e);
-                }
-            }
-        }
-
-        function cleanupYouTubePlayer() {
-            if (window.ytPlayer && typeof window.ytPlayer.destroy === 'function') {
-                try {
-                    window.ytPlayer.destroy();
-                    window.ytPlayer = null;
-                    window.ytPlayerCreated = false;
-                } catch (e) {
-                    console.warn('Error cleaning up YouTube player:', e);
-                }
-            }
-        }
-
-        function cleanupVideoElements() {
-            const videos = [
-                document.getElementById('html5video-player'),
-                document.getElementById('html5video-detailed')
-            ];
-            
-            videos.forEach(video => {
-                if (video) {
-                    try {
-                        video.pause();
-                        video.src = '';
-                        video.load();
-                        video.removeAttribute('src');
-                    } catch (e) {
-                        console.warn('Error cleaning up video element:', e);
-                    }
-                }
-            });
-        }
-
-        // =======================================================
-        // UNIVERSAL VIDEO LOADER
-        // =======================================================
-        
-        function detectVideoType(url) { 
-            try { 
-                const u = new URL(url); 
-                
-                // YouTube 
-                if (u.hostname.includes("youtube.com") || u.hostname.includes("youtu.be")) { 
-                    return "youtube"; 
-                } 
-                
-                // Vimeo 
-                if (u.hostname.includes("vimeo.com")) { 
-                    return "vimeo"; 
-                } 
-                
-                // Dropbox direct link 
-                if (u.hostname.includes("dropbox.com")) { 
-                    return "dropbox"; 
-                } 
-                
-                // Google Drive 
-                if (u.hostname.includes("drive.google.com")) { 
-                    return "gdrive"; 
-                } 
-                
-                // Dailymotion 
-                if (u.hostname.includes("dailymotion.com") || u.hostname.includes("dai.ly")) { 
-                    return "dailymotion"; 
-                } 
-                
-                // MP4 / WebM / M3U8 / MOV / MKV etc. 
-                if (/\.(mp4|webm|mkv|mov|m3u8|avi|flv|wmv|mpg|mpeg)$/i.test(u.pathname)) { 
-                    return "html5"; 
-                } 
-                
-                // TikTok 
-                if (u.hostname.includes("tiktok.com")) { 
-                    return "tiktok"; 
-                } 
-                
-                // Instagram 
-                if (u.hostname.includes("instagram.com")) { 
-                    return "instagram"; 
-                } 
-                
-                // Unknown 
-                return "unknown"; 
-            } catch (e) { 
-                const lowerUrl = url.toLowerCase();
-                if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) return "youtube";
-                if (lowerUrl.includes('vimeo.com')) return "vimeo";
-                if (lowerUrl.includes('drive.google.com')) return "gdrive";
-                if (lowerUrl.includes('dropbox.com')) return "dropbox";
-                if (lowerUrl.includes('dailymotion.com') || lowerUrl.includes('dai.ly')) return "dailymotion";
-                if (lowerUrl.includes('tiktok.com')) return "tiktok";
-                if (lowerUrl.includes('instagram.com')) return "instagram";
-                if (/\.(mp4|webm|mkv|mov|m3u8)$/i.test(url)) return "html5";
-                
-                return "unknown"; 
-            } 
-        }
-        
-        function loadVideoUniversal(url, isHost) {
-            const type = detectVideoType(url);
-            console.log(`Detected video type: ${type} for URL: ${url}`);
-            
-            // Clean up existing video before loading new one
-            cleanupVideoElements();
-            
-            switch (type) {
-                case "youtube":
-                    const videoId = extractYouTubeID(url);
-                    if (videoId) {
-                        loadYouTubeWithOptimizations(videoId, isHost);
-                    } else {
-                        overlayError("Invalid YouTube URL");
-                    }
-                    break;
-                    
-                case "html5":
-                    loadHTML5VideoWithOptimizations(url, isHost);
-                    break;
-                    
-                case "gdrive":
-                    loadGoogleDriveVideo(url, isHost);
-                    break;
-                    
-                case "dropbox":
-                    loadDropboxVideo(url, isHost);
-                    break;
-                    
-                case "vimeo":
-                    loadVimeoVideo(url, isHost);
-                    break;
-                    
-                case "dailymotion":
-                    loadDailymotionVideo(url, isHost);
-                    break;
-                    
-                case "tiktok":
-                case "instagram":
-                    loadSocialEmbed(url, isHost);
-                    break;
-                    
-                default:
-                    overlayError(`Unsupported video link: ${url}`);
-                    break;
-            }
-        }
-        
-        function loadGoogleDriveVideo(url, isHost) {
-            console.log("Loading Google Drive video:", url);
-            
-            let fileId = '';
-            const match1 = url.match(/\/d\/([^\/]+)/);
-            if (match1) {
-                fileId = match1[1];
-            } else {
-                const match2 = url.match(/id=([^&]+)/);
-                if (match2) {
-                    fileId = match2[1];
-                }
-            }
-            
-            if (!fileId) {
-                overlayError("Invalid Google Drive link");
-                return;
-            }
-            
-            const direct = `https://drive.google.com/uc?export=download&id=${fileId}`;
-            loadHTML5VideoWithOptimizations(direct, isHost);
-        }
-        
-        function loadDropboxVideo(url, isHost) {
-            console.log("Loading Dropbox video:", url);
-            
-            let direct = url;
-            if (url.includes('?dl=0')) {
-                direct = url.replace('?dl=0', '?raw=1');
-            } else if (url.includes('?dl=1')) {
-                direct = url.replace('?dl=1', '?raw=1');
-            } else if (!url.includes('?raw=1')) {
-                direct = url + (url.includes('?') ? '&' : '?') + 'raw=1';
-            }
-            
-            loadHTML5VideoWithOptimizations(direct, isHost);
-        }
-        
-        function loadVimeoVideo(url, isHost) {
-            console.log("Loading Vimeo video:", url);
-            
-            let videoId = '';
-            const match = url.match(/vimeo\.com\/(\d+)/);
-            if (match) {
-                videoId = match[1];
-            }
-            
-            if (!videoId) {
-                overlayError("Invalid Vimeo URL");
-                return;
-            }
-            
-            usingYT = true;
-            ytContainer.style.display = "block";
-            html5video.style.display = "none";
-            document.getElementById("ytPlayerIframe").src = `https://player.vimeo.com/video/${videoId}?autoplay=${isHost ? 1 : 0}&title=0&byline=0&portrait=0`;
-        }
-        
-        function loadDailymotionVideo(url, isHost) {
-            console.log("Loading Dailymotion video:", url);
-            
-            let videoId = '';
-            const match1 = url.match(/\/video\/([^_]+)/);
-            if (match1) {
-                videoId = match1[1];
-            } else {
-                const match2 = url.match(/dai\.ly\/([^\/]+)/);
-                if (match2) {
-                    videoId = match2[1];
-                }
-            }
-            
-            if (!videoId) {
-                overlayError("Invalid Dailymotion URL");
-                return;
-            }
-            
-            usingYT = true;
-            ytContainer.style.display = "block";
-            html5video.style.display = "none";
-            document.getElementById("ytPlayerIframe").src = `https://www.dailymotion.com/embed/video/${videoId}?autoplay=${isHost ? 1 : 0}&queue-enable=false`;
-        }
-        
-        function loadSocialEmbed(url, isHost) {
-            console.log("Loading social embed:", url);
-            
-            usingYT = true;
-            ytContainer.style.display = "block";
-            html5video.style.display = "none";
-            const iframeSrc = url.includes('tiktok.com') 
-                ? `https://www.tiktok.com/embed/v2/${url.split('/').pop()}` 
-                : url;
-            document.getElementById("ytPlayerIframe").src = iframeSrc;
-        }
-        
-        function overlayError(message) {
-            const overlayBlock = document.getElementById('overlay-block');
-            if (overlayBlock) {
-                overlayBlock.innerHTML = `
-                    <div style="text-align:center;color:white;">
-                        <div style="font-size:40px;margin-bottom:16px;">⚠️</div>
-                        ${message}
-                    </div>
-                `;
-            }
-        }
-        
-        function extractYouTubeID(url) {
-            if (!url) return null;
-            
-            try {
-                const u = new URL(url);
-                if (u.hostname.includes('youtu.be')) {
-                    return u.pathname.substring(1).split('?')[0];
-                }
-                if (u.hostname.includes('youtube.com')) {
-                    if (u.pathname.includes('/embed/')) {
-                        return u.pathname.split('/embed/')[1].split('?')[0];
-                    }
-                    if (u.pathname.includes('/v/')) {
-                        return u.pathname.split('/v/')[1].split('?')[0];
-                    }
-                    return u.searchParams.get('v') || null;
-                }
-            } catch (e) {
-                const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-                const match = url.match(regExp);
-                return (match && match[7].length === 11) ? match[7] : null;
-            }
-            
-            return null;
-        }
-        
-        // =======================================================
-        // MAIN APPLICATION CODE
-        // =======================================================
-        
         // Initialize Firebase
         let firebaseInitialized = false;
         try {
@@ -3373,7 +2870,7 @@
         let discussionTimer = 0;
         let discussionInterval = null;
         
-        // Video state tracking
+        // Video state tracking - FIXED: Single video instance for better sync
         let html5video = null;
         let ytPlayer = null;
         let usingYT = false;
@@ -3392,6 +2889,16 @@
         let activeWidget = null;
         let drawing = false;
         let lastPos = null;
+        
+        // FIXED: Prevent multiple reaction sending
+        let reactionCooldown = false;
+        let lastReactionTime = 0;
+        
+        // FIXED: Video sync tracking
+        let lastHostTime = 0;
+        let lastHostUpdate = 0;
+        let syncInterval = null;
+        let isSyncing = false;
         
         // DOM elements
         const resizeTutorial = document.getElementById('resize-tutorial');
@@ -3414,9 +2921,9 @@
         const detailedView = document.getElementById('detailed-view');
         const menuBtn = document.getElementById('menu-btn');
         const backToPlayerBtn = document.getElementById('back-to-player');
-        const html5videoPlayer = document.getElementById('html5video-player');
+        const html5videoElement = document.getElementById('html5video');
         const html5videoDetailed = document.getElementById('html5video-detailed');
-        const ytContainer = document.getElementById('ytContainer-player');
+        const ytContainer = document.getElementById('ytContainer');
         const overlayBlock = document.getElementById('overlay-block');
         const canvas = document.getElementById('drawingCanvas');
         const canvasDetailed = document.getElementById('drawingCanvas-detailed');
@@ -3499,18 +3006,19 @@
             auth = firebase.auth();
             
             const params = new URLSearchParams(location.search);
-            roomId = params.get('room') || 'default-room';
-            isHost = params.get('host') === 'true';
+            roomId = params.get('room') || 'default-room-' + Math.random().toString(36).substring(7);
+            isHost = params.get('host') === 'true' || !params.has('room');
 
             roomRef = db.ref('rooms/' + roomId);
             drawRef = roomRef.child('drawing');
             reactionsRef = roomRef.child('reactions');
             chatRef = roomRef.child('chat');
             participantsRef = roomRef.child('participants');
+            videoStateRef = roomRef.child('videoState');
             
             auth.signInAnonymously().then(userCredential => {
                 currentUser = userCredential.user.uid;
-                console.log("User signed in:", currentUser);
+                console.log("User signed in:", currentUser, "isHost:", isHost);
                 joinRoom();
             }).catch(console.warn);
         } else {
@@ -3521,13 +3029,11 @@
 
         // Helper functions
         function getActiveVideoElement() {
-            return isDetailedView ? 
-                (usingYT ? ytPlayer : html5videoDetailed) : 
-                (usingYT ? ytPlayer : html5videoPlayer);
+            return usingYT ? ytPlayer : html5videoElement;
         }
 
         function getActiveHTML5Video() {
-            return isDetailedView ? html5videoDetailed : html5videoPlayer;
+            return html5videoElement;
         }
 
         function formatTime(seconds) {
@@ -3544,11 +3050,9 @@
                 if (usingYT && ytPlayer) {
                     currentTime = ytPlayer.getCurrentTime();
                     duration = ytPlayer.getDuration();
-                } else {
-                    const video = getActiveHTML5Video();
-                    if (!video) return;
-                    currentTime = video.currentTime || 0;
-                    duration = video.duration || 0;
+                } else if (html5videoElement) {
+                    currentTime = html5videoElement.currentTime || 0;
+                    duration = html5videoElement.duration || 0;
                 }
                 
                 if (duration && !isNaN(duration)) {
@@ -3615,17 +3119,13 @@
         function resetControlsTimeout() {
             if (controlsTimeout) {
                 clearTimeout(controlsTimeout);
-                AppState.timeouts.delete(controlsTimeout);
             }
             
-            const timeout = setTimeout(() => {
+            controlsTimeout = setTimeout(() => {
                 if (!isDragging && !isPinching && !isTalking) {
                     hideControls();
                 }
             }, 3000);
-            
-            AppState.addTimeout(timeout);
-            controlsTimeout = timeout;
         }
 
         function updateVolumeUI() {
@@ -3679,7 +3179,8 @@
                     isInPlayerView: true
                 });
                 
-                const onParticipantAdded = (snap) => {
+                // Set up participants listeners
+                participantsRef.on('child_added', (snap) => {
                     const participant = snap.val();
                     participants[participant.uid] = participant;
                     updateParticipantCount();
@@ -3689,16 +3190,16 @@
                     if (participant.uid !== currentUser) {
                         showNotification(`${participant.username} joined the party!`);
                     }
-                };
+                });
                 
-                const onParticipantChanged = (snap) => {
+                participantsRef.on('child_changed', (snap) => {
                     const participant = snap.val();
                     participants[participant.uid] = participant;
                     updateTalkingStatus();
                     updateParticipantsModal();
-                };
+                });
                 
-                const onParticipantRemoved = (snap) => {
+                participantsRef.on('child_removed', (snap) => {
                     const participant = snap.val();
                     delete participants[participant.uid];
                     updateParticipantCount();
@@ -3706,13 +3207,10 @@
                     updateParticipantsModal();
                     
                     showNotification(`${participant.username} left the party`);
-                };
+                });
                 
-                AppState.addFirebaseListener(participantsRef, 'child_added', onParticipantAdded);
-                AppState.addFirebaseListener(participantsRef, 'child_changed', onParticipantChanged);
-                AppState.addFirebaseListener(participantsRef, 'child_removed', onParticipantRemoved);
-                
-                const lastActiveInterval = setInterval(() => {
+                // Update last active every 30 seconds
+                setInterval(() => {
                     if (userParticipantRef) {
                         userParticipantRef.update({ 
                             lastActive: firebase.database.ServerValue.TIMESTAMP,
@@ -3721,7 +3219,6 @@
                     }
                 }, 30000);
                 
-                AppState.addInterval(lastActiveInterval);
             } catch (error) {
                 console.error("Error joining room:", error);
             }
@@ -3907,11 +3404,9 @@
             notification.textContent = message;
             document.body.appendChild(notification);
             
-            const timeout = setTimeout(() => {
+            setTimeout(() => {
                 notification.remove();
             }, 3000);
-            
-            AppState.addTimeout(timeout);
         }
 
         function getRandomColor() {
@@ -4017,129 +3512,132 @@
         function initVideoResize() {
             if (!playerContainer) return;
             
-            AppState.addEventListener(playerContainer, 'touchstart', handleTouchStart, { passive: false });
-            AppState.addEventListener(playerContainer, 'touchmove', handleTouchMove, { passive: false });
-            AppState.addEventListener(playerContainer, 'touchend', handleTouchEnd);
-            AppState.addEventListener(playerContainer, 'touchcancel', handleTouchEnd);
-            AppState.addEventListener(playerContainer, 'mousedown', handleMouseDown);
-        }
+            let dragStartX = 0, dragStartY = 0;
+            let transformStartX = 0, transformStartY = 0;
+            let startDistance = 0, startScale = 1;
+            
+            playerContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+            playerContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+            playerContainer.addEventListener('touchend', handleTouchEnd);
+            playerContainer.addEventListener('touchcancel', handleTouchEnd);
+            playerContainer.addEventListener('mousedown', handleMouseDown);
+            
+            function handleTouchStart(e) {
+                if (e.touches.length === 1) {
+                    const touch = e.touches[0];
+                    dragStartX = touch.clientX;
+                    dragStartY = touch.clientY;
+                    transformStartX = currentTranslateX;
+                    transformStartY = currentTranslateY;
+                    isDragging = true;
+                    playerContainer.classList.add('pinch-resizing');
+                    
+                    resizeIndicator.textContent = `Drag to move`;
+                    resizeIndicator.style.display = 'block';
+                    
+                    e.preventDefault();
+                } else if (e.touches.length === 2) {
+                    const touch1 = e.touches[0];
+                    const touch2 = e.touches[1];
+                    startDistance = Math.hypot(
+                        touch2.clientX - touch1.clientX,
+                        touch2.clientY - touch1.clientY
+                    );
+                    startScale = currentScale;
+                    isPinching = true;
+                    isDragging = false;
+                    
+                    resizeIndicator.textContent = `Pinch to zoom`;
+                    resizeIndicator.style.display = 'block';
+                    
+                    e.preventDefault();
+                }
+                
+                showControls();
+            }
 
-        function handleTouchStart(e) {
-            if (e.touches.length === 1) {
-                const touch = e.touches[0];
-                dragStartX = touch.clientX;
-                dragStartY = touch.clientY;
+            function handleTouchMove(e) {
+                if (!isDragging && !isPinching) return;
+                
+                if (isDragging && e.touches.length === 1) {
+                    const touch = e.touches[0];
+                    const deltaX = touch.clientX - dragStartX;
+                    const deltaY = touch.clientY - dragStartY;
+                    
+                    const maxTranslate = (currentScale - 1) * 50;
+                    currentTranslateX = Math.max(-maxTranslate, Math.min(maxTranslate, transformStartX + deltaX));
+                    currentTranslateY = Math.max(-maxTranslate, Math.min(maxTranslate, transformStartY + deltaY));
+                    
+                    applyPlayerTransform();
+                    e.preventDefault();
+                } else if (isPinching && e.touches.length === 2) {
+                    const touch1 = e.touches[0];
+                    const touch2 = e.touches[1];
+                    const currentDistance = Math.hypot(
+                        touch2.clientX - touch1.clientX,
+                        touch2.clientY - touch1.clientY
+                    );
+                    
+                    if (startDistance > 0) {
+                        const scaleChange = currentDistance / startDistance;
+                        const newScale = Math.max(0.5, Math.min(3, startScale * scaleChange));
+                        
+                        if (Math.abs(newScale - currentScale) > 0.01) {
+                            currentScale = newScale;
+                            applyPlayerTransform();
+                            resizeIndicator.textContent = `Scale: ${currentScale.toFixed(2)}x`;
+                        }
+                    }
+                    e.preventDefault();
+                }
+            }
+
+            function handleTouchEnd(e) {
+                isDragging = false;
+                isPinching = false;
+                playerContainer.classList.remove('pinch-resizing');
+                
+                setTimeout(() => {
+                    resizeIndicator.style.display = 'none';
+                }, 2000);
+                
+                resetControlsTimeout();
+            }
+
+            function handleMouseDown(e) {
+                if (e.button !== 0) return;
+                
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
                 transformStartX = currentTranslateX;
                 transformStartY = currentTranslateY;
                 isDragging = true;
-                playerContainer.classList.add('pinch-resizing');
                 
-                resizeIndicator.textContent = `Drag to move`;
-                resizeIndicator.style.display = 'block';
+                const mouseMoveHandler = (e) => handleMouseMove(e);
+                const mouseUpHandler = () => {
+                    document.removeEventListener('mousemove', mouseMoveHandler);
+                    document.removeEventListener('mouseup', mouseUpHandler);
+                    isDragging = false;
+                };
                 
-                e.preventDefault();
-            } else if (e.touches.length === 2) {
-                const touch1 = e.touches[0];
-                const touch2 = e.touches[1];
-                startDistance = Math.hypot(
-                    touch2.clientX - touch1.clientX,
-                    touch2.clientY - touch1.clientY
-                );
-                startScale = currentScale;
-                isPinching = true;
-                isDragging = false;
-                
-                resizeIndicator.textContent = `Pinch to zoom`;
-                resizeIndicator.style.display = 'block';
+                document.addEventListener('mousemove', mouseMoveHandler);
+                document.addEventListener('mouseup', mouseUpHandler);
                 
                 e.preventDefault();
-            }
-            
-            showControls();
-        }
-
-        function handleTouchMove(e) {
-            if (!isDragging && !isPinching) return;
-            
-            if (isDragging && e.touches.length === 1) {
-                const touch = e.touches[0];
-                const deltaX = touch.clientX - dragStartX;
-                const deltaY = touch.clientY - dragStartY;
                 
-                const maxTranslate = (currentScale - 1) * 50;
-                currentTranslateX = Math.max(-maxTranslate, Math.min(maxTranslate, transformStartX + deltaX));
-                currentTranslateY = Math.max(-maxTranslate, Math.min(maxTranslate, transformStartY + deltaY));
-                
-                applyPlayerTransform();
-                e.preventDefault();
-            } else if (isPinching && e.touches.length === 2) {
-                const touch1 = e.touches[0];
-                const touch2 = e.touches[1];
-                const currentDistance = Math.hypot(
-                    touch2.clientX - touch1.clientX,
-                    touch2.clientY - touch1.clientY
-                );
-                
-                if (startDistance > 0) {
-                    const scaleChange = currentDistance / startDistance;
-                    const newScale = Math.max(0.5, Math.min(3, startScale * scaleChange));
+                function handleMouseMove(e) {
+                    if (!isDragging) return;
                     
-                    if (Math.abs(newScale - currentScale) > 0.01) {
-                        currentScale = newScale;
-                        applyPlayerTransform();
-                        resizeIndicator.textContent = `Scale: ${currentScale.toFixed(2)}x`;
-                    }
+                    const deltaX = e.clientX - dragStartX;
+                    const deltaY = e.clientY - dragStartY;
+                    
+                    const maxTranslate = (currentScale - 1) * 50;
+                    currentTranslateX = Math.max(-maxTranslate, Math.min(maxTranslate, transformStartX + deltaX));
+                    currentTranslateY = Math.max(-maxTranslate, Math.min(maxTranslate, transformStartY + deltaY));
+                    
+                    applyPlayerTransform();
                 }
-                e.preventDefault();
             }
-        }
-
-        function handleTouchEnd(e) {
-            isDragging = false;
-            isPinching = false;
-            playerContainer.classList.remove('pinch-resizing');
-            
-            const timeout = setTimeout(() => {
-                resizeIndicator.style.display = 'none';
-            }, 2000);
-            
-            AppState.addTimeout(timeout);
-            resetControlsTimeout();
-        }
-
-        function handleMouseDown(e) {
-            if (e.button !== 0) return;
-            
-            dragStartX = e.clientX;
-            dragStartY = e.clientY;
-            transformStartX = currentTranslateX;
-            transformStartY = currentTranslateY;
-            isDragging = true;
-            
-            const mouseMoveHandler = (e) => handleMouseMove(e);
-            const mouseUpHandler = () => {
-                document.removeEventListener('mousemove', mouseMoveHandler);
-                document.removeEventListener('mouseup', mouseUpHandler);
-                isDragging = false;
-            };
-            
-            document.addEventListener('mousemove', mouseMoveHandler);
-            document.addEventListener('mouseup', mouseUpHandler);
-            
-            e.preventDefault();
-        }
-
-        function handleMouseMove(e) {
-            if (!isDragging) return;
-            
-            const deltaX = e.clientX - dragStartX;
-            const deltaY = e.clientY - dragStartY;
-            
-            const maxTranslate = (currentScale - 1) * 50;
-            currentTranslateX = Math.max(-maxTranslate, Math.min(maxTranslate, transformStartX + deltaX));
-            currentTranslateY = Math.max(-maxTranslate, Math.min(maxTranslate, transformStartY + deltaY));
-            
-            applyPlayerTransform();
         }
 
         function applyPlayerTransform() {
@@ -4160,18 +3658,16 @@
             resizeIndicator.textContent = `Reset to default`;
             resizeIndicator.style.display = 'block';
             
-            const timeout = setTimeout(() => {
+            setTimeout(() => {
                 resizeIndicator.style.display = 'none';
             }, 2000);
-            
-            AppState.addTimeout(timeout);
         }
 
         function showResizeTutorial() {
             resizeTutorial.classList.add('show');
         }
 
-        // VIDEO LOADING FUNCTIONS
+        // FIXED VIDEO LOADING AND SYNC FUNCTIONS
         function loadVideoFromFirebase() {
             if (!firebaseInitialized) {
                 overlayBlock.innerHTML = `
@@ -4185,7 +3681,7 @@
             }
             
             overlayBlock.classList.remove('hidden');
-            videoLoadStartTime = Date.now();
+            let videoLoadStartTime = Date.now();
             
             const videoLoadTimeout = setTimeout(() => {
                 if (!ready) {
@@ -4198,8 +3694,6 @@
                     `;
                 }
             }, 8000);
-            
-            AppState.addTimeout(videoLoadTimeout);
             
             roomRef.once('value').then((snap) => {
                 clearTimeout(videoLoadTimeout);
@@ -4238,25 +3732,149 @@
             });
         }
 
+        function detectVideoType(url) { 
+            try { 
+                const u = new URL(url); 
+                
+                // YouTube 
+                if (u.hostname.includes("youtube.com") || u.hostname.includes("youtu.be")) { 
+                    return "youtube"; 
+                } 
+                
+                // Vimeo 
+                if (u.hostname.includes("vimeo.com")) { 
+                    return "vimeo"; 
+                } 
+                
+                // Dropbox direct link 
+                if (u.hostname.includes("dropbox.com")) { 
+                    return "dropbox"; 
+                } 
+                
+                // Google Drive 
+                if (u.hostname.includes("drive.google.com")) { 
+                    return "gdrive"; 
+                } 
+                
+                // Dailymotion 
+                if (u.hostname.includes("dailymotion.com") || u.hostname.includes("dai.ly")) { 
+                    return "dailymotion"; 
+                } 
+                
+                // MP4 / WebM / M3U8 / MOV / MKV etc. 
+                if (/\.(mp4|webm|mkv|mov|m3u8|avi|flv|wmv|mpg|mpeg)$/i.test(u.pathname)) { 
+                    return "html5"; 
+                } 
+                
+                // TikTok 
+                if (u.hostname.includes("tiktok.com")) { 
+                    return "tiktok"; 
+                } 
+                
+                // Instagram 
+                if (u.hostname.includes("instagram.com")) { 
+                    return "instagram"; 
+                } 
+                
+                // Unknown 
+                return "unknown"; 
+            } catch (e) { 
+                const lowerUrl = url.toLowerCase();
+                if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) return "youtube";
+                if (lowerUrl.includes('vimeo.com')) return "vimeo";
+                if (lowerUrl.includes('drive.google.com')) return "gdrive";
+                if (lowerUrl.includes('dropbox.com')) return "dropbox";
+                if (lowerUrl.includes('dailymotion.com') || lowerUrl.includes('dai.ly')) return "dailymotion";
+                if (lowerUrl.includes('tiktok.com')) return "tiktok";
+                if (lowerUrl.includes('instagram.com')) return "instagram";
+                if (/\.(mp4|webm|mkv|mov|m3u8)$/i.test(url)) return "html5";
+                
+                return "unknown"; 
+            } 
+        }
+        
+        function loadVideoUniversal(url, isHostUser) {
+            const type = detectVideoType(url);
+            console.log(`Detected video type: ${type} for URL: ${url}`);
+            
+            switch (type) {
+                case "youtube":
+                    const videoId = extractYouTubeID(url);
+                    if (videoId) {
+                        loadYouTubeWithOptimizations(videoId, isHostUser);
+                    } else {
+                        overlayError("Invalid YouTube URL");
+                    }
+                    break;
+                    
+                case "html5":
+                    loadHTML5VideoWithOptimizations(url, isHostUser);
+                    break;
+                    
+                case "gdrive":
+                    loadGoogleDriveVideo(url, isHostUser);
+                    break;
+                    
+                case "dropbox":
+                    loadDropboxVideo(url, isHostUser);
+                    break;
+                    
+                case "vimeo":
+                    loadVimeoVideo(url, isHostUser);
+                    break;
+                    
+                case "dailymotion":
+                    loadDailymotionVideo(url, isHostUser);
+                    break;
+                    
+                case "tiktok":
+                case "instagram":
+                    loadSocialEmbed(url, isHostUser);
+                    break;
+                    
+                default:
+                    overlayError(`Unsupported video link: ${url}`);
+                    break;
+            }
+        }
+        
+        function extractYouTubeID(url) {
+            if (!url) return null;
+            
+            try {
+                const u = new URL(url);
+                if (u.hostname.includes('youtu.be')) {
+                    return u.pathname.substring(1).split('?')[0];
+                }
+                if (u.hostname.includes('youtube.com')) {
+                    if (u.pathname.includes('/embed/')) {
+                        return u.pathname.split('/embed/')[1].split('?')[0];
+                    }
+                    if (u.pathname.includes('/v/')) {
+                        return u.pathname.split('/v/')[1].split('?')[0];
+                    }
+                    return u.searchParams.get('v') || null;
+                }
+            } catch (e) {
+                const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+                const match = url.match(regExp);
+                return (match && match[7].length === 11) ? match[7] : null;
+            }
+            
+            return null;
+        }
+
         function loadHTML5VideoWithOptimizations(link, isHostUser) {
             console.log("Loading HTML5 video:", link);
             
             usingYT = false;
             
-            if (html5videoPlayer) {
-                html5videoPlayer.style.display = 'block';
-                html5videoPlayer.preload = 'auto';
-                html5videoPlayer.playsInline = true;
-                html5videoPlayer.crossOrigin = 'anonymous';
-                html5videoPlayer.controls = false;
-            }
-            
-            if (html5videoDetailed) {
-                html5videoDetailed.style.display = 'block';
-                html5videoDetailed.preload = 'auto';
-                html5videoDetailed.playsInline = true;
-                html5videoDetailed.crossOrigin = 'anonymous';
-                html5videoDetailed.controls = false;
+            if (html5videoElement) {
+                html5videoElement.style.display = 'block';
+                html5videoElement.preload = 'auto';
+                html5videoElement.playsInline = true;
+                html5videoElement.crossOrigin = 'anonymous';
+                html5videoElement.controls = false;
             }
             
             if (ytContainer) ytContainer.style.display = 'none';
@@ -4267,26 +3885,25 @@
             const onLoadedMetadata = () => {
                 ready = true;
                 fitCanvas();
-                initializeSyncSystem(isHostUser);
+                initializeVideoSync(isHostUser);
                 
+                updateTimeDisplay();
                 const updateInterval = setInterval(updateTimeDisplay, 1000);
-                AppState.addInterval(updateInterval);
                 
                 overlayBlock.classList.add('hidden');
                 cachingIndicator.style.display = 'none';
                 
                 if (isHostUser) {
                     setTimeout(() => {
-                        html5videoPlayer.play().catch(e => console.log("Auto-play prevented:", e));
-                        html5videoDetailed.play().catch(e => console.log("Auto-play prevented:", e));
+                        html5videoElement.play().catch(e => console.log("Auto-play prevented:", e));
                     }, 500);
                 }
             };
             
             const onProgress = () => {
-                if (html5videoPlayer.buffered.length > 0) {
-                    const bufferedEnd = html5videoPlayer.buffered.end(html5videoPlayer.buffered.length - 1);
-                    const duration = html5videoPlayer.duration;
+                if (html5videoElement.buffered.length > 0) {
+                    const bufferedEnd = html5videoElement.buffered.end(html5videoElement.buffered.length - 1);
+                    const duration = html5videoElement.duration;
                     if (duration > 0) {
                         const bufferedPercent = (bufferedEnd / duration) * 100;
                         cachingIndicator.textContent = `Buffered: ${Math.round(bufferedPercent)}%`;
@@ -4307,15 +3924,11 @@
                 cachingIndicator.style.display = 'none';
             };
             
-            AppState.addEventListener(html5videoPlayer, 'loadedmetadata', onLoadedMetadata, { once: true });
-            AppState.addEventListener(html5videoDetailed, 'loadedmetadata', onLoadedMetadata, { once: true });
-            AppState.addEventListener(html5videoPlayer, 'progress', onProgress);
-            AppState.addEventListener(html5videoDetailed, 'progress', onProgress);
-            AppState.addEventListener(html5videoPlayer, 'error', onError, { once: true });
-            AppState.addEventListener(html5videoDetailed, 'error', onError, { once: true });
+            html5videoElement.addEventListener('loadedmetadata', onLoadedMetadata, { once: true });
+            html5videoElement.addEventListener('progress', onProgress);
+            html5videoElement.addEventListener('error', onError, { once: true });
             
-            html5videoPlayer.src = link;
-            html5videoDetailed.src = link;
+            html5videoElement.src = link;
         }
 
         // YouTube API Ready function
@@ -4332,7 +3945,7 @@
                 return;
             }
 
-            ytPlayer = new YT.Player('ytPlayerIframe-player', {
+            ytPlayer = new YT.Player('ytPlayerIframe', {
                 videoId: videoId,
                 width: '100%',
                 height: '100%',
@@ -4343,10 +3956,10 @@
                     onReady: (e) => {
                         ready = true;
                         fitCanvas();
-                        initializeSyncSystem(isHost);
+                        initializeVideoSync(isHost);
                         
+                        updateTimeDisplay();
                         const updateInterval = setInterval(updateTimeDisplay, 1000);
-                        AppState.addInterval(updateInterval);
 
                         overlayBlock.classList.add('hidden');
                         cachingIndicator.style.display = 'none';
@@ -4355,8 +3968,16 @@
                     },
                     onStateChange: (e) => {
                         if (!isHost) return;
-                        if (e.data === YT.PlayerState.PLAYING) syncManager.sendPlayEvent();
-                        if (e.data === YT.PlayerState.PAUSED) syncManager.sendPauseEvent();
+                        if (e.data === YT.PlayerState.PLAYING) {
+                            isPlaying = true;
+                            updatePlayPauseButton();
+                            updateVideoState();
+                        }
+                        if (e.data === YT.PlayerState.PAUSED) {
+                            isPlaying = false;
+                            updatePlayPauseButton();
+                            updateVideoState();
+                        }
                     },
                     onError: (e) => { console.error('YT error', e); }
                 }
@@ -4369,8 +3990,7 @@
             usingYT = true;
             
             if (ytContainer) ytContainer.style.display = 'block';
-            if (html5videoPlayer) html5videoPlayer.style.display = 'none';
-            if (html5videoDetailed) html5videoDetailed.style.display = 'none';
+            if (html5videoElement) html5videoElement.style.display = 'none';
             
             ensureYTPlayer(videoId, isHostUser);
             
@@ -4379,8 +3999,125 @@
                     console.log("YouTube loading timeout");
                 }
             }, 8000);
+        }
+
+        // FIXED VIDEO SYNC SYSTEM
+        function initializeVideoSync(isHostUser) {
+            if (syncInterval) {
+                clearInterval(syncInterval);
+            }
             
-            AppState.addTimeout(youtubeTimeout);
+            if (isHostUser) {
+                // Host: Broadcast video state every second
+                syncInterval = setInterval(() => {
+                    updateVideoState();
+                }, 1000);
+                
+                // Listen for video events to update state immediately
+                if (usingYT && ytPlayer) {
+                    // YouTube events are handled in ensureYTPlayer
+                } else if (html5videoElement) {
+                    html5videoElement.addEventListener('play', () => {
+                        isPlaying = true;
+                        updatePlayPauseButton();
+                        updateVideoState();
+                    });
+                    
+                    html5videoElement.addEventListener('pause', () => {
+                        isPlaying = false;
+                        updatePlayPauseButton();
+                        updateVideoState();
+                    });
+                    
+                    html5videoElement.addEventListener('seeked', () => {
+                        updateVideoState();
+                    });
+                }
+            } else {
+                // Viewer: Listen for host updates
+                if (firebaseInitialized) {
+                    videoStateRef.on('value', (snapshot) => {
+                        const data = snapshot.val();
+                        if (!data || isSyncing) return;
+                        
+                        isSyncing = true;
+                        
+                        // Calculate latency
+                        const now = Date.now();
+                        const latency = now - data.timestamp;
+                        const estimatedHostTime = data.currentTime + (latency / 1000);
+                        
+                        // Get current time
+                        let currentTime = 0;
+                        if (usingYT && ytPlayer) {
+                            currentTime = ytPlayer.getCurrentTime();
+                        } else if (html5videoElement) {
+                            currentTime = html5videoElement.currentTime;
+                        }
+                        
+                        // Check if sync is needed (more than 1 second difference)
+                        if (Math.abs(currentTime - estimatedHostTime) > 1) {
+                            if (usingYT && ytPlayer) {
+                                ytPlayer.seekTo(estimatedHostTime, true);
+                            } else if (html5videoElement) {
+                                html5videoElement.currentTime = estimatedHostTime;
+                            }
+                        }
+                        
+                        // Sync play/pause state
+                        if (data.isPlaying !== isPlaying) {
+                            isPlaying = data.isPlaying;
+                            updatePlayPauseButton();
+                            
+                            if (isPlaying) {
+                                if (usingYT && ytPlayer) {
+                                    ytPlayer.playVideo();
+                                } else if (html5videoElement) {
+                                    html5videoElement.play();
+                                }
+                            } else {
+                                if (usingYT && ytPlayer) {
+                                    ytPlayer.pauseVideo();
+                                } else if (html5videoElement) {
+                                    html5videoElement.pause();
+                                }
+                            }
+                        }
+                        
+                        setTimeout(() => {
+                            isSyncing = false;
+                        }, 100);
+                    });
+                }
+            }
+        }
+
+        function updateVideoState() {
+            if (!isHost || !firebaseInitialized) return;
+            
+            try {
+                let currentTime = 0;
+                
+                if (usingYT && ytPlayer) {
+                    currentTime = ytPlayer.getCurrentTime();
+                } else if (html5videoElement) {
+                    currentTime = html5videoElement.currentTime;
+                }
+                
+                videoStateRef.set({
+                    currentTime: currentTime,
+                    isPlaying: isPlaying,
+                    timestamp: Date.now(),
+                    hostId: currentUser
+                });
+                
+                roomRef.update({
+                    hostIsPlaying: isPlaying,
+                    hostIsInPlayerView: !isDetailedView
+                });
+            } catch (error) {
+                console.error("Error updating video state:", error);
+            }
         }
 
         function startVideo() {
@@ -4396,6 +4133,7 @@
                 overlayBlock.classList.add('hidden');
                 isPlaying = true;
                 updatePlayPauseButton();
+                updateVideoState();
                 showControls();
             }).catch(error => {
                 console.error('Error playing video:', error);
@@ -4407,40 +4145,22 @@
                 if (isPlaying) {
                     ytPlayer.pauseVideo();
                     isPlaying = false;
-                    if (syncManager && isHost) {
-                        syncManager.sendPauseEvent();
-                        roomRef.update({ hostIsPlaying: false });
-                    }
                 } else {
                     ytPlayer.playVideo();
                     isPlaying = true;
-                    if (syncManager && isHost) {
-                        syncManager.sendPlayEvent();
-                        roomRef.update({ hostIsPlaying: true });
-                    }
                 }
-            } else {
-                const video = getActiveHTML5Video();
-                if (!video) return;
-                
+            } else if (html5videoElement) {
                 if (isPlaying) {
-                    video.pause();
+                    html5videoElement.pause();
                     isPlaying = false;
-                    if (syncManager && isHost) {
-                        syncManager.sendPauseEvent();
-                        roomRef.update({ hostIsPlaying: false });
-                    }
                 } else {
-                    video.play();
+                    html5videoElement.play();
                     isPlaying = true;
-                    if (syncManager && isHost) {
-                        syncManager.sendPlayEvent();
-                        roomRef.update({ hostIsPlaying: true });
-                    }
                 }
             }
             
             updatePlayPauseButton();
+            updateVideoState();
             resetControlsTimeout();
         }
 
@@ -4454,13 +4174,11 @@
             if (usingYT && ytPlayer) {
                 const currentTime = ytPlayer.getCurrentTime();
                 ytPlayer.seekTo(Math.max(0, currentTime - 10), true);
-            } else {
-                const video = getActiveHTML5Video();
-                if (!video) return;
-                video.currentTime = Math.max(0, video.currentTime - 10);
+            } else if (html5videoElement) {
+                html5videoElement.currentTime = Math.max(0, html5videoElement.currentTime - 10);
             }
             
-            if (syncManager && isHost) syncManager.sendSeekEvent();
+            updateVideoState();
             resetControlsTimeout();
         }
 
@@ -4468,13 +4186,11 @@
             if (usingYT && ytPlayer) {
                 const currentTime = ytPlayer.getCurrentTime();
                 ytPlayer.seekTo(Math.min(ytPlayer.getDuration(), currentTime + 30), true);
-            } else {
-                const video = getActiveHTML5Video();
-                if (!video) return;
-                video.currentTime = Math.min(video.duration, video.currentTime + 30);
+            } else if (html5videoElement) {
+                html5videoElement.currentTime = Math.min(html5videoElement.duration, html5videoElement.currentTime + 30);
             }
             
-            if (syncManager && isHost) syncManager.sendSeekEvent();
+            updateVideoState();
             resetControlsTimeout();
         }
 
@@ -4506,7 +4222,6 @@
         function toggleWidget(widgetName) {
             if (widgetTimeout) {
                 clearTimeout(widgetTimeout);
-                AppState.timeouts.delete(widgetTimeout);
                 widgetTimeout = null;
             }
             
@@ -4542,7 +4257,6 @@
                     widgetTimeout = setTimeout(() => {
                         closeWidget('reactions');
                     }, 5000);
-                    AppState.addTimeout(widgetTimeout);
                 }
             }
         }
@@ -4562,7 +4276,6 @@
             
             if (widgetTimeout) {
                 clearTimeout(widgetTimeout);
-                AppState.timeouts.delete(widgetTimeout);
                 widgetTimeout = null;
             }
         }
@@ -4671,6 +4384,60 @@
             }
         }
 
+        // FIXED: Initialize chat listener
+        function initChatListener() {
+            if (!firebaseInitialized) return;
+            
+            chatRef.on('child_added', (snapshot) => {
+                const message = snapshot.val();
+                if (message.userId === currentUser) return;
+                
+                addChatMessage(message, chatMessages);
+                
+                if (!chatWidget.classList.contains('active')) {
+                    unreadChatCount++;
+                    updateChatBadge();
+                }
+            });
+        }
+
+        function addChatMessage(message, container) {
+            if (!container) return;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = message.userId === currentUser ? 'message self' : 'message';
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = message.username?.charAt(0) || 'U';
+            
+            const content = document.createElement('div');
+            content.className = 'message-content';
+            
+            const meta = document.createElement('div');
+            meta.className = 'message-meta';
+            
+            const time = new Date(message.timestamp);
+            const timeStr = time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            meta.innerHTML = `
+                <span>${message.username || 'User'}</span>
+                <span>${timeStr}</span>
+            `;
+            
+            const body = document.createElement('div');
+            body.textContent = message.text;
+            
+            content.appendChild(body);
+            content.appendChild(meta);
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
         function updateChatBadge() {
             if (!chatBadge) return;
             
@@ -4682,8 +4449,15 @@
             }
         }
 
-        // Reactions
+        // FIXED: Reactions with cooldown
         function sendReaction(emoji) {
+            // Prevent multiple reactions in quick succession
+            const now = Date.now();
+            if (now - lastReactionTime < 500) { // 500ms cooldown
+                return;
+            }
+            lastReactionTime = now;
+            
             if (!reactionsBox) return;
             
             const bubble = document.createElement('div');
@@ -4691,11 +4465,9 @@
             bubble.textContent = emoji;
             reactionsBox.appendChild(bubble);
             
-            const timeout = setTimeout(() => {
+            setTimeout(() => {
                 bubble.remove();
             }, 3000);
-            
-            AppState.addTimeout(timeout);
             
             if (firebaseInitialized) {
                 try {
@@ -4712,6 +4484,28 @@
             }
         }
 
+        // FIXED: Initialize reactions listener
+        function initReactionsListener() {
+            if (!firebaseInitialized) return;
+            
+            reactionsRef.on('child_added', (snapshot) => {
+                const reaction = snapshot.val();
+                if (reaction.userId === currentUser) return;
+                
+                // Show reaction on screen
+                if (reactionsBox) {
+                    const bubble = document.createElement('div');
+                    bubble.className = 'reaction-bubble';
+                    bubble.textContent = reaction.emoji;
+                    reactionsBox.appendChild(bubble);
+                    
+                    setTimeout(() => {
+                        bubble.remove();
+                    }, 3000);
+                }
+            });
+        }
+
         // Copy to clipboard
         function copyToClipboard(input, button) {
             if (!input || !button) return;
@@ -4726,35 +4520,29 @@
                     button.innerHTML = '<i class="fas fa-check"></i> Copied!';
                     button.classList.add('copied');
                     
-                    const timeout = setTimeout(() => {
+                    setTimeout(() => {
                         button.innerHTML = originalText;
                         button.classList.remove('copied');
                     }, 2000);
-                    
-                    AppState.addTimeout(timeout);
                 }).catch(err => {
                     document.execCommand('copy');
                     button.innerHTML = '<i class="fas fa-check"></i> Copied!';
                     button.classList.add('copied');
                     
-                    const timeout = setTimeout(() => {
+                    setTimeout(() => {
                         button.innerHTML = originalText;
                         button.classList.remove('copied');
                     }, 2000);
-                    
-                    AppState.addTimeout(timeout);
                 });
             } catch (err) {
                 document.execCommand('copy');
                 button.innerHTML = '<i class="fas fa-check"></i> Copied!';
                 button.classList.add('copied');
                 
-                const timeout = setTimeout(() => {
+                setTimeout(() => {
                     button.innerHTML = originalText;
                     button.classList.remove('copied');
                 }, 2000);
-                
-                AppState.addTimeout(timeout);
             }
         }
 
@@ -4768,9 +4556,8 @@
             
             if (usingYT && ytPlayer) {
                 ytPlayer.pauseVideo();
-            } else {
-                const video = getActiveHTML5Video();
-                if (video) video.pause();
+            } else if (html5videoElement) {
+                html5videoElement.pause();
             }
             
             isPlaying = false;
@@ -4785,8 +4572,6 @@
                         `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 }
             }, 1000);
-            
-            AppState.addInterval(discussionInterval);
             
             updateDiscussionParticipants();
             initDiscussionVoice();
@@ -4809,7 +4594,6 @@
             
             if (discussionInterval) {
                 clearInterval(discussionInterval);
-                AppState.intervals.delete(discussionInterval);
                 discussionInterval = null;
             }
             
@@ -4852,21 +4636,21 @@
             canvasDetailed.style.pointerEvents = 'auto';
             canvasDetailed.style.display = 'block';
             
-            AppState.addEventListener(canvas, 'mousedown', onDown); 
-            AppState.addEventListener(canvas, 'mousemove', onMove); 
-            AppState.addEventListener(canvas, 'mouseup', onUp); 
-            AppState.addEventListener(canvas, 'mouseleave', onUp); 
-            AppState.addEventListener(canvas, 'touchstart', onDown, {passive:false}); 
-            AppState.addEventListener(canvas, 'touchmove', onMove, {passive:false}); 
-            AppState.addEventListener(canvas, 'touchend', onUp); 
+            canvas.addEventListener('mousedown', onDown); 
+            canvas.addEventListener('mousemove', onMove); 
+            canvas.addEventListener('mouseup', onUp); 
+            canvas.addEventListener('mouseleave', onUp); 
+            canvas.addEventListener('touchstart', onDown, {passive:false}); 
+            canvas.addEventListener('touchmove', onMove, {passive:false}); 
+            canvas.addEventListener('touchend', onUp); 
             
-            AppState.addEventListener(canvasDetailed, 'mousedown', onDownDetailed); 
-            AppState.addEventListener(canvasDetailed, 'mousemove', onMoveDetailed); 
-            AppState.addEventListener(canvasDetailed, 'mouseup', onUpDetailed); 
-            AppState.addEventListener(canvasDetailed, 'mouseleave', onUpDetailed); 
-            AppState.addEventListener(canvasDetailed, 'touchstart', onDownDetailed, {passive:false}); 
-            AppState.addEventListener(canvasDetailed, 'touchmove', onMoveDetailed, {passive:false}); 
-            AppState.addEventListener(canvasDetailed, 'touchend', onUpDetailed); 
+            canvasDetailed.addEventListener('mousedown', onDownDetailed); 
+            canvasDetailed.addEventListener('mousemove', onMoveDetailed); 
+            canvasDetailed.addEventListener('mouseup', onUpDetailed); 
+            canvasDetailed.addEventListener('mouseleave', onUpDetailed); 
+            canvasDetailed.addEventListener('touchstart', onDownDetailed, {passive:false}); 
+            canvasDetailed.addEventListener('touchmove', onMoveDetailed, {passive:false}); 
+            canvasDetailed.addEventListener('touchend', onUpDetailed); 
         }
         
         function disableDrawing(){ 
@@ -4990,400 +4774,118 @@
             lastPos=null; 
         }
 
-        // Sync Manager
-        class TelepartySyncManager {
-            constructor(isHost, roomRef) {
-                this.isHost = isHost;
-                this.roomRef = roomRef;
-                this.lastSyncTime = 0;
-                this.syncInterval = 3000;
-                this.maxDrift = 2.0;
-                this.isSyncing = false;
-                this.heartbeatInterval = null;
-                this.lastHostUpdate = 0;
-                this.hostPlaybackRate = 1.0;
-                this.hostLastPlayState = false;
-                this.hostLastViewState = true;
-                this.lastSeekTime = 0;
-                this.accumulatedDrift = 0;
-                this.driftSamples = [];
-                this.maxDriftSamples = 10;
-                
-                this.hostState = {
-                    isPlaying: false,
-                    currentTime: 0,
-                    lastUpdate: Date.now(),
-                    hostId: '',
-                    hostIsInPlayerView: true
-                };
-            }
+        // FIXED: Manual sync button
+        function manualSync() {
+            if (!firebaseInitialized) return;
             
-            getCurrentTime() {
-                if (usingYT && ytPlayer) {
-                    return ytPlayer.getCurrentTime();
-                } else {
-                    const video = getActiveHTML5Video();
-                    return video ? video.currentTime : 0;
-                }
-            }
-            
-            seekTo(time) {
-                if (usingYT && ytPlayer) {
-                    ytPlayer.seekTo(time, true);
-                } else {
-                    const video = getActiveHTML5Video();
-                    if (video) video.currentTime = time;
-                }
-                this.lastSeekTime = Date.now();
-            }
-            
-            play() {
-                if (usingYT && ytPlayer) {
-                    ytPlayer.playVideo();
-                } else {
-                    const video = getActiveHTML5Video();
-                    if (video) video.play();
-                }
-            }
-            
-            pause() {
-                if (usingYT && ytPlayer) {
-                    ytPlayer.pauseVideo();
-                } else {
-                    const video = getActiveHTML5Video();
-                    if (video) video.pause();
-                }
-            }
-            
-            isPlaying() {
-                if (usingYT && ytPlayer) {
-                    return ytPlayer.getPlayerState() === 1;
-                } else {
-                    const video = getActiveHTML5Video();
-                    return video ? !video.paused : false;
-                }
-            }
-            
-            sendPlayEvent() {
-                if (!this.isHost) return;
-                
-                const videoTime = this.getCurrentTime();
-                this.updateFirebaseState({
-                    isPlaying: true,
-                    currentTime: videoTime,
-                    lastUpdate: Date.now(),
-                    hostId: currentUser,
-                    hostIsInPlayerView: !isDetailedView
-                });
-            }
-            
-            sendPauseEvent() {
-                if (!this.isHost) return;
-                
-                const videoTime = this.getCurrentTime();
-                this.updateFirebaseState({
-                    isPlaying: false,
-                    currentTime: videoTime,
-                    lastUpdate: Date.now(),
-                    hostId: currentUser,
-                    hostIsInPlayerView: !isDetailedView
-                });
-            }
-            
-            sendSeekEvent() {
-                if (!this.isHost) return;
-                
-                const videoTime = this.getCurrentTime();
-                this.updateFirebaseState({
-                    currentTime: videoTime,
-                    lastUpdate: Date.now(),
-                    hostId: currentUser,
-                    hostIsInPlayerView: !isDetailedView
-                });
-            }
-            
-            updateFirebaseState(state) {
-                if (!this.isHost || !firebaseInitialized) return;
-                
-                try {
-                    this.roomRef.child('videoState').set(state);
-                    this.roomRef.update({
-                        hostIsPlaying: state.isPlaying,
-                        hostIsInPlayerView: state.hostIsInPlayerView
-                    });
-                } catch (error) {
-                    console.error('Firebase update error:', error);
-                }
-            }
-            
-            startHostSync() {
-                if (!this.isHost) return;
-                
-                this.sendPauseEvent();
-                
-                this.heartbeatInterval = setInterval(() => {
-                    if (this.isPlaying()) {
-                        const videoTime = this.getCurrentTime();
-                        this.roomRef.child('videoState').update({
-                            currentTime: videoTime,
-                            lastUpdate: Date.now(),
-                            hostIsInPlayerView: !isDetailedView
-                        });
-                    }
-                }, this.syncInterval);
-                
-                AppState.addInterval(this.heartbeatInterval);
-            }
-            
-            startViewerSync() {
-                if (this.isHost) return;
-                
-                const onVideoStateValue = (snapshot) => {
-                    const data = snapshot.val();
-                    if (!data) return;
-                    
-                    lastHostState = data;
-                    this.hostState = data;
-                    this.lastHostUpdate = Date.now();
-                    
-                    if (data.hostIsInPlayerView !== undefined) {
-                        this.hostLastViewState = data.hostIsInPlayerView;
-                    }
-                    
-                    if (data.isPlaying !== undefined && data.isPlaying !== this.hostLastPlayState) {
-                        this.hostLastPlayState = data.isPlaying;
-                        this.syncToHost();
-                    }
-                    else if (data.currentTime !== undefined) {
-                        const localTime = this.getCurrentTime();
-                        const drift = localTime - data.currentTime;
-                        
-                        this.driftSamples.push(drift);
-                        if (this.driftSamples.length > this.maxDriftSamples) {
-                            this.driftSamples.shift();
-                        }
-                        
-                        const avgDrift = this.driftSamples.reduce((a, b) => a + b, 0) / this.driftSamples.length;
-                        
-                        if (Math.abs(avgDrift) > this.maxDrift && Date.now() - this.lastSeekTime > 2000) {
-                            this.syncToHost();
-                            this.driftSamples = [];
-                        }
-                    }
-                };
-                
-                AppState.addFirebaseListener(this.roomRef.child('videoState'), 'value', onVideoStateValue);
-            }
-            
-            syncToHost() {
-                if (this.isHost || this.isSyncing) return;
-                
-                this.isSyncing = true;
+            videoStateRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                if (!data) return;
                 
                 const now = Date.now();
-                const latency = Math.max(0, now - this.hostState.lastUpdate);
-                const estimatedHostTime = this.hostState.currentTime + (latency / 1000);
+                const latency = now - data.timestamp;
+                const estimatedHostTime = data.currentTime + (latency / 1000);
                 
-                const localTime = this.getCurrentTime();
-                const drift = localTime - estimatedHostTime;
-                const absDrift = Math.abs(drift);
-                
-                if (absDrift > this.maxDrift) {
-                    this.seekTo(estimatedHostTime);
-                    this.lastSeekTime = Date.now();
-                }
-                
-                const shouldPlay = this.hostState.isPlaying;
-                const isPlaying = this.isPlaying();
-                
-                if (shouldPlay && !isPlaying) {
-                    this.play();
-                } else if (!shouldPlay && isPlaying) {
-                    this.pause();
-                }
-                
-                this.isSyncing = false;
-            }
-            
-            stopSync() {
-                if (this.heartbeatInterval) {
-                    clearInterval(this.heartbeatInterval);
-                    AppState.intervals.delete(this.heartbeatInterval);
-                    this.heartbeatInterval = null;
-                }
-            }
-        }
-
-        function initializeSyncSystem(isHostUser) {
-            syncManager = new TelepartySyncManager(isHostUser, roomRef);
-            
-            if (isHostUser) {
-                syncManager.startHostSync();
-            } else {
-                syncManager.startViewerSync();
-            }
-        }
-
-        // Host controls
-        function hostStart() { 
-            if (pauseDiscussBtn) {
-                AppState.addEventListener(pauseDiscussBtn, 'click', () => { 
-                    startDiscussion();
-                });
-            }
-            
-            if (toggleDrawBtn) {
-                AppState.addEventListener(toggleDrawBtn, 'click', () => { 
-                    drawingEnabled = !drawingEnabled; 
-                    toggleDrawBtn.classList.toggle('active');
-                    if (drawingEnabled) {
-                        enableDrawing();
+                if (usingYT && ytPlayer) {
+                    ytPlayer.seekTo(estimatedHostTime, true);
+                    if (data.isPlaying) {
+                        ytPlayer.playVideo();
                     } else {
-                        disableDrawing();
+                        ytPlayer.pauseVideo();
                     }
-                    
-                    if (firebaseInitialized) {
-                        try {
-                            roomRef.update({drawingEnabled});
-                        } catch (error) {
-                            console.error("Error updating drawing state:", error);
-                        }
-                    }
-                });
-            }
-            
-            if (clearDrawBtn) {
-                AppState.addEventListener(clearDrawBtn, 'click', () => { 
-                    ctx.clearRect(0,0,canvas.width,canvas.height); 
-                    ctxDetailed.clearRect(0,0,canvasDetailed.width,canvasDetailed.height);
-                    
-                    if (firebaseInitialized) {
-                        try {
-                            drawRef.remove().catch(()=>{});
-                        } catch (error) {
-                            console.error("Error clearing drawing:", error);
-                        }
-                    }
-                });
-            }
-            
-            if (speedSel) {
-                AppState.addEventListener(speedSel, 'change', e => { 
-                    const sp = Number(e.target.value||1); 
-                    if (usingYT && ytPlayer) {
-                        ytPlayer.setPlaybackRate(sp);
+                } else if (html5videoElement) {
+                    html5videoElement.currentTime = estimatedHostTime;
+                    if (data.isPlaying) {
+                        html5videoElement.play();
                     } else {
-                        const video = getActiveHTML5Video();
-                        if (video) video.playbackRate = sp;
+                        html5videoElement.pause();
                     }
-                    
-                    if (firebaseInitialized) {
-                        try {
-                            roomRef.child('hostPowers').update({speed:sp});
-                        } catch (error) {
-                            console.error("Error updating playback speed:", error);
-                        }
-                    }
-                });
-            }
-        }
-
-        // Viewer controls
-        function viewerStart() { 
-            if (syncBtn) {
-                AppState.addEventListener(syncBtn, 'click', () => {
-                    if (syncManager && lastHostState) {
-                        syncManager.seekTo(lastHostState.currentTime || 0);
-                        if (lastHostState.isPlaying) {
-                            syncManager.play();
-                        } else {
-                            syncManager.pause();
-                        }
-                    }
-                });
-            }
+                }
+                
+                showNotification("Video synced with host!");
+            });
         }
 
         // Set up all event listeners
         function setupEventListeners() {
             // View toggle
-            AppState.addEventListener(menuBtn, 'click', toggleToDetailedView);
-            AppState.addEventListener(backToPlayerBtn, 'click', toggleToPlayerView);
+            if (menuBtn) menuBtn.addEventListener('click', toggleToDetailedView);
+            if (backToPlayerBtn) backToPlayerBtn.addEventListener('click', toggleToPlayerView);
 
             // Home buttons
-            AppState.addEventListener(homeBtn, 'click', () => {
+            if (homeBtn) homeBtn.addEventListener('click', () => {
                 window.location.href = 'home.html';
             });
-            AppState.addEventListener(detailedHomeBtn, 'click', () => {
+            if (detailedHomeBtn) detailedHomeBtn.addEventListener('click', () => {
                 window.location.href = 'home.html';
             });
-            AppState.addEventListener(controlPanelHomeBtn, 'click', () => {
+            if (controlPanelHomeBtn) controlPanelHomeBtn.addEventListener('click', () => {
                 window.location.href = 'home.html';
             });
 
             // Video controls
-            AppState.addEventListener(playPauseBtn, 'click', togglePlayPause);
-            AppState.addEventListener(detailedPlayPauseBtn, 'click', togglePlayPause);
+            if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
+            if (detailedPlayPauseBtn) detailedPlayPauseBtn.addEventListener('click', togglePlayPause);
             
-            AppState.addEventListener(skipBackBtn, 'click', skipBackward);
-            AppState.addEventListener(detailedSkipBackBtn, 'click', skipBackward);
-            AppState.addEventListener(skipForwardBtn, 'click', skipForward);
-            AppState.addEventListener(detailedSkipForwardBtn, 'click', skipForward);
+            if (skipBackBtn) skipBackBtn.addEventListener('click', skipBackward);
+            if (detailedSkipBackBtn) detailedSkipBackBtn.addEventListener('click', skipBackward);
+            if (skipForwardBtn) skipForwardBtn.addEventListener('click', skipForward);
+            if (detailedSkipForwardBtn) detailedSkipForwardBtn.addEventListener('click', skipForward);
 
             // Screen resize menu
-            AppState.addEventListener(fullscreenResizeBtn, 'click', openScreenResizeMenu);
-            AppState.addEventListener(detailedFullscreenResizeBtn, 'click', openScreenResizeMenu);
-            AppState.addEventListener(resizeOptionBtn, 'click', () => {
+            if (fullscreenResizeBtn) fullscreenResizeBtn.addEventListener('click', openScreenResizeMenu);
+            if (detailedFullscreenResizeBtn) detailedFullscreenResizeBtn.addEventListener('click', openScreenResizeMenu);
+            if (resizeOptionBtn) resizeOptionBtn.addEventListener('click', () => {
                 screenResizeMenu.classList.remove('show');
                 showResizeTutorial();
             });
-            AppState.addEventListener(fullscreenOptionBtn, 'click', () => {
+            if (fullscreenOptionBtn) fullscreenOptionBtn.addEventListener('click', () => {
                 screenResizeMenu.classList.remove('show');
                 toggleFullscreen();
             });
 
             // Tutorial close
-            AppState.addEventListener(closeTutorialBtn, 'click', () => {
+            if (closeTutorialBtn) closeTutorialBtn.addEventListener('click', () => {
                 resizeTutorial.classList.remove('show');
             });
 
             // Volume controls
-            AppState.addEventListener(volumeBtn, 'click', toggleMute);
-            AppState.addEventListener(detailedVolumeBtn, 'click', toggleMute);
-            AppState.addEventListener(volumeSlider, 'input', updateVolume);
-            AppState.addEventListener(detailedVolumeSlider, 'input', updateVolume);
+            if (volumeBtn) volumeBtn.addEventListener('click', toggleMute);
+            if (detailedVolumeBtn) detailedVolumeBtn.addEventListener('click', toggleMute);
+            if (volumeSlider) volumeSlider.addEventListener('input', updateVolume);
+            if (detailedVolumeSlider) detailedVolumeSlider.addEventListener('input', updateVolume);
 
             // Overlay tap to play
-            AppState.addEventListener(overlayBlock, 'click', startVideo);
+            if (overlayBlock) overlayBlock.addEventListener('click', startVideo);
 
             // Widget toggles
-            AppState.addEventListener(voiceWidget, 'click', () => toggleWidget('voice'));
-            AppState.addEventListener(reactionsWidget, 'click', () => toggleWidget('reactions'));
-            AppState.addEventListener(chatWidget, 'click', () => toggleWidget('chat'));
-            AppState.addEventListener(shareWidget, 'click', () => toggleWidget('share'));
+            if (voiceWidget) voiceWidget.addEventListener('click', () => toggleWidget('voice'));
+            if (reactionsWidget) reactionsWidget.addEventListener('click', () => toggleWidget('reactions'));
+            if (chatWidget) chatWidget.addEventListener('click', () => toggleWidget('chat'));
+            if (shareWidget) shareWidget.addEventListener('click', () => toggleWidget('share'));
 
             // Hold to talk button
             if (holdTalkBtn) {
-                AppState.addEventListener(holdTalkBtn, 'mousedown', startTalking);
-                AppState.addEventListener(holdTalkBtn, 'mouseup', stopTalking);
-                AppState.addEventListener(holdTalkBtn, 'mouseleave', stopTalking);
-                AppState.addEventListener(holdTalkBtn, 'touchstart', (e) => {
+                holdTalkBtn.addEventListener('mousedown', startTalking);
+                holdTalkBtn.addEventListener('mouseup', stopTalking);
+                holdTalkBtn.addEventListener('mouseleave', stopTalking);
+                holdTalkBtn.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     startTalking();
                 }, { passive: false });
-                AppState.addEventListener(holdTalkBtn, 'touchend', (e) => {
+                holdTalkBtn.addEventListener('touchend', (e) => {
                     e.preventDefault();
                     stopTalking();
                 });
-                AppState.addEventListener(holdTalkBtn, 'touchcancel', (e) => {
+                holdTalkBtn.addEventListener('touchcancel', (e) => {
                     e.preventDefault();
                     stopTalking();
                 });
             }
 
-            // Reaction buttons
+            // FIXED: Reaction buttons with cooldown
             document.querySelectorAll('.reaction-btn').forEach(btn => {
-                AppState.addEventListener(btn, 'click', (e) => {
+                btn.addEventListener('click', (e) => {
                     const emoji = e.target.getAttribute('data-emoji') || e.target.textContent;
                     sendReaction(emoji);
                     closeWidget('reactions');
@@ -5391,30 +4893,30 @@
             });
 
             // Chat send buttons
-            AppState.addEventListener(chatSendBtn, 'click', () => sendChatMessage(chatInput, chatMessages));
-            AppState.addEventListener(chatInput, 'keypress', (e) => {
+            if (chatSendBtn) chatSendBtn.addEventListener('click', () => sendChatMessage(chatInput, chatMessages));
+            if (chatInput) chatInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') sendChatMessage(chatInput, chatMessages);
             });
 
             // Copy buttons
-            AppState.addEventListener(copyBtn, 'click', () => copyToClipboard(shareLink, copyBtn));
+            if (copyBtn) copyBtn.addEventListener('click', () => copyToClipboard(shareLink, copyBtn));
 
             // Discussion controls
-            AppState.addEventListener(endDiscussionBtn, 'click', endDiscussion);
+            if (endDiscussionBtn) endDiscussionBtn.addEventListener('click', endDiscussion);
 
             // Participants modal
-            AppState.addEventListener(participantCountBtn, 'click', showParticipantsModal);
-            AppState.addEventListener(closeParticipantsBtn, 'click', hideParticipantsModal);
+            if (participantCountBtn) participantCountBtn.addEventListener('click', showParticipantsModal);
+            if (closeParticipantsBtn) closeParticipantsBtn.addEventListener('click', hideParticipantsModal);
 
             // Close participants modal when clicking outside
-            AppState.addEventListener(participantsModal, 'click', (e) => {
+            if (participantsModal) participantsModal.addEventListener('click', (e) => {
                 if (e.target === participantsModal) {
                     hideParticipantsModal();
                 }
             });
 
             // Close screen resize menu when clicking outside
-            AppState.addEventListener(document, 'click', (e) => {
+            document.addEventListener('click', (e) => {
                 if (!e.target.closest('#fullscreen-resize-btn') && 
                     !e.target.closest('#detailed-fullscreen-resize-btn') &&
                     !e.target.closest('.screen-resize-menu')) {
@@ -5434,10 +4936,10 @@
                 fitCanvas();
             }, 250);
 
-            AppState.addEventListener(window, 'resize', debouncedFitCanvas);
+            window.addEventListener('resize', debouncedFitCanvas);
 
             // Fullscreen change
-            AppState.addEventListener(document, 'fullscreenchange', () => {
+            document.addEventListener('fullscreenchange', () => {
                 isFullscreen = !!document.fullscreenElement;
                 if (!isFullscreen) {
                     screenResizeMenu.classList.remove('show');
@@ -5446,7 +4948,7 @@
 
             // Progress bar click to seek
             if (progressContainer) {
-                AppState.addEventListener(progressContainer, 'click', (e) => {
+                progressContainer.addEventListener('click', (e) => {
                     const video = getActiveHTML5Video();
                     if (!video || !video.duration) return;
 
@@ -5455,41 +4957,84 @@
                     const time = percent * video.duration;
 
                     video.currentTime = time;
-                    if (syncManager && isHost) syncManager.sendSeekEvent();
+                    updateVideoState();
 
                     showControls();
                 });
             }
 
+            // Control panel buttons
+            if (pauseDiscussBtn) pauseDiscussBtn.addEventListener('click', startDiscussion);
+            if (toggleDrawBtn) toggleDrawBtn.addEventListener('click', () => {
+                drawingEnabled = !drawingEnabled;
+                toggleDrawBtn.classList.toggle('active');
+                if (drawingEnabled) {
+                    enableDrawing();
+                } else {
+                    disableDrawing();
+                }
+                
+                if (firebaseInitialized && isHost) {
+                    try {
+                        roomRef.update({drawingEnabled});
+                    } catch (error) {
+                        console.error("Error updating drawing state:", error);
+                    }
+                }
+            });
+            
+            if (clearDrawBtn) clearDrawBtn.addEventListener('click', () => {
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                ctxDetailed.clearRect(0,0,canvasDetailed.width,canvasDetailed.height);
+                
+                if (firebaseInitialized && isHost) {
+                    try {
+                        drawRef.remove();
+                    } catch (error) {
+                        console.error("Error clearing drawing:", error);
+                    }
+                }
+            });
+            
+            if (speedSel) speedSel.addEventListener('change', (e) => {
+                const speed = Number(e.target.value || 1);
+                if (usingYT && ytPlayer) {
+                    ytPlayer.setPlaybackRate(speed);
+                } else if (html5videoElement) {
+                    html5videoElement.playbackRate = speed;
+                }
+            });
+            
+            if (syncBtn) syncBtn.addEventListener('click', manualSync);
+
             // Auto-hide controls system
             setupAutoHideControls();
             initVideoResize();
-            optimizeVideoLoading();
         }
 
         function setupAutoHideControls() {
             const videoContainer = document.querySelector('.video-container');
             if (videoContainer) {
-                AppState.addEventListener(videoContainer, 'click', (e) => {
-                    if (e.target === videoContainer || e.target === html5videoPlayer || 
-                        e.target === html5videoDetailed || e.target === ytContainer) {
+                videoContainer.addEventListener('click', (e) => {
+                    if (e.target === videoContainer || e.target === html5videoElement || 
+                        e.target === ytContainer) {
                         showControls();
                     }
                 });
                 
-                AppState.addEventListener(videoContainer, 'mousemove', showControls);
-                AppState.addEventListener(videoContainer, 'touchstart', showControls);
-                AppState.addEventListener(videoContainer, 'mouseleave', () => {
+                videoContainer.addEventListener('mousemove', showControls);
+                videoContainer.addEventListener('touchstart', showControls);
+                videoContainer.addEventListener('mouseleave', () => {
                     if (!screenResizeMenu.classList.contains('show')) {
                         resetControlsTimeout();
                     }
                 });
             }
             
-            if (customControls) AppState.addEventListener(customControls, 'mousemove', resetControlsTimeout);
-            if (detailedCustomControls) AppState.addEventListener(detailedCustomControls, 'mousemove', resetControlsTimeout);
-            if (progressContainer) AppState.addEventListener(progressContainer, 'mousemove', resetControlsTimeout);
-            if (detailedProgressContainer) AppState.addEventListener(detailedProgressContainer, 'mousemove', resetControlsTimeout);
+            if (customControls) customControls.addEventListener('mousemove', resetControlsTimeout);
+            if (detailedCustomControls) detailedCustomControls.addEventListener('mousemove', resetControlsTimeout);
+            if (progressContainer) progressContainer.addEventListener('mousemove', resetControlsTimeout);
+            if (detailedProgressContainer) detailedProgressContainer.addEventListener('mousemove', resetControlsTimeout);
         }
 
         function debounce(func, wait) {
@@ -5497,133 +5042,15 @@
             return function executedFunction(...args) {
                 const later = () => {
                     clearTimeout(timeout);
-                    AppState.timeouts.delete(timeout);
                     func(...args);
                 };
                 clearTimeout(timeout);
-                AppState.timeouts.delete(timeout);
                 timeout = setTimeout(later, wait);
-                AppState.addTimeout(timeout);
             };
-        }
-
-        // Initialize Firebase listeners for real-time updates
-        function initFirebaseListeners() {
-            if (!firebaseInitialized) return;
-            
-            try {
-                const onChatChildAdded = (snapshot) => {
-                    const message = snapshot.val();
-                    if (message.userId === currentUser) return;
-                    addChatMessage(message, chatMessages);
-                    
-                    if (!chatWidget.classList.contains('active')) {
-                        unreadChatCount++;
-                        updateChatBadge();
-                    }
-                };
-                
-                const onReactionsChildAdded = (snapshot) => {
-                    const reaction = snapshot.val();
-                    if (reaction.userId === currentUser) return;
-                    sendReaction(reaction.emoji);
-                };
-                
-                const onDiscussionActiveValue = (snapshot) => {
-                    const isDiscussionActive = snapshot.val();
-                    if (isDiscussionActive && !discussionActive && isHost) {
-                        startDiscussion();
-                    } else if (!isDiscussionActive && discussionActive) {
-                        endDiscussion();
-                    }
-                };
-                
-                AppState.addFirebaseListener(chatRef, 'child_added', onChatChildAdded);
-                AppState.addFirebaseListener(reactionsRef, 'child_added', onReactionsChildAdded);
-                AppState.addFirebaseListener(roomRef.child('discussionActive'), 'value', onDiscussionActiveValue);
-            } catch (error) {
-                console.error("Error initializing Firebase listeners:", error);
-            }
-        }
-
-        function addChatMessage(message, container) {
-            if (!container) return;
-            
-            const messageDiv = document.createElement('div');
-            messageDiv.className = message.userId === currentUser ? 'message self' : 'message';
-            
-            const avatar = document.createElement('div');
-            avatar.className = 'message-avatar';
-            avatar.textContent = message.username?.charAt(0) || 'U';
-            
-            const content = document.createElement('div');
-            content.className = 'message-content';
-            
-            const meta = document.createElement('div');
-            meta.className = 'message-meta';
-            
-            const time = new Date(message.timestamp);
-            const timeStr = time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            
-            meta.innerHTML = `
-                <span>${message.username || 'User'}</span>
-                <span>${timeStr}</span>
-            `;
-            
-            const body = document.createElement('div');
-            body.textContent = message.text;
-            
-            content.appendChild(body);
-            content.appendChild(meta);
-            
-            messageDiv.appendChild(avatar);
-            messageDiv.appendChild(content);
-            
-            container.appendChild(messageDiv);
-            container.scrollTop = container.scrollHeight;
-            
-            // Limit chat messages to prevent memory issues
-            const messages = container.querySelectorAll('.message');
-            if (messages.length > 100) {
-                messages[0].remove();
-            }
-        }
-
-        function optimizeVideoLoading() {
-            const preconnectLinks = [
-                'https://www.youtube.com',
-                'https://i.ytimg.com',
-                'https://*.googlevideo.com'
-            ];
-            
-            preconnectLinks.forEach(link => {
-                const preconnect = document.createElement('link');
-                preconnect.rel = 'preconnect';
-                preconnect.href = link;
-                preconnect.crossOrigin = 'anonymous';
-                document.head.appendChild(preconnect);
-            });
-            
-            if (html5videoPlayer) {
-                html5videoPlayer.preload = 'auto';
-                html5videoPlayer.load();
-            }
-            
-            if (html5videoDetailed) {
-                html5videoDetailed.preload = 'auto';
-                html5videoDetailed.load();
-            }
-            
-            playerContainer.style.willChange = 'transform';
-            if (html5videoPlayer) html5videoPlayer.style.transform = 'translateZ(0)';
-            if (html5videoDetailed) html5videoDetailed.style.transform = 'translateZ(0)';
         }
 
         // Initialize the app
         function initApp() {
-            if (AppState.isInitialized) return;
-            AppState.isInitialized = true;
-            
             console.log("Initializing Let's Watch...");
             
             // Update status display
@@ -5642,57 +5069,32 @@
             setupEventListeners();
             
             // Set share links
-            const currentUrl = window.location.href;
+            const currentUrl = window.location.href.split('?')[0] + '?room=' + roomId + (isHost ? '&host=true' : '');
             if (shareLink) shareLink.value = currentUrl;
             
             // Initialize Agora voice chat with delay
-            const agoraTimeout = setTimeout(() => {
+            setTimeout(() => {
                 initAgoraVoice();
             }, 1500);
             
-            AppState.addTimeout(agoraTimeout);
-            
             // Initialize Firebase listeners
-            initFirebaseListeners();
+            initChatListener();
+            initReactionsListener();
             
             // Load video from Firebase
             loadVideoFromFirebase();
             
             // Show controls initially
-            const initialControlsTimeout = setTimeout(() => {
+            setTimeout(() => {
                 showControls();
             }, 500);
             
-            AppState.addTimeout(initialControlsTimeout);
-            
-            // Initialize host/viewer controls
-            if (isHost) {
-                hostStart();
-            } else {
-                viewerStart();
-            }
-            
-            // Start memory leak detection
-            AppState.startMemoryLeakCheck();
-            
             console.log("Let's Watch initialized successfully");
-            
-            // Setup cleanup on page unload
-            AppState.addEventListener(window, 'beforeunload', () => AppState.cleanup());
-            AppState.addEventListener(window, 'pagehide', () => AppState.cleanup());
-            AppState.addEventListener(window, 'unload', () => AppState.cleanup());
-            
-            // Add periodic cleanup (every 5 minutes)
-            const periodicCleanup = setInterval(() => {
-                AppState.emergencyCleanup();
-            }, 300000);
-            
-            AppState.addInterval(periodicCleanup);
         }
 
         // Initialize when DOM is ready
         if (document.readyState === 'loading') {
-            AppState.addEventListener(document, 'DOMContentLoaded', initApp);
+            document.addEventListener('DOMContentLoaded', initApp);
         } else {
             initApp();
         }

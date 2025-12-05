@@ -2841,7 +2841,7 @@
         }
 
         // Global variables
-        let db, auth, roomRef, drawRef, reactionsRef, chatRef, participantsRef;
+        let db, auth, roomRef, drawRef, reactionsRef, chatRef, participantsRef, videoStateRef;
         let currentUser = null;
         let isHost = false;
         let roomId = 'default-room';
@@ -2899,6 +2899,9 @@
         let lastHostUpdate = 0;
         let syncInterval = null;
         let isSyncing = false;
+        
+        // FIXED: Chat sending flag to prevent duplicate messages
+        let isSendingChatMessage = false;
         
         // DOM elements
         const resizeTutorial = document.getElementById('resize-tutorial');
@@ -4017,26 +4020,35 @@
                 if (usingYT && ytPlayer) {
                     // YouTube events are handled in ensureYTPlayer
                 } else if (html5videoElement) {
-                    html5videoElement.addEventListener('play', () => {
+                    const playHandler = () => {
                         isPlaying = true;
                         updatePlayPauseButton();
                         updateVideoState();
-                    });
+                    };
                     
-                    html5videoElement.addEventListener('pause', () => {
+                    const pauseHandler = () => {
                         isPlaying = false;
                         updatePlayPauseButton();
                         updateVideoState();
-                    });
+                    };
                     
-                    html5videoElement.addEventListener('seeked', () => {
+                    const seekHandler = () => {
                         updateVideoState();
-                    });
+                    };
+                    
+                    html5videoElement.addEventListener('play', playHandler);
+                    html5videoElement.addEventListener('pause', pauseHandler);
+                    html5videoElement.addEventListener('seeked', seekHandler);
+                    
+                    // Store handlers for cleanup
+                    html5videoElement._playHandler = playHandler;
+                    html5videoElement._pauseHandler = pauseHandler;
+                    html5videoElement._seekHandler = seekHandler;
                 }
             } else {
                 // Viewer: Listen for host updates
                 if (firebaseInitialized) {
-                    videoStateRef.on('value', (snapshot) => {
+                    const videoStateHandler = (snapshot) => {
                         const data = snapshot.val();
                         if (!data || isSyncing) return;
                         
@@ -4087,7 +4099,12 @@
                         setTimeout(() => {
                             isSyncing = false;
                         }, 100);
-                    });
+                    };
+                    
+                    videoStateRef.on('value', videoStateHandler);
+                    
+                    // Store handler for cleanup
+                    videoStateRef._valueHandler = videoStateHandler;
                 }
             }
         }
@@ -4327,46 +4344,17 @@
             showControls();
         }
 
-        // Chat functionality
+        // Chat functionality - FIXED: No duplicate messages
         function sendChatMessage(input, container) {
-            if (!input || !container) return;
+            if (!input || !container || isSendingChatMessage) return;
             
             const text = input.value.trim();
             if (!text) return;
             
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message self';
+            // Prevent duplicate sending
+            isSendingChatMessage = true;
             
-            const avatar = document.createElement('div');
-            avatar.className = 'message-avatar';
-            avatar.textContent = participants[currentUser]?.username?.charAt(0) || (isHost ? 'H' : 'Y');
-            
-            const content = document.createElement('div');
-            content.className = 'message-content';
-            
-            const meta = document.createElement('div');
-            meta.className = 'message-meta';
-            
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            
-            meta.innerHTML = `
-                <span>${participants[currentUser]?.username || (isHost ? 'Host' : 'Viewer')}</span>
-                <span>${timeStr}</span>
-            `;
-            
-            const body = document.createElement('div');
-            body.textContent = text;
-            
-            content.appendChild(body);
-            content.appendChild(meta);
-            
-            messageDiv.appendChild(avatar);
-            messageDiv.appendChild(content);
-            
-            container.appendChild(messageDiv);
-            container.scrollTop = container.scrollHeight;
-            
+            // Clear input immediately
             input.value = '';
             
             if (firebaseInitialized) {
@@ -4378,27 +4366,78 @@
                         username: participants[currentUser]?.username || (isHost ? 'Host' : 'Viewer'),
                         timestamp: firebase.database.ServerValue.TIMESTAMP
                     });
+                    
+                    // Reset sending flag after a short delay
+                    setTimeout(() => {
+                        isSendingChatMessage = false;
+                    }, 500);
+                    
                 } catch (error) {
                     console.error("Error sending chat message:", error);
+                    isSendingChatMessage = false;
                 }
+            } else {
+                // Demo mode without Firebase
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message self';
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'message-avatar';
+                avatar.textContent = participants[currentUser]?.username?.charAt(0) || (isHost ? 'H' : 'Y');
+                
+                const content = document.createElement('div');
+                content.className = 'message-content';
+                
+                const meta = document.createElement('div');
+                meta.className = 'message-meta';
+                
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                meta.innerHTML = `
+                    <span>${participants[currentUser]?.username || (isHost ? 'Host' : 'Viewer')}</span>
+                    <span>${timeStr}</span>
+                `;
+                
+                const body = document.createElement('div');
+                body.textContent = text;
+                
+                content.appendChild(body);
+                content.appendChild(meta);
+                
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(content);
+                
+                container.appendChild(messageDiv);
+                container.scrollTop = container.scrollHeight;
+                
+                isSendingChatMessage = false;
             }
         }
 
-        // FIXED: Initialize chat listener
+        // FIXED: Initialize chat listener - only add messages from Firebase once
         function initChatListener() {
             if (!firebaseInitialized) return;
             
-            chatRef.on('child_added', (snapshot) => {
+            // Remove any existing listener to prevent duplicates
+            if (chatRef._valueHandler) {
+                chatRef.off('child_added', chatRef._valueHandler);
+            }
+            
+            const chatHandler = (snapshot) => {
                 const message = snapshot.val();
-                if (message.userId === currentUser) return;
-                
                 addChatMessage(message, chatMessages);
                 
                 if (!chatWidget.classList.contains('active')) {
                     unreadChatCount++;
                     updateChatBadge();
                 }
-            });
+            };
+            
+            chatRef.on('child_added', chatHandler);
+            
+            // Store handler for cleanup
+            chatRef._valueHandler = chatHandler;
         }
 
         function addChatMessage(message, container) {
@@ -4449,7 +4488,7 @@
             }
         }
 
-        // FIXED: Reactions with cooldown
+        // FIXED: Reactions with cooldown - prevent multiple reactions
         function sendReaction(emoji) {
             // Prevent multiple reactions in quick succession
             const now = Date.now();
@@ -4460,13 +4499,16 @@
             
             if (!reactionsBox) return;
             
+            // Add reaction locally
             const bubble = document.createElement('div');
             bubble.className = 'reaction-bubble';
             bubble.textContent = emoji;
             reactionsBox.appendChild(bubble);
             
             setTimeout(() => {
-                bubble.remove();
+                if (bubble.parentNode === reactionsBox) {
+                    bubble.remove();
+                }
             }, 3000);
             
             if (firebaseInitialized) {
@@ -4484,13 +4526,18 @@
             }
         }
 
-        // FIXED: Initialize reactions listener
+        // FIXED: Initialize reactions listener - only add reactions from Firebase once
         function initReactionsListener() {
             if (!firebaseInitialized) return;
             
-            reactionsRef.on('child_added', (snapshot) => {
+            // Remove any existing listener to prevent duplicates
+            if (reactionsRef._valueHandler) {
+                reactionsRef.off('child_added', reactionsRef._valueHandler);
+            }
+            
+            const reactionsHandler = (snapshot) => {
                 const reaction = snapshot.val();
-                if (reaction.userId === currentUser) return;
+                if (reaction.userId === currentUser) return; // Skip own reactions
                 
                 // Show reaction on screen
                 if (reactionsBox) {
@@ -4500,10 +4547,17 @@
                     reactionsBox.appendChild(bubble);
                     
                     setTimeout(() => {
-                        bubble.remove();
+                        if (bubble.parentNode === reactionsBox) {
+                            bubble.remove();
+                        }
                     }, 3000);
                 }
-            });
+            };
+            
+            reactionsRef.on('child_added', reactionsHandler);
+            
+            // Store handler for cleanup
+            reactionsRef._valueHandler = reactionsHandler;
         }
 
         // Copy to clipboard
@@ -4627,9 +4681,12 @@
             participantsModal.classList.remove('show');
         }
 
-        // Drawing functionality
+        // Drawing functionality - FIXED: Prevent duplicate drawing events
         function enableDrawing(){ 
             if (!canvas || !canvasDetailed) return;
+            
+            // Remove existing listeners first to prevent duplicates
+            disableDrawing();
             
             canvas.style.pointerEvents = 'auto'; 
             canvas.style.display = 'block';
@@ -4651,6 +4708,14 @@
             canvasDetailed.addEventListener('touchstart', onDownDetailed, {passive:false}); 
             canvasDetailed.addEventListener('touchmove', onMoveDetailed, {passive:false}); 
             canvasDetailed.addEventListener('touchend', onUpDetailed); 
+            
+            // Store references for cleanup
+            canvas._onDown = onDown;
+            canvas._onMove = onMove;
+            canvas._onUp = onUp;
+            canvasDetailed._onDownDetailed = onDownDetailed;
+            canvasDetailed._onMoveDetailed = onMoveDetailed;
+            canvasDetailed._onUpDetailed = onUpDetailed;
         }
         
         function disableDrawing(){ 
@@ -4660,6 +4725,35 @@
             canvas.style.display = 'none';
             canvasDetailed.style.pointerEvents = 'none';
             canvasDetailed.style.display = 'none';
+            
+            // Remove event listeners
+            if (canvas._onDown) {
+                canvas.removeEventListener('mousedown', canvas._onDown);
+                canvas.removeEventListener('touchstart', canvas._onDown);
+            }
+            if (canvas._onMove) {
+                canvas.removeEventListener('mousemove', canvas._onMove);
+                canvas.removeEventListener('touchmove', canvas._onMove);
+            }
+            if (canvas._onUp) {
+                canvas.removeEventListener('mouseup', canvas._onUp);
+                canvas.removeEventListener('mouseleave', canvas._onUp);
+                canvas.removeEventListener('touchend', canvas._onUp);
+            }
+            
+            if (canvasDetailed._onDownDetailed) {
+                canvasDetailed.removeEventListener('mousedown', canvasDetailed._onDownDetailed);
+                canvasDetailed.removeEventListener('touchstart', canvasDetailed._onDownDetailed);
+            }
+            if (canvasDetailed._onMoveDetailed) {
+                canvasDetailed.removeEventListener('mousemove', canvasDetailed._onMoveDetailed);
+                canvasDetailed.removeEventListener('touchmove', canvasDetailed._onMoveDetailed);
+            }
+            if (canvasDetailed._onUpDetailed) {
+                canvasDetailed.removeEventListener('mouseup', canvasDetailed._onUpDetailed);
+                canvasDetailed.removeEventListener('mouseleave', canvasDetailed._onUpDetailed);
+                canvasDetailed.removeEventListener('touchend', canvasDetailed._onUpDetailed);
+            }
         }
         
         function getCanvasPos(e, canvasElement){ 
@@ -4806,85 +4900,175 @@
             });
         }
 
-        // Set up all event listeners
+        // Set up all event listeners - FIXED: Prevent duplicate listeners
         function setupEventListeners() {
             // View toggle
-            if (menuBtn) menuBtn.addEventListener('click', toggleToDetailedView);
-            if (backToPlayerBtn) backToPlayerBtn.addEventListener('click', toggleToPlayerView);
+            if (menuBtn) {
+                menuBtn.removeEventListener('click', toggleToDetailedView);
+                menuBtn.addEventListener('click', toggleToDetailedView);
+            }
+            if (backToPlayerBtn) {
+                backToPlayerBtn.removeEventListener('click', toggleToPlayerView);
+                backToPlayerBtn.addEventListener('click', toggleToPlayerView);
+            }
 
             // Home buttons
-            if (homeBtn) homeBtn.addEventListener('click', () => {
+            const goHome = () => {
                 window.location.href = 'home.html';
-            });
-            if (detailedHomeBtn) detailedHomeBtn.addEventListener('click', () => {
-                window.location.href = 'home.html';
-            });
-            if (controlPanelHomeBtn) controlPanelHomeBtn.addEventListener('click', () => {
-                window.location.href = 'home.html';
-            });
+            };
+            
+            if (homeBtn) {
+                homeBtn.removeEventListener('click', goHome);
+                homeBtn.addEventListener('click', goHome);
+            }
+            if (detailedHomeBtn) {
+                detailedHomeBtn.removeEventListener('click', goHome);
+                detailedHomeBtn.addEventListener('click', goHome);
+            }
+            if (controlPanelHomeBtn) {
+                controlPanelHomeBtn.removeEventListener('click', goHome);
+                controlPanelHomeBtn.addEventListener('click', goHome);
+            }
 
             // Video controls
-            if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
-            if (detailedPlayPauseBtn) detailedPlayPauseBtn.addEventListener('click', togglePlayPause);
+            if (playPauseBtn) {
+                playPauseBtn.removeEventListener('click', togglePlayPause);
+                playPauseBtn.addEventListener('click', togglePlayPause);
+            }
+            if (detailedPlayPauseBtn) {
+                detailedPlayPauseBtn.removeEventListener('click', togglePlayPause);
+                detailedPlayPauseBtn.addEventListener('click', togglePlayPause);
+            }
             
-            if (skipBackBtn) skipBackBtn.addEventListener('click', skipBackward);
-            if (detailedSkipBackBtn) detailedSkipBackBtn.addEventListener('click', skipBackward);
-            if (skipForwardBtn) skipForwardBtn.addEventListener('click', skipForward);
-            if (detailedSkipForwardBtn) detailedSkipForwardBtn.addEventListener('click', skipForward);
+            if (skipBackBtn) {
+                skipBackBtn.removeEventListener('click', skipBackward);
+                skipBackBtn.addEventListener('click', skipBackward);
+            }
+            if (detailedSkipBackBtn) {
+                detailedSkipBackBtn.removeEventListener('click', skipBackward);
+                detailedSkipBackBtn.addEventListener('click', skipBackward);
+            }
+            if (skipForwardBtn) {
+                skipForwardBtn.removeEventListener('click', skipForward);
+                skipForwardBtn.addEventListener('click', skipForward);
+            }
+            if (detailedSkipForwardBtn) {
+                detailedSkipForwardBtn.removeEventListener('click', skipForward);
+                detailedSkipForwardBtn.addEventListener('click', skipForward);
+            }
 
             // Screen resize menu
-            if (fullscreenResizeBtn) fullscreenResizeBtn.addEventListener('click', openScreenResizeMenu);
-            if (detailedFullscreenResizeBtn) detailedFullscreenResizeBtn.addEventListener('click', openScreenResizeMenu);
-            if (resizeOptionBtn) resizeOptionBtn.addEventListener('click', () => {
-                screenResizeMenu.classList.remove('show');
-                showResizeTutorial();
-            });
-            if (fullscreenOptionBtn) fullscreenOptionBtn.addEventListener('click', () => {
-                screenResizeMenu.classList.remove('show');
-                toggleFullscreen();
-            });
+            if (fullscreenResizeBtn) {
+                fullscreenResizeBtn.removeEventListener('click', openScreenResizeMenu);
+                fullscreenResizeBtn.addEventListener('click', openScreenResizeMenu);
+            }
+            if (detailedFullscreenResizeBtn) {
+                detailedFullscreenResizeBtn.removeEventListener('click', openScreenResizeMenu);
+                detailedFullscreenResizeBtn.addEventListener('click', openScreenResizeMenu);
+            }
+            if (resizeOptionBtn) {
+                resizeOptionBtn.removeEventListener('click', () => {
+                    screenResizeMenu.classList.remove('show');
+                    showResizeTutorial();
+                });
+                resizeOptionBtn.addEventListener('click', () => {
+                    screenResizeMenu.classList.remove('show');
+                    showResizeTutorial();
+                });
+            }
+            if (fullscreenOptionBtn) {
+                fullscreenOptionBtn.removeEventListener('click', () => {
+                    screenResizeMenu.classList.remove('show');
+                    toggleFullscreen();
+                });
+                fullscreenOptionBtn.addEventListener('click', () => {
+                    screenResizeMenu.classList.remove('show');
+                    toggleFullscreen();
+                });
+            }
 
             // Tutorial close
-            if (closeTutorialBtn) closeTutorialBtn.addEventListener('click', () => {
-                resizeTutorial.classList.remove('show');
-            });
+            if (closeTutorialBtn) {
+                closeTutorialBtn.removeEventListener('click', () => {
+                    resizeTutorial.classList.remove('show');
+                });
+                closeTutorialBtn.addEventListener('click', () => {
+                    resizeTutorial.classList.remove('show');
+                });
+            }
 
             // Volume controls
-            if (volumeBtn) volumeBtn.addEventListener('click', toggleMute);
-            if (detailedVolumeBtn) detailedVolumeBtn.addEventListener('click', toggleMute);
-            if (volumeSlider) volumeSlider.addEventListener('input', updateVolume);
-            if (detailedVolumeSlider) detailedVolumeSlider.addEventListener('input', updateVolume);
+            if (volumeBtn) {
+                volumeBtn.removeEventListener('click', toggleMute);
+                volumeBtn.addEventListener('click', toggleMute);
+            }
+            if (detailedVolumeBtn) {
+                detailedVolumeBtn.removeEventListener('click', toggleMute);
+                detailedVolumeBtn.addEventListener('click', toggleMute);
+            }
+            if (volumeSlider) {
+                volumeSlider.removeEventListener('input', updateVolume);
+                volumeSlider.addEventListener('input', updateVolume);
+            }
+            if (detailedVolumeSlider) {
+                detailedVolumeSlider.removeEventListener('input', updateVolume);
+                detailedVolumeSlider.addEventListener('input', updateVolume);
+            }
 
             // Overlay tap to play
-            if (overlayBlock) overlayBlock.addEventListener('click', startVideo);
+            if (overlayBlock) {
+                overlayBlock.removeEventListener('click', startVideo);
+                overlayBlock.addEventListener('click', startVideo);
+            }
 
             // Widget toggles
-            if (voiceWidget) voiceWidget.addEventListener('click', () => toggleWidget('voice'));
-            if (reactionsWidget) reactionsWidget.addEventListener('click', () => toggleWidget('reactions'));
-            if (chatWidget) chatWidget.addEventListener('click', () => toggleWidget('chat'));
-            if (shareWidget) shareWidget.addEventListener('click', () => toggleWidget('share'));
+            if (voiceWidget) {
+                voiceWidget.removeEventListener('click', () => toggleWidget('voice'));
+                voiceWidget.addEventListener('click', () => toggleWidget('voice'));
+            }
+            if (reactionsWidget) {
+                reactionsWidget.removeEventListener('click', () => toggleWidget('reactions'));
+                reactionsWidget.addEventListener('click', () => toggleWidget('reactions'));
+            }
+            if (chatWidget) {
+                chatWidget.removeEventListener('click', () => toggleWidget('chat'));
+                chatWidget.addEventListener('click', () => toggleWidget('chat'));
+            }
+            if (shareWidget) {
+                shareWidget.removeEventListener('click', () => toggleWidget('share'));
+                shareWidget.addEventListener('click', () => toggleWidget('share'));
+            }
 
-            // Hold to talk button
+            // Hold to talk button - FIXED: Prevent duplicate listeners
             if (holdTalkBtn) {
-                holdTalkBtn.addEventListener('mousedown', startTalking);
-                holdTalkBtn.addEventListener('mouseup', stopTalking);
-                holdTalkBtn.addEventListener('mouseleave', stopTalking);
-                holdTalkBtn.addEventListener('touchstart', (e) => {
+                // Remove existing listeners
+                const newHoldTalkBtn = holdTalkBtn.cloneNode(true);
+                holdTalkBtn.parentNode.replaceChild(newHoldTalkBtn, holdTalkBtn);
+                
+                // Re-assign the variable
+                const updatedHoldTalkBtn = newHoldTalkBtn;
+                
+                updatedHoldTalkBtn.addEventListener('mousedown', startTalking);
+                updatedHoldTalkBtn.addEventListener('mouseup', stopTalking);
+                updatedHoldTalkBtn.addEventListener('mouseleave', stopTalking);
+                updatedHoldTalkBtn.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     startTalking();
                 }, { passive: false });
-                holdTalkBtn.addEventListener('touchend', (e) => {
+                updatedHoldTalkBtn.addEventListener('touchend', (e) => {
                     e.preventDefault();
                     stopTalking();
                 });
-                holdTalkBtn.addEventListener('touchcancel', (e) => {
+                updatedHoldTalkBtn.addEventListener('touchcancel', (e) => {
                     e.preventDefault();
                     stopTalking();
                 });
             }
 
-            // FIXED: Reaction buttons with cooldown
+            // FIXED: Reaction buttons with cooldown - prevent duplicate listeners
             document.querySelectorAll('.reaction-btn').forEach(btn => {
+                const originalOnClick = btn.onclick;
+                btn.onclick = null;
                 btn.addEventListener('click', (e) => {
                     const emoji = e.target.getAttribute('data-emoji') || e.target.textContent;
                     sendReaction(emoji);
@@ -4892,31 +5076,61 @@
                 });
             });
 
-            // Chat send buttons
-            if (chatSendBtn) chatSendBtn.addEventListener('click', () => sendChatMessage(chatInput, chatMessages));
-            if (chatInput) chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') sendChatMessage(chatInput, chatMessages);
-            });
+            // Chat send buttons - FIXED: Prevent duplicate sending
+            const sendChatHandler = () => {
+                if (!isSendingChatMessage) {
+                    sendChatMessage(chatInput, chatMessages);
+                }
+            };
+            
+            if (chatSendBtn) {
+                chatSendBtn.removeEventListener('click', sendChatHandler);
+                chatSendBtn.addEventListener('click', sendChatHandler);
+            }
+            
+            const chatInputHandler = (e) => {
+                if (e.key === 'Enter' && !isSendingChatMessage) {
+                    sendChatMessage(chatInput, chatMessages);
+                }
+            };
+            
+            if (chatInput) {
+                chatInput.removeEventListener('keypress', chatInputHandler);
+                chatInput.addEventListener('keypress', chatInputHandler);
+            }
 
             // Copy buttons
-            if (copyBtn) copyBtn.addEventListener('click', () => copyToClipboard(shareLink, copyBtn));
+            const copyHandler = () => copyToClipboard(shareLink, copyBtn);
+            if (copyBtn) {
+                copyBtn.removeEventListener('click', copyHandler);
+                copyBtn.addEventListener('click', copyHandler);
+            }
 
             // Discussion controls
-            if (endDiscussionBtn) endDiscussionBtn.addEventListener('click', endDiscussion);
+            if (endDiscussionBtn) {
+                endDiscussionBtn.removeEventListener('click', endDiscussion);
+                endDiscussionBtn.addEventListener('click', endDiscussion);
+            }
 
             // Participants modal
-            if (participantCountBtn) participantCountBtn.addEventListener('click', showParticipantsModal);
-            if (closeParticipantsBtn) closeParticipantsBtn.addEventListener('click', hideParticipantsModal);
+            if (participantCountBtn) {
+                participantCountBtn.removeEventListener('click', showParticipantsModal);
+                participantCountBtn.addEventListener('click', showParticipantsModal);
+            }
+            if (closeParticipantsBtn) {
+                closeParticipantsBtn.removeEventListener('click', hideParticipantsModal);
+                closeParticipantsBtn.addEventListener('click', hideParticipantsModal);
+            }
 
             // Close participants modal when clicking outside
-            if (participantsModal) participantsModal.addEventListener('click', (e) => {
+            participantsModal.addEventListener('click', (e) => {
                 if (e.target === participantsModal) {
                     hideParticipantsModal();
                 }
             });
 
             // Close screen resize menu when clicking outside
-            document.addEventListener('click', (e) => {
+            const closeScreenResizeHandler = (e) => {
                 if (!e.target.closest('#fullscreen-resize-btn') && 
                     !e.target.closest('#detailed-fullscreen-resize-btn') &&
                     !e.target.closest('.screen-resize-menu')) {
@@ -4929,43 +5143,57 @@
                         closeWidget(activeWidget);
                     }
                 }
-            });
+            };
+            
+            document.removeEventListener('click', closeScreenResizeHandler);
+            document.addEventListener('click', closeScreenResizeHandler);
 
             // Handle window resize
             const debouncedFitCanvas = debounce(() => {
                 fitCanvas();
             }, 250);
-
+            
+            window.removeEventListener('resize', debouncedFitCanvas);
             window.addEventListener('resize', debouncedFitCanvas);
 
             // Fullscreen change
-            document.addEventListener('fullscreenchange', () => {
+            const fullscreenChangeHandler = () => {
                 isFullscreen = !!document.fullscreenElement;
                 if (!isFullscreen) {
                     screenResizeMenu.classList.remove('show');
                 }
-            });
+            };
+            
+            document.removeEventListener('fullscreenchange', fullscreenChangeHandler);
+            document.addEventListener('fullscreenchange', fullscreenChangeHandler);
 
             // Progress bar click to seek
+            const progressClickHandler = (e) => {
+                const video = getActiveHTML5Video();
+                if (!video || !video.duration) return;
+
+                const rect = progressContainer.getBoundingClientRect();
+                const percent = (e.clientX - rect.left) / rect.width;
+                const time = percent * video.duration;
+
+                video.currentTime = time;
+                updateVideoState();
+
+                showControls();
+            };
+            
             if (progressContainer) {
-                progressContainer.addEventListener('click', (e) => {
-                    const video = getActiveHTML5Video();
-                    if (!video || !video.duration) return;
-
-                    const rect = progressContainer.getBoundingClientRect();
-                    const percent = (e.clientX - rect.left) / rect.width;
-                    const time = percent * video.duration;
-
-                    video.currentTime = time;
-                    updateVideoState();
-
-                    showControls();
-                });
+                progressContainer.removeEventListener('click', progressClickHandler);
+                progressContainer.addEventListener('click', progressClickHandler);
             }
 
             // Control panel buttons
-            if (pauseDiscussBtn) pauseDiscussBtn.addEventListener('click', startDiscussion);
-            if (toggleDrawBtn) toggleDrawBtn.addEventListener('click', () => {
+            if (pauseDiscussBtn) {
+                pauseDiscussBtn.removeEventListener('click', startDiscussion);
+                pauseDiscussBtn.addEventListener('click', startDiscussion);
+            }
+            
+            const toggleDrawHandler = () => {
                 drawingEnabled = !drawingEnabled;
                 toggleDrawBtn.classList.toggle('active');
                 if (drawingEnabled) {
@@ -4981,9 +5209,14 @@
                         console.error("Error updating drawing state:", error);
                     }
                 }
-            });
+            };
             
-            if (clearDrawBtn) clearDrawBtn.addEventListener('click', () => {
+            if (toggleDrawBtn) {
+                toggleDrawBtn.removeEventListener('click', toggleDrawHandler);
+                toggleDrawBtn.addEventListener('click', toggleDrawHandler);
+            }
+            
+            const clearDrawHandler = () => {
                 ctx.clearRect(0,0,canvas.width,canvas.height);
                 ctxDetailed.clearRect(0,0,canvasDetailed.width,canvasDetailed.height);
                 
@@ -4994,18 +5227,31 @@
                         console.error("Error clearing drawing:", error);
                     }
                 }
-            });
+            };
             
-            if (speedSel) speedSel.addEventListener('change', (e) => {
+            if (clearDrawBtn) {
+                clearDrawBtn.removeEventListener('click', clearDrawHandler);
+                clearDrawBtn.addEventListener('click', clearDrawHandler);
+            }
+            
+            const speedChangeHandler = (e) => {
                 const speed = Number(e.target.value || 1);
                 if (usingYT && ytPlayer) {
                     ytPlayer.setPlaybackRate(speed);
                 } else if (html5videoElement) {
                     html5videoElement.playbackRate = speed;
                 }
-            });
+            };
             
-            if (syncBtn) syncBtn.addEventListener('click', manualSync);
+            if (speedSel) {
+                speedSel.removeEventListener('change', speedChangeHandler);
+                speedSel.addEventListener('change', speedChangeHandler);
+            }
+            
+            if (syncBtn) {
+                syncBtn.removeEventListener('click', manualSync);
+                syncBtn.addEventListener('click', manualSync);
+            }
 
             // Auto-hide controls system
             setupAutoHideControls();
@@ -5015,26 +5261,48 @@
         function setupAutoHideControls() {
             const videoContainer = document.querySelector('.video-container');
             if (videoContainer) {
-                videoContainer.addEventListener('click', (e) => {
+                const videoClickHandler = (e) => {
                     if (e.target === videoContainer || e.target === html5videoElement || 
                         e.target === ytContainer) {
                         showControls();
                     }
-                });
+                };
                 
+                videoContainer.removeEventListener('click', videoClickHandler);
+                videoContainer.addEventListener('click', videoClickHandler);
+                
+                videoContainer.removeEventListener('mousemove', showControls);
                 videoContainer.addEventListener('mousemove', showControls);
+                
+                videoContainer.removeEventListener('touchstart', showControls);
                 videoContainer.addEventListener('touchstart', showControls);
-                videoContainer.addEventListener('mouseleave', () => {
+                
+                const mouseLeaveHandler = () => {
                     if (!screenResizeMenu.classList.contains('show')) {
                         resetControlsTimeout();
                     }
-                });
+                };
+                
+                videoContainer.removeEventListener('mouseleave', mouseLeaveHandler);
+                videoContainer.addEventListener('mouseleave', mouseLeaveHandler);
             }
             
-            if (customControls) customControls.addEventListener('mousemove', resetControlsTimeout);
-            if (detailedCustomControls) detailedCustomControls.addEventListener('mousemove', resetControlsTimeout);
-            if (progressContainer) progressContainer.addEventListener('mousemove', resetControlsTimeout);
-            if (detailedProgressContainer) detailedProgressContainer.addEventListener('mousemove', resetControlsTimeout);
+            if (customControls) {
+                customControls.removeEventListener('mousemove', resetControlsTimeout);
+                customControls.addEventListener('mousemove', resetControlsTimeout);
+            }
+            if (detailedCustomControls) {
+                detailedCustomControls.removeEventListener('mousemove', resetControlsTimeout);
+                detailedCustomControls.addEventListener('mousemove', resetControlsTimeout);
+            }
+            if (progressContainer) {
+                progressContainer.removeEventListener('mousemove', resetControlsTimeout);
+                progressContainer.addEventListener('mousemove', resetControlsTimeout);
+            }
+            if (detailedProgressContainer) {
+                detailedProgressContainer.removeEventListener('mousemove', resetControlsTimeout);
+                detailedProgressContainer.addEventListener('mousemove', resetControlsTimeout);
+            }
         }
 
         function debounce(func, wait) {
@@ -5049,9 +5317,75 @@
             };
         }
 
+        // Cleanup function to remove all listeners
+        function cleanup() {
+            if (firebaseInitialized) {
+                // Remove Firebase listeners
+                if (participantsRef) {
+                    participantsRef.off();
+                }
+                if (chatRef && chatRef._valueHandler) {
+                    chatRef.off('child_added', chatRef._valueHandler);
+                }
+                if (reactionsRef && reactionsRef._valueHandler) {
+                    reactionsRef.off('child_added', reactionsRef._valueHandler);
+                }
+                if (videoStateRef && videoStateRef._valueHandler) {
+                    videoStateRef.off('value', videoStateRef._valueHandler);
+                }
+                if (drawRef) {
+                    drawRef.off();
+                }
+            }
+            
+            // Remove video event listeners
+            if (html5videoElement) {
+                if (html5videoElement._playHandler) {
+                    html5videoElement.removeEventListener('play', html5videoElement._playHandler);
+                }
+                if (html5videoElement._pauseHandler) {
+                    html5videoElement.removeEventListener('pause', html5videoElement._pauseHandler);
+                }
+                if (html5videoElement._seekHandler) {
+                    html5videoElement.removeEventListener('seeked', html5videoElement._seekHandler);
+                }
+            }
+            
+            // Clear intervals
+            if (syncInterval) {
+                clearInterval(syncInterval);
+                syncInterval = null;
+            }
+            if (controlsTimeout) {
+                clearTimeout(controlsTimeout);
+                controlsTimeout = null;
+            }
+            if (widgetTimeout) {
+                clearTimeout(widgetTimeout);
+                widgetTimeout = null;
+            }
+            if (discussionInterval) {
+                clearInterval(discussionInterval);
+                discussionInterval = null;
+            }
+            
+            // Clean up Agora
+            if (agoraClient) {
+                agoraClient.leave();
+                agoraClient = null;
+            }
+            if (agoraDiscussionClient) {
+                agoraDiscussionClient.leave();
+                agoraDiscussionClient = null;
+            }
+        }
+
         // Initialize the app
         function initApp() {
             console.log("Initializing Let's Watch...");
+            
+            // Clean up any existing listeners first
+            cleanup();
             
             // Update status display
             if (statusIndicator && statusDisplay) {
@@ -5098,6 +5432,10 @@
         } else {
             initApp();
         }
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', cleanup);
+        window.addEventListener('pagehide', cleanup);
     </script>
 </body>
 </html>

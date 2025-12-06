@@ -6,7 +6,611 @@
     <title>Let's Watch | Group Video Experience</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* All CSS styles remain the same as previous version */
+        /* All CSS styles remain the same with these additions/fixes */
+        
+        /* FIXED: Improved chat UI/UX - Reduced size and better UX */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(138, 79, 255, 0.2);
+            background: rgba(26, 4, 58, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 12px 12px 0 0;
+            min-height: 44px;
+        }
+        
+        .chat-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(203, 178, 255, 0.9);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .chat-title i {
+            font-size: 12px;
+        }
+        
+        .chat-messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            padding-bottom: 0;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(138, 79, 255, 0.3) transparent;
+            max-height: 280px;
+        }
+        
+        .chat-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 100%;
+            padding-bottom: 12px;
+        }
+        
+        .message {
+            display: flex;
+            gap: 8px;
+            animation: messageAppear 0.3s ease;
+            opacity: 0;
+            animation-fill-mode: forwards;
+            max-width: 100%;
+        }
+        
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.system {
+            justify-content: center;
+        }
+        
+        .message.system .message-content {
+            background: linear-gradient(145deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.1));
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            color: #FFD166;
+            font-size: 11px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 90%;
+            line-height: 1.3;
+        }
+        
+        .message.system .message-content i {
+            margin-right: 6px;
+        }
+        
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+            flex-shrink: 0;
+            border: 2px solid rgba(138, 79, 255, 0.3);
+            box-shadow: 0 2px 8px rgba(106, 13, 255, 0.2);
+            position: relative;
+        }
+        
+        .message-avatar.talking::after {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            border-radius: 50%;
+            border: 2px solid #FFD166;
+            animation: pulseGlow 1.5s infinite;
+        }
+        
+        @keyframes pulseGlow {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+                box-shadow: 0 0 6px rgba(255, 209, 102, 0.4);
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+                box-shadow: 0 0 12px rgba(255, 209, 102, 0.6);
+            }
+        }
+        
+        .message-content {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 10px 12px;
+            border-radius: 14px;
+            border-top-left-radius: 4px;
+            max-width: 75%;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(138, 79, 255, 0.15);
+            word-break: break-word;
+            position: relative;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .message.self {
+            flex-direction: row-reverse;
+        }
+        
+        .message.self .message-content {
+            background: linear-gradient(145deg, rgba(106, 13, 255, 0.2), rgba(138, 79, 255, 0.15));
+            border-top-left-radius: 14px;
+            border-top-right-radius: 4px;
+            border-color: rgba(138, 79, 255, 0.25);
+        }
+        
+        .message.self .message-avatar {
+            margin-left: 0;
+            margin-right: 0;
+        }
+        
+        .message-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 4px;
+            font-weight: 500;
+            align-items: center;
+        }
+        
+        .message.self .message-meta {
+            flex-direction: row-reverse;
+        }
+        
+        .chat-input-container {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 12px;
+            background: rgba(26, 4, 58, 0.9);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(138, 79, 255, 0.2);
+            border-radius: 0 0 12px 12px;
+        }
+        
+        #chat-input {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(138, 79, 255, 0.3);
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-color);
+            font-size: 13px;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+            -webkit-user-select: text;
+            user-select: text;
+            -webkit-touch-callout: default;
+            touch-action: manipulation;
+        }
+        
+        #chat-input:focus {
+            outline: none;
+            border-color: rgba(138, 79, 255, 0.5);
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 0 2px rgba(138, 79, 255, 0.1);
+        }
+        
+        .send-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(106, 13, 255, 0.3);
+            flex-shrink: 0;
+        }
+        
+        .send-btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(106, 13, 255, 0.4);
+        }
+        
+        .send-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        /* FIXED: Enhanced discussion modal with orbiting participants */
+        .discussion-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 0, 22, 0.98);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(30px);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .discussion-modal.active {
+            display: flex;
+        }
+
+        .discussion-content {
+            background: linear-gradient(145deg, #1A043A 0%, #09001F 100%);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            width: 95%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(138, 79, 255, 0.3);
+            position: relative;
+            animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .discussion-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .discussion-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #8A4FFF, #CBB2FF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            animation: titleGlow 2s infinite alternate;
+        }
+
+        .discussion-subtitle {
+            color: rgba(200, 200, 217, 0.7);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        /* FIXED: Enhanced participants orbit system */
+        .participants-orbit {
+            position: relative;
+            width: 350px;
+            height: 350px;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .host-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+
+        .host-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+            border: 4px solid #FFD166;
+            box-shadow: 0 0 30px rgba(255, 209, 102, 0.5);
+            position: relative;
+            animation: hostPulse 2s infinite;
+        }
+
+        @keyframes hostPulse {
+            0%, 100% { 
+                transform: translate(-50%, -50%) scale(1);
+                box-shadow: 0 0 30px rgba(255, 209, 102, 0.5);
+            }
+            50% { 
+                transform: translate(-50%, -50%) scale(1.05);
+                box-shadow: 0 0 50px rgba(255, 209, 102, 0.7);
+            }
+        }
+
+        .host-label {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(138, 79, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(138, 79, 255, 0.3);
+        }
+
+        .orbit-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px dashed rgba(138, 79, 255, 0.3);
+            border-radius: 50%;
+            width: 250px;
+            height: 250px;
+            animation: rotateOrbit 20s linear infinite;
+        }
+
+        .orbit-ring.inner {
+            width: 200px;
+            height: 200px;
+            animation: rotateOrbit 15s linear infinite reverse;
+        }
+
+        @keyframes rotateOrbit {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .participant-orbit {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: orbit 20s linear infinite;
+        }
+
+        .participant-orbit:nth-child(2) {
+            animation: orbit 25s linear infinite;
+            animation-delay: -5s;
+        }
+
+        .participant-orbit:nth-child(3) {
+            animation: orbit 30s linear infinite;
+            animation-delay: -10s;
+        }
+
+        .participant-orbit:nth-child(4) {
+            animation: orbit 35s linear infinite;
+            animation-delay: -15s;
+        }
+
+        .participant-orbit:nth-child(5) {
+            animation: orbit 40s linear infinite;
+            animation-delay: -20s;
+        }
+
+        @keyframes orbit {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg) translateX(125px) rotate(0deg);
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg) translateX(125px) rotate(-360deg);
+            }
+        }
+
+        .participant-orbit .orbit-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #FF6B6B 0%, #FF8E8E 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            border: 3px solid transparent;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .participant-orbit .orbit-avatar.talking {
+            border-color: #FFD166;
+            box-shadow: 0 0 20px rgba(255, 209, 102, 0.6);
+            animation: talkingOrbit 1.5s infinite;
+        }
+
+        @keyframes talkingOrbit {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(255, 209, 102, 0.6);
+            }
+            50% { 
+                transform: scale(1.1);
+                box-shadow: 0 0 30px rgba(255, 209, 102, 0.8);
+            }
+        }
+
+        .participant-orbit .orbit-avatar.muted {
+            filter: grayscale(0.8);
+            opacity: 0.7;
+            border-color: #ff6b81;
+        }
+
+        .orbit-mic-btn {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(26, 4, 58, 0.9);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(138, 79, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .orbit-mic-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .orbit-mic-btn.muted {
+            background: rgba(255, 107, 129, 0.3);
+            border-color: rgba(255, 107, 129, 0.5);
+            color: #ff6b81;
+        }
+
+        .orbit-mic-btn.active {
+            background: rgba(16, 185, 129, 0.3);
+            border-color: rgba(16, 185, 129, 0.5);
+            color: #10b981;
+        }
+
+        .orbit-name {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(26, 4, 58, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 500;
+            color: white;
+            white-space: nowrap;
+            margin-top: 5px;
+            border: 1px solid rgba(138, 79, 255, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .participant-orbit:hover .orbit-name {
+            opacity: 1;
+        }
+
+        .discussion-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .discussion-timer {
+            background: rgba(138, 79, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: var(--border-radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            border: 1px solid rgba(138, 79, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-align: center;
+        }
+
+        .end-discussion-btn {
+            background: linear-gradient(145deg, #ff4757 0%, #ff6b81 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: var(--border-radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 6px 20px rgba(255, 71, 87, 0.3);
+        }
+
+        .end-discussion-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 71, 87, 0.4);
+        }
+
+        .discussion-instructions {
+            background: linear-gradient(145deg, rgba(138, 79, 255, 0.15), rgba(106, 13, 255, 0.1));
+            border: 1px solid rgba(138, 79, 255, 0.3);
+            border-radius: var(--border-radius-sm);
+            padding: 12px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .discussion-instructions h4 {
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(203, 178, 255, 0.9);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .discussion-instructions p {
+            font-size: 11px;
+            color: rgba(200, 200, 217, 0.8);
+            line-height: 1.4;
+            margin-bottom: 6px;
+        }
+        
+        .discussion-instructions ol {
+            text-align: left;
+            padding-left: 18px;
+            font-size: 11px;
+            color: rgba(200, 200, 217, 0.8);
+            line-height: 1.4;
+        }
+        
+        .discussion-instructions li {
+            margin-bottom: 4px;
+        }
+
+        /* Your existing CSS remains the same below */
         :root {
             --primary: #8A4FFF;
             --primary-dark: #6A0DFF;
@@ -575,8 +1179,8 @@
             background: rgba(26, 4, 58, 0.98);
             backdrop-filter: blur(25px) saturate(180%);
             -webkit-backdrop-filter: blur(25px) saturate(180%);
-            border-radius: 20px;
-            padding: 16px;
+            border-radius: 16px;
+            padding: 0;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 8px 32px rgba(106, 13, 255, 0.15);
             width: 320px;
             max-height: 400px;
@@ -589,7 +1193,8 @@
         }
         
         .widget-content.active {
-            display: block;
+            display: flex;
+            flex-direction: column;
         }
         
         @keyframes slideIn {
@@ -625,37 +1230,38 @@
         .voice-status {
             text-align: center;
             margin-bottom: 16px;
-            font-size: 13px;
+            font-size: 12px;
             color: rgba(255, 255, 255, 0.85);
             font-weight: 500;
             padding: 8px;
             background: rgba(138, 79, 255, 0.1);
-            border-radius: 12px;
+            border-radius: 10px;
             border: 1px solid rgba(138, 79, 255, 0.15);
+            line-height: 1.4;
         }
         
         .voice-btn {
             width: 100%;
-            padding: 14px 20px;
-            border-radius: 14px;
+            padding: 12px 16px;
+            border-radius: 12px;
             background: linear-gradient(145deg, rgba(138, 79, 255, 0.15), rgba(106, 13, 255, 0.1));
             border: 1px solid rgba(138, 79, 255, 0.3);
             color: rgba(255, 255, 255, 0.95);
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             backdrop-filter: blur(10px);
         }
         
         .voice-btn:hover {
             background: linear-gradient(145deg, rgba(138, 79, 255, 0.25), rgba(106, 13, 255, 0.2));
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(106, 13, 255, 0.25);
+            box-shadow: 0 6px 20px rgba(106, 13, 255, 0.25);
             border-color: rgba(138, 79, 255, 0.5);
         }
         
@@ -669,16 +1275,16 @@
             border-color: rgba(255, 71, 87, 0.4);
             color: white;
             animation: talkingPulse 1.5s infinite;
-            box-shadow: 0 0 20px rgba(255, 71, 87, 0.3);
+            box-shadow: 0 0 15px rgba(255, 71, 87, 0.3);
         }
         
         @keyframes talkingPulse {
             0%, 100% { 
-                box-shadow: 0 0 20px rgba(255, 71, 87, 0.3);
+                box-shadow: 0 0 15px rgba(255, 71, 87, 0.3);
                 transform: translateY(-2px);
             }
             50% { 
-                box-shadow: 0 0 30px rgba(255, 71, 87, 0.5);
+                box-shadow: 0 0 25px rgba(255, 71, 87, 0.5);
                 transform: translateY(-2px) scale(1.02);
             }
         }
@@ -686,16 +1292,16 @@
         .reactions-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            padding: 5px;
+            gap: 8px;
+            padding: 12px;
         }
         
         .reaction-btn {
             aspect-ratio: 1;
-            border-radius: 14px;
+            border-radius: 12px;
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(138, 79, 255, 0.2);
-            font-size: 24px;
+            font-size: 20px;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
@@ -706,190 +1312,30 @@
         
         .reaction-btn:hover {
             background: rgba(138, 79, 255, 0.2);
-            transform: scale(1.15) translateY(-4px);
+            transform: scale(1.1) translateY(-2px);
             border-color: rgba(138, 79, 255, 0.4);
-            box-shadow: 0 8px 20px rgba(106, 13, 255, 0.25);
+            box-shadow: 0 6px 15px rgba(106, 13, 255, 0.25);
         }
         
         .reaction-btn:active {
-            transform: scale(1.05) translateY(-2px);
-        }
-        
-        /* UPDATED: Chat messages styling - Reduced height */
-        .chat-messages {
-            height: 200px; /* Reduced from 280px */
-            overflow-y: auto;
-            margin-bottom: 12px;
-            padding-right: 8px;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(138, 79, 255, 0.3) transparent;
-        }
-        
-        .chat-messages::-webkit-scrollbar {
-            width: 5px;
-        }
-        
-        .chat-messages::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        
-        .chat-messages::-webkit-scrollbar-thumb {
-            background: rgba(138, 79, 255, 0.3);
-            border-radius: 3px;
-        }
-        
-        .chat-messages::-webkit-scrollbar-thumb:hover {
-            background: rgba(138, 79, 255, 0.4);
-        }
-        
-        .message {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 12px;
-            animation: messageAppear 0.3s ease;
-        }
-        
-        @keyframes messageAppear {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .message-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
-            font-size: 13px;
-            flex-shrink: 0;
-            border: 2px solid rgba(138, 79, 255, 0.3);
-            box-shadow: 0 4px 12px rgba(106, 13, 255, 0.2);
-        }
-        
-        .message-content {
-            background: rgba(255, 255, 255, 0.08);
-            padding: 10px 14px;
-            border-radius: 16px;
-            border-top-left-radius: 4px;
-            max-width: 85%;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(138, 79, 255, 0.15);
-            word-break: break-word;
-            position: relative;
-            font-size: 13px;
-            line-height: 1.4;
-        }
-        
-        .message.self {
-            flex-direction: row-reverse;
-        }
-        
-        .message.self .message-content {
-            background: linear-gradient(145deg, rgba(106, 13, 255, 0.2), rgba(138, 79, 255, 0.15));
-            border-top-left-radius: 16px;
-            border-top-right-radius: 4px;
-            border-color: rgba(138, 79, 255, 0.25);
-        }
-        
-        .message.self .message-avatar {
-            margin-left: 0;
-            margin-right: 0;
-        }
-        
-        .message-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            opacity: 0.7;
-            margin-top: 6px;
-            font-weight: 500;
-        }
-        
-        .message.self .message-meta {
-            flex-direction: row-reverse;
-        }
-        
-        .chat-input-container {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            padding: 8px 0;
-        }
-        
-        #chat-input {
-            flex: 1;
-            padding: 12px 16px;
-            border-radius: 14px;
-            border: 1px solid rgba(138, 79, 255, 0.3);
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-color);
-            font-size: 16px;
-            transition: var(--transition);
-            backdrop-filter: blur(10px);
-            -webkit-user-select: text;
-            user-select: text;
-            -webkit-touch-callout: default;
-            touch-action: manipulation;
-            min-width: 0;
-        }
-        
-        #chat-input:focus {
-            outline: none;
-            border-color: rgba(138, 79, 255, 0.5);
-            background: rgba(255, 255, 255, 0.12);
-            box-shadow: 0 0 0 2px rgba(138, 79, 255, 0.1);
-        }
-        
-        .send-btn {
-            width: 44px;
-            height: 44px;
-            border-radius: 14px;
-            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
-            border: none;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            box-shadow: 0 4px 15px rgba(106, 13, 255, 0.3);
-            flex-shrink: 0;
-        }
-        
-        .send-btn:hover {
-            transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 8px 25px rgba(106, 13, 255, 0.4);
-        }
-        
-        .send-btn:active {
-            transform: translateY(0) scale(0.98);
+            transform: scale(1.05) translateY(-1px);
         }
         
         .share-link-container {
             display: flex;
             gap: 8px;
             align-items: center;
+            padding: 12px;
         }
         
         #share-link {
             flex: 1;
-            padding: 12px 16px;
-            border-radius: 14px;
+            padding: 10px 12px;
+            border-radius: 12px;
             border: 1px solid rgba(138, 79, 255, 0.3);
             background: rgba(255, 255, 255, 0.08);
             color: var(--text-color);
-            font-size: 13px;
+            font-size: 12px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -897,24 +1343,24 @@
         }
         
         .copy-btn {
-            padding: 12px 20px;
-            border-radius: 14px;
+            padding: 10px 16px;
+            border-radius: 12px;
             background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
             border: none;
             color: white;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 15px rgba(106, 13, 255, 0.3);
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(106, 13, 255, 0.3);
         }
         
         .copy-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(106, 13, 255, 0.4);
+            box-shadow: 0 6px 20px rgba(106, 13, 255, 0.4);
         }
         
         .copy-btn:active {
@@ -923,7 +1369,7 @@
         
         .copy-btn.copied {
             background: linear-gradient(145deg, #10b981 0%, #34d399 100%);
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
         
         .home-btn {
@@ -1305,345 +1751,6 @@
             background: rgba(138, 79, 255, 0.25);
             color: white;
             transform: translateY(-2px);
-        }
-
-        .discussion-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(5, 0, 22, 0.95);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            backdrop-filter: blur(30px);
-            animation: fadeIn 0.5s ease;
-        }
-
-        .discussion-modal.active {
-            display: flex;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .discussion-content {
-            background: linear-gradient(145deg, #1A043A 0%, #09001F 100%);
-            border-radius: var(--border-radius);
-            padding: 24px;
-            width: 90%;
-            max-width: 800px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(138, 79, 255, 0.3);
-            position: relative;
-            animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .discussion-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .discussion-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: linear-gradient(to right, #8A4FFF, #CBB2FF);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
-            animation: titleGlow 2s infinite alternate;
-        }
-
-        @keyframes titleGlow {
-            from { filter: drop-shadow(0 0 10px rgba(138, 79, 255, 0.5)); }
-            to { filter: drop-shadow(0 0 20px rgba(138, 79, 255, 0.8)); }
-        }
-
-        .discussion-subtitle {
-            color: rgba(200, 200, 217, 0.7);
-            font-size: 1rem;
-        }
-
-        .premium-feature-note {
-            background: linear-gradient(145deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.1));
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            color: #FFD166;
-            padding: 10px 16px;
-            border-radius: var(--border-radius-sm);
-            font-size: 0.9rem;
-            text-align: center;
-            margin-top: 15px;
-            backdrop-filter: blur(10px);
-        }
-
-        .premium-feature-note i {
-            margin-right: 8px;
-            font-size: 1.1rem;
-        }
-
-        /* NEW: Planet-style orbital layout for participants */
-        .participants-orbit {
-            position: relative;
-            width: 400px;
-            height: 400px;
-            margin: 0 auto 40px;
-        }
-
-        .host-center {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 10;
-        }
-
-        .host-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #FFD166 0%, #FFB347 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #1A043A;
-            font-size: 28px;
-            font-weight: 700;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 0 40px rgba(255, 209, 102, 0.6),
-                        0 0 80px rgba(255, 209, 102, 0.3),
-                        0 0 120px rgba(255, 209, 102, 0.1);
-            animation: hostPulse 2s infinite alternate;
-        }
-
-        @keyframes hostPulse {
-            from { 
-                box-shadow: 0 0 40px rgba(255, 209, 102, 0.6),
-                          0 0 80px rgba(255, 209, 102, 0.3),
-                          0 0 120px rgba(255, 209, 102, 0.1);
-            }
-            to { 
-                box-shadow: 0 0 60px rgba(255, 209, 102, 0.8),
-                          0 0 100px rgba(255, 209, 102, 0.4),
-                          0 0 140px rgba(255, 209, 102, 0.2);
-                transform: translate(-50%, -50%) scale(1.05);
-            }
-        }
-
-        .planet-orbit {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 300px;
-            height: 300px;
-            border-radius: 50%;
-            border: 1px dashed rgba(138, 79, 255, 0.3);
-        }
-
-        .planet-orbit::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 320px;
-            height: 320px;
-            border-radius: 50%;
-            border: 1px dashed rgba(138, 79, 255, 0.2);
-        }
-
-        .planet-orbit::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 340px;
-            height: 340px;
-            border-radius: 50%;
-            border: 1px dashed rgba(138, 79, 255, 0.1);
-        }
-
-        .planet-item {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            animation: orbit 20s linear infinite;
-            transform-origin: 0 150px;
-        }
-
-        .planet-item:nth-child(2) {
-            animation-delay: -4s;
-            transform-origin: 0 150px;
-        }
-
-        .planet-item:nth-child(3) {
-            animation-delay: -8s;
-            transform-origin: 0 150px;
-        }
-
-        .planet-item:nth-child(4) {
-            animation-delay: -12s;
-            transform-origin: 0 150px;
-        }
-
-        .planet-item:nth-child(5) {
-            animation-delay: -16s;
-            transform-origin: 0 150px;
-        }
-
-        @keyframes orbit {
-            0% { transform: rotate(0deg) translateX(150px) rotate(0deg); }
-            100% { transform: rotate(360deg) translateX(150px) rotate(-360deg); }
-        }
-
-        .planet-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-            font-weight: 600;
-            border: 3px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 20px rgba(106, 13, 255, 0.3);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .planet-item.talking .planet-avatar {
-            animation: planetPulse 1.5s infinite;
-            border-color: #FFD166;
-            box-shadow: 0 0 25px rgba(255, 209, 102, 0.6),
-                        0 8px 20px rgba(106, 13, 255, 0.4);
-        }
-
-        @keyframes planetPulse {
-            0%, 100% { 
-                box-shadow: 0 0 20px rgba(255, 209, 102, 0.4),
-                          0 8px 20px rgba(106, 13, 255, 0.4);
-            }
-            50% { 
-                box-shadow: 0 0 30px rgba(255, 209, 102, 0.8),
-                          0 8px 20px rgba(106, 13, 255, 0.4);
-                transform: scale(1.1);
-            }
-        }
-
-        .planet-name {
-            position: absolute;
-            top: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(26, 4, 58, 0.9);
-            backdrop-filter: blur(10px);
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 500;
-            color: white;
-            border: 1px solid rgba(138, 79, 255, 0.3);
-            white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .planet-item:hover .planet-name {
-            opacity: 1;
-        }
-
-        .discussion-controls {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            margin-top: 30px;
-        }
-
-        .end-discussion-btn {
-            background: linear-gradient(145deg, #ff4757 0%, #ff6b81 100%);
-            color: white;
-            border: none;
-            padding: 14px 24px;
-            border-radius: var(--border-radius-sm);
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 8px 25px rgba(255, 71, 87, 0.3);
-        }
-
-        .end-discussion-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(255, 71, 87, 0.4);
-        }
-
-        .end-discussion-btn:active {
-            transform: translateY(-1px);
-        }
-
-        .mute-discussion-btn {
-            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
-            color: white;
-            border: none;
-            padding: 14px 24px;
-            border-radius: var(--border-radius-sm);
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 8px 25px rgba(106, 13, 255, 0.3);
-        }
-
-        .mute-discussion-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(106, 13, 255, 0.4);
-        }
-
-        .mute-discussion-btn:active {
-            transform: translateY(-1px);
-        }
-
-        .mute-discussion-btn.muted {
-            background: linear-gradient(145deg, #C8C8D9 0%, #A0A0B8 100%);
-            box-shadow: 0 8px 25px rgba(200, 200, 217, 0.3);
-        }
-
-        .mute-discussion-btn.muted:hover {
-            box-shadow: 0 12px 35px rgba(200, 200, 217, 0.4);
-        }
-
-        .discussion-timer {
-            background: rgba(138, 79, 255, 0.2);
-            backdrop-filter: blur(10px);
-            padding: 14px 24px;
-            border-radius: var(--border-radius-sm);
-            font-size: 16px;
-            font-weight: 600;
-            color: white;
-            border: 1px solid rgba(138, 79, 255, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .screen-resize-menu {
@@ -2050,48 +2157,25 @@
             }
 
             .participants-orbit {
-                width: 350px;
-                height: 350px;
+                width: 300px;
+                height: 300px;
             }
 
             .host-avatar {
                 width: 70px;
                 height: 70px;
-                font-size: 24px;
+                font-size: 22px;
             }
-
-            .planet-orbit {
-                width: 260px;
-                height: 260px;
-            }
-
-            .planet-orbit::before {
-                width: 280px;
-                height: 280px;
-            }
-
-            .planet-orbit::after {
-                width: 300px;
-                height: 300px;
-            }
-
-            .planet-item {
-                transform-origin: 0 130px;
-            }
-
-            .planet-avatar {
-                width: 46px;
-                height: 46px;
+            
+            .participant-orbit .orbit-avatar {
+                width: 45px;
+                height: 45px;
                 font-size: 16px;
             }
             
             .widget-content {
                 width: 300px;
                 right: 52px;
-            }
-            
-            .chat-messages {
-                height: 180px; /* Adjusted for medium screens */
             }
         }
         
@@ -2202,56 +2286,33 @@
             }
 
             .participants-orbit {
-                width: 300px;
-                height: 300px;
+                width: 280px;
+                height: 280px;
             }
 
             .host-avatar {
-                width: 60px;
-                height: 60px;
-                font-size: 22px;
+                width: 65px;
+                height: 65px;
+                font-size: 20px;
             }
 
-            .planet-orbit {
+            .orbit-ring {
                 width: 220px;
                 height: 220px;
             }
 
-            .planet-orbit::before {
-                width: 240px;
-                height: 240px;
+            .orbit-ring.inner {
+                width: 180px;
+                height: 180px;
             }
 
-            .planet-orbit::after {
-                width: 260px;
-                height: 260px;
-            }
-
-            .planet-item {
-                transform-origin: 0 110px;
-            }
-
-            .planet-avatar {
-                width: 42px;
-                height: 42px;
-                font-size: 15px;
-            }
-
-            .discussion-title {
-                font-size: 1.5rem;
-            }
-
-            .discussion-subtitle {
-                font-size: 0.9rem;
-            }
-
-            .screen-resize-menu {
-                bottom: 160px;
-                right: 12px;
-            }
-            
-            .chat-messages {
-                height: 160px; /* Adjusted for smaller screens */
+            @keyframes orbit {
+                0% {
+                    transform: translate(-50%, -50%) rotate(0deg) translateX(110px) rotate(0deg);
+                }
+                100% {
+                    transform: translate(-50%, -50%) rotate(360deg) translateX(110px) rotate(-360deg);
+                }
             }
             
             .reactions-grid {
@@ -2362,34 +2423,34 @@
             }
 
             .host-avatar {
-                width: 50px;
-                height: 50px;
+                width: 60px;
+                height: 60px;
                 font-size: 18px;
             }
 
-            .planet-orbit {
-                width: 180px;
-                height: 180px;
-            }
-
-            .planet-orbit::before {
+            .orbit-ring {
                 width: 200px;
                 height: 200px;
             }
 
-            .planet-orbit::after {
-                width: 220px;
-                height: 220px;
+            .orbit-ring.inner {
+                width: 160px;
+                height: 160px;
             }
 
-            .planet-item {
-                transform-origin: 0 90px;
-            }
-
-            .planet-avatar {
-                width: 38px;
-                height: 38px;
+            .participant-orbit .orbit-avatar {
+                width: 40px;
+                height: 40px;
                 font-size: 14px;
+            }
+
+            @keyframes orbit {
+                0% {
+                    transform: translate(-50%, -50%) rotate(0deg) translateX(100px) rotate(0deg);
+                }
+                100% {
+                    transform: translate(-50%, -50%) rotate(360deg) translateX(100px) rotate(-360deg);
+                }
             }
 
             .discussion-content {
@@ -2414,7 +2475,7 @@
             }
             
             .chat-messages {
-                height: 140px; /* Adjusted for mobile */
+                height: 180px;
             }
             
             .reactions-grid {
@@ -2428,18 +2489,18 @@
             }
             
             .message-avatar {
-                width: 32px;
-                height: 32px;
-                font-size: 12px;
+                width: 30px;
+                height: 30px;
+                font-size: 11px;
             }
             
             .message-content {
-                padding: 10px;
-                font-size: 13px;
+                padding: 8px 10px;
+                font-size: 12px;
             }
             
             .message-meta {
-                font-size: 10px;
+                font-size: 9px;
             }
         }
 
@@ -2655,27 +2716,37 @@
             </button>
         </div>
 
-        <!-- Discussion Modal with Planet Orbit Layout -->
+        <!-- Discussion Modal - UPDATED: Enhanced with orbiting participants -->
         <div class="discussion-modal" id="discussion-modal">
             <div class="discussion-content">
                 <div class="discussion-header">
                     <h1 class="discussion-title">Discussion Time 🎤</h1>
                     <p class="discussion-subtitle">Take turns talking about the movie with everyone</p>
-                    <div class="premium-feature-note">
-                        <i class="fas fa-crown"></i>
-                        Premium Feature: You're using audio discussion for FREE during this trial period
-                    </div>
                 </div>
                 
-                <!-- Updated Planet Orbit Layout -->
                 <div class="participants-orbit" id="participants-orbit">
-                    <div class="host-center">
-                        <div class="host-avatar" id="host-avatar">
-                            H
-                        </div>
+                    <!-- Host in center -->
+                    <div class="host-center" id="discussion-host">
+                        <div class="host-avatar" id="host-avatar">H</div>
+                        <div class="host-label">Host</div>
                     </div>
-                    <div class="planet-orbit"></div>
-                    <!-- Planet participants will be added here dynamically -->
+                    
+                    <!-- Orbit rings -->
+                    <div class="orbit-ring"></div>
+                    <div class="orbit-ring inner"></div>
+                    
+                    <!-- Participants will be added here dynamically as orbiting circles -->
+                </div>
+                
+                <div class="discussion-instructions">
+                    <h4><i class="fas fa-info-circle"></i> How to Join Discussion</h4>
+                    <p>Click on any participant circle to mute/unmute them</p>
+                    <ol>
+                        <li>Click the microphone icon in the floating widgets</li>
+                        <li>Press and hold the "Hold to Talk" button to speak</li>
+                        <li>Release to stop talking</li>
+                        <li>Your profile will light up when you're speaking</li>
+                    </ol>
                 </div>
                 
                 <div class="discussion-controls">
@@ -2683,10 +2754,6 @@
                         <i class="fas fa-clock"></i>
                         <span id="discussion-timer">00:00</span>
                     </div>
-                    <button class="mute-discussion-btn touch-feedback" id="mute-discussion-btn">
-                        <i class="fas fa-microphone"></i>
-                        <span id="mute-discussion-text">Mute</span>
-                    </button>
                     <button class="end-discussion-btn touch-feedback" id="end-discussion-btn">
                         <i class="fas fa-stop"></i>
                         End Discussion
@@ -2761,7 +2828,7 @@
                     </div>
                 </div>
                 
-                <!-- Custom Controls - Fixed positioned -->
+                <!-- Custom Controls - UPDATED: Fixed positioned -->
                 <div class="custom-controls" id="custom-controls">
                     <button class="home-btn touch-feedback" id="home-btn" title="Go Home">
                         <i class="fas fa-home"></i>
@@ -2809,10 +2876,20 @@
                         <i class="fas fa-microphone"></i>
                     </button>
                     <div class="widget-content" id="voice-content">
-                        <div class="voice-status" id="voice-status">Tap and hold to talk</div>
-                        <button id="hold-talk-btn" class="voice-btn touch-feedback">
-                            <i class="fas fa-microphone"></i> Hold to Talk
-                        </button>
+                        <div class="chat-header">
+                            <div class="chat-title">
+                                <i class="fas fa-microphone"></i>
+                                Voice Chat
+                            </div>
+                        </div>
+                        <div class="chat-messages-container" style="padding:12px;">
+                            <div class="voice-status" id="voice-status">
+                                <i class="fas fa-info-circle"></i> Press and hold the button below to talk
+                            </div>
+                            <button id="hold-talk-btn" class="voice-btn touch-feedback">
+                                <i class="fas fa-microphone"></i> Hold to Talk
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
@@ -2822,6 +2899,12 @@
                         <i class="fas fa-smile"></i>
                     </button>
                     <div class="widget-content" id="reactions-content">
+                        <div class="chat-header">
+                            <div class="chat-title">
+                                <i class="fas fa-smile"></i>
+                                Quick Reactions
+                            </div>
+                        </div>
                         <div class="reactions-grid">
                             <button class="reaction-btn touch-feedback" data-emoji="😂">😂</button>
                             <button class="reaction-btn touch-feedback" data-emoji="😱">😱</button>
@@ -2835,32 +2918,35 @@
                     </div>
                 </div>
                 
-                <!-- Chat Widget - Updated with smaller chat space -->
+                <!-- Chat Widget - UPDATED: Removed X and delete buttons -->
                 <div class="widget-container">
                     <button class="widget-icon touch-feedback" id="chat-widget" title="Group Chat">
                         <i class="fas fa-comment"></i>
                         <div class="widget-badge" id="chat-badge" style="display: none;">0</div>
                     </button>
-                    <div class="widget-content" id="chat-content" style="width: 320px;">
-                        <div class="chat-messages" id="chat-messages">
-                            <div class="message">
-                                <div class="message-avatar">H</div>
-                                <div class="message-content">
-                                    Welcome to the watch party! 🎉
-                                    <div class="message-meta">
-                                        <span>Host</span>
-                                        <span>Just now</span>
+                    <div class="widget-content" id="chat-content">
+                        <div class="chat-container">
+                            <div class="chat-header">
+                                <div class="chat-title">
+                                    <i class="fas fa-comments"></i>
+                                    Group Chat
+                                </div>
+                            </div>
+                            <div class="chat-messages-container">
+                                <div class="chat-messages" id="chat-messages">
+                                    <div class="message system">
+                                        <div class="message-content">
+                                            <i class="fas fa-info-circle"></i> Welcome to the watch party! 🎉
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="chat-input-container">
-                            <div class="chat-input-wrapper">
+                            <div class="chat-input-container">
                                 <input type="text" id="chat-input" placeholder="Type your message...">
+                                <button class="send-btn touch-feedback" id="chat-send-btn">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
                             </div>
-                            <button class="send-btn touch-feedback" id="chat-send-btn">
-                                <i class="fas fa-paper-plane"></i>
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -2871,6 +2957,12 @@
                         <i class="fas fa-share-alt"></i>
                     </button>
                     <div class="widget-content" id="share-content">
+                        <div class="chat-header">
+                            <div class="chat-title">
+                                <i class="fas fa-share-alt"></i>
+                                Share Watch Party
+                            </div>
+                        </div>
                         <div class="share-link-container">
                             <input type="text" id="share-link" readonly>
                             <button class="copy-btn touch-feedback" id="copy-btn">
@@ -2918,7 +3010,7 @@
                     <div class="progress-bar" id="detailed-progress-bar"></div>
                 </div>
                 
-                <!-- Fixed positioned controls for detailed view -->
+                <!-- UPDATED: Fixed positioned controls for detailed view -->
                 <div class="custom-controls" id="detailed-custom-controls">
                     <button class="home-btn touch-feedback" id="detailed-home-btn" title="Go Home">
                         <i class="fas fa-home"></i>
@@ -2965,7 +3057,7 @@
                         </div>
                     </div>
                     
-                    <!-- Home button now first in grid -->
+                    <!-- UPDATED: Home button now first in grid -->
                     <div class="controls-grid">
                         <div class="control-card touch-feedback" id="control-panel-home-btn">
                             <div class="control-icon">
@@ -3068,7 +3160,7 @@
 
     <script>
         // =======================================================
-        // FIXED APPLICATION WITH ALL IMPROVEMENTS
+        // FIXED APPLICATION WITH COMPLETE UI/UX IMPROVEMENTS
         // =======================================================
 
         // Initialize Firebase
@@ -3093,7 +3185,7 @@
         let isTalking = false;
         let agoraDiscussionClient = null;
         let agoraDiscussionAudioTrack = null;
-        let discussionMuted = false;
+        let isMicMuted = false;
         
         // Participants tracking
         let participants = {};
@@ -3132,7 +3224,7 @@
         let drawing = false;
         let lastPos = null;
         
-        // Prevent multiple reaction sending
+        // Prevent duplicate reactions
         let reactionCooldown = false;
         let lastReactionTime = 0;
         
@@ -3142,7 +3234,7 @@
         let syncInterval = null;
         let isSyncing = false;
         
-        // Chat sending flag to prevent duplicate messages
+        // Chat sending flag
         let isSendingChatMessage = false;
         let displayedMessageKeys = new Set();
         
@@ -3154,10 +3246,7 @@
         const closeTutorialBtn = document.getElementById('close-tutorial-btn');
         const discussionModal = document.getElementById('discussion-modal');
         const participantsOrbit = document.getElementById('participants-orbit');
-        const hostAvatar = document.getElementById('host-avatar');
         const discussionTimerElement = document.getElementById('discussion-timer');
-        const muteDiscussionBtn = document.getElementById('mute-discussion-btn');
-        const muteDiscussionText = document.getElementById('mute-discussion-text');
         const endDiscussionBtn = document.getElementById('end-discussion-btn');
         const participantsModal = document.getElementById('participants-modal');
         const participantsList = document.getElementById('participants-list');
@@ -3252,7 +3341,7 @@
         const predictBtn = document.getElementById('predictBtn');
         const openPoll = document.getElementById('openPoll');
 
-        // Initialize Firebase services if Firebase is available
+        // Initialize Firebase services if available
         if (firebaseInitialized) {
             db = firebase.database();
             auth = firebase.auth();
@@ -3427,6 +3516,7 @@
                     isHost: isHost,
                     lastActive: firebase.database.ServerValue.TIMESTAMP,
                     isTalking: false,
+                    isMicMuted: false,
                     avatarColor: getRandomColor(),
                     isInPlayerView: true
                 });
@@ -3449,6 +3539,12 @@
                     participants[participant.uid] = participant;
                     updateTalkingStatus();
                     updateParticipantsModal();
+                    updateDiscussionParticipants();
+                    
+                    // Update UI if it's the current user
+                    if (participant.uid === currentUser) {
+                        updateMicStatusUI(participant.isMicMuted);
+                    }
                 });
                 
                 participantsRef.on('child_removed', (snap) => {
@@ -3484,55 +3580,120 @@
             }
         }
 
+        // FIXED: Enhanced discussion participants with orbiting circles
         function updateDiscussionParticipants() {
             if (!participantsOrbit || !discussionActive) return;
             
-            // Clear existing planets except the host
-            const existingPlanets = document.querySelectorAll('.planet-item');
-            existingPlanets.forEach(planet => planet.remove());
+            // Remove existing participant orbits except host
+            const existingOrbits = document.querySelectorAll('.participant-orbit');
+            existingOrbits.forEach(orbit => orbit.remove());
             
             // Update host avatar
-            if (hostAvatar && isHost) {
-                hostAvatar.textContent = participants[currentUser]?.username?.charAt(0) || 'H';
+            const host = Object.values(participants).find(p => p.isHost);
+            if (host && document.getElementById('host-avatar')) {
+                const hostAvatar = document.getElementById('host-avatar');
+                hostAvatar.textContent = host.username.charAt(0).toUpperCase();
+                hostAvatar.style.background = host.avatarColor || 'linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%)';
             }
             
-            // Create planet items for other participants
-            const otherParticipants = Object.values(participants).filter(p => p.uid !== currentUser);
-            otherParticipants.forEach((participant, index) => {
-                const planetItem = document.createElement('div');
-                planetItem.className = 'planet-item';
-                planetItem.dataset.uid = participant.uid;
-                planetItem.style.animationDelay = `-${index * 4}s`;
+            // Create orbiting participants
+            const nonHostParticipants = Object.values(participants).filter(p => !p.isHost);
+            
+            nonHostParticipants.forEach((participant, index) => {
+                const orbitDiv = document.createElement('div');
+                orbitDiv.className = 'participant-orbit';
+                orbitDiv.dataset.uid = participant.uid;
                 
-                const planetAvatar = document.createElement('div');
-                planetAvatar.className = 'planet-avatar';
-                planetAvatar.textContent = participant.username.charAt(0).toUpperCase();
-                planetAvatar.style.background = participant.avatarColor || 'linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%)';
-                
-                const planetName = document.createElement('div');
-                planetName.className = 'planet-name';
-                planetName.textContent = participant.username;
-                
-                planetItem.appendChild(planetAvatar);
-                planetItem.appendChild(planetName);
-                participantsOrbit.appendChild(planetItem);
+                const avatar = document.createElement('div');
+                avatar.className = 'orbit-avatar';
+                avatar.textContent = participant.username.charAt(0).toUpperCase();
+                avatar.style.background = participant.avatarColor || getRandomOrbitColor();
                 
                 if (participant.isTalking) {
-                    planetItem.classList.add('talking');
+                    avatar.classList.add('talking');
                 }
+                if (participant.isMicMuted) {
+                    avatar.classList.add('muted');
+                }
+                
+                // Add click to mute/unmute
+                avatar.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleParticipantMic(participant.uid);
+                });
+                
+                const micBtn = document.createElement('div');
+                micBtn.className = `orbit-mic-btn ${participant.isMicMuted ? 'muted' : 'active'}`;
+                micBtn.innerHTML = `<i class="fas fa-${participant.isMicMuted ? 'microphone-slash' : 'microphone'}"></i>`;
+                
+                micBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleParticipantMic(participant.uid);
+                });
+                
+                const name = document.createElement('div');
+                name.className = 'orbit-name';
+                name.textContent = participant.username;
+                
+                orbitDiv.appendChild(avatar);
+                orbitDiv.appendChild(micBtn);
+                orbitDiv.appendChild(name);
+                participantsOrbit.appendChild(orbitDiv);
+                
+                // Set animation delay for staggered orbits
+                orbitDiv.style.animationDelay = `${index * 2}s`;
             });
+        }
+
+        function toggleParticipantMic(uid) {
+            if (!firebaseInitialized) return;
+            
+            const participant = participants[uid];
+            if (!participant) return;
+            
+            const newMuteState = !participant.isMicMuted;
+            
+            participantsRef.child(uid).update({ 
+                isMicMuted: newMuteState 
+            });
+            
+            // Update UI immediately
+            const orbit = document.querySelector(`.participant-orbit[data-uid="${uid}"]`);
+            if (orbit) {
+                const avatar = orbit.querySelector('.orbit-avatar');
+                const micBtn = orbit.querySelector('.orbit-mic-btn');
+                
+                if (newMuteState) {
+                    avatar.classList.add('muted');
+                    micBtn.classList.remove('active');
+                    micBtn.classList.add('muted');
+                    micBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+                } else {
+                    avatar.classList.remove('muted');
+                    micBtn.classList.remove('muted');
+                    micBtn.classList.add('active');
+                    micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                }
+            }
+            
+            showNotification(`${participant.username} ${newMuteState ? 'muted' : 'unmuted'}`);
         }
 
         function updateTalkingStatus() {
             if (!discussionActive) return;
             
-            const planetItems = document.querySelectorAll('.planet-item');
-            planetItems.forEach((item) => {
-                const uid = item.dataset.uid;
-                if (participants[uid] && participants[uid].isTalking) {
-                    item.classList.add('talking');
-                } else {
-                    item.classList.remove('talking');
+            const participantOrbits = document.querySelectorAll('.participant-orbit');
+            participantOrbits.forEach(orbit => {
+                const uid = orbit.dataset.uid;
+                const participant = participants[uid];
+                const avatar = orbit.querySelector('.orbit-avatar');
+                
+                if (avatar && participant) {
+                    if (participant.isTalking) {
+                        avatar.classList.add('talking');
+                    } else {
+                        avatar.classList.remove('talking');
+                    }
                 }
             });
         }
@@ -3583,6 +3744,10 @@
                 
                 const statusText = document.createElement('span');
                 statusText.textContent = participant.lastActive > Date.now() - 30000 ? 'Online' : 'Away';
+                if (participant.isTalking) {
+                    statusText.textContent = 'Talking';
+                    statusText.style.color = '#FFD166';
+                }
                 
                 status.appendChild(statusDot);
                 status.appendChild(statusText);
@@ -3678,7 +3843,21 @@
             return colors[Math.floor(Math.random() * colors.length)];
         }
 
-        // AGORA VOICE CHAT FUNCTIONS
+        function getRandomOrbitColor() {
+            const colors = [
+                'linear-gradient(145deg, #FF6B6B 0%, #FF8E8E 100%)',
+                'linear-gradient(145deg, #4ECDC4 0%, #44A08D 100%)',
+                'linear-gradient(145deg, #FFD166 0%, #FFB347 100%)',
+                'linear-gradient(145deg, #06D6A0 0%, #04A777 100%)',
+                'linear-gradient(145deg, #118AB2 0%, #0A6A8A 100%)',
+                'linear-gradient(145deg, #EF476F 0%, #D43D63 100%)',
+                'linear-gradient(145deg, #9D4EDD 0%, #7B2CBF 100%)',
+                'linear-gradient(145deg, #FF9E6D 0%, #FF7A45 100%)'
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // AGORA VOICE CHAT FUNCTIONS - UPDATED
         async function initAgoraVoice() {
             try {
                 if (typeof AgoraRTC === 'undefined') {
@@ -3700,7 +3879,16 @@
                     }
                 });
                 
+                // Update mic status in Firebase
+                if (firebaseInitialized) {
+                    participantsRef.child(currentUser).update({ 
+                        isMicMuted: false,
+                        isTalking: false 
+                    });
+                }
+                
                 setVoiceStatus("Voice ready - Hold to talk");
+                updateMicStatusUI(false);
             } catch (error) {
                 console.error("Agora initialization error:", error);
                 setVoiceStatus("Voice chat unavailable");
@@ -3719,33 +3907,6 @@
                 agoraDiscussionAudioTrack.setVolume(100);
                 await agoraDiscussionClient.publish([agoraDiscussionAudioTrack]);
                 
-                // Enable volume indicator to detect who is talking
-                agoraDiscussionClient.enableAudioVolumeIndicator();
-                
-                agoraDiscussionClient.on('volume-indicator', (volumes) => {
-                    volumes.forEach((volume) => {
-                        const uid = volume.uid;
-                        const level = volume.level;
-                        const planetItem = document.querySelector(`.planet-item[data-uid="${uid}"]`);
-                        
-                        if (planetItem) {
-                            if (level > 10) { // Threshold for talking
-                                planetItem.classList.add('talking');
-                                // Update Firebase talking status
-                                if (firebaseInitialized && uid !== currentUser) {
-                                    participantsRef.child(uid).update({ isTalking: true });
-                                }
-                            } else {
-                                planetItem.classList.remove('talking');
-                                // Update Firebase talking status
-                                if (firebaseInitialized && uid !== currentUser) {
-                                    participantsRef.child(uid).update({ isTalking: false });
-                                }
-                            }
-                        }
-                    });
-                });
-                
                 agoraDiscussionClient.on('user-published', async (user, mediaType) => {
                     await agoraDiscussionClient.subscribe(user, mediaType);
                     if (mediaType === 'audio') {
@@ -3753,36 +3914,67 @@
                     }
                 });
                 
-                // Update local user talking status
-                participantsRef.child(currentUser).update({ isTalking: true });
+                // Start audio level detection for talking indication
+                startAudioLevelDetection();
                 
             } catch (error) {
                 console.error("Agora discussion initialization error:", error);
             }
         }
 
-        function toggleDiscussionMute() {
+        function startAudioLevelDetection() {
             if (!agoraDiscussionAudioTrack) return;
             
-            discussionMuted = !discussionMuted;
-            agoraDiscussionAudioTrack.setEnabled(!discussionMuted);
+            setInterval(() => {
+                const audioLevel = agoraDiscussionAudioTrack.getVolumeLevel();
+                const isSpeaking = audioLevel > 0.1;
+                
+                if (firebaseInitialized) {
+                    participantsRef.child(currentUser).update({ 
+                        isTalking: isSpeaking 
+                    });
+                }
+            }, 200);
+        }
+
+        function toggleMicrophone() {
+            if (!agoraDiscussionAudioTrack && !agoraLocalAudioTrack) return;
             
-            const icon = muteDiscussionBtn.querySelector('i');
-            if (discussionMuted) {
-                icon.className = 'fas fa-microphone-slash';
-                muteDiscussionText.textContent = 'Unmute';
-                muteDiscussionBtn.classList.add('muted');
-                participantsRef.child(currentUser).update({ isTalking: false });
-            } else {
-                icon.className = 'fas fa-microphone';
-                muteDiscussionText.textContent = 'Mute';
-                muteDiscussionBtn.classList.remove('muted');
-                participantsRef.child(currentUser).update({ isTalking: true });
+            isMicMuted = !isMicMuted;
+            
+            if (discussionActive && agoraDiscussionAudioTrack) {
+                if (isMicMuted) {
+                    agoraDiscussionAudioTrack.setEnabled(false);
+                } else {
+                    agoraDiscussionAudioTrack.setEnabled(true);
+                }
             }
+            
+            if (firebaseInitialized) {
+                participantsRef.child(currentUser).update({ 
+                    isMicMuted: isMicMuted 
+                });
+            }
+            
+            updateMicStatusUI(isMicMuted);
+            
+            showNotification(isMicMuted ? "Microphone muted" : "Microphone unmuted");
+        }
+
+        function updateMicStatusUI(isMuted) {
+            if (holdTalkBtn) {
+                holdTalkBtn.disabled = isMuted;
+                holdTalkBtn.innerHTML = `<i class="fas fa-microphone${isMuted ? '-slash' : ''}"></i> ${isMuted ? 'Mic Muted' : 'Hold to Talk'}`;
+                holdTalkBtn.style.opacity = isMuted ? '0.6' : '1';
+            }
+            
+            setVoiceStatus(isMuted ? 
+                "Microphone is muted - Click microphone icon to unmute" : 
+                "Press and hold the button below to talk");
         }
 
         function startTalking() {
-            if (!agoraLocalAudioTrack || isTalking) return;
+            if (!agoraLocalAudioTrack || isTalking || isMicMuted) return;
             
             try {
                 agoraClient.publish([agoraLocalAudioTrack]);
@@ -3791,6 +3983,12 @@
                 
                 if (holdTalkBtn) holdTalkBtn.classList.add('talking');
                 setVoiceStatus("<span class='recording-indicator'></span> Talking...");
+                
+                if (firebaseInitialized) {
+                    participantsRef.child(currentUser).update({ 
+                        isTalking: true 
+                    });
+                }
             } catch (error) {
                 console.error("Error starting voice:", error);
             }
@@ -3805,7 +4003,15 @@
                 isTalking = false;
                 
                 if (holdTalkBtn) holdTalkBtn.classList.remove('talking');
-                setVoiceStatus("Voice ready - Hold to talk");
+                setVoiceStatus(isMicMuted ? 
+                    "Microphone is muted - Click microphone icon to unmute" : 
+                    "Voice ready - Hold to talk");
+                
+                if (firebaseInitialized) {
+                    participantsRef.child(currentUser).update({ 
+                        isTalking: false 
+                    });
+                }
             } catch (error) {
                 console.error("Error stopping voice:", error);
             }
@@ -4231,7 +4437,6 @@
             html5videoElement.src = link;
         }
 
-        // YouTube API Ready function
         window.onYouTubeIframeAPIReady = function() {
             console.log("YouTube API ready");
         };
@@ -4308,14 +4513,11 @@
             }
             
             if (isHostUser) {
-                // Host: Broadcast video state every second
                 syncInterval = setInterval(() => {
                     updateVideoState();
                 }, 1000);
                 
-                // Listen for video events to update state immediately
                 if (usingYT && ytPlayer) {
-                    // YouTube events are handled in ensureYTPlayer
                 } else if (html5videoElement) {
                     const playHandler = () => {
                         isPlaying = true;
@@ -4337,13 +4539,11 @@
                     html5videoElement.addEventListener('pause', pauseHandler);
                     html5videoElement.addEventListener('seeked', seekHandler);
                     
-                    // Store handlers for cleanup
                     html5videoElement._playHandler = playHandler;
                     html5videoElement._pauseHandler = pauseHandler;
                     html5videoElement._seekHandler = seekHandler;
                 }
             } else {
-                // Viewer: Listen for host updates
                 if (firebaseInitialized) {
                     const videoStateHandler = (snapshot) => {
                         const data = snapshot.val();
@@ -4351,12 +4551,10 @@
                         
                         isSyncing = true;
                         
-                        // Calculate latency
                         const now = Date.now();
                         const latency = now - data.timestamp;
                         const estimatedHostTime = data.currentTime + (latency / 1000);
                         
-                        // Get current time
                         let currentTime = 0;
                         if (usingYT && ytPlayer) {
                             currentTime = ytPlayer.getCurrentTime();
@@ -4364,7 +4562,6 @@
                             currentTime = html5videoElement.currentTime;
                         }
                         
-                        // Check if sync is needed (more than 1 second difference)
                         if (Math.abs(currentTime - estimatedHostTime) > 1) {
                             if (usingYT && ytPlayer) {
                                 ytPlayer.seekTo(estimatedHostTime, true);
@@ -4373,7 +4570,6 @@
                             }
                         }
                         
-                        // Sync play/pause state
                         if (data.isPlaying !== isPlaying) {
                             isPlaying = data.isPlaying;
                             updatePlayPauseButton();
@@ -4400,7 +4596,6 @@
                     
                     videoStateRef.on('value', videoStateHandler);
                     
-                    // Store handler for cleanup
                     videoStateRef._valueHandler = videoStateHandler;
                 }
             }
@@ -4641,22 +4836,23 @@
             showControls();
         }
 
-        // CHAT FUNCTIONALITY - Improved UI/UX with smaller chat space
+        // FIXED: Enhanced chat functionality
         function sendChatMessage(input, container) {
             if (!input || !container || isSendingChatMessage) return;
             
             const text = input.value.trim();
             if (!text) return;
             
-            // Prevent duplicate sending
             isSendingChatMessage = true;
             
-            // Clear input immediately
+            // Disable send button temporarily
+            chatSendBtn.disabled = true;
+            chatSendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
             input.value = '';
             
             if (firebaseInitialized) {
                 try {
-                    // Create message with unique ID
                     const messageKey = firebase.database().ref().child('rooms/' + roomId + '/chat').push().key;
                     const messageData = {
                         text: text,
@@ -4666,20 +4862,22 @@
                         messageId: messageKey
                     };
                     
-                    // Save message with its key
                     const messageRef = db.ref('rooms/' + roomId + '/chat/' + messageKey);
                     messageRef.set(messageData);
                     
-                    // Add message locally with its ID to track it
                     displayedMessageKeys.add(messageKey);
                     
-                    // Reset sending flag after a short delay
+                    // Re-enable send button
                     setTimeout(() => {
+                        chatSendBtn.disabled = false;
+                        chatSendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
                         isSendingChatMessage = false;
-                    }, 300);
+                    }, 500);
                     
                 } catch (error) {
                     console.error("Error sending chat message:", error);
+                    chatSendBtn.disabled = false;
+                    chatSendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
                     isSendingChatMessage = false;
                 }
             } else {
@@ -4717,15 +4915,19 @@
                 container.appendChild(messageDiv);
                 container.scrollTop = container.scrollHeight;
                 
-                isSendingChatMessage = false;
+                // Re-enable send button
+                setTimeout(() => {
+                    chatSendBtn.disabled = false;
+                    chatSendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                    isSendingChatMessage = false;
+                }, 300);
             }
         }
 
-        // Initialize chat listener
+        // FIXED: Initialize chat listener
         function initChatListener() {
             if (!firebaseInitialized) return;
             
-            // Remove any existing listener to prevent duplicates
             if (chatRef._valueHandler) {
                 chatRef.off('child_added', chatRef._valueHandler);
             }
@@ -4734,15 +4936,12 @@
                 const message = snapshot.val();
                 const messageId = snapshot.key;
                 
-                // Check if we've already displayed this message
                 if (displayedMessageKeys.has(messageId)) {
                     return;
                 }
                 
-                // Add to tracked messages
                 displayedMessageKeys.add(messageId);
                 
-                // Add message to UI
                 addChatMessage(message, chatMessages);
                 
                 if (!chatWidget.classList.contains('active')) {
@@ -4753,7 +4952,6 @@
             
             chatRef.on('child_added', chatHandler);
             
-            // Store handler for cleanup
             chatRef._valueHandler = chatHandler;
         }
 
@@ -4761,38 +4959,58 @@
             if (!container) return;
             
             const messageDiv = document.createElement('div');
-            messageDiv.className = message.userId === currentUser ? 'message self' : 'message';
-            messageDiv.dataset.messageId = message.messageId || Date.now();
             
-            const avatar = document.createElement('div');
-            avatar.className = 'message-avatar';
-            avatar.textContent = message.username?.charAt(0) || 'U';
-            
-            const content = document.createElement('div');
-            content.className = 'message-content';
-            
-            const meta = document.createElement('div');
-            meta.className = 'message-meta';
-            
-            const time = message.timestamp ? new Date(message.timestamp) : new Date();
-            const timeStr = time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            
-            meta.innerHTML = `
-                <span>${message.username || 'User'}</span>
-                <span>${timeStr}</span>
-            `;
-            
-            const body = document.createElement('div');
-            body.textContent = message.text;
-            
-            content.appendChild(body);
-            content.appendChild(meta);
-            
-            messageDiv.appendChild(avatar);
-            messageDiv.appendChild(content);
+            if (message.userId === 'system') {
+                messageDiv.className = 'message system';
+                
+                const content = document.createElement('div');
+                content.className = 'message-content';
+                content.innerHTML = message.text;
+                
+                messageDiv.appendChild(content);
+            } else {
+                messageDiv.className = message.userId === currentUser ? 'message self' : 'message';
+                messageDiv.dataset.messageId = message.messageId || Date.now();
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'message-avatar';
+                if (participants[message.userId] && participants[message.userId].isTalking) {
+                    avatar.classList.add('talking');
+                }
+                avatar.textContent = message.username?.charAt(0) || 'U';
+                avatar.style.background = participants[message.userId]?.avatarColor || 'linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%)';
+                
+                const content = document.createElement('div');
+                content.className = 'message-content';
+                
+                const meta = document.createElement('div');
+                meta.className = 'message-meta';
+                
+                const time = message.timestamp ? new Date(message.timestamp) : new Date();
+                const timeStr = time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                meta.innerHTML = `
+                    <span>${message.username || 'User'}</span>
+                    <span>${timeStr}</span>
+                `;
+                
+                const body = document.createElement('div');
+                body.textContent = message.text;
+                
+                content.appendChild(body);
+                content.appendChild(meta);
+                
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(content);
+            }
             
             container.appendChild(messageDiv);
             container.scrollTop = container.scrollHeight;
+            
+            // Animate message appearance
+            setTimeout(() => {
+                messageDiv.style.opacity = '1';
+            }, 10);
         }
 
         function updateChatBadge() {
@@ -4806,7 +5024,7 @@
             }
         }
 
-        // Reactions with cooldown
+        // FIXED: Reactions with cooldown
         function sendReaction(emoji) {
             const now = Date.now();
             if (now - lastReactionTime < 500) {
@@ -4816,7 +5034,6 @@
             
             if (!reactionsBox) return;
             
-            // Add reaction locally
             const bubble = document.createElement('div');
             bubble.className = 'reaction-bubble';
             bubble.textContent = emoji;
@@ -4843,11 +5060,10 @@
             }
         }
 
-        // Initialize reactions listener
+        // FIXED: Initialize reactions listener
         function initReactionsListener() {
             if (!firebaseInitialized) return;
             
-            // Remove any existing listener to prevent duplicates
             if (reactionsRef._valueHandler) {
                 reactionsRef.off('child_added', reactionsRef._valueHandler);
             }
@@ -4856,7 +5072,6 @@
                 const reaction = snapshot.val();
                 if (reaction.userId === currentUser) return;
                 
-                // Show reaction on screen
                 if (reactionsBox) {
                     const bubble = document.createElement('div');
                     bubble.className = 'reaction-bubble';
@@ -4873,7 +5088,6 @@
             
             reactionsRef.on('child_added', reactionsHandler);
             
-            // Store handler for cleanup
             reactionsRef._valueHandler = reactionsHandler;
         }
 
@@ -4917,7 +5131,7 @@
             }
         }
 
-        // DISCUSSION FUNCTIONS - Improved with planet orbit layout
+        // FIXED: Enhanced discussion functions with orbiting participants
         function startDiscussion() {
             if (!isHost) {
                 showNotification("Only the host can start a discussion");
@@ -4963,10 +5177,10 @@
                         discussionStartedAt: firebase.database.ServerValue.TIMESTAMP
                     });
                     
-                    // IMPORTANT: Send instructions to chat
+                    // Send detailed instructions in chat
                     const chatRef = db.ref('rooms/' + roomId + '/chat').push();
                     chatRef.set({
-                        text: "🎤 Discussion started! Join the discussion panel. Click 'Pause & Discuss' in controls or the mic button to join. Use mute/unmute during discussion.",
+                        text: "🎤 **Discussion Started!**\n\nTo join the audio discussion:\n1. Click the microphone icon in the floating widgets\n2. Press and hold the 'Hold to Talk' button to speak\n3. Your profile will light up when you're talking\n4. Click on participant circles to mute/unmute them\n\nEnjoy the discussion! 🗣️",
                         userId: "system",
                         username: "System",
                         timestamp: firebase.database.ServerValue.TIMESTAMP
@@ -4976,7 +5190,7 @@
                 }
             }
             
-            showNotification("Discussion started! Check chat for instructions.");
+            showNotification("Discussion started! Click the microphone widget to join.");
         }
 
         function endDiscussion() {
@@ -4997,7 +5211,10 @@
             // Reset talking status for all participants
             Object.keys(participants).forEach(uid => {
                 if (participantsRef.child(uid)) {
-                    participantsRef.child(uid).update({ isTalking: false });
+                    participantsRef.child(uid).update({ 
+                        isTalking: false,
+                        isMicMuted: false 
+                    });
                 }
             });
             
@@ -5009,7 +5226,7 @@
                     // Notify participants
                     const chatRef = db.ref('rooms/' + roomId + '/chat').push();
                     chatRef.set({
-                        text: "🎤 Discussion ended. Video will resume.",
+                        text: "🎤 Discussion ended. Video will resume shortly...",
                         userId: "system",
                         username: "System",
                         timestamp: firebase.database.ServerValue.TIMESTAMP
@@ -5019,13 +5236,19 @@
                 }
             }
             
+            // Reset mic status
+            isMicMuted = false;
+            updateMicStatusUI(false);
+            
             // Resume video if host
             if (isHost) {
-                if (usingYT && ytPlayer) {
-                    ytPlayer.playVideo();
-                } else if (html5videoElement) {
-                    html5videoElement.play();
-                }
+                setTimeout(() => {
+                    if (usingYT && ytPlayer) {
+                        ytPlayer.playVideo();
+                    } else if (html5videoElement) {
+                        html5videoElement.play();
+                    }
+                }, 1000);
             }
             
             showNotification("Discussion ended");
@@ -5045,7 +5268,6 @@
         function enableDrawing(){ 
             if (!canvas || !canvasDetailed) return;
             
-            // Remove existing listeners first to prevent duplicates
             disableDrawing();
             
             canvas.style.pointerEvents = 'auto'; 
@@ -5069,7 +5291,6 @@
             canvasDetailed.addEventListener('touchmove', onMoveDetailed, {passive:false}); 
             canvasDetailed.addEventListener('touchend', onUpDetailed); 
             
-            // Store references for cleanup
             canvas._onDown = onDown;
             canvas._onMove = onMove;
             canvas._onUp = onUp;
@@ -5086,7 +5307,6 @@
             canvasDetailed.style.pointerEvents = 'none';
             canvasDetailed.style.display = 'none';
             
-            // Remove event listeners
             if (canvas._onDown) {
                 canvas.removeEventListener('mousedown', canvas._onDown);
                 canvas.removeEventListener('touchstart', canvas._onDown);
@@ -5401,7 +5621,6 @@
 
             // Hold to talk button
             if (holdTalkBtn) {
-                // Remove existing listeners
                 holdTalkBtn.removeEventListener('mousedown', startTalking);
                 holdTalkBtn.removeEventListener('mouseup', stopTalking);
                 holdTalkBtn.removeEventListener('mouseleave', stopTalking);
@@ -5409,13 +5628,12 @@
                 holdTalkBtn.removeEventListener('touchend', null);
                 holdTalkBtn.removeEventListener('touchcancel', null);
                 
-                // Add new listeners
                 holdTalkBtn.addEventListener('mousedown', startTalking);
                 holdTalkBtn.addEventListener('mouseup', stopTalking);
                 holdTalkBtn.addEventListener('mouseleave', stopTalking);
                 holdTalkBtn.addEventListener('touchstart', (e) => {
                     e.preventDefault();
-                    startTalking();
+                    if (!isMicMuted) startTalking();
                 }, { passive: false });
                 holdTalkBtn.addEventListener('touchend', (e) => {
                     e.preventDefault();
@@ -5460,7 +5678,7 @@
                 chatInput.addEventListener('keypress', chatInputHandler);
             }
 
-            // Prevent zoom when typing on mobile
+            // FIXED: Prevent zoom when typing on mobile
             if (chatInput) {
                 chatInput.removeEventListener('focus', null);
                 chatInput.removeEventListener('blur', null);
@@ -5468,21 +5686,10 @@
                 chatInput.addEventListener('focus', () => {
                     isChatInputFocused = true;
                     showControls();
-                    
-                    const viewport = document.querySelector('meta[name="viewport"]');
-                    if (viewport) {
-                        viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-                    }
                 });
                 
                 chatInput.addEventListener('blur', () => {
                     isChatInputFocused = false;
-                    
-                    const viewport = document.querySelector('meta[name="viewport"]');
-                    if (viewport) {
-                        viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-                    }
-                    
                     resetControlsTimeout();
                 });
             }
@@ -5495,11 +5702,6 @@
             }
 
             // Discussion controls
-            if (muteDiscussionBtn) {
-                muteDiscussionBtn.removeEventListener('click', toggleDiscussionMute);
-                muteDiscussionBtn.addEventListener('click', toggleDiscussionMute);
-            }
-            
             if (endDiscussionBtn) {
                 endDiscussionBtn.removeEventListener('click', endDiscussion);
                 endDiscussionBtn.addEventListener('click', endDiscussion);
@@ -5714,7 +5916,6 @@
         // Cleanup function to remove all listeners
         function cleanup() {
             if (firebaseInitialized) {
-                // Remove Firebase listeners
                 if (participantsRef) {
                     participantsRef.off();
                 }
@@ -5732,7 +5933,6 @@
                 }
             }
             
-            // Remove video event listeners
             if (html5videoElement) {
                 if (html5videoElement._playHandler) {
                     html5videoElement.removeEventListener('play', html5videoElement._playHandler);
@@ -5745,7 +5945,6 @@
                 }
             }
             
-            // Clear intervals
             if (syncInterval) {
                 clearInterval(syncInterval);
                 syncInterval = null;
@@ -5763,7 +5962,6 @@
                 discussionInterval = null;
             }
             
-            // Clean up Agora
             if (agoraClient) {
                 agoraClient.leave();
                 agoraClient = null;
@@ -5778,10 +5976,8 @@
         function initApp() {
             console.log("Initializing Let's Watch...");
             
-            // Clean up any existing listeners first
             cleanup();
             
-            // Update status display
             if (statusIndicator && statusDisplay) {
                 if (isHost) {
                     statusIndicator.className = 'status-indicator host';

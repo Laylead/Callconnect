@@ -1,57 +1,905 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Create Watch Party</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Live MVP - Watch Together</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset & Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary: #6A0DFF;
+            --secondary: #8A4FFF;
+            --accent: #D300FF;
+            --dark: #050016;
+            --darker: #09001F;
+            --light: #F8F8FF;
+            --gray: #C8C8D9;
+            --success: #00FF88;
+            --error: #FF4757;
+            --warning: #FFD700;
+            --glass: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.15);
+        }
+
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--darker) 100%);
+            color: var(--light);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Animated Background */
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.3;
+            animation: float 15s infinite linear;
+        }
+
+        .particle:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+            top: 10%;
+            left: 10%;
+            animation-duration: 20s;
+        }
+
+        .particle:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+            top: 60%;
+            right: 10%;
+            animation-duration: 25s;
+            animation-delay: 5s;
+        }
+
+        .particle:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, var(--secondary) 0%, transparent 70%);
+            bottom: 20%;
+            left: 20%;
+            animation-duration: 30s;
+            animation-delay: 10s;
+        }
+
+        /* Main Container */
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 400px;
+            animation: fadeIn 0.8s ease;
+        }
+
+        /* Logo */
+        .logo-container {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--light);
+            margin-bottom: 8px;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .tagline {
+            color: var(--gray);
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        /* Auth Card */
+        .auth-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            padding: 6px;
+            margin-bottom: 30px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: var(--gray);
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: var(--light);
+            box-shadow: 0 4px 20px rgba(106, 13, 255, 0.3);
+        }
+
+        /* Form */
+        .form-container {
+            display: none;
+            animation: slideUp 0.4s ease;
+        }
+
+        .form-container.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--light);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--light);
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(106, 13, 255, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: var(--gray);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .password-container {
+            position: relative;
+        }
+
+        /* Auth Buttons */
+        .auth-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 30px;
+        }
+
+        .auth-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 18px;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .auth-btn.primary {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: var(--light);
+            box-shadow: 0 6px 25px rgba(106, 13, 255, 0.4);
+        }
+
+        .auth-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(106, 13, 255, 0.5);
+        }
+
+        .auth-btn.google {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            border: 1px solid var(--glass-border);
+        }
+
+        .auth-btn.google:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .auth-btn.demo {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: var(--light);
+        }
+
+        .auth-btn.demo:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+        }
+
+        .auth-btn i {
+            font-size: 18px;
+        }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 30px 0;
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--glass-border);
+        }
+
+        .divider span {
+            padding: 0 20px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: var(--gray);
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: var(--secondary);
+            text-decoration: none;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 0, 22, 0.95);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        /* Sun Loader */
+        .sun-loader {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+
+        .sun-core {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #FFD700, #FF8C00);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 40px #FFD700;
+        }
+
+        .wave {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid #FFD700;
+            border-radius: 50%;
+            opacity: 0;
+            animation: wave 2s infinite;
+        }
+
+        .wave:nth-child(2) {
+            animation-delay: 0.4s;
+        }
+
+        .wave:nth-child(3) {
+            animation-delay: 0.8s;
+        }
+
+        .wave:nth-child(4) {
+            animation-delay: 1.2s;
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            color: var(--light);
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* Error Message */
+        .error-message {
+            padding: 12px 16px;
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid var(--error);
+            border-radius: 12px;
+            color: var(--error);
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+            animation: shake 0.5s ease;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0);
+            }
+            33% {
+                transform: translate(30px, -30px);
+            }
+            66% {
+                transform: translate(-20px, 20px);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(1);
+                box-shadow: 0 0 40px #FFD700;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.1);
+                box-shadow: 0 0 60px #FFD700, 0 0 80px rgba(255, 215, 0, 0.5);
+            }
+        }
+
+        @keyframes wave {
+            0% {
+                width: 0;
+                height: 0;
+                opacity: 1;
+            }
+            100% {
+                width: 120px;
+                height: 120px;
+                opacity: 0;
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-5px);
+            }
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 30px 20px;
+            }
+            
+            .logo {
+                font-size: 24px;
+            }
+            
+            .logo-icon {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .tab {
+                font-size: 15px;
+                padding: 10px;
+            }
+        }
+
+        @media (max-height: 700px) {
+            .logo-container {
+                margin-bottom: 30px;
+            }
+            
+            .auth-card {
+                padding: 30px 25px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h2>Create a Watch Party</h2>
-  <input type="text" id="videoLink" placeholder="Paste YouTube link" required>
-  <input type="datetime-local" id="startTime" required>
-  <button onclick="createRoom()">Create Room</button>
-  <p id="output"></p>
+    <!-- Animated Background -->
+    <div class="bg-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="firebase-config.js"></script>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div>
+            <div class="sun-loader">
+                <div class="sun-core"></div>
+                <div class="wave"></div>
+                <div class="wave"></div>
+                <div class="wave"></div>
+                <div class="wave"></div>
+            </div>
+            <div class="loading-text" id="loadingText">Authenticating...</div>
+        </div>
+    </div>
 
-  <script>
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Logo -->
+        <div class="logo-container">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <span>Live MVP</span>
+            </div>
+            <div class="tagline">Watch & Stream Together</div>
+        </div>
 
-    async function createRoom() {
-      const videoLink = document.getElementById("videoLink").value;
-      const startTime = document.getElementById("startTime").value;
-      
-      if (!videoLink || !startTime) {
-        alert("Please fill all fields");
-        return;
-      }
+        <!-- Auth Card -->
+        <div class="auth-card">
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" id="loginTab">Login</button>
+                <button class="tab" id="signupTab">Sign Up</button>
+            </div>
 
-      try {
-        // Generate secure room ID
-        const roomRef = db.ref('rooms').push();
-        const roomId = roomRef.key;
-        
-        await roomRef.set({
-          videoLink,
-          startTime: firebase.database.ServerValue.TIMESTAMP,
-          status: "pause",
-          currentTime: 0,
-          host: true
+            <!-- Error Message -->
+            <div class="error-message" id="errorMessage"></div>
+
+            <!-- Login Form -->
+            <div class="form-container active" id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-input" id="loginEmail" placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="password-container">
+                        <input type="password" class="form-input" id="loginPassword" placeholder="Enter your password">
+                        <button class="password-toggle" type="button" id="toggleLoginPassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="auth-buttons">
+                    <button class="auth-btn primary" id="loginSubmit">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Login
+                    </button>
+                    <div class="divider">
+                        <span>or continue with</span>
+                    </div>
+                    <button class="auth-btn google" id="googleLogin">
+                        <i class="fab fa-google"></i>
+                        Google
+                    </button>
+                    <button class="auth-btn demo" id="demoLogin">
+                        <i class="fas fa-bolt"></i>
+                        Try Demo
+                    </button>
+                </div>
+            </div>
+
+            <!-- Signup Form -->
+            <div class="form-container" id="signupForm">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-input" id="signupName" placeholder="Enter your name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-input" id="signupEmail" placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="password-container">
+                        <input type="password" class="form-input" id="signupPassword" placeholder="Create a password">
+                        <button class="password-toggle" type="button" id="toggleSignupPassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <div class="password-container">
+                        <input type="password" class="form-input" id="signupConfirmPassword" placeholder="Confirm your password">
+                        <button class="password-toggle" type="button" id="toggleConfirmPassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="auth-buttons">
+                    <button class="auth-btn primary" id="signupSubmit">
+                        <i class="fas fa-user-plus"></i>
+                        Create Account
+                    </button>
+                    <div class="divider">
+                        <span>or continue with</span>
+                    </div>
+                    <button class="auth-btn google" id="googleSignup">
+                        <i class="fab fa-google"></i>
+                        Google
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            By continuing, you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <!-- Firebase Config -->
+    <script src="firebase-config.js"></script>
+
+    <!-- Main Script -->
+    <script>
+        class AuthApp {
+            constructor() {
+                this.currentForm = 'login';
+                this.isPasswordVisible = false;
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.checkExistingSession();
+            }
+
+            bindEvents() {
+                // Tab switching
+                document.getElementById('loginTab').addEventListener('click', () => this.switchForm('login'));
+                document.getElementById('signupTab').addEventListener('click', () => this.switchForm('signup'));
+
+                // Password visibility toggle
+                document.getElementById('toggleLoginPassword').addEventListener('click', () => 
+                    this.togglePassword('loginPassword', 'toggleLoginPassword'));
+                document.getElementById('toggleSignupPassword').addEventListener('click', () => 
+                    this.togglePassword('signupPassword', 'toggleSignupPassword'));
+                document.getElementById('toggleConfirmPassword').addEventListener('click', () => 
+                    this.togglePassword('signupConfirmPassword', 'toggleConfirmPassword'));
+
+                // Form submissions
+                document.getElementById('loginSubmit').addEventListener('click', () => this.handleLogin());
+                document.getElementById('signupSubmit').addEventListener('click', () => this.handleSignup());
+                document.getElementById('googleLogin').addEventListener('click', () => this.handleGoogleLogin());
+                document.getElementById('googleSignup').addEventListener('click', () => this.handleGoogleLogin());
+                document.getElementById('demoLogin').addEventListener('click', () => this.handleDemoLogin());
+
+                // Enter key support
+                document.getElementById('loginEmail').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleLogin();
+                });
+                document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleLogin();
+                });
+                document.getElementById('signupName').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleSignup();
+                });
+                document.getElementById('signupEmail').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleSignup();
+                });
+                document.getElementById('signupPassword').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleSignup();
+                });
+            }
+
+            checkExistingSession() {
+                const user = AuthService.getCurrentUser();
+                if (user) {
+                    window.location.href = 'home.html';
+                }
+            }
+
+            switchForm(form) {
+                if (this.currentForm === form) return;
+
+                this.currentForm = form;
+                document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+                document.querySelectorAll('.form-container').forEach(container => container.classList.remove('active'));
+                
+                if (form === 'login') {
+                    document.getElementById('loginTab').classList.add('active');
+                    document.getElementById('loginForm').classList.add('active');
+                } else {
+                    document.getElementById('signupTab').classList.add('active');
+                    document.getElementById('signupForm').classList.add('active');
+                }
+
+                this.hideError();
+            }
+
+            togglePassword(passwordId, toggleId) {
+                const passwordInput = document.getElementById(passwordId);
+                const toggleIcon = document.getElementById(toggleId).querySelector('i');
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    toggleIcon.classList.remove('fa-eye');
+                    toggleIcon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    toggleIcon.classList.remove('fa-eye-slash');
+                    toggleIcon.classList.add('fa-eye');
+                }
+            }
+
+            async handleLogin() {
+                const email = document.getElementById('loginEmail').value.trim();
+                const password = document.getElementById('loginPassword').value;
+
+                if (!this.validateEmail(email)) {
+                    this.showError('Please enter a valid email address');
+                    return;
+                }
+
+                if (!password) {
+                    this.showError('Please enter your password');
+                    return;
+                }
+
+                this.showLoading('Signing in...');
+                this.hideError();
+
+                try {
+                    const result = await AuthService.signInWithEmail(email, password);
+                    
+                    if (result.success) {
+                        this.showLoading('Welcome back!');
+                        setTimeout(() => {
+                            window.location.href = 'home.html';
+                        }, 1000);
+                    } else {
+                        this.hideLoading();
+                        this.showError(result.error || 'Login failed. Please try again.');
+                    }
+                } catch (error) {
+                    this.hideLoading();
+                    this.showError('An error occurred. Please try again.');
+                }
+            }
+
+            async handleSignup() {
+                const name = document.getElementById('signupName').value.trim();
+                const email = document.getElementById('signupEmail').value.trim();
+                const password = document.getElementById('signupPassword').value;
+                const confirmPassword = document.getElementById('signupConfirmPassword').value;
+
+                if (!name) {
+                    this.showError('Please enter your name');
+                    return;
+                }
+
+                if (!this.validateEmail(email)) {
+                    this.showError('Please enter a valid email address');
+                    return;
+                }
+
+                if (password.length < 6) {
+                    this.showError('Password must be at least 6 characters long');
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    this.showError('Passwords do not match');
+                    return;
+                }
+
+                this.showLoading('Creating account...');
+                this.hideError();
+
+                try {
+                    const result = await AuthService.signUpWithEmail(email, password, name);
+                    
+                    if (result.success) {
+                        this.showLoading('Account created!');
+                        setTimeout(() => {
+                            window.location.href = 'home.html';
+                        }, 1500);
+                    } else {
+                        this.hideLoading();
+                        this.showError(result.error || 'Signup failed. Please try again.');
+                    }
+                } catch (error) {
+                    this.hideLoading();
+                    this.showError('An error occurred. Please try again.');
+                }
+            }
+
+            async handleGoogleLogin() {
+                this.showLoading('Connecting to Google...');
+                this.hideError();
+
+                try {
+                    const result = await AuthService.signInWithGoogle();
+                    
+                    if (result.success) {
+                        this.showLoading('Welcome!');
+                        setTimeout(() => {
+                            window.location.href = 'home.html';
+                        }, 1000);
+                    } else {
+                        this.hideLoading();
+                        this.showError(result.error || 'Google login failed. Please try again.');
+                    }
+                } catch (error) {
+                    this.hideLoading();
+                    this.showError('An error occurred. Please try again.');
+                }
+            }
+
+            handleDemoLogin() {
+                this.showLoading('Launching Demo...');
+                
+                // Create demo user data
+                const demoUser = {
+                    uid: 'demo-' + Date.now(),
+                    email: 'demo@livemvp.com',
+                    displayName: 'Demo User',
+                    photoURL: 'https://ui-avatars.com/api/?name=Demo+User&background=6A0DFF&color=fff',
+                    expires: Date.now() + (2 * 60 * 60 * 1000) // 2 hours
+                };
+
+                // Store demo user
+                localStorage.setItem('liveMVPUser', JSON.stringify(demoUser));
+                
+                setTimeout(() => {
+                    window.location.href = 'demo.html';
+                }, 1500);
+            }
+
+            validateEmail(email) {
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return re.test(email);
+            }
+
+            showLoading(message) {
+                document.getElementById('loadingText').textContent = message;
+                document.getElementById('loadingOverlay').classList.add('active');
+            }
+
+            hideLoading() {
+                document.getElementById('loadingOverlay').classList.remove('active');
+            }
+
+            showError(message) {
+                const errorEl = document.getElementById('errorMessage');
+                errorEl.textContent = message;
+                errorEl.style.display = 'block';
+                
+                // Scroll to error
+                errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            hideError() {
+                document.getElementById('errorMessage').style.display = 'none';
+            }
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            new AuthApp();
         });
-
-        document.getElementById("output").innerHTML = `
-          <p>Share these links:</p>
-          <p><b>Host link:</b> room.html?room=${roomId}&host=true</p>
-          <p><b>Viewer link:</b> room.html?room=${roomId}</p>
-        `;
-      } catch (error) {
-        document.getElementById("output").innerText = "Error: " + error.message;
-      }
-    }
-  </script>
+    </script>
 </body>
 </html>

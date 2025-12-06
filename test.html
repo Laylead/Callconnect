@@ -6,405 +6,7 @@
     <title>Let's Watch | Group Video Experience</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* All CSS styles remain the same with these additions/fixes */
-        
-        /* FIXED: Improved chat UI/UX */
-        .chat-container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-        
-        .chat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px;
-            border-bottom: 1px solid rgba(138, 79, 255, 0.2);
-            background: rgba(26, 4, 58, 0.8);
-            backdrop-filter: blur(10px);
-            border-radius: 16px 16px 0 0;
-        }
-        
-        .chat-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: rgba(203, 178, 255, 0.9);
-        }
-        
-        .chat-actions {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .chat-action-btn {
-            background: rgba(138, 79, 255, 0.15);
-            border: 1px solid rgba(138, 79, 255, 0.2);
-            border-radius: 8px;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 12px;
-            transition: all 0.2s ease;
-        }
-        
-        .chat-action-btn:hover {
-            background: rgba(138, 79, 255, 0.25);
-            color: white;
-        }
-        
-        .chat-messages-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px;
-            padding-bottom: 0;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(138, 79, 255, 0.3) transparent;
-        }
-        
-        .chat-messages {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            min-height: 100%;
-            padding-bottom: 16px;
-        }
-        
-        .message {
-            display: flex;
-            gap: 10px;
-            animation: messageAppear 0.3s ease;
-            opacity: 0;
-            animation-fill-mode: forwards;
-            max-width: 100%;
-        }
-        
-        @keyframes messageAppear {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .message.system {
-            justify-content: center;
-        }
-        
-        .message.system .message-content {
-            background: linear-gradient(145deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.1));
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            color: #FFD166;
-            font-size: 12px;
-            padding: 8px 12px;
-            border-radius: 12px;
-            text-align: center;
-            max-width: 90%;
-        }
-        
-        .message.system .message-content i {
-            margin-right: 6px;
-        }
-        
-        .message-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
-            font-size: 14px;
-            flex-shrink: 0;
-            border: 2px solid rgba(138, 79, 255, 0.3);
-            box-shadow: 0 4px 12px rgba(106, 13, 255, 0.2);
-            position: relative;
-        }
-        
-        .message-avatar.talking::after {
-            content: '';
-            position: absolute;
-            top: -4px;
-            left: -4px;
-            right: -4px;
-            bottom: -4px;
-            border-radius: 50%;
-            border: 2px solid #FFD166;
-            animation: pulseGlow 1.5s infinite;
-        }
-        
-        @keyframes pulseGlow {
-            0%, 100% {
-                transform: scale(1);
-                opacity: 1;
-                box-shadow: 0 0 10px rgba(255, 209, 102, 0.4);
-            }
-            50% {
-                transform: scale(1.05);
-                opacity: 0.8;
-                box-shadow: 0 0 20px rgba(255, 209, 102, 0.6);
-            }
-        }
-        
-        .message-content {
-            background: rgba(255, 255, 255, 0.08);
-            padding: 12px;
-            border-radius: 16px;
-            border-top-left-radius: 4px;
-            max-width: 75%;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(138, 79, 255, 0.15);
-            word-break: break-word;
-            position: relative;
-        }
-        
-        .message.self {
-            flex-direction: row-reverse;
-        }
-        
-        .message.self .message-content {
-            background: linear-gradient(145deg, rgba(106, 13, 255, 0.2), rgba(138, 79, 255, 0.15));
-            border-top-left-radius: 16px;
-            border-top-right-radius: 4px;
-            border-color: rgba(138, 79, 255, 0.25);
-        }
-        
-        .message.self .message-avatar {
-            margin-left: 0;
-            margin-right: 0;
-        }
-        
-        .message-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            opacity: 0.7;
-            margin-top: 6px;
-            font-weight: 500;
-        }
-        
-        .message.self .message-meta {
-            flex-direction: row-reverse;
-        }
-        
-        .chat-input-container {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            padding: 16px;
-            background: rgba(26, 4, 58, 0.8);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(138, 79, 255, 0.2);
-            border-radius: 0 0 16px 16px;
-        }
-        
-        #chat-input {
-            flex: 1;
-            padding: 12px 16px;
-            border-radius: 14px;
-            border: 1px solid rgba(138, 79, 255, 0.3);
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-color);
-            font-size: 14px;
-            transition: var(--transition);
-            backdrop-filter: blur(10px);
-            -webkit-user-select: text;
-            user-select: text;
-            -webkit-touch-callout: default;
-            touch-action: manipulation;
-        }
-        
-        #chat-input:focus {
-            outline: none;
-            border-color: rgba(138, 79, 255, 0.5);
-            background: rgba(255, 255, 255, 0.12);
-            box-shadow: 0 0 0 2px rgba(138, 79, 255, 0.1);
-        }
-        
-        .send-btn {
-            width: 44px;
-            height: 44px;
-            border-radius: 14px;
-            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
-            border: none;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            box-shadow: 0 4px 15px rgba(106, 13, 255, 0.3);
-            flex-shrink: 0;
-        }
-        
-        .send-btn:hover {
-            transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 8px 25px rgba(106, 13, 255, 0.4);
-        }
-        
-        .send-btn:active {
-            transform: translateY(0) scale(0.98);
-        }
-        
-        .send-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        /* FIXED: Enhanced discussion participant cards */
-        .participant-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: absolute;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            text-align: center;
-        }
-        
-        .participant-avatar-container {
-            position: relative;
-            margin-bottom: 10px;
-        }
-        
-        .participant-avatar {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 22px;
-            font-weight: 600;
-            border: 3px solid transparent;
-            box-shadow: 0 8px 25px rgba(106, 13, 255, 0.3);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            z-index: 1;
-        }
-        
-        .participant-avatar.talking {
-            animation: talkingGlow 1.5s infinite;
-            border-color: #FFD166;
-            transform: scale(1.1);
-            box-shadow: 0 0 30px rgba(255, 209, 102, 0.6);
-        }
-        
-        @keyframes talkingGlow {
-            0%, 100% { 
-                box-shadow: 0 0 20px rgba(255, 209, 102, 0.4),
-                          0 0 40px rgba(255, 209, 102, 0.2),
-                          0 0 60px rgba(255, 209, 102, 0.1);
-            }
-            50% { 
-                box-shadow: 0 0 30px rgba(255, 209, 102, 0.6),
-                          0 0 60px rgba(255, 209, 102, 0.3),
-                          0 0 90px rgba(255, 209, 102, 0.2);
-            }
-        }
-        
-        .participant-mic-status {
-            position: absolute;
-            bottom: -5px;
-            right: -5px;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            background: rgba(26, 4, 58, 0.9);
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(138, 79, 255, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            z-index: 2;
-        }
-        
-        .participant-mic-status.muted {
-            background: rgba(255, 71, 87, 0.2);
-            color: #ff6b81;
-        }
-        
-        .participant-mic-status.active {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-        }
-        
-        .participant-name {
-            background: rgba(138, 79, 255, 0.2);
-            backdrop-filter: blur(10px);
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 13px;
-            font-weight: 500;
-            color: white;
-            border: 1px solid rgba(138, 79, 255, 0.3);
-            white-space: nowrap;
-            max-width: 120px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .participant-name.host::after {
-            content: " 👑";
-            font-size: 12px;
-        }
-        
-        /* Enhanced discussion instructions */
-        .discussion-instructions {
-            background: linear-gradient(145deg, rgba(138, 79, 255, 0.15), rgba(106, 13, 255, 0.1));
-            border: 1px solid rgba(138, 79, 255, 0.3);
-            border-radius: var(--border-radius-sm);
-            padding: 16px;
-            margin-top: 20px;
-            text-align: center;
-        }
-        
-        .discussion-instructions h4 {
-            font-size: 14px;
-            font-weight: 600;
-            color: rgba(203, 178, 255, 0.9);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        
-        .discussion-instructions p {
-            font-size: 12px;
-            color: rgba(200, 200, 217, 0.8);
-            line-height: 1.4;
-            margin-bottom: 8px;
-        }
-        
-        .discussion-instructions ol {
-            text-align: left;
-            padding-left: 20px;
-            font-size: 12px;
-            color: rgba(200, 200, 217, 0.8);
-            line-height: 1.4;
-        }
-        
-        .discussion-instructions li {
-            margin-bottom: 6px;
-        }
-        
-        /* Your existing CSS remains the same below */
+        /* All CSS styles remain the same with improvements for chat UI */
         :root {
             --primary: #8A4FFF;
             --primary-dark: #6A0DFF;
@@ -974,10 +576,10 @@
             backdrop-filter: blur(25px) saturate(180%);
             -webkit-backdrop-filter: blur(25px) saturate(180%);
             border-radius: 20px;
-            padding: 0;
+            padding: 16px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 8px 32px rgba(106, 13, 255, 0.15);
             width: 320px;
-            max-height: 500px;
+            max-height: 400px;
             overflow-y: auto;
             display: none;
             z-index: 1000;
@@ -987,8 +589,7 @@
         }
         
         .widget-content.active {
-            display: flex;
-            flex-direction: column;
+            display: block;
         }
         
         @keyframes slideIn {
@@ -1086,7 +687,7 @@
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 10px;
-            padding: 16px;
+            padding: 5px;
         }
         
         .reaction-btn {
@@ -1114,11 +715,203 @@
             transform: scale(1.05) translateY(-2px);
         }
         
+        /* ENHANCED CHAT UI */
+        .chat-messages {
+            height: 250px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+            padding-right: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(138, 79, 255, 0.3) transparent;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .chat-messages::-webkit-scrollbar {
+            width: 5px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(138, 79, 255, 0.3);
+            border-radius: 3px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(138, 79, 255, 0.4);
+        }
+        
+        .message {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+            animation: messageAppear 0.3s ease;
+            max-width: 100%;
+        }
+        
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+            border: 2px solid rgba(138, 79, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(106, 13, 255, 0.2);
+        }
+        
+        .message-content {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 12px 16px;
+            border-radius: 16px;
+            border-top-left-radius: 4px;
+            max-width: 85%;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(138, 79, 255, 0.15);
+            word-break: break-word;
+            position: relative;
+            flex: 1;
+        }
+        
+        .message.self {
+            flex-direction: row-reverse;
+        }
+        
+        .message.self .message-content {
+            background: linear-gradient(145deg, rgba(106, 13, 255, 0.2), rgba(138, 79, 255, 0.15));
+            border-top-left-radius: 16px;
+            border-top-right-radius: 4px;
+            border-color: rgba(138, 79, 255, 0.25);
+        }
+        
+        .message.self .message-avatar {
+            margin-left: 0;
+            margin-right: 0;
+            background: linear-gradient(145deg, #4ECDC4 0%, #44A08D 100%);
+        }
+        
+        .message-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 6px;
+            font-weight: 500;
+        }
+        
+        .message.self .message-meta {
+            flex-direction: row-reverse;
+        }
+        
+        .system-message {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            background: rgba(138, 79, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(138, 79, 255, 0.2);
+        }
+        
+        .system-message strong {
+            color: #CBB2FF;
+        }
+        
+        .chat-input-container {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 4px;
+            border: 1px solid rgba(138, 79, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        #chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-color);
+            font-size: 14px;
+            transition: var(--transition);
+            -webkit-user-select: text;
+            user-select: text;
+            -webkit-touch-callout: default;
+            touch-action: manipulation;
+            outline: none;
+        }
+        
+        #chat-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        #chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 4px 15px rgba(106, 13, 255, 0.3);
+            flex-shrink: 0;
+        }
+        
+        .send-btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(106, 13, 255, 0.4);
+        }
+        
+        .send-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        .send-btn:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
         .share-link-container {
             display: flex;
             gap: 8px;
             align-items: center;
-            padding: 16px;
         }
         
         #share-link {
@@ -1614,21 +1407,22 @@
             font-size: 1rem;
         }
 
-        .premium-feature-note {
-            background: linear-gradient(145deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.1));
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            color: #FFD166;
-            padding: 10px 16px;
+        .discussion-instructions {
+            background: rgba(138, 79, 255, 0.1);
+            border: 1px solid rgba(138, 79, 255, 0.2);
+            color: #CBB2FF;
+            padding: 12px 16px;
             border-radius: var(--border-radius-sm);
             font-size: 0.9rem;
             text-align: center;
             margin-top: 15px;
             backdrop-filter: blur(10px);
+            line-height: 1.5;
         }
 
-        .premium-feature-note i {
+        .discussion-instructions i {
             margin-right: 8px;
-            font-size: 1.1rem;
+            font-size: 1rem;
         }
 
         .participants-circle {
@@ -1639,6 +1433,87 @@
             width: 400px;
             height: 400px;
             margin: 0 auto 40px;
+        }
+
+        .participant-item {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+        }
+
+        .participant-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            border: 3px solid transparent;
+            box-shadow: 0 8px 25px rgba(106, 13, 255, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .participant-item.talking .participant-avatar {
+            animation: talkingGlow 1.5s infinite;
+            border-color: #FFD166;
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(255, 209, 102, 0.6);
+        }
+
+        .participant-avatar::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            right: -6px;
+            bottom: -6px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            pointer-events: none;
+        }
+
+        .participant-item.talking .participant-avatar::after {
+            border-color: rgba(255, 209, 102, 0.3);
+            animation: talkingRing 2s infinite;
+        }
+
+        @keyframes talkingRing {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+
+        @keyframes talkingGlow {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(255, 209, 102, 0.4),
+                          0 0 40px rgba(255, 209, 102, 0.2),
+                          0 0 60px rgba(255, 209, 102, 0.1);
+            }
+            50% { 
+                box-shadow: 0 0 30px rgba(255, 209, 102, 0.6),
+                          0 0 60px rgba(255, 209, 102, 0.3),
+                          0 0 90px rgba(255, 209, 102, 0.2);
+            }
+        }
+
+        .participant-name {
+            background: rgba(138, 79, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+            border: 1px solid rgba(138, 79, 255, 0.3);
+            white-space: nowrap;
         }
 
         .discussion-controls {
@@ -1685,6 +1560,41 @@
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .mic-controls {
+            background: rgba(138, 79, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 14px 24px;
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid rgba(138, 79, 255, 0.2);
+        }
+
+        .mic-toggle-btn {
+            background: linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(106, 13, 255, 0.3);
+        }
+
+        .mic-toggle-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(106, 13, 255, 0.4);
+        }
+
+        .mic-toggle-btn.muted {
+            background: linear-gradient(145deg, #ff4757 0%, #ff6b81 100%);
         }
 
         .screen-resize-menu {
@@ -2104,6 +2014,10 @@
             .widget-content {
                 width: 300px;
                 right: 52px;
+            }
+            
+            .chat-messages {
+                height: 220px;
             }
         }
         
@@ -2623,9 +2537,9 @@
                 <div class="discussion-header">
                     <h1 class="discussion-title">Discussion Time 🎤</h1>
                     <p class="discussion-subtitle">Take turns talking about the movie with everyone</p>
-                    <div class="premium-feature-note">
-                        <i class="fas fa-crown"></i>
-                        Premium Feature: You're using audio discussion for FREE during this trial period
+                    <div class="discussion-instructions">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>How to join:</strong> Click the "Pause & Discuss" button in the control panel below to activate your microphone and join the discussion. Your profile will light up when you're talking!
                     </div>
                 </div>
                 
@@ -2633,22 +2547,19 @@
                     <!-- Participants will be arranged in a circle here -->
                 </div>
                 
-                <div class="discussion-instructions">
-                    <h4><i class="fas fa-info-circle"></i> How to Join Discussion</h4>
-                    <p>To participate in the audio discussion:</p>
-                    <ol>
-                        <li>Click the microphone icon in the floating widgets</li>
-                        <li>Press and hold the "Hold to Talk" button to speak</li>
-                        <li>Release to stop talking</li>
-                        <li>Your profile will light up when you're speaking</li>
-                    </ol>
-                </div>
-                
                 <div class="discussion-controls">
                     <div class="discussion-timer">
                         <i class="fas fa-clock"></i>
                         <span id="discussion-timer">00:00</span>
                     </div>
+                    
+                    <div class="mic-controls">
+                        <button class="mic-toggle-btn touch-feedback" id="discussion-mic-toggle">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <span id="mic-status">Mic is ON</span>
+                    </div>
+                    
                     <button class="end-discussion-btn touch-feedback" id="end-discussion-btn">
                         <i class="fas fa-stop"></i>
                         End Discussion
@@ -2771,22 +2682,10 @@
                         <i class="fas fa-microphone"></i>
                     </button>
                     <div class="widget-content" id="voice-content">
-                        <div class="chat-header">
-                            <div class="chat-title">Voice Chat</div>
-                            <div class="chat-actions">
-                                <button class="chat-action-btn touch-feedback" id="toggle-mic-btn" title="Toggle Microphone">
-                                    <i class="fas fa-microphone"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="chat-messages-container" style="padding:16px;">
-                            <div class="voice-status" id="voice-status">
-                                <i class="fas fa-info-circle"></i> Press and hold the button below to talk
-                            </div>
-                            <button id="hold-talk-btn" class="voice-btn touch-feedback">
-                                <i class="fas fa-microphone"></i> Hold to Talk
-                            </button>
-                        </div>
+                        <div class="voice-status" id="voice-status">Tap and hold to talk</div>
+                        <button id="hold-talk-btn" class="voice-btn touch-feedback">
+                            <i class="fas fa-microphone"></i> Hold to Talk
+                        </button>
                     </div>
                 </div>
                 
@@ -2796,14 +2695,6 @@
                         <i class="fas fa-smile"></i>
                     </button>
                     <div class="widget-content" id="reactions-content">
-                        <div class="chat-header">
-                            <div class="chat-title">Quick Reactions</div>
-                            <div class="chat-actions">
-                                <button class="chat-action-btn touch-feedback" title="Close">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        </div>
                         <div class="reactions-grid">
                             <button class="reaction-btn touch-feedback" data-emoji="😂">😂</button>
                             <button class="reaction-btn touch-feedback" data-emoji="😱">😱</button>
@@ -2817,40 +2708,33 @@
                     </div>
                 </div>
                 
-                <!-- Chat Widget -->
+                <!-- Enhanced Chat Widget -->
                 <div class="widget-container">
                     <button class="widget-icon touch-feedback" id="chat-widget" title="Group Chat">
                         <i class="fas fa-comment"></i>
                         <div class="widget-badge" id="chat-badge" style="display: none;">0</div>
                     </button>
                     <div class="widget-content" id="chat-content">
-                        <div class="chat-container">
-                            <div class="chat-header">
-                                <div class="chat-title">Group Chat</div>
-                                <div class="chat-actions">
-                                    <button class="chat-action-btn touch-feedback" id="clear-chat-btn" title="Clear Chat">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                    <button class="chat-action-btn touch-feedback" title="Close">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="system-message">
+                                Welcome to the watch party! 🎉 Chat with everyone here.
                             </div>
-                            <div class="chat-messages-container">
-                                <div class="chat-messages" id="chat-messages">
-                                    <div class="message system">
-                                        <div class="message-content">
-                                            <i class="fas fa-info-circle"></i> Welcome to the watch party! 🎉
-                                        </div>
+                            <div class="message">
+                                <div class="message-avatar">H</div>
+                                <div class="message-content">
+                                    Welcome everyone! Enjoy the movie together 🍿
+                                    <div class="message-meta">
+                                        <span>Host</span>
+                                        <span>Just now</span>
                                     </div>
                                 </div>
                             </div>
-                            <div class="chat-input-container">
-                                <input type="text" id="chat-input" placeholder="Type your message...">
-                                <button class="send-btn touch-feedback" id="chat-send-btn">
-                                    <i class="fas fa-paper-plane"></i>
-                                </button>
-                            </div>
+                        </div>
+                        <div class="chat-input-container">
+                            <input type="text" id="chat-input" placeholder="Type your message...">
+                            <button class="send-btn touch-feedback" id="chat-send-btn" title="Send message">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -2861,14 +2745,6 @@
                         <i class="fas fa-share-alt"></i>
                     </button>
                     <div class="widget-content" id="share-content">
-                        <div class="chat-header">
-                            <div class="chat-title">Share Watch Party</div>
-                            <div class="chat-actions">
-                                <button class="chat-action-btn touch-feedback" title="Close">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        </div>
                         <div class="share-link-container">
                             <input type="text" id="share-link" readonly>
                             <button class="copy-btn touch-feedback" id="copy-btn">
@@ -3066,7 +2942,7 @@
 
     <script>
         // =======================================================
-        // FIXED APPLICATION WITH COMPLETE UI/UX IMPROVEMENTS
+        // ENHANCED APPLICATION WITH COMPLETE FEATURES
         // =======================================================
 
         // Initialize Firebase
@@ -3091,7 +2967,7 @@
         let isTalking = false;
         let agoraDiscussionClient = null;
         let agoraDiscussionAudioTrack = null;
-        let isMicMuted = false;
+        let isDiscussionMicMuted = false;
         
         // Participants tracking
         let participants = {};
@@ -3130,22 +3006,11 @@
         let drawing = false;
         let lastPos = null;
         
-        // Prevent duplicate reactions
+        // Chat state
         let reactionCooldown = false;
         let lastReactionTime = 0;
-        
-        // Video sync tracking
-        let lastHostTime = 0;
-        let lastHostUpdate = 0;
-        let syncInterval = null;
-        let isSyncing = false;
-        
-        // Chat sending flag
         let isSendingChatMessage = false;
         let displayedMessageKeys = new Set();
-        
-        // Prevent zoom on input focus
-        let isChatInputFocused = false;
         
         // DOM elements
         const resizeTutorial = document.getElementById('resize-tutorial');
@@ -3154,6 +3019,8 @@
         const participantsCircle = document.getElementById('participants-circle');
         const discussionTimerElement = document.getElementById('discussion-timer');
         const endDiscussionBtn = document.getElementById('end-discussion-btn');
+        const discussionMicToggle = document.getElementById('discussion-mic-toggle');
+        const micStatus = document.getElementById('mic-status');
         const participantsModal = document.getElementById('participants-modal');
         const participantsList = document.getElementById('participants-list');
         const closeParticipantsBtn = document.getElementById('close-participants');
@@ -3220,7 +3087,6 @@
         const voiceContent = document.getElementById('voice-content');
         const holdTalkBtn = document.getElementById('hold-talk-btn');
         const voiceStatus = document.getElementById('voice-status');
-        const toggleMicBtn = document.getElementById('toggle-mic-btn');
         
         const reactionsWidget = document.getElementById('reactions-widget');
         const reactionsContent = document.getElementById('reactions-content');
@@ -3231,7 +3097,6 @@
         const chatInput = document.getElementById('chat-input');
         const chatSendBtn = document.getElementById('chat-send-btn');
         const chatBadge = document.getElementById('chat-badge');
-        const clearChatBtn = document.getElementById('clear-chat-btn');
         
         const shareWidget = document.getElementById('share-widget');
         const shareContent = document.getElementById('share-content');
@@ -3249,7 +3114,7 @@
         const predictBtn = document.getElementById('predictBtn');
         const openPoll = document.getElementById('openPoll');
 
-        // Initialize Firebase services if available
+        // Initialize Firebase services
         if (firebaseInitialized) {
             db = firebase.database();
             auth = firebase.auth();
@@ -3424,9 +3289,9 @@
                     isHost: isHost,
                     lastActive: firebase.database.ServerValue.TIMESTAMP,
                     isTalking: false,
-                    isMicMuted: false,
                     avatarColor: getRandomColor(),
-                    isInPlayerView: true
+                    isInPlayerView: true,
+                    inDiscussion: false
                 });
                 
                 // Set up participants listeners
@@ -3447,11 +3312,7 @@
                     participants[participant.uid] = participant;
                     updateTalkingStatus();
                     updateParticipantsModal();
-                    
-                    // Update UI if it's the current user
-                    if (participant.uid === currentUser) {
-                        updateMicStatusUI(participant.isMicMuted);
-                    }
+                    updateDiscussionParticipants();
                 });
                 
                 participantsRef.on('child_removed', (snap) => {
@@ -3492,69 +3353,49 @@
             
             participantsCircle.innerHTML = '';
             const participantCount = Object.keys(participants).length;
-            const radius = Math.min(180, participantCount * 25);
+            const participantsInDiscussion = Object.values(participants).filter(p => p.inDiscussion);
+            const participantsToShow = participantsInDiscussion.length > 0 ? participantsInDiscussion : Object.values(participants);
             
-            Object.values(participants).forEach((participant, index) => {
-                const angle = (index / participantCount) * 2 * Math.PI;
+            participantsToShow.forEach((participant, index) => {
+                const angle = (index / participantsToShow.length) * 2 * Math.PI;
+                const radius = 150;
                 const x = radius * Math.cos(angle);
                 const y = radius * Math.sin(angle);
                 
-                const participantCard = document.createElement('div');
-                participantCard.className = 'participant-card';
-                participantCard.style.transform = `translate(${x}px, ${y}px)`;
-                participantCard.dataset.uid = participant.uid;
-                
-                const avatarContainer = document.createElement('div');
-                avatarContainer.className = 'participant-avatar-container';
+                const participantItem = document.createElement('div');
+                participantItem.className = 'participant-item';
+                participantItem.style.transform = `translate(${x}px, ${y}px)`;
+                participantItem.dataset.uid = participant.uid;
                 
                 const avatar = document.createElement('div');
                 avatar.className = 'participant-avatar';
-                if (participant.isTalking) {
-                    avatar.classList.add('talking');
-                }
                 avatar.textContent = participant.username.charAt(0).toUpperCase();
                 avatar.style.background = participant.avatarColor || 'linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%)';
                 
-                const micStatus = document.createElement('div');
-                micStatus.className = `participant-mic-status ${participant.isMicMuted ? 'muted' : 'active'}`;
-                micStatus.innerHTML = `<i class="fas fa-${participant.isMicMuted ? 'microphone-slash' : 'microphone'}"></i>`;
-                
                 const name = document.createElement('div');
                 name.className = 'participant-name';
-                if (participant.isHost) {
-                    name.classList.add('host');
-                }
                 name.textContent = participant.username;
                 
-                avatarContainer.appendChild(avatar);
-                avatarContainer.appendChild(micStatus);
-                participantCard.appendChild(avatarContainer);
-                participantCard.appendChild(name);
-                participantsCircle.appendChild(participantCard);
+                participantItem.appendChild(avatar);
+                participantItem.appendChild(name);
+                participantsCircle.appendChild(participantItem);
+                
+                if (participant.isTalking) {
+                    participantItem.classList.add('talking');
+                }
             });
         }
 
         function updateTalkingStatus() {
             if (!discussionActive) return;
             
-            const participantCards = document.querySelectorAll('.participant-card');
-            participantCards.forEach(card => {
-                const uid = card.dataset.uid;
-                const participant = participants[uid];
-                const avatar = card.querySelector('.participant-avatar');
-                const micStatus = card.querySelector('.participant-mic-status');
-                
-                if (avatar && participant) {
-                    if (participant.isTalking) {
-                        avatar.classList.add('talking');
-                    } else {
-                        avatar.classList.remove('talking');
-                    }
-                }
-                
-                if (micStatus && participant) {
-                    micStatus.className = `participant-mic-status ${participant.isMicMuted ? 'muted' : 'active'}`;
-                    micStatus.innerHTML = `<i class="fas fa-${participant.isMicMuted ? 'microphone-slash' : 'microphone'}"></i>`;
+            const participantItems = document.querySelectorAll('.participant-item');
+            participantItems.forEach((item) => {
+                const uid = item.dataset.uid;
+                if (participants[uid] && participants[uid].isTalking) {
+                    item.classList.add('talking');
+                } else {
+                    item.classList.remove('talking');
                 }
             });
         }
@@ -3605,10 +3446,6 @@
                 
                 const statusText = document.createElement('span');
                 statusText.textContent = participant.lastActive > Date.now() - 30000 ? 'Online' : 'Away';
-                if (participant.isTalking) {
-                    statusText.textContent = 'Talking';
-                    statusText.style.color = '#FFD166';
-                }
                 
                 status.appendChild(statusDot);
                 status.appendChild(statusText);
@@ -3704,7 +3541,7 @@
             return colors[Math.floor(Math.random() * colors.length)];
         }
 
-        // AGORA VOICE CHAT FUNCTIONS - UPDATED
+        // AGORA VOICE CHAT FUNCTIONS
         async function initAgoraVoice() {
             try {
                 if (typeof AgoraRTC === 'undefined') {
@@ -3726,16 +3563,7 @@
                     }
                 });
                 
-                // Update mic status in Firebase
-                if (firebaseInitialized) {
-                    participantsRef.child(currentUser).update({ 
-                        isMicMuted: false,
-                        isTalking: false 
-                    });
-                }
-                
                 setVoiceStatus("Voice ready - Hold to talk");
-                updateMicStatusUI(false);
             } catch (error) {
                 console.error("Agora initialization error:", error);
                 setVoiceStatus("Voice chat unavailable");
@@ -3761,72 +3589,93 @@
                     }
                 });
                 
-                // Start audio level detection for talking indication
-                startAudioLevelDetection();
+                // Update participant status
+                if (participantsRef && currentUser) {
+                    participantsRef.child(currentUser).update({
+                        inDiscussion: true,
+                        isTalking: true
+                    });
+                }
+                
+                // Start voice activity detection
+                startVoiceActivityDetection();
                 
             } catch (error) {
                 console.error("Agora discussion initialization error:", error);
             }
         }
 
-        function startAudioLevelDetection() {
+        function startVoiceActivityDetection() {
             if (!agoraDiscussionAudioTrack) return;
             
-            setInterval(() => {
-                const audioLevel = agoraDiscussionAudioTrack.getVolumeLevel();
-                const isSpeaking = audioLevel > 0.1;
+            // Simple voice activity detection
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const analyser = audioContext.createAnalyser();
+            const microphone = audioContext.createMediaStreamSource(agoraDiscussionAudioTrack.getMediaStreamTrack());
+            microphone.connect(analyser);
+            
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            let lastUpdate = 0;
+            const checkVoice = () => {
+                if (!discussionActive) return;
                 
-                if (firebaseInitialized) {
-                    participantsRef.child(currentUser).update({ 
-                        isTalking: isSpeaking 
-                    });
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    sum += dataArray[i];
                 }
-            }, 200);
+                const average = sum / bufferLength;
+                
+                const now = Date.now();
+                if (average > 20 && now - lastUpdate > 1000) {
+                    // User is talking
+                    if (participantsRef && currentUser) {
+                        participantsRef.child(currentUser).update({
+                            isTalking: true
+                        });
+                        lastUpdate = now;
+                    }
+                } else if (average <= 20 && now - lastUpdate > 2000) {
+                    // User stopped talking
+                    if (participantsRef && currentUser) {
+                        participantsRef.child(currentUser).update({
+                            isTalking: false
+                        });
+                        lastUpdate = now;
+                    }
+                }
+                
+                if (discussionActive) {
+                    requestAnimationFrame(checkVoice);
+                }
+            };
+            
+            checkVoice();
         }
 
-        function toggleMicrophone() {
-            if (!agoraDiscussionAudioTrack && !agoraLocalAudioTrack) return;
+        function toggleDiscussionMic() {
+            if (!agoraDiscussionAudioTrack) return;
             
-            isMicMuted = !isMicMuted;
+            isDiscussionMicMuted = !isDiscussionMicMuted;
             
-            if (discussionActive && agoraDiscussionAudioTrack) {
-                if (isMicMuted) {
-                    agoraDiscussionAudioTrack.setEnabled(false);
-                } else {
-                    agoraDiscussionAudioTrack.setEnabled(true);
-                }
+            if (isDiscussionMicMuted) {
+                agoraDiscussionAudioTrack.setVolume(0);
+                discussionMicToggle.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+                discussionMicToggle.classList.add('muted');
+                if (micStatus) micStatus.textContent = 'Mic is OFF';
+            } else {
+                agoraDiscussionAudioTrack.setVolume(100);
+                discussionMicToggle.innerHTML = '<i class="fas fa-microphone"></i>';
+                discussionMicToggle.classList.remove('muted');
+                if (micStatus) micStatus.textContent = 'Mic is ON';
             }
-            
-            if (firebaseInitialized) {
-                participantsRef.child(currentUser).update({ 
-                    isMicMuted: isMicMuted 
-                });
-            }
-            
-            updateMicStatusUI(isMicMuted);
-            
-            showNotification(isMicMuted ? "Microphone muted" : "Microphone unmuted");
-        }
-
-        function updateMicStatusUI(isMuted) {
-            if (toggleMicBtn) {
-                toggleMicBtn.innerHTML = `<i class="fas fa-microphone${isMuted ? '-slash' : ''}"></i>`;
-                toggleMicBtn.style.color = isMuted ? '#ff6b81' : '#10b981';
-            }
-            
-            if (holdTalkBtn) {
-                holdTalkBtn.disabled = isMuted;
-                holdTalkBtn.innerHTML = `<i class="fas fa-microphone${isMuted ? '-slash' : ''}"></i> ${isMuted ? 'Mic Muted' : 'Hold to Talk'}`;
-                holdTalkBtn.style.opacity = isMuted ? '0.6' : '1';
-            }
-            
-            setVoiceStatus(isMuted ? 
-                "Microphone is muted - Click microphone icon to unmute" : 
-                "Press and hold the button below to talk");
         }
 
         function startTalking() {
-            if (!agoraLocalAudioTrack || isTalking || isMicMuted) return;
+            if (!agoraLocalAudioTrack || isTalking) return;
             
             try {
                 agoraClient.publish([agoraLocalAudioTrack]);
@@ -3835,12 +3684,6 @@
                 
                 if (holdTalkBtn) holdTalkBtn.classList.add('talking');
                 setVoiceStatus("<span class='recording-indicator'></span> Talking...");
-                
-                if (firebaseInitialized) {
-                    participantsRef.child(currentUser).update({ 
-                        isTalking: true 
-                    });
-                }
             } catch (error) {
                 console.error("Error starting voice:", error);
             }
@@ -3855,15 +3698,7 @@
                 isTalking = false;
                 
                 if (holdTalkBtn) holdTalkBtn.classList.remove('talking');
-                setVoiceStatus(isMicMuted ? 
-                    "Microphone is muted - Click microphone icon to unmute" : 
-                    "Voice ready - Hold to talk");
-                
-                if (firebaseInitialized) {
-                    participantsRef.child(currentUser).update({ 
-                        isTalking: false 
-                    });
-                }
+                setVoiceStatus("Voice ready - Hold to talk");
             } catch (error) {
                 console.error("Error stopping voice:", error);
             }
@@ -4103,38 +3938,47 @@
             try { 
                 const u = new URL(url); 
                 
+                // YouTube 
                 if (u.hostname.includes("youtube.com") || u.hostname.includes("youtu.be")) { 
                     return "youtube"; 
                 } 
                 
+                // Vimeo 
                 if (u.hostname.includes("vimeo.com")) { 
                     return "vimeo"; 
                 } 
                 
+                // Dropbox direct link 
                 if (u.hostname.includes("dropbox.com")) { 
                     return "dropbox"; 
                 } 
                 
+                // Google Drive 
                 if (u.hostname.includes("drive.google.com")) { 
                     return "gdrive"; 
                 } 
                 
+                // Dailymotion 
                 if (u.hostname.includes("dailymotion.com") || u.hostname.includes("dai.ly")) { 
                     return "dailymotion"; 
                 } 
                 
+                // MP4 / WebM / M3U8 / MOV / MKV etc. 
                 if (/\.(mp4|webm|mkv|mov|m3u8|avi|flv|wmv|mpg|mpeg)$/i.test(u.pathname)) { 
                     return "html5"; 
                 } 
                 
+                // TikTok 
                 if (u.hostname.includes("tiktok.com")) { 
                     return "tiktok"; 
                 } 
                 
+                // Instagram 
                 if (u.hostname.includes("instagram.com")) { 
                     return "instagram"; 
                 } 
                 
+                // Unknown 
                 return "unknown"; 
             } catch (e) { 
                 const lowerUrl = url.toLowerCase();
@@ -4289,6 +4133,7 @@
             html5videoElement.src = link;
         }
 
+        // YouTube API Ready function
         window.onYouTubeIframeAPIReady = function() {
             console.log("YouTube API ready");
         };
@@ -4365,11 +4210,14 @@
             }
             
             if (isHostUser) {
+                // Host: Broadcast video state every second
                 syncInterval = setInterval(() => {
                     updateVideoState();
                 }, 1000);
                 
+                // Listen for video events to update state immediately
                 if (usingYT && ytPlayer) {
+                    // YouTube events are handled in ensureYTPlayer
                 } else if (html5videoElement) {
                     const playHandler = () => {
                         isPlaying = true;
@@ -4391,11 +4239,13 @@
                     html5videoElement.addEventListener('pause', pauseHandler);
                     html5videoElement.addEventListener('seeked', seekHandler);
                     
+                    // Store handlers for cleanup
                     html5videoElement._playHandler = playHandler;
                     html5videoElement._pauseHandler = pauseHandler;
                     html5videoElement._seekHandler = seekHandler;
                 }
             } else {
+                // Viewer: Listen for host updates
                 if (firebaseInitialized) {
                     const videoStateHandler = (snapshot) => {
                         const data = snapshot.val();
@@ -4403,10 +4253,12 @@
                         
                         isSyncing = true;
                         
+                        // Calculate latency
                         const now = Date.now();
                         const latency = now - data.timestamp;
                         const estimatedHostTime = data.currentTime + (latency / 1000);
                         
+                        // Get current time
                         let currentTime = 0;
                         if (usingYT && ytPlayer) {
                             currentTime = ytPlayer.getCurrentTime();
@@ -4414,6 +4266,7 @@
                             currentTime = html5videoElement.currentTime;
                         }
                         
+                        // Check if sync is needed (more than 1 second difference)
                         if (Math.abs(currentTime - estimatedHostTime) > 1) {
                             if (usingYT && ytPlayer) {
                                 ytPlayer.seekTo(estimatedHostTime, true);
@@ -4422,6 +4275,7 @@
                             }
                         }
                         
+                        // Sync play/pause state
                         if (data.isPlaying !== isPlaying) {
                             isPlaying = data.isPlaying;
                             updatePlayPauseButton();
@@ -4448,6 +4302,7 @@
                     
                     videoStateRef.on('value', videoStateHandler);
                     
+                    // Store handler for cleanup
                     videoStateRef._valueHandler = videoStateHandler;
                 }
             }
@@ -4688,49 +4543,52 @@
             showControls();
         }
 
-        // FIXED: Enhanced chat functionality
+        // ENHANCED CHAT FUNCTIONALITY
         function sendChatMessage(input, container) {
             if (!input || !container || isSendingChatMessage) return;
             
             const text = input.value.trim();
             if (!text) return;
             
+            // Prevent duplicate sending
             isSendingChatMessage = true;
             
-            // Disable send button temporarily
+            // Disable send button while sending
             chatSendBtn.disabled = true;
-            chatSendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             
+            // Clear input immediately
             input.value = '';
             
             if (firebaseInitialized) {
                 try {
+                    // Create message with unique ID
                     const messageKey = firebase.database().ref().child('rooms/' + roomId + '/chat').push().key;
                     const messageData = {
                         text: text,
                         userId: currentUser,
                         username: participants[currentUser]?.username || (isHost ? 'Host' : 'Viewer'),
                         timestamp: firebase.database.ServerValue.TIMESTAMP,
-                        messageId: messageKey
+                        messageId: messageKey,
+                        isSystem: false
                     };
                     
+                    // Save message with its key
                     const messageRef = db.ref('rooms/' + roomId + '/chat/' + messageKey);
                     messageRef.set(messageData);
                     
+                    // Add message locally with its ID to track it
                     displayedMessageKeys.add(messageKey);
                     
-                    // Re-enable send button
+                    // Reset sending flag after a short delay
                     setTimeout(() => {
-                        chatSendBtn.disabled = false;
-                        chatSendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
                         isSendingChatMessage = false;
-                    }, 500);
+                        chatSendBtn.disabled = false;
+                    }, 300);
                     
                 } catch (error) {
                     console.error("Error sending chat message:", error);
-                    chatSendBtn.disabled = false;
-                    chatSendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
                     isSendingChatMessage = false;
+                    chatSendBtn.disabled = false;
                 }
             } else {
                 // Demo mode without Firebase
@@ -4767,19 +4625,16 @@
                 container.appendChild(messageDiv);
                 container.scrollTop = container.scrollHeight;
                 
-                // Re-enable send button
-                setTimeout(() => {
-                    chatSendBtn.disabled = false;
-                    chatSendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
-                    isSendingChatMessage = false;
-                }, 300);
+                isSendingChatMessage = false;
+                chatSendBtn.disabled = false;
             }
         }
 
-        // FIXED: Initialize chat listener
+        // Initialize chat listener
         function initChatListener() {
             if (!firebaseInitialized) return;
             
+            // Remove any existing listener to prevent duplicates
             if (chatRef._valueHandler) {
                 chatRef.off('child_added', chatRef._valueHandler);
             }
@@ -4788,12 +4643,15 @@
                 const message = snapshot.val();
                 const messageId = snapshot.key;
                 
+                // Check if we've already displayed this message
                 if (displayedMessageKeys.has(messageId)) {
-                    return;
+                    return; // Skip if already displayed
                 }
                 
+                // Add to tracked messages
                 displayedMessageKeys.add(messageId);
                 
+                // Add message to UI
                 addChatMessage(message, chatMessages);
                 
                 if (!chatWidget.classList.contains('active')) {
@@ -4804,33 +4662,27 @@
             
             chatRef.on('child_added', chatHandler);
             
+            // Store handler for cleanup
             chatRef._valueHandler = chatHandler;
         }
 
         function addChatMessage(message, container) {
             if (!container) return;
             
-            const messageDiv = document.createElement('div');
-            
-            if (message.userId === 'system') {
-                messageDiv.className = 'message system';
-                
-                const content = document.createElement('div');
-                content.className = 'message-content';
-                content.innerHTML = message.text;
-                
-                messageDiv.appendChild(content);
+            // Handle system messages differently
+            if (message.isSystem) {
+                const systemDiv = document.createElement('div');
+                systemDiv.className = 'system-message';
+                systemDiv.innerHTML = message.text;
+                container.appendChild(systemDiv);
             } else {
+                const messageDiv = document.createElement('div');
                 messageDiv.className = message.userId === currentUser ? 'message self' : 'message';
                 messageDiv.dataset.messageId = message.messageId || Date.now();
                 
                 const avatar = document.createElement('div');
                 avatar.className = 'message-avatar';
-                if (participants[message.userId] && participants[message.userId].isTalking) {
-                    avatar.classList.add('talking');
-                }
                 avatar.textContent = message.username?.charAt(0) || 'U';
-                avatar.style.background = participants[message.userId]?.avatarColor || 'linear-gradient(145deg, #6A0DFF 0%, #8A4FFF 100%)';
                 
                 const content = document.createElement('div');
                 content.className = 'message-content';
@@ -4854,15 +4706,11 @@
                 
                 messageDiv.appendChild(avatar);
                 messageDiv.appendChild(content);
+                
+                container.appendChild(messageDiv);
             }
             
-            container.appendChild(messageDiv);
             container.scrollTop = container.scrollHeight;
-            
-            // Animate message appearance
-            setTimeout(() => {
-                messageDiv.style.opacity = '1';
-            }, 10);
         }
 
         function updateChatBadge() {
@@ -4876,25 +4724,29 @@
             }
         }
 
-        function clearChat() {
-            if (chatMessages) {
-                chatMessages.innerHTML = '';
+        // Send system message to chat
+        function sendSystemMessage(text) {
+            if (!firebaseInitialized) return;
+            
+            try {
+                const messageKey = firebase.database().ref().child('rooms/' + roomId + '/chat').push().key;
+                const messageData = {
+                    text: text,
+                    userId: "system",
+                    username: "System",
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    messageId: messageKey,
+                    isSystem: true
+                };
                 
-                // Add welcome message back
-                const welcomeMessage = document.createElement('div');
-                welcomeMessage.className = 'message system';
-                welcomeMessage.innerHTML = `
-                    <div class="message-content">
-                        <i class="fas fa-info-circle"></i> Welcome to the watch party! 🎉
-                    </div>
-                `;
-                chatMessages.appendChild(welcomeMessage);
-                
-                showNotification('Chat cleared');
+                const messageRef = db.ref('rooms/' + roomId + '/chat/' + messageKey);
+                messageRef.set(messageData);
+            } catch (error) {
+                console.error("Error sending system message:", error);
             }
         }
 
-        // FIXED: Reactions with cooldown
+        // Reactions with cooldown
         function sendReaction(emoji) {
             const now = Date.now();
             if (now - lastReactionTime < 500) {
@@ -4904,6 +4756,7 @@
             
             if (!reactionsBox) return;
             
+            // Add reaction locally
             const bubble = document.createElement('div');
             bubble.className = 'reaction-bubble';
             bubble.textContent = emoji;
@@ -4930,10 +4783,11 @@
             }
         }
 
-        // FIXED: Initialize reactions listener
+        // Initialize reactions listener
         function initReactionsListener() {
             if (!firebaseInitialized) return;
             
+            // Remove any existing listener to prevent duplicates
             if (reactionsRef._valueHandler) {
                 reactionsRef.off('child_added', reactionsRef._valueHandler);
             }
@@ -4942,6 +4796,7 @@
                 const reaction = snapshot.val();
                 if (reaction.userId === currentUser) return;
                 
+                // Show reaction on screen
                 if (reactionsBox) {
                     const bubble = document.createElement('div');
                     bubble.className = 'reaction-bubble';
@@ -4958,6 +4813,7 @@
             
             reactionsRef.on('child_added', reactionsHandler);
             
+            // Store handler for cleanup
             reactionsRef._valueHandler = reactionsHandler;
         }
 
@@ -5001,7 +4857,7 @@
             }
         }
 
-        // FIXED: Enhanced discussion functions
+        // ENHANCED DISCUSSION FUNCTIONS
         function startDiscussion() {
             if (!isHost) {
                 showNotification("Only the host can start a discussion");
@@ -5011,6 +4867,14 @@
             discussionActive = true;
             discussionModal.classList.add('active');
             discussionTimer = 0;
+            isDiscussionMicMuted = false;
+            
+            // Reset mic controls
+            if (discussionMicToggle) {
+                discussionMicToggle.innerHTML = '<i class="fas fa-microphone"></i>';
+                discussionMicToggle.classList.remove('muted');
+            }
+            if (micStatus) micStatus.textContent = 'Mic is ON';
             
             // Pause the video
             if (usingYT && ytPlayer) {
@@ -5036,6 +4900,9 @@
             // Initialize participants circle
             updateDiscussionParticipants();
             
+            // Send system message with instructions
+            sendSystemMessage("🎤 <strong>Discussion started!</strong> Click the 'Pause & Discuss' button in the control panel to join the discussion. Your profile will light up when you're talking!");
+            
             // Initialize Agora for discussion
             initDiscussionVoice();
             
@@ -5047,20 +4914,38 @@
                         discussionStartedAt: firebase.database.ServerValue.TIMESTAMP
                     });
                     
-                    // Send detailed instructions in chat
-                    const chatRef = db.ref('rooms/' + roomId + '/chat').push();
-                    chatRef.set({
-                        text: "🎤 **Discussion Started!**\n\nTo join the audio discussion:\n1. Click the microphone icon in the floating widgets\n2. Press and hold the 'Hold to Talk' button to speak\n3. Your profile will light up when you're talking\n4. Click the microphone icon to mute/unmute\n\nEnjoy the discussion! 🗣️",
-                        userId: "system",
-                        username: "System",
-                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    // Update host participant status
+                    participantsRef.child(currentUser).update({
+                        inDiscussion: true,
+                        isTalking: true
                     });
+                    
                 } catch (error) {
                     console.error("Error starting discussion:", error);
                 }
             }
             
-            showNotification("Discussion started! Click the microphone widget to join.");
+            showNotification("Discussion started! Click 'Pause & Discuss' to join the conversation.");
+        }
+
+        function joinDiscussion() {
+            if (discussionActive && !isHost) {
+                // Join the discussion as a participant
+                initDiscussionVoice();
+                
+                // Send system message
+                sendSystemMessage(`🎤 <strong>${participants[currentUser]?.username || 'A viewer'} joined the discussion!</strong>`);
+                
+                // Update participant status
+                if (participantsRef && currentUser) {
+                    participantsRef.child(currentUser).update({
+                        inDiscussion: true,
+                        isTalking: true
+                    });
+                }
+                
+                showNotification("You joined the discussion! Your mic is now active.");
+            }
         }
 
         function endDiscussion() {
@@ -5083,7 +4968,7 @@
                 if (participantsRef.child(uid)) {
                     participantsRef.child(uid).update({ 
                         isTalking: false,
-                        isMicMuted: false 
+                        inDiscussion: false 
                     });
                 }
             });
@@ -5093,32 +4978,20 @@
                 try {
                     roomRef.update({ discussionActive: false });
                     
-                    // Notify participants
-                    const chatRef = db.ref('rooms/' + roomId + '/chat').push();
-                    chatRef.set({
-                        text: "🎤 Discussion ended. Video will resume shortly...",
-                        userId: "system",
-                        username: "System",
-                        timestamp: firebase.database.ServerValue.TIMESTAMP
-                    });
+                    // Send system message
+                    sendSystemMessage("🎤 <strong>Discussion ended.</strong> Video will resume shortly.");
                 } catch (error) {
                     console.error("Error ending discussion:", error);
                 }
             }
             
-            // Reset mic status
-            isMicMuted = false;
-            updateMicStatusUI(false);
-            
             // Resume video if host
             if (isHost) {
-                setTimeout(() => {
-                    if (usingYT && ytPlayer) {
-                        ytPlayer.playVideo();
-                    } else if (html5videoElement) {
-                        html5videoElement.play();
-                    }
-                }, 1000);
+                if (usingYT && ytPlayer) {
+                    ytPlayer.playVideo();
+                } else if (html5videoElement) {
+                    html5videoElement.play();
+                }
             }
             
             showNotification("Discussion ended");
@@ -5138,6 +5011,7 @@
         function enableDrawing(){ 
             if (!canvas || !canvasDetailed) return;
             
+            // Remove existing listeners first to prevent duplicates
             disableDrawing();
             
             canvas.style.pointerEvents = 'auto'; 
@@ -5161,6 +5035,7 @@
             canvasDetailed.addEventListener('touchmove', onMoveDetailed, {passive:false}); 
             canvasDetailed.addEventListener('touchend', onUpDetailed); 
             
+            // Store references for cleanup
             canvas._onDown = onDown;
             canvas._onMove = onMove;
             canvas._onUp = onUp;
@@ -5177,6 +5052,7 @@
             canvasDetailed.style.pointerEvents = 'none';
             canvasDetailed.style.display = 'none';
             
+            // Remove event listeners
             if (canvas._onDown) {
                 canvas.removeEventListener('mousedown', canvas._onDown);
                 canvas.removeEventListener('touchstart', canvas._onDown);
@@ -5489,14 +5365,9 @@
                 shareWidget.addEventListener('click', () => toggleWidget('share'));
             }
 
-            // Microphone toggle
-            if (toggleMicBtn) {
-                toggleMicBtn.removeEventListener('click', toggleMicrophone);
-                toggleMicBtn.addEventListener('click', toggleMicrophone);
-            }
-
             // Hold to talk button
             if (holdTalkBtn) {
+                // Remove existing listeners
                 holdTalkBtn.removeEventListener('mousedown', startTalking);
                 holdTalkBtn.removeEventListener('mouseup', stopTalking);
                 holdTalkBtn.removeEventListener('mouseleave', stopTalking);
@@ -5504,12 +5375,13 @@
                 holdTalkBtn.removeEventListener('touchend', null);
                 holdTalkBtn.removeEventListener('touchcancel', null);
                 
+                // Add new listeners
                 holdTalkBtn.addEventListener('mousedown', startTalking);
                 holdTalkBtn.addEventListener('mouseup', stopTalking);
                 holdTalkBtn.addEventListener('mouseleave', stopTalking);
                 holdTalkBtn.addEventListener('touchstart', (e) => {
                     e.preventDefault();
-                    if (!isMicMuted) startTalking();
+                    startTalking();
                 }, { passive: false });
                 holdTalkBtn.addEventListener('touchend', (e) => {
                     e.preventDefault();
@@ -5554,28 +5426,6 @@
                 chatInput.addEventListener('keypress', chatInputHandler);
             }
 
-            // Clear chat button
-            if (clearChatBtn) {
-                clearChatBtn.removeEventListener('click', clearChat);
-                clearChatBtn.addEventListener('click', clearChat);
-            }
-
-            // FIXED: Prevent zoom when typing on mobile
-            if (chatInput) {
-                chatInput.removeEventListener('focus', null);
-                chatInput.removeEventListener('blur', null);
-                
-                chatInput.addEventListener('focus', () => {
-                    isChatInputFocused = true;
-                    showControls();
-                });
-                
-                chatInput.addEventListener('blur', () => {
-                    isChatInputFocused = false;
-                    resetControlsTimeout();
-                });
-            }
-
             // Copy buttons
             const copyHandler = () => copyToClipboard(shareLink, copyBtn);
             if (copyBtn) {
@@ -5587,6 +5437,11 @@
             if (endDiscussionBtn) {
                 endDiscussionBtn.removeEventListener('click', endDiscussion);
                 endDiscussionBtn.addEventListener('click', endDiscussion);
+            }
+
+            if (discussionMicToggle) {
+                discussionMicToggle.removeEventListener('click', toggleDiscussionMic);
+                discussionMicToggle.addEventListener('click', toggleDiscussionMic);
             }
 
             // Participants modal
@@ -5798,6 +5653,7 @@
         // Cleanup function to remove all listeners
         function cleanup() {
             if (firebaseInitialized) {
+                // Remove Firebase listeners
                 if (participantsRef) {
                     participantsRef.off();
                 }
@@ -5815,6 +5671,7 @@
                 }
             }
             
+            // Remove video event listeners
             if (html5videoElement) {
                 if (html5videoElement._playHandler) {
                     html5videoElement.removeEventListener('play', html5videoElement._playHandler);
@@ -5827,6 +5684,7 @@
                 }
             }
             
+            // Clear intervals
             if (syncInterval) {
                 clearInterval(syncInterval);
                 syncInterval = null;
@@ -5844,6 +5702,7 @@
                 discussionInterval = null;
             }
             
+            // Clean up Agora
             if (agoraClient) {
                 agoraClient.leave();
                 agoraClient = null;
@@ -5858,8 +5717,10 @@
         function initApp() {
             console.log("Initializing Let's Watch...");
             
+            // Clean up any existing listeners first
             cleanup();
             
+            // Update status display
             if (statusIndicator && statusDisplay) {
                 if (isHost) {
                     statusIndicator.className = 'status-indicator host';

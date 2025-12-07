@@ -411,6 +411,19 @@
             animation: shake 0.5s ease;
         }
 
+        /* Success Message */
+        .success-message {
+            padding: 12px 16px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 12px;
+            color: var(--success);
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideUp 0.4s ease;
+        }
+
         /* Animations */
         @keyframes float {
             0%, 100% {
@@ -560,6 +573,9 @@
             <!-- Error Message -->
             <div class="error-message" id="errorMessage"></div>
 
+            <!-- Success Message -->
+            <div class="success-message" id="successMessage"></div>
+
             <!-- Login Form -->
             <div class="form-container active" id="loginForm">
                 <div class="form-group">
@@ -649,21 +665,199 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-    <!-- Firebase Config -->
-    <script src="firebase-config.js"></script>
-
     <!-- Main Script -->
     <script>
+        // Firebase Configuration - Replace with your actual Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9QiL_k8-b80Qynk8rR2c84pR4wWx7Tz0",
+            authDomain: "livemvp-demo.firebaseapp.com",
+            projectId: "livemvp-demo",
+            storageBucket: "livemvp-demo.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef1234567890abcdef",
+            measurementId: "G-ABCDEF1234"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        // Initialize Firestore
+        const db = firebase.firestore();
+        
+        // AuthService class to handle Firebase authentication
+        class AuthService {
+            static getCurrentUser() {
+                const user = JSON.parse(localStorage.getItem('liveMVPUser'));
+                if (user && user.expires > Date.now()) {
+                    return user;
+                }
+                if (user) {
+                    localStorage.removeItem('liveMVPUser');
+                }
+                return null;
+            }
+
+            static async signInWithEmail(email, password) {
+                try {
+                    const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                    const user = {
+                        uid: userCredential.user.uid,
+                        email: userCredential.user.email,
+                        displayName: userCredential.user.displayName || email.split('@')[0],
+                        photoURL: userCredential.user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(email.split('@')[0])}&background=6A0DFF&color=fff`,
+                        expires: Date.now() + (7 * 24 * 60 * 60 * 1000)
+                    };
+                    localStorage.setItem('liveMVPUser', JSON.stringify(user));
+                    
+                    // Update last login in Firestore
+                    await db.collection('users').doc(user.uid).set({
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                    
+                    return { success: true, user: user };
+                } catch (error) {
+                    let errorMessage = 'Login failed. Please try again.';
+                    switch (error.code) {
+                        case 'auth/user-not-found':
+                            errorMessage = 'No account found with this email.';
+                            break;
+                        case 'auth/wrong-password':
+                            errorMessage = 'Incorrect password.';
+                            break;
+                        case 'auth/invalid-email':
+                            errorMessage = 'Invalid email address.';
+                            break;
+                        case 'auth/user-disabled':
+                            errorMessage = 'This account has been disabled.';
+                            break;
+                        case 'auth/too-many-requests':
+                            errorMessage = 'Too many failed attempts. Please try again later.';
+                            break;
+                    }
+                    return { success: false, error: errorMessage };
+                }
+            }
+
+            static async signUpWithEmail(email, password, name) {
+                try {
+                    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                    
+                    // Update profile with name
+                    await userCredential.user.updateProfile({
+                        displayName: name
+                    });
+
+                    // Create user document in Firestore
+                    await db.collection('users').doc(userCredential.user.uid).set({
+                        name: name,
+                        email: email,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                        profileComplete: false
+                    });
+
+                    const user = {
+                        uid: userCredential.user.uid,
+                        email: userCredential.user.email,
+                        displayName: name,
+                        photoURL: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6A0DFF&color=fff`,
+                        expires: Date.now() + (7 * 24 * 60 * 60 * 1000)
+                    };
+                    localStorage.setItem('liveMVPUser', JSON.stringify(user));
+                    return { success: true, user: user };
+                } catch (error) {
+                    let errorMessage = 'Signup failed. Please try again.';
+                    switch (error.code) {
+                        case 'auth/email-already-in-use':
+                            errorMessage = 'This email is already registered.';
+                            break;
+                        case 'auth/invalid-email':
+                            errorMessage = 'Invalid email address.';
+                            break;
+                        case 'auth/weak-password':
+                            errorMessage = 'Password should be at least 6 characters.';
+                            break;
+                        case 'auth/operation-not-allowed':
+                            errorMessage = 'Email/password accounts are not enabled.';
+                            break;
+                        case 'auth/network-request-failed':
+                            errorMessage = 'Network error. Please check your connection.';
+                            break;
+                    }
+                    return { success: false, error: errorMessage };
+                }
+            }
+
+            static async signInWithGoogle() {
+                try {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    provider.addScope('profile');
+                    provider.addScope('email');
+                    
+                    const userCredential = await firebase.auth().signInWithPopup(provider);
+                    
+                    // Check if user exists in Firestore, if not create
+                    const userDoc = await db.collection('users').doc(userCredential.user.uid).get();
+                    if (!userDoc.exists) {
+                        await db.collection('users').doc(userCredential.user.uid).set({
+                            name: userCredential.user.displayName,
+                            email: userCredential.user.email,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                            profileComplete: true
+                        });
+                    } else {
+                        // Update last login
+                        await db.collection('users').doc(userCredential.user.uid).update({
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+
+                    const user = {
+                        uid: userCredential.user.uid,
+                        email: userCredential.user.email,
+                        displayName: userCredential.user.displayName,
+                        photoURL: userCredential.user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userCredential.user.displayName)}&background=6A0DFF&color=fff`,
+                        expires: Date.now() + (7 * 24 * 60 * 60 * 1000)
+                    };
+                    localStorage.setItem('liveMVPUser', JSON.stringify(user));
+                    return { success: true, user: user };
+                } catch (error) {
+                    let errorMessage = 'Google login failed. Please try again.';
+                    if (error.code === 'auth/popup-closed-by-user') {
+                        errorMessage = 'Login cancelled.';
+                    } else if (error.code === 'auth/cancelled-popup-request') {
+                        errorMessage = 'Login cancelled.';
+                    } else if (error.code === 'auth/popup-blocked') {
+                        errorMessage = 'Popup was blocked by your browser. Please allow popups for this site.';
+                    }
+                    return { success: false, error: errorMessage };
+                }
+            }
+        }
+
         class AuthApp {
             constructor() {
                 this.currentForm = 'login';
-                this.isPasswordVisible = false;
                 this.init();
             }
 
             init() {
                 this.bindEvents();
                 this.checkExistingSession();
+                this.setupAuthStateListener();
+            }
+
+            setupAuthStateListener() {
+                firebase.auth().onAuthStateChanged((user) => {
+                    if (user) {
+                        console.log('User is signed in:', user.email);
+                    } else {
+                        console.log('User is signed out');
+                    }
+                });
             }
 
             bindEvents() {
@@ -702,12 +896,19 @@
                 document.getElementById('signupPassword').addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') this.handleSignup();
                 });
+                document.getElementById('signupConfirmPassword').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleSignup();
+                });
             }
 
             checkExistingSession() {
                 const user = AuthService.getCurrentUser();
                 if (user) {
-                    window.location.href = 'home.html';
+                    if (user.uid.startsWith('demo-')) {
+                        window.location.href = 'demo.html';
+                    } else {
+                        window.location.href = 'home.html';
+                    }
                 }
             }
 
@@ -727,6 +928,7 @@
                 }
 
                 this.hideError();
+                this.hideSuccess();
             }
 
             togglePassword(passwordId, toggleId) {
@@ -760,12 +962,13 @@
 
                 this.showLoading('Signing in...');
                 this.hideError();
+                this.hideSuccess();
 
                 try {
                     const result = await AuthService.signInWithEmail(email, password);
                     
                     if (result.success) {
-                        this.showLoading('Welcome back!');
+                        this.showSuccess('Login successful! Redirecting...');
                         setTimeout(() => {
                             window.location.href = 'home.html';
                         }, 1000);
@@ -776,6 +979,7 @@
                 } catch (error) {
                     this.hideLoading();
                     this.showError('An error occurred. Please try again.');
+                    console.error('Login error:', error);
                 }
             }
 
@@ -807,12 +1011,13 @@
 
                 this.showLoading('Creating account...');
                 this.hideError();
+                this.hideSuccess();
 
                 try {
                     const result = await AuthService.signUpWithEmail(email, password, name);
                     
                     if (result.success) {
-                        this.showLoading('Account created!');
+                        this.showSuccess('Account created successfully! Welcome to Live MVP.');
                         setTimeout(() => {
                             window.location.href = 'home.html';
                         }, 1500);
@@ -823,18 +1028,20 @@
                 } catch (error) {
                     this.hideLoading();
                     this.showError('An error occurred. Please try again.');
+                    console.error('Signup error:', error);
                 }
             }
 
             async handleGoogleLogin() {
                 this.showLoading('Connecting to Google...');
                 this.hideError();
+                this.hideSuccess();
 
                 try {
                     const result = await AuthService.signInWithGoogle();
                     
                     if (result.success) {
-                        this.showLoading('Welcome!');
+                        this.showSuccess('Google login successful! Redirecting...');
                         setTimeout(() => {
                             window.location.href = 'home.html';
                         }, 1000);
@@ -845,11 +1052,14 @@
                 } catch (error) {
                     this.hideLoading();
                     this.showError('An error occurred. Please try again.');
+                    console.error('Google login error:', error);
                 }
             }
 
             handleDemoLogin() {
                 this.showLoading('Launching Demo...');
+                this.hideError();
+                this.hideSuccess();
                 
                 // Create demo user data
                 const demoUser = {
@@ -893,6 +1103,20 @@
 
             hideError() {
                 document.getElementById('errorMessage').style.display = 'none';
+            }
+
+            showSuccess(message) {
+                const successEl = document.getElementById('successMessage');
+                successEl.textContent = message;
+                successEl.style.display = 'block';
+                this.hideLoading();
+                
+                // Scroll to success
+                successEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            hideSuccess() {
+                document.getElementById('successMessage').style.display = 'none';
             }
         }
 

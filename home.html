@@ -159,6 +159,7 @@
             min-width: 120px;
             text-align: left;
             display: inline-block;
+            transition: all 0.5s ease;
         }
 
         .logo-animated::after {
@@ -172,13 +173,7 @@
             border-radius: 1px;
             transform: scaleX(0);
             transform-origin: left;
-            animation: underlineExpand 2s ease-in-out infinite;
-        }
-
-        @keyframes underlineExpand {
-            0%, 50% { transform: scaleX(0); opacity: 0; }
-            60%, 90% { transform: scaleX(1); opacity: 1; }
-            100% { transform: scaleX(0); opacity: 0; }
+            transition: transform 0.5s ease;
         }
 
         /* ===== Main Container & Layout ===== */
@@ -219,13 +214,12 @@
         .user-profile {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             padding: 8px 16px;
             background: var(--frosted-bg);
             backdrop-filter: blur(10px);
             border: 1px solid var(--frosted-border);
-            border-radius: var(--button-radius);
-            color: var(--text-primary);
+            border-radius: 50px;
             cursor: pointer;
             transition: var(--transition);
         }
@@ -233,69 +227,44 @@
         .user-profile:hover {
             background: rgba(138, 79, 255, 0.2);
             border-color: rgba(138, 79, 255, 0.4);
+            transform: translateY(-2px);
         }
 
         .user-avatar {
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            background: var(--gradient-button);
+            background: var(--gradient-hero);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 600;
-            font-size: 14px;
+            color: white;
         }
 
         .user-name {
-            font-weight: 600;
+            font-weight: 500;
             font-size: 14px;
-            max-width: 150px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
 
-        /* ===== Enhanced Home Button ===== */
-        .home-btn {
-            padding: 12px 28px;
+        .logout-btn {
+            padding: 12px 24px;
             border-radius: var(--button-radius);
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            color: var(--accent-red);
             font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
-            display: inline-flex;
+            display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 12px;
-            border: none;
-            font-size: 15px;
-            position: relative;
-            overflow: hidden;
-            background: var(--frosted-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--frosted-border);
-            color: var(--text-primary);
-            text-decoration: none;
+            gap: 8px;
         }
 
-        .home-btn:hover {
-            background: rgba(138, 79, 255, 0.2);
+        .logout-btn:hover {
+            background: rgba(255, 71, 87, 0.2);
+            border-color: var(--accent-red);
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(106, 13, 255, 0.3);
-            border-color: rgba(138, 79, 255, 0.4);
-        }
-
-        .home-btn:active {
-            transform: translateY(0);
-        }
-
-        .home-btn i {
-            font-size: 16px;
-            transition: transform 0.3s ease;
-        }
-
-        .home-btn:hover i {
-            transform: translateX(-3px);
         }
 
         /* ===== Main Content ===== */
@@ -935,6 +904,11 @@
             .radio-group {
                 flex-direction: column;
             }
+            
+            .logout-btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
         }
 
         /* ===== Utility Classes ===== */
@@ -967,31 +941,28 @@
         <div class="loading-spinner"></div>
         <h3 class="logo-container" style="margin-bottom: 12px;">
             <span class="logo-static">Let's </span>
-            <span class="logo-animated">Connect</span>
+            <span id="animated-logo" class="logo-animated">Connect</span>
         </h3>
-        <p style="color: var(--text-secondary);">Checking authentication...</p>
+        <p style="color: var(--text-secondary);">Loading your watch party...</p>
     </div>
 
     <!-- Main Container -->
     <div class="container hidden">
         <!-- Header -->
         <div class="header">
-            <a href="#" class="logo-container">
+            <a href="create.html" class="logo-container">
                 <span class="logo-static">Let's </span>
-                <span id="animated-logo" class="logo-animated">Connect</span>
+                <span id="animated-logo-text" class="logo-animated">Connect</span>
             </a>
             
             <div class="header-actions">
-                <div class="user-profile" id="user-profile" onclick="showUserMenu()">
-                    <div class="user-avatar" id="user-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="user-name" id="user-name">Guest</div>
+                <div class="user-profile" id="user-profile">
+                    <div class="user-avatar" id="user-avatar">U</div>
+                    <div class="user-name" id="user-name">User</div>
                 </div>
-                <a href="home.html" class="home-btn">
-                    <i class="fas fa-home"></i>
-                    Home
-                </a>
+                <button class="logout-btn" id="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
             </div>
         </div>
 
@@ -1130,73 +1101,13 @@
         const refreshPartiesBtn = document.getElementById('refresh-parties');
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toast-message');
-        const animatedLogo = document.getElementById('animated-logo');
+        const animatedLogo = document.getElementById('animated-logo-text');
         const publicLabel = document.getElementById('public-label');
         const privateLabel = document.getElementById('private-label');
+        const logoutBtn = document.getElementById('logout-btn');
         const userProfile = document.getElementById('user-profile');
-        const userName = document.getElementById('user-name');
         const userAvatar = document.getElementById('user-avatar');
-
-        // ===== Current User Info =====
-        let currentUser = null;
-
-        // ===== Authentication Check =====
-        function checkAuth() {
-            return new Promise((resolve, reject) => {
-                auth.onAuthStateChanged((user) => {
-                    if (user) {
-                        currentUser = user;
-                        updateUserProfile();
-                        resolve(user);
-                    } else {
-                        // Not logged in, redirect to login page
-                        window.location.href = 'index.html';
-                        reject(new Error('Not authenticated'));
-                    }
-                }, (error) => {
-                    console.error('Auth state change error:', error);
-                    window.location.href = 'index.html';
-                    reject(error);
-                });
-            });
-        }
-
-        // ===== Update User Profile Display =====
-        function updateUserProfile() {
-            if (currentUser) {
-                const displayName = currentUser.displayName || currentUser.email || 'User';
-                const firstLetter = displayName.charAt(0).toUpperCase();
-                
-                userName.textContent = displayName;
-                userAvatar.textContent = firstLetter;
-                
-                // Set random gradient for avatar
-                const gradients = [
-                    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                    'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
-                ];
-                const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
-                userAvatar.style.background = randomGradient;
-            }
-        }
-
-        // ===== Show User Menu =====
-        function showUserMenu() {
-            if (currentUser) {
-                if (confirm('Do you want to sign out?')) {
-                    auth.signOut().then(() => {
-                        showToast('Signed out successfully', false, 'success');
-                        setTimeout(() => {
-                            window.location.href = 'index.html';
-                        }, 1000);
-                    }).catch((error) => {
-                        showToast('Error signing out: ' + error.message, true, 'error');
-                    });
-                }
-            }
-        }
+        const userName = document.getElementById('user-name');
 
         // ===== Animated Logo Functionality =====
         function startLogoAnimation() {
@@ -1208,29 +1119,46 @@
                 setTimeout(() => {
                     currentIndex = (currentIndex + 1) % words.length;
                     animatedLogo.textContent = words[currentIndex];
+                    
+                    // Trigger underline animation
                     animatedLogo.style.opacity = '1';
+                    const underline = animatedLogo.querySelector('.underline') || document.createElement('div');
+                    underline.className = 'underline';
+                    underline.style.cssText = `
+                        position: absolute;
+                        bottom: -4px;
+                        left: 0;
+                        width: 100%;
+                        height: 2px;
+                        background: var(--gradient-hero);
+                        border-radius: 1px;
+                        transform: scaleX(0);
+                        transform-origin: left;
+                    `;
+                    animatedLogo.appendChild(underline);
+                    
+                    // Animate underline
+                    setTimeout(() => {
+                        underline.style.transform = 'scaleX(1)';
+                        setTimeout(() => {
+                            underline.style.transform = 'scaleX(0)';
+                        }, 2000);
+                    }, 100);
+                    
                 }, 500);
             }, 3000);
         }
 
-        // ===== Radio Button Selection =====
-        publicLabel.addEventListener('click', () => {
-            publicLabel.classList.add('selected');
-            privateLabel.classList.remove('selected');
-        });
-
-        privateLabel.addEventListener('click', () => {
-            privateLabel.classList.add('selected');
-            publicLabel.classList.remove('selected');
-        });
-
-        // ===== Initialize Page =====
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                // First check authentication
-                await checkAuth();
+        // ===== Authentication State Listener =====
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in
+                console.log('User signed in:', user.email);
                 
-                // If we get here, user is authenticated
+                // Update user info in header
+                updateUserInfo(user);
+                
+                // Show main content
                 setTimeout(() => {
                     loadingScreen.style.opacity = '0';
                     setTimeout(() => {
@@ -1255,10 +1183,58 @@
                         
                     }, 500);
                 }, 800);
-            } catch (error) {
-                // Already redirected in checkAuth
-                console.log('Authentication failed, redirecting...');
+                
+            } else {
+                // User is signed out - redirect to index.html (login page)
+                console.log('User signed out, redirecting to login...');
+                window.location.href = 'index.html';
             }
+        });
+
+        // ===== Update User Info in Header =====
+        function updateUserInfo(user) {
+            const displayName = user.displayName || user.email.split('@')[0];
+            const initials = displayName.charAt(0).toUpperCase();
+            
+            userAvatar.textContent = initials;
+            userName.textContent = displayName;
+            
+            // Generate gradient based on user ID
+            const colors = [
+                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                'linear-gradient(135deg, #6A0DFF 0%, #D300FF 100%)'
+            ];
+            
+            if (user.uid) {
+                const hash = user.uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                userAvatar.style.background = colors[hash % colors.length];
+            }
+        }
+
+        // ===== Logout Function =====
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await auth.signOut();
+                // Auth state listener will handle the redirect
+            } catch (error) {
+                console.error('Logout error:', error);
+                showToast('Logout failed: ' + error.message, true, 'error');
+            }
+        });
+
+        // ===== Radio Button Selection =====
+        publicLabel.addEventListener('click', () => {
+            publicLabel.classList.add('selected');
+            privateLabel.classList.remove('selected');
+        });
+
+        privateLabel.addEventListener('click', () => {
+            privateLabel.classList.add('selected');
+            publicLabel.classList.remove('selected');
         });
 
         // ===== Normalize Video Link =====
@@ -1281,8 +1257,9 @@
         createForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            if (!currentUser) {
-                showToast('Please login to create a room', true, 'error');
+            const user = auth.currentUser;
+            if (!user) {
+                showToast('Please sign in to create a room', true, 'error');
                 window.location.href = 'index.html';
                 return;
             }
@@ -1304,42 +1281,32 @@
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
                 submitBtn.disabled = true;
 
-                // Get user info
-                const userId = currentUser.uid;
-                const userDisplayName = currentUser.displayName || currentUser.email || 'Anonymous';
-                const userEmail = currentUser.email || '';
+                const roomRef = db.ref('rooms').push();
+                const roomId = roomRef.key;
+                const startTimestamp = new Date(startTime).getTime();
+                const userDisplayName = user.displayName || user.email.split('@')[0];
                 
-                // Create room data with user info
-                const roomData = {
+                await roomRef.set({
                     videoLink,
                     scheduledStartTime: startTime,
-                    startTimestamp: new Date(startTime).getTime(),
+                    startTimestamp: startTimestamp,
                     createdAt: firebase.database.ServerValue.TIMESTAMP,
                     roomName: roomName || '',
                     visibility: visibility,
                     status: 'scheduled',
                     currentTime: 0,
-                    host: userId,
+                    host: user.uid,
+                    createdBy: user.uid,
+                    userEmail: user.email,
+                    userName: userDisplayName,
                     meta: {
                         name: roomName || `Party by ${userDisplayName}`,
                         type: 'auto',
                         participants: 1,
                         hostName: userDisplayName,
-                        hostId: userId,
-                        hostEmail: userEmail
-                    },
-                    createdBy: {
-                        uid: userId,
-                        name: userDisplayName,
-                        email: userEmail
+                        hostId: user.uid
                     }
-                };
-
-                // Push to database with proper authentication
-                const roomRef = db.ref('rooms').push();
-                const roomId = roomRef.key;
-                
-                await roomRef.set(roomData);
+                });
 
                 showToast('Room created successfully!', false, 'success');
                 
@@ -1359,14 +1326,6 @@
             } catch (error) {
                 console.error('Error creating room:', error);
                 showToast('Error: ' + error.message, true, 'error');
-                
-                // If permission denied, suggest re-login
-                if (error.message.includes('permission') || error.code === 'PERMISSION_DENIED') {
-                    showToast('Authentication error. Please login again.', true, 'error');
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 2000);
-                }
             } finally {
                 const submitBtn = createForm.querySelector('button[type="submit"]');
                 submitBtn.innerHTML = originalText || '<i class="fas fa-plus-circle"></i> Create Room';
@@ -1429,7 +1388,7 @@
                 const isYouTube = party.videoLink && party.videoLink.includes('youtube');
                 const timeText = 'Live Now';
                 const viewerCount = party.meta?.participants || 1;
-                const hostName = party.meta?.hostName || party.createdBy?.name || 'Anonymous';
+                const hostName = party.meta?.hostName || 'Anonymous';
                 const roomName = party.roomName || party.meta?.name || `Party ${party.id.substring(0, 6)}`;
                 
                 const partyElement = document.createElement('div');

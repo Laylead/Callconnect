@@ -659,6 +659,7 @@
         class AuthApp {
             constructor() {
                 this.currentForm = 'login';
+                this.isProcessing = false;
                 this.init();
             }
 
@@ -672,16 +673,23 @@
                 this.auth = firebase.auth();
                 
                 this.bindEvents();
-                this.checkExistingSession();
-                this.setupAuthStateListener();
+                this.checkAuthState();
             }
 
-            setupAuthStateListener() {
+            checkAuthState() {
+                // Check if user is already authenticated
                 this.auth.onAuthStateChanged((user) => {
                     if (user) {
-                        console.log('User authenticated:', user.email);
+                        // User is signed in, check if we should redirect
+                        // Only redirect if this is a fresh page load, not during login/signup process
+                        if (!this.isProcessing) {
+                            console.log('User already logged in, redirecting to home.html');
+                            window.location.href = 'home.html';
+                        }
                     } else {
-                        console.log('No user signed in');
+                        // No user is signed in, stay on login page
+                        console.log('No user signed in, showing login page');
+                        this.isProcessing = false;
                     }
                 });
             }
@@ -700,8 +708,14 @@
                     this.togglePassword('signupConfirmPassword', 'toggleConfirmPassword'));
 
                 // Form submissions
-                document.getElementById('loginSubmit').addEventListener('click', () => this.handleLogin());
-                document.getElementById('signupSubmit').addEventListener('click', () => this.handleSignup());
+                document.getElementById('loginSubmit').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.handleLogin();
+                });
+                document.getElementById('signupSubmit').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.handleSignup();
+                });
                 document.getElementById('googleLogin').addEventListener('click', () => this.handleGoogleLogin());
                 document.getElementById('googleSignup').addEventListener('click', () => this.handleGoogleLogin());
 
@@ -724,17 +738,6 @@
                 document.getElementById('signupConfirmPassword').addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') this.handleSignup();
                 });
-            }
-
-            checkExistingSession() {
-                const user = JSON.parse(localStorage.getItem('liveMVPUser'));
-                if (user) {
-                    if (user.expires < Date.now()) {
-                        localStorage.removeItem('liveMVPUser');
-                        return;
-                    }
-                    window.location.href = 'home.html';
-                }
             }
 
             switchForm(form) {
@@ -772,6 +775,8 @@
             }
 
             async handleLogin() {
+                if (this.isProcessing) return;
+                
                 const email = document.getElementById('loginEmail').value.trim();
                 const password = document.getElementById('loginPassword').value;
 
@@ -788,31 +793,33 @@
                 this.showLoading('Signing in...');
                 this.hideError();
                 this.hideSuccess();
+                this.isProcessing = true;
 
                 try {
                     const userCredential = await this.auth.signInWithEmailAndPassword(email, password);
                     const user = userCredential.user;
                     
-                    const userData = {
-                        uid: user.uid,
-                        email: user.email,
-                        displayName: user.displayName || email.split('@')[0],
-                        photoURL: user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(email.split('@')[0])}&background=6A0DFF&color=fff`,
-                        expires: Date.now() + (7 * 24 * 60 * 60 * 1000)
-                    };
-                    
-                    localStorage.setItem('liveMVPUser', JSON.stringify(userData));
-                    
+                    // Update user document in Firestore
                     await this.db.collection('users').doc(user.uid).set({
-                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                        email: user.email,
+                        displayName: user.displayName || email.split('@')[0]
                     }, { merge: true });
                     
                     this.showSuccess('Login successful! Redirecting...');
+                    
+                    // Clear form
+                    document.getElementById('loginEmail').value = '';
+                    document.getElementById('loginPassword').value = '';
+                    
+                    // Wait a moment then redirect
                     setTimeout(() => {
+                        this.hideLoading();
                         window.location.href = 'home.html';
-                    }, 1000);
+                    }, 1500);
                     
                 } catch (error) {
+                    this.isProcessing = false;
                     this.hideLoading();
                     let errorMessage = 'Login failed. Please try again.';
                     
@@ -835,6 +842,9 @@
                         case 'auth/network-request-failed':
                             errorMessage = 'Network error. Please check your connection.';
                             break;
+                        case 'auth/invalid-credential':
+                            errorMessage = 'Invalid email or password.';
+                            break;
                     }
                     
                     this.showError(errorMessage);
@@ -842,6 +852,8 @@
             }
 
             async handleSignup() {
+                if (this.isProcessing) return;
+                
                 const name = document.getElementById('signupName').value.trim();
                 const email = document.getElementById('signupEmail').value.trim();
                 const password = document.getElementById('signupPassword').value;
@@ -870,38 +882,42 @@
                 this.showLoading('Creating account...');
                 this.hideError();
                 this.hideSuccess();
+                this.isProcessing = true;
 
                 try {
                     const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
                     const user = userCredential.user;
                     
+                    // Update user profile
                     await user.updateProfile({
                         displayName: name
                     });
 
-                    const userData = {
-                        uid: user.uid,
-                        email: user.email,
-                        displayName: name,
-                        photoURL: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6A0DFF&color=fff`,
-                        expires: Date.now() + (7 * 24 * 60 * 60 * 1000)
-                    };
-                    
-                    localStorage.setItem('liveMVPUser', JSON.stringify(userData));
-                    
+                    // Create user document in Firestore
                     await this.db.collection('users').doc(user.uid).set({
                         name: name,
                         email: email,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                        profileComplete: true
                     });
                     
                     this.showSuccess('Account created successfully! Redirecting...');
+                    
+                    // Clear form
+                    document.getElementById('signupName').value = '';
+                    document.getElementById('signupEmail').value = '';
+                    document.getElementById('signupPassword').value = '';
+                    document.getElementById('signupConfirmPassword').value = '';
+                    
+                    // Wait a moment then redirect
                     setTimeout(() => {
+                        this.hideLoading();
                         window.location.href = 'home.html';
-                    }, 1000);
+                    }, 1500);
                     
                 } catch (error) {
+                    this.isProcessing = false;
                     this.hideLoading();
                     let errorMessage = 'Signup failed. Please try again.';
                     
@@ -928,38 +944,41 @@
             }
 
             async handleGoogleLogin() {
+                if (this.isProcessing) return;
+                
                 this.showLoading('Connecting to Google...');
                 this.hideError();
                 this.hideSuccess();
+                this.isProcessing = true;
 
                 try {
                     const provider = new firebase.auth.GoogleAuthProvider();
+                    // Add scopes if needed
+                    provider.addScope('profile');
+                    provider.addScope('email');
+                    
                     const userCredential = await this.auth.signInWithPopup(provider);
                     const user = userCredential.user;
                     
-                    const userData = {
-                        uid: user.uid,
-                        email: user.email,
-                        displayName: user.displayName,
-                        photoURL: user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=6A0DFF&color=fff`,
-                        expires: Date.now() + (7 * 24 * 60 * 60 * 1000)
-                    };
-                    
-                    localStorage.setItem('liveMVPUser', JSON.stringify(userData));
-                    
+                    // Create or update user document in Firestore
                     await this.db.collection('users').doc(user.uid).set({
                         name: user.displayName,
                         email: user.email,
+                        photoURL: user.photoURL,
                         lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
                         profileComplete: true
                     }, { merge: true });
                     
                     this.showSuccess('Google login successful! Redirecting...');
+                    
+                    // Wait a moment then redirect
                     setTimeout(() => {
+                        this.hideLoading();
                         window.location.href = 'home.html';
-                    }, 1000);
+                    }, 1500);
                     
                 } catch (error) {
+                    this.isProcessing = false;
                     this.hideLoading();
                     let errorMessage = 'Google login failed. Please try again.';
                     
@@ -969,8 +988,11 @@
                         errorMessage = 'Login cancelled.';
                     } else if (error.code === 'auth/popup-blocked') {
                         errorMessage = 'Popup was blocked by your browser. Please allow popups.';
+                    } else if (error.code === 'auth/unauthorized-domain') {
+                        errorMessage = 'This domain is not authorized for Google login.';
                     }
                     
+                    console.error('Google login error:', error);
                     this.showError(errorMessage);
                 }
             }
@@ -994,6 +1016,11 @@
                 errorEl.textContent = message;
                 errorEl.style.display = 'block';
                 errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Auto-hide error after 5 seconds
+                setTimeout(() => {
+                    this.hideError();
+                }, 5000);
             }
 
             hideError() {
@@ -1004,7 +1031,6 @@
                 const successEl = document.getElementById('successMessage');
                 successEl.textContent = message;
                 successEl.style.display = 'block';
-                this.hideLoading();
                 successEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
 
@@ -1015,7 +1041,7 @@
 
         // Initialize app when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
-            new AuthApp();
+            window.authApp = new AuthApp();
         });
     </script>
 </body>

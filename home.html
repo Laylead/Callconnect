@@ -159,7 +159,6 @@
             min-width: 120px;
             text-align: left;
             display: inline-block;
-            transition: all 0.5s ease;
         }
 
         .logo-animated::after {
@@ -173,7 +172,13 @@
             border-radius: 1px;
             transform: scaleX(0);
             transform-origin: left;
-            transition: transform 0.5s ease;
+            animation: underlineExpand 2s ease-in-out infinite;
+        }
+
+        @keyframes underlineExpand {
+            0%, 50% { transform: scaleX(0); opacity: 0; }
+            60%, 90% { transform: scaleX(1); opacity: 1; }
+            100% { transform: scaleX(0); opacity: 0; }
         }
 
         /* ===== Main Container & Layout ===== */
@@ -210,61 +215,73 @@
             align-items: center;
         }
 
-        /* ===== User Profile ===== */
-        .user-profile {
+        /* ===== User Info ===== */
+        .user-info {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 8px 16px;
+            gap: 12px;
+            padding: 10px 16px;
             background: var(--frosted-bg);
             backdrop-filter: blur(10px);
             border: 1px solid var(--frosted-border);
-            border-radius: 50px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .user-profile:hover {
-            background: rgba(138, 79, 255, 0.2);
-            border-color: rgba(138, 79, 255, 0.4);
-            transform: translateY(-2px);
+            border-radius: var(--button-radius);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
         }
 
         .user-avatar {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            background: var(--gradient-hero);
+            background: var(--gradient-button);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 600;
             color: white;
+            font-weight: 600;
         }
 
-        .user-name {
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        .logout-btn {
-            padding: 12px 24px;
+        /* ===== Enhanced Home Button ===== */
+        .home-btn {
+            padding: 12px 28px;
             border-radius: var(--button-radius);
-            background: rgba(255, 71, 87, 0.1);
-            border: 1px solid rgba(255, 71, 87, 0.3);
-            color: var(--accent-red);
             font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            gap: 12px;
+            border: none;
+            font-size: 15px;
+            position: relative;
+            overflow: hidden;
+            background: var(--frosted-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--frosted-border);
+            color: var(--text-primary);
+            text-decoration: none;
         }
 
-        .logout-btn:hover {
-            background: rgba(255, 71, 87, 0.2);
-            border-color: var(--accent-red);
+        .home-btn:hover {
+            background: rgba(138, 79, 255, 0.2);
             transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(106, 13, 255, 0.3);
+            border-color: rgba(138, 79, 255, 0.4);
+        }
+
+        .home-btn:active {
+            transform: translateY(0);
+        }
+
+        .home-btn i {
+            font-size: 16px;
+            transition: transform 0.3s ease;
+        }
+
+        .home-btn:hover i {
+            transform: translateX(-3px);
         }
 
         /* ===== Main Content ===== */
@@ -875,10 +892,6 @@
             .logo-animated {
                 min-width: 100px;
             }
-            
-            .user-name {
-                display: none;
-            }
         }
 
         @media (max-width: 480px) {
@@ -903,11 +916,6 @@
             
             .radio-group {
                 flex-direction: column;
-            }
-            
-            .logout-btn {
-                padding: 10px 16px;
-                font-size: 13px;
             }
         }
 
@@ -941,7 +949,7 @@
         <div class="loading-spinner"></div>
         <h3 class="logo-container" style="margin-bottom: 12px;">
             <span class="logo-static">Let's </span>
-            <span id="animated-logo" class="logo-animated">Connect</span>
+            <span class="logo-animated">Connect</span>
         </h3>
         <p style="color: var(--text-secondary);">Loading your watch party...</p>
     </div>
@@ -950,18 +958,23 @@
     <div class="container hidden">
         <!-- Header -->
         <div class="header">
-            <a href="create.html" class="logo-container">
+            <a href="#" class="logo-container">
                 <span class="logo-static">Let's </span>
-                <span id="animated-logo-text" class="logo-animated">Connect</span>
+                <span id="animated-logo" class="logo-animated">Connect</span>
             </a>
             
             <div class="header-actions">
-                <div class="user-profile" id="user-profile">
+                <div id="user-info" class="user-info hidden">
                     <div class="user-avatar" id="user-avatar">U</div>
-                    <div class="user-name" id="user-name">User</div>
+                    <span id="user-name">Loading...</span>
                 </div>
-                <button class="logout-btn" id="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+                <a href="home.html" class="home-btn">
+                    <i class="fas fa-home"></i>
+                    Home
+                </a>
+                <button id="logout-btn" class="home-btn hidden">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
                 </button>
             </div>
         </div>
@@ -1081,16 +1094,16 @@
 
     <!-- External Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="firebase-config.js"></script>
     <script src="agora.js"></script>
     
     <script>
         // ===== Initialize Firebase =====
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
         const db = firebase.database();
+        const auth = firebase.auth();
 
         // ===== DOM Elements =====
         const loadingScreen = document.getElementById('loading-screen');
@@ -1101,13 +1114,83 @@
         const refreshPartiesBtn = document.getElementById('refresh-parties');
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toast-message');
-        const animatedLogo = document.getElementById('animated-logo-text');
+        const animatedLogo = document.getElementById('animated-logo');
         const publicLabel = document.getElementById('public-label');
         const privateLabel = document.getElementById('private-label');
-        const logoutBtn = document.getElementById('logout-btn');
-        const userProfile = document.getElementById('user-profile');
+        const userInfo = document.getElementById('user-info');
         const userAvatar = document.getElementById('user-avatar');
         const userName = document.getElementById('user-name');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        // ===== Current User =====
+        let currentUser = null;
+
+        // ===== Authentication State Observer =====
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in
+                currentUser = user;
+                setupAuthenticatedUser(user);
+                loadPageContent();
+            } else {
+                // User is signed out, redirect to login
+                window.location.href = "index.html";
+            }
+        });
+
+        // ===== Setup Authenticated User =====
+        function setupAuthenticatedUser(user) {
+            userInfo.classList.remove('hidden');
+            logoutBtn.classList.remove('hidden');
+            
+            // Set user display name
+            const displayName = user.displayName || user.email || 'User';
+            userName.textContent = displayName;
+            
+            // Set user avatar initial
+            const initial = displayName.charAt(0).toUpperCase();
+            userAvatar.textContent = initial;
+            
+            // Add logout functionality
+            logoutBtn.addEventListener('click', () => {
+                auth.signOut().then(() => {
+                    showToast('Logged out successfully', false, 'success');
+                    setTimeout(() => {
+                        window.location.href = "index.html";
+                    }, 1000);
+                }).catch((error) => {
+                    showToast('Error logging out: ' + error.message, true, 'error');
+                });
+            });
+        }
+
+        // ===== Load Page Content =====
+        function loadPageContent() {
+            setTimeout(() => {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    mainContainer.classList.remove('hidden');
+                    mainContainer.classList.add('fade-in');
+                    
+                    // Set default time to 30 minutes from now
+                    const now = new Date();
+                    now.setMinutes(now.getMinutes() + 30);
+                    const localDateTime = now.toISOString().slice(0, 16);
+                    document.getElementById('startTime').value = localDateTime;
+                    
+                    // Start logo animation
+                    startLogoAnimation();
+                    
+                    // Load popular parties
+                    loadPopularParties();
+                    
+                    // Set up auto-refresh for popular parties (every 5 minutes)
+                    setInterval(loadPopularParties, 5 * 60 * 1000);
+                    
+                }, 500);
+            }, 800);
+        }
 
         // ===== Animated Logo Functionality =====
         function startLogoAnimation() {
@@ -1119,112 +1202,10 @@
                 setTimeout(() => {
                     currentIndex = (currentIndex + 1) % words.length;
                     animatedLogo.textContent = words[currentIndex];
-                    
-                    // Trigger underline animation
                     animatedLogo.style.opacity = '1';
-                    const underline = animatedLogo.querySelector('.underline') || document.createElement('div');
-                    underline.className = 'underline';
-                    underline.style.cssText = `
-                        position: absolute;
-                        bottom: -4px;
-                        left: 0;
-                        width: 100%;
-                        height: 2px;
-                        background: var(--gradient-hero);
-                        border-radius: 1px;
-                        transform: scaleX(0);
-                        transform-origin: left;
-                    `;
-                    animatedLogo.appendChild(underline);
-                    
-                    // Animate underline
-                    setTimeout(() => {
-                        underline.style.transform = 'scaleX(1)';
-                        setTimeout(() => {
-                            underline.style.transform = 'scaleX(0)';
-                        }, 2000);
-                    }, 100);
-                    
                 }, 500);
             }, 3000);
         }
-
-        // ===== Authentication State Listener =====
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                // User is signed in
-                console.log('User signed in:', user.email);
-                
-                // Update user info in header
-                updateUserInfo(user);
-                
-                // Show main content
-                setTimeout(() => {
-                    loadingScreen.style.opacity = '0';
-                    setTimeout(() => {
-                        loadingScreen.style.display = 'none';
-                        mainContainer.classList.remove('hidden');
-                        mainContainer.classList.add('fade-in');
-                        
-                        // Set default time to 30 minutes from now
-                        const now = new Date();
-                        now.setMinutes(now.getMinutes() + 30);
-                        const localDateTime = now.toISOString().slice(0, 16);
-                        document.getElementById('startTime').value = localDateTime;
-                        
-                        // Start logo animation
-                        startLogoAnimation();
-                        
-                        // Load popular parties
-                        loadPopularParties();
-                        
-                        // Set up auto-refresh for popular parties (every 5 minutes)
-                        setInterval(loadPopularParties, 5 * 60 * 1000);
-                        
-                    }, 500);
-                }, 800);
-                
-            } else {
-                // User is signed out - redirect to index.html (login page)
-                console.log('User signed out, redirecting to login...');
-                window.location.href = 'index.html';
-            }
-        });
-
-        // ===== Update User Info in Header =====
-        function updateUserInfo(user) {
-            const displayName = user.displayName || user.email.split('@')[0];
-            const initials = displayName.charAt(0).toUpperCase();
-            
-            userAvatar.textContent = initials;
-            userName.textContent = displayName;
-            
-            // Generate gradient based on user ID
-            const colors = [
-                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-                'linear-gradient(135deg, #6A0DFF 0%, #D300FF 100%)'
-            ];
-            
-            if (user.uid) {
-                const hash = user.uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-                userAvatar.style.background = colors[hash % colors.length];
-            }
-        }
-
-        // ===== Logout Function =====
-        logoutBtn.addEventListener('click', async () => {
-            try {
-                await auth.signOut();
-                // Auth state listener will handle the redirect
-            } catch (error) {
-                console.error('Logout error:', error);
-                showToast('Logout failed: ' + error.message, true, 'error');
-            }
-        });
 
         // ===== Radio Button Selection =====
         publicLabel.addEventListener('click', () => {
@@ -1253,14 +1234,45 @@
             return raw;
         }
 
-        // ===== Create Room =====
+        // ===== Create Room Function =====
+        function createRoom(uid, roomData) {
+            const roomRef = db.ref('rooms').push();
+            const roomId = roomRef.key;
+            const startTimestamp = new Date(roomData.startTime).getTime();
+            
+            const roomObject = {
+                videoLink: roomData.videoLink,
+                scheduledStartTime: roomData.startTime,
+                startTimestamp: startTimestamp,
+                createdAt: firebase.database.ServerValue.TIMESTAMP,
+                createdBy: uid,
+                roomName: roomData.roomName || '',
+                visibility: roomData.visibility,
+                status: 'scheduled',
+                currentTime: 0,
+                host: true,
+                meta: {
+                    name: roomData.roomName || '',
+                    type: 'auto',
+                    participants: 1,
+                    hostName: currentUser.displayName || currentUser.email || 'Anonymous',
+                    hostId: uid
+                }
+            };
+            
+            return roomRef.set(roomObject).then(() => {
+                return roomId;
+            });
+        }
+
+        // ===== Form Submission =====
         createForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const user = auth.currentUser;
-            if (!user) {
-                showToast('Please sign in to create a room', true, 'error');
-                window.location.href = 'index.html';
+            // Check if user is authenticated
+            if (!currentUser) {
+                showToast('Please log in to create a room', true, 'error');
+                window.location.href = "index.html";
                 return;
             }
             
@@ -1281,32 +1293,14 @@
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
                 submitBtn.disabled = true;
 
-                const roomRef = db.ref('rooms').push();
-                const roomId = roomRef.key;
-                const startTimestamp = new Date(startTime).getTime();
-                const userDisplayName = user.displayName || user.email.split('@')[0];
-                
-                await roomRef.set({
+                const roomData = {
                     videoLink,
-                    scheduledStartTime: startTime,
-                    startTimestamp: startTimestamp,
-                    createdAt: firebase.database.ServerValue.TIMESTAMP,
-                    roomName: roomName || '',
-                    visibility: visibility,
-                    status: 'scheduled',
-                    currentTime: 0,
-                    host: user.uid,
-                    createdBy: user.uid,
-                    userEmail: user.email,
-                    userName: userDisplayName,
-                    meta: {
-                        name: roomName || `Party by ${userDisplayName}`,
-                        type: 'auto',
-                        participants: 1,
-                        hostName: userDisplayName,
-                        hostId: user.uid
-                    }
-                });
+                    startTime,
+                    roomName,
+                    visibility
+                };
+
+                const roomId = await createRoom(currentUser.uid, roomData);
 
                 showToast('Room created successfully!', false, 'success');
                 
@@ -1314,7 +1308,7 @@
                 outputSection.classList.add('fade-in');
                 
                 const baseUrl = window.location.origin;
-                document.getElementById('host-link').value = `${baseUrl}/test.html?room=${roomId}&host=true`;
+                document.getElementById('host-link').value = `${baseUrl}/test.html?room=${roomId}&host=true&uid=${currentUser.uid}`;
                 document.getElementById('viewer-link').value = `${baseUrl}/test.html?room=${roomId}`;
                 document.getElementById('room-id').value = roomId;
 

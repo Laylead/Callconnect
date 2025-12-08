@@ -1,0 +1,2615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DEMO | Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary-purple: #6A0DFF;
+            --secondary-purple: #8A4FFF;
+            --light-purple: #CBB2FF;
+            --neon-magenta: #D300FF;
+            --dark-bg-1: #1A043A;
+            --dark-bg-2: #09001F;
+            --dark-bg-3: #050016;
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --border-light: rgba(255, 255, 255, 0.12);
+            --text-primary: #F8F8FF;
+            --text-secondary: #C8C8D9;
+            --text-accent: #CBB2FF;
+            --green-accent: #00FF88;
+            --red-accent: #FF4757;
+            --yellow-accent: #FFD700;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --success: #00D68F;
+            --info: #0095FF;
+            --warning: #FFAA00;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(160deg, var(--dark-bg-1) 0%, var(--dark-bg-2) 50%, var(--dark-bg-3) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            touch-action: pan-y;
+        }
+
+        .bg-blur {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-blur-1 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--primary-purple) 0%, transparent 70%);
+            top: -200px;
+            left: -200px;
+            animation: float 25s infinite ease-in-out;
+        }
+
+        .bg-blur-2 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--neon-magenta) 0%, transparent 70%);
+            bottom: -150px;
+            right: -150px;
+            animation: float 30s infinite ease-in-out reverse;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding-bottom: 80px;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(5, 0, 22, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 800;
+            font-size: 22px;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--light-purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-transform: uppercase;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .notification-btn {
+            position: relative;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: var(--text-primary);
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .notification-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(106, 13, 255, 0.3);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 10px;
+            height: 10px;
+            background: var(--red-accent);
+            border-radius: 50%;
+            border: 2px solid var(--dark-bg-2);
+        }
+
+        .profile-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .profile-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(106, 13, 255, 0.4);
+        }
+
+        .search-container {
+            padding: 16px 20px;
+            background: rgba(5, 0, 22, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+
+        .search-bar:focus-within {
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 2px rgba(106, 13, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .search-bar i {
+            color: var(--text-secondary);
+            font-size: 18px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 16px;
+            outline: none;
+            font-weight: 500;
+        }
+
+        .search-bar input::placeholder {
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .pages-container {
+            display: flex;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            width: 100%;
+            height: calc(100vh - 180px);
+            position: relative;
+        }
+
+        .page {
+            min-width: 100%;
+            height: 100%;
+            padding: 16px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-purple) transparent;
+        }
+
+        .page::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .page::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .page::-webkit-scrollbar-thumb {
+            background: var(--primary-purple);
+            border-radius: 2px;
+        }
+
+        .page-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px 0;
+            position: absolute;
+            bottom: 80px;
+            left: 0;
+            right: 0;
+            z-index: 10;
+        }
+
+        .page-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .page-indicator:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .page-indicator.active {
+            width: 32px;
+            background: linear-gradient(90deg, var(--primary-purple), var(--neon-magenta));
+            border-radius: 12px;
+        }
+
+        .tonights-vibes {
+            padding: 0px 0 24px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .vibes-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .vibe-btn {
+            flex: 1;
+            padding: 18px 0;
+            border-radius: 16px;
+            border: none;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.5px;
+        }
+
+        .vibe-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .vibe-btn:hover::before {
+            left: 100%;
+        }
+
+        .vibe-btn.truth {
+            background: linear-gradient(135deg, var(--success), #00b894);
+            color: white;
+            box-shadow: 0 4px 20px rgba(0, 214, 143, 0.3);
+        }
+
+        .vibe-btn.dare {
+            background: linear-gradient(135deg, var(--red-accent), #ff6b6b);
+            color: white;
+            box-shadow: 0 4px 20px rgba(255, 71, 87, 0.3);
+        }
+
+        .vibe-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .vibe-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .room-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.5s ease-out;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .room-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary-purple), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .room-card:hover::before {
+            opacity: 1;
+        }
+
+        .room-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--secondary-purple);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .room-card:nth-child(1) { animation-delay: 0.1s; }
+        .room-card:nth-child(2) { animation-delay: 0.2s; }
+        .room-card:nth-child(3) { animation-delay: 0.3s; }
+
+        .room-image {
+            height: 140px;
+            width: 100%;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .room-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .room-content {
+            padding: 16px;
+        }
+
+        .room-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+
+        .room-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .room-players {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .room-players i {
+            color: var(--green-accent);
+        }
+
+        .room-time {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .for-you-section {
+            margin-bottom: 28px;
+        }
+
+        .for-you-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .for-you-title i {
+            color: var(--yellow-accent);
+        }
+
+        .featured-room {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .featured-room:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .featured-header {
+            padding: 20px;
+            background: linear-gradient(90deg, var(--primary-purple), var(--neon-magenta));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .featured-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: 0.5px;
+        }
+
+        .featured-badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .featured-content {
+            padding: 24px 20px;
+        }
+
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .player-count {
+            font-size: 36px;
+            font-weight: 900;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .player-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            font-weight: 500;
+        }
+
+        .join-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 17px;
+            font-weight: 700;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .join-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(106, 13, 255, 0.5);
+        }
+
+        .join-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .guess-game {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .guess-game:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .guess-game-header {
+            padding: 20px;
+            background: linear-gradient(90deg, #ff6b6b, #ffa502);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .guess-game-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .guess-game-badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .guess-game-content {
+            padding: 24px 20px;
+            text-align: center;
+        }
+
+        .game-image {
+            width: 100%;
+            height: 140px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .movie-scene {
+            font-size: 48px;
+            animation: floatUp 3s infinite ease-in-out;
+        }
+
+        .game-description {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .best-room-section {
+            margin-bottom: 28px;
+        }
+
+        .best-room-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .best-room-title i {
+            color: var(--yellow-accent);
+        }
+
+        .best-room-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .best-room-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--secondary-purple);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .best-room-avatar {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .best-room-info h4 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .best-room-info p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .movies-section {
+            margin-bottom: 28px;
+        }
+
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .movie-poster {
+            aspect-ratio: 2/3;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--dark-bg-1);
+        }
+
+        .movie-poster:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .movie-poster img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .movie-poster:hover img {
+            transform: scale(1.1);
+        }
+
+        .movie-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            padding: 16px;
+            color: white;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .movie-poster:hover .movie-overlay {
+            transform: translateY(0);
+        }
+
+        .movie-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+
+        .movie-meta {
+            font-size: 12px;
+            opacity: 0.9;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 500;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(5, 0, 22, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px 20px;
+            z-index: 100;
+        }
+
+        .nav-items {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 10px 16px;
+            border-radius: 16px;
+            min-width: 64px;
+            font-weight: 600;
+        }
+
+        .nav-item.active {
+            color: var(--primary-purple);
+            background: rgba(106, 13, 255, 0.15);
+            box-shadow: 0 4px 20px rgba(106, 13, 255, 0.2);
+        }
+
+        .nav-item i {
+            font-size: 22px;
+        }
+
+        .nav-item:hover {
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        .start-party-btn {
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            color: white;
+            border: none;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 30px rgba(106, 13, 255, 0.5);
+            margin-top: -30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .start-party-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: transform 0.6s;
+        }
+
+        .start-party-btn:hover::after {
+            transform: rotate(45deg) translate(50%, 50%);
+        }
+
+        .start-party-btn:hover {
+            transform: scale(1.15);
+            box-shadow: 0 0 50px rgba(106, 13, 255, 0.8);
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .popup-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .popup-content {
+            background: linear-gradient(135deg, rgba(5, 0, 22, 0.95), rgba(26, 4, 58, 0.95));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 32px;
+            padding: 40px;
+            width: 90%;
+            max-width: 420px;
+            transform: scale(0.8) translateY(50px);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .popup-overlay.active .popup-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .popup-title {
+            font-size: 32px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .popup-options {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .popup-option {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .popup-option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s;
+        }
+
+        .popup-option:hover::before {
+            left: 100%;
+        }
+
+        .popup-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(15px) scale(1.02);
+            border-color: var(--primary-purple);
+            box-shadow: 0 10px 30px rgba(106, 13, 255, 0.3);
+        }
+
+        .option-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            color: white;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+
+        .popup-option:hover .option-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .option-details h4 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .option-details p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .profile-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .profile-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .profile-content {
+            background: linear-gradient(135deg, rgba(5, 0, 22, 0.98), rgba(26, 4, 58, 0.98));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 36px;
+            padding: 48px;
+            width: 90%;
+            max-width: 460px;
+            transform: scale(0.8) translateY(50px);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+        }
+
+        .profile-modal.active .profile-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .profile-title {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -1px;
+        }
+
+        .profile-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .profile-form {
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 18px 20px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 3px rgba(106, 13, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .avatar-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .avatar-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+            cursor: pointer;
+            overflow: hidden;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .avatar-preview:hover {
+            transform: scale(1.05);
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 30px rgba(106, 13, 255, 0.5);
+        }
+
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .upload-btn {
+            padding: 14px 28px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 14px;
+            color: var(--text-primary);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--primary-purple);
+            transform: translateY(-2px);
+        }
+
+        .username-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .username-info i {
+            color: var(--yellow-accent);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 16px;
+            margin-top: 40px;
+        }
+
+        .form-btn {
+            flex: 1;
+            padding: 20px;
+            border-radius: 16px;
+            border: none;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 0.5px;
+        }
+
+        .form-btn.save {
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            color: white;
+        }
+
+        .form-btn.cancel {
+            background: rgba(255, 255, 255, 0.07);
+            color: var(--text-primary);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .form-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .form-btn.save:hover {
+            box-shadow: 0 10px 30px rgba(106, 13, 255, 0.4);
+        }
+
+        .coming-soon-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: linear-gradient(135deg, rgba(5, 0, 22, 0.95), rgba(26, 4, 58, 0.95));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 32px;
+            padding: 48px;
+            width: 90%;
+            max-width: 420px;
+            text-align: center;
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .coming-soon-modal.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .modal-icon {
+            font-size: 80px;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: floatUp 3s infinite ease-in-out;
+        }
+
+        .modal-title {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            letter-spacing: -1px;
+        }
+
+        .modal-description {
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            line-height: 1.6;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 20px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 20px;
+            border-radius: 16px;
+            border: none;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 0.5px;
+        }
+
+        .modal-btn.primary {
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            color: white;
+        }
+
+        .modal-btn.secondary {
+            background: rgba(255, 255, 255, 0.07);
+            color: var(--text-primary);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .toast {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: rgba(5, 0, 22, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 16px 24px;
+            color: white;
+            font-weight: 600;
+            z-index: 3000;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .live-badge {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: var(--red-accent);
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 1.5s infinite;
+        }
+
+        .room-type {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(40px, -60px) rotate(120deg); }
+            66% { transform: translate(-30px, 30px) rotate(240deg); }
+        }
+
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(40px) scale(0.9); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                opacity: 1; 
+                transform: scale(1); 
+            }
+            50% { 
+                opacity: 0.7; 
+                transform: scale(1.1); 
+            }
+        }
+
+        @keyframes floatUp {
+            0% { 
+                transform: translateY(0) rotate(0deg); 
+            }
+            50% { 
+                transform: translateY(-15px) rotate(5deg); 
+            }
+            100% { 
+                transform: translateY(0) rotate(0deg); 
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .popup-content, .profile-content, .coming-soon-modal {
+                padding: 32px 24px;
+                margin: 16px;
+            }
+            
+            .popup-title, .profile-title, .modal-title {
+                font-size: 28px;
+            }
+            
+            .room-title {
+                font-size: 16px;
+            }
+            
+            .featured-title, .guess-game-title {
+                font-size: 18px;
+            }
+            
+            .player-count {
+                font-size: 32px;
+            }
+            
+            .movies-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Profile Modal -->
+    <div class="profile-modal" id="profileModal">
+        <div class="profile-content">
+            <div class="profile-header">
+                <h2 class="profile-title">Edit Profile</h2>
+                <p class="profile-subtitle">Update your information and preferences</p>
+            </div>
+            <form class="profile-form" id="profileForm">
+                <div class="avatar-upload">
+                    <div class="avatar-preview" id="avatarPreview">
+                        <span id="avatarInitials">U</span>
+                    </div>
+                    <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+                    <button type="button" class="upload-btn" onclick="document.getElementById('avatarInput').click()">
+                        <i class="fas fa-camera"></i> Upload Photo
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="userName">Full Name</label>
+                    <input type="text" id="userName" class="form-input" placeholder="Enter your name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="userEmail">Email Address</label>
+                    <input type="email" id="userEmail" class="form-input" placeholder="your@email.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="userUsername">Username (Optional)</label>
+                    <input type="text" id="userUsername" class="form-input" placeholder="Choose a username">
+                    <div class="username-info">
+                        <i class="fas fa-info-circle"></i>
+                        Can be changed 3 times per 3 months
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="form-btn cancel" onclick="closeProfileModal()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="form-btn save">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Coming Soon Modal -->
+    <div class="coming-soon-modal" id="comingSoonModal">
+        <div class="modal-icon">
+            <i class="fas fa-rocket"></i>
+        </div>
+        <h2 class="modal-title">Coming Soon!</h2>
+        <p class="modal-description" id="modalDescription">
+            This feature is currently in development. We're working hard to bring it to you soon!
+        </p>
+        <div class="modal-buttons">
+            <button class="modal-btn secondary" onclick="closeModal()">
+                Got it!
+            </button>
+            <button class="modal-btn primary" onclick="openWatchParty()" id="tryItBtn">
+                <i class="fas fa-play"></i> Try Watch Party
+            </button>
+        </div>
+    </div>
+
+    <!-- Plus Button Popup -->
+    <div class="popup-overlay" id="popupOverlay">
+        <div class="popup-content">
+            <h2 class="popup-title">Create New</h2>
+            <div class="popup-options">
+                <div class="popup-option" onclick="createWatchParty()">
+                    <div class="option-icon">
+                        <i class="fas fa-film"></i>
+                    </div>
+                    <div class="option-details">
+                        <h4>Watch Party</h4>
+                        <p>Synchronize videos with friends in real-time</p>
+                    </div>
+                </div>
+                
+                <div class="popup-option" onclick="createVoiceCall()">
+                    <div class="option-icon">
+                        <i class="fas fa-phone-alt"></i>
+                    </div>
+                    <div class="option-details">
+                        <h4>Group Voice Call</h4>
+                        <p>Voice chat with multiple participants</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Animated Background -->
+    <div class="bg-blur bg-blur-1"></div>
+    <div class="bg-blur bg-blur-2"></div>
+
+    <!-- Main App -->
+    <div class="container" id="mainApp">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span>DEMO</span>
+            </div>
+            <div class="header-right">
+                <button class="notification-btn" id="notificationBtn">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge"></span>
+                </button>
+                <button class="profile-btn" id="profileBtn" onclick="openProfileModal()">U</button>
+            </div>
+        </header>
+
+        <!-- Search Bar -->
+        <div class="search-container">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search movies, rooms, or friends..." id="searchInput">
+            </div>
+        </div>
+
+        <!-- Page Indicators -->
+        <div class="page-indicators">
+            <div class="page-indicator active" data-page="0"></div>
+            <div class="page-indicator" data-page="1"></div>
+            <div class="page-indicator" data-page="2"></div>
+            <div class="page-indicator" data-page="3"></div>
+        </div>
+
+        <!-- Swipeable Pages Container -->
+        <div class="pages-container" id="pagesContainer">
+            <!-- Page 1: Movies -->
+            <div class="page" id="page1">
+                <!-- Tonight's Vibes -->
+                <section class="tonights-vibes">
+                    <h2 class="section-title">TONIGHT'S VIBES</h2>
+                    <div class="vibes-buttons">
+                        <button class="vibe-btn truth" onclick="showComingSoon('Truth Game')">
+                            <i class="fas fa-star"></i> Truth
+                        </button>
+                        <button class="vibe-btn dare" onclick="showComingSoon('Dare Game')">
+                            <i class="fas fa-fire"></i> Dare
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Movies Posters -->
+                <section class="movies-section">
+                    <h3 class="for-you-title">
+                        <i class="fas fa-fire"></i> TRENDING MOVIES
+                    </h3>
+                    <div class="movies-grid" id="moviesGrid">
+                        <!-- Movie posters will be dynamically added -->
+                    </div>
+                </section>
+
+                <!-- Rooms Grid -->
+                <div class="rooms-grid">
+                    <div class="room-card" onclick="showComingSoon('Horror Night Room')">
+                        <div class="room-image" style="background: linear-gradient(135deg, #1a1a2e, #16213e);">
+                            <div class="room-badge">
+                                <span class="live-badge"></span> LIVE
+                            </div>
+                            <div class="room-type">
+                                <i class="fas fa-ghost"></i> Horror
+                            </div>
+                        </div>
+                        <div class="room-content">
+                            <h3 class="room-title">Horror Night Marathon</h3>
+                            <div class="room-stats">
+                                <div class="room-players">
+                                    <i class="fas fa-users"></i>
+                                    <span>127 watching</span>
+                                </div>
+                                <div class="room-time">
+                                    <i class="far fa-clock"></i>
+                                    <span>12 min ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="room-card" onclick="openWatchParty()">
+                        <div class="room-image" style="background: linear-gradient(135deg, #3a0ca3, #4361ee);">
+                            <div class="room-badge">
+                                <span class="live-badge"></span> LIVE
+                            </div>
+                            <div class="room-type">
+                                <i class="fas fa-gamepad"></i> Games
+                            </div>
+                        </div>
+                        <div class="room-content">
+                            <h3 class="room-title">Chill Games Night</h3>
+                            <div class="room-stats">
+                                <div class="room-players">
+                                    <i class="fas fa-users"></i>
+                                    <span>89 playing</span>
+                                </div>
+                                <div class="room-time">
+                                    <i class="far fa-clock"></i>
+                                    <span>15 min ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- For You Section -->
+                <section class="for-you-section">
+                    <h3 class="for-you-title">
+                        <i class="fas fa-heart"></i> RECOMMENDED FOR YOU
+                    </h3>
+
+                    <!-- Featured Room -->
+                    <div class="featured-room" onclick="openWatchParty()">
+                        <div class="featured-header">
+                            <h3 class="featured-title">UNO CHAOS</h3>
+                            <div class="featured-badge">
+                                <i class="fas fa-crown"></i> MOST POPULAR
+                            </div>
+                        </div>
+                        <div class="featured-content">
+                            <div class="players-grid">
+                                <div>
+                                    <div class="player-count">4</div>
+                                    <div class="player-label">Players</div>
+                                </div>
+                                <div>
+                                    <div class="player-count">5</div>
+                                    <div class="player-label">Waiting</div>
+                                </div>
+                                <div>
+                                    <div class="player-count">4</div>
+                                    <div class="player-label">Spectators</div>
+                                </div>
+                            </div>
+                            <button class="join-btn" onclick="event.stopPropagation(); openWatchParty();">
+                                <i class="fas fa-gamepad"></i> JOIN GAME
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Guess Game -->
+                    <div class="guess-game" onclick="showComingSoon('Guess the Movie Game')">
+                        <div class="guess-game-header">
+                            <h3 class="guess-game-title">Guess the Movie Scene Challenge</h3>
+                            <div class="guess-game-badge">
+                                <i class="fas fa-lightbulb"></i> TRENDING
+                            </div>
+                        </div>
+                        <div class="guess-game-content">
+                            <div class="game-image">
+                                <div class="movie-scene">🎬</div>
+                            </div>
+                            <p class="game-description">Tap to join room and guess the movie from the scene</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Best Room Section -->
+                <section class="best-room-section">
+                    <h3 class="best-room-title">
+                        <i class="fas fa-trophy"></i> YOUR BEST ROOM
+                    </h3>
+                    <div class="best-room-card" onclick="showComingSoon('Movie Trivia Night')">
+                        <div class="best-room-avatar">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div class="best-room-info">
+                            <h4>Movie Trivia Night</h4>
+                            <p>You guessed 12/15 movies correctly! 🏆</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Page 2: Games -->
+            <div class="page" id="page2">
+                <section class="tonights-vibes">
+                    <h2 class="section-title">POPULAR GAMES</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px; font-weight: 500;">
+                        Interactive games to play during watch parties
+                    </p>
+                </section>
+
+                <div class="rooms-grid">
+                    <div class="room-card" onclick="showComingSoon('Movie Trivia')" style="grid-column: span 2;">
+                        <div class="room-image" style="background: linear-gradient(135deg, #00b894, #00FF88);">
+                            <div class="room-badge">
+                                <i class="fas fa-question-circle"></i> TRIVIA
+                            </div>
+                            <div class="room-type">
+                                <i class="fas fa-brain"></i> Knowledge
+                            </div>
+                        </div>
+                        <div class="room-content">
+                            <h3 class="room-title">Movie Trivia Challenge</h3>
+                            <div class="room-stats">
+                                <div class="room-players">
+                                    <i class="fas fa-users"></i>
+                                    <span>234 playing</span>
+                                </div>
+                                <div class="room-time">
+                                    <i class="fas fa-trophy"></i>
+                                    <span>High Score: 850</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="for-you-section">
+                    <h3 class="for-you-title">
+                        <i class="fas fa-gamepad"></i> MORE GAMES
+                    </h3>
+
+                    <div class="featured-room" onclick="showComingSoon('Truth or Dare')">
+                        <div class="featured-header" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
+                            <h3 class="featured-title">TRUTH OR DARE</h3>
+                            <div class="featured-badge">
+                                <i class="fas fa-fire"></i> TRENDING
+                            </div>
+                        </div>
+                        <div class="featured-content">
+                            <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px; font-weight: 500;">
+                                Classic party game with movie-themed questions
+                            </p>
+                            <button class="join-btn" style="background: linear-gradient(135deg, #FFD700, #FFA500);" 
+                                    onclick="event.stopPropagation(); showComingSoon('Truth or Dare');">
+                                <i class="fas fa-play-circle"></i> PLAY NOW
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Guess Game Variation -->
+                    <div class="guess-game" onclick="showComingSoon('Scene Challenge')">
+                        <div class="guess-game-header" style="background: linear-gradient(135deg, #6A0DFF, #8A4FFF);">
+                            <h3 class="guess-game-title">Scene Challenge</h3>
+                            <div class="guess-game-badge">
+                                <i class="fas fa-star"></i> NEW
+                            </div>
+                        </div>
+                        <div class="guess-game-content">
+                            <div class="game-image" style="background: linear-gradient(135deg, #6A0DFF, #8A4FFF);">
+                                <div class="movie-scene">🎥</div>
+                            </div>
+                            <p class="game-description">Identify movie scenes against the clock! ⏱️</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Page 3: Friends -->
+            <div class="page" id="page3">
+                <section class="tonights-vibes">
+                    <h2 class="section-title">FRIENDS ACTIVITY</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px; font-weight: 500;">
+                        See what your friends are watching and playing
+                    </p>
+                </section>
+
+                <!-- Friend Rooms -->
+                <div class="rooms-grid">
+                    <div class="room-card" onclick="openWatchParty()">
+                        <div class="room-image" style="background: linear-gradient(135deg, #FF6B6B, #FF4757);">
+                            <div class="room-badge">
+                                <i class="fas fa-user-friends"></i> FRIENDS
+                            </div>
+                            <div class="room-type">
+                                <i class="fas fa-film"></i> Watching
+                            </div>
+                        </div>
+                        <div class="room-content">
+                            <h3 class="room-title">Alex's Movie Night</h3>
+                            <div class="room-stats">
+                                <div class="room-players">
+                                    <i class="fas fa-users"></i>
+                                    <span>3 friends</span>
+                                </div>
+                                <div class="room-time">
+                                    <i class="fas fa-film"></i>
+                                    <span>Action Movie</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="room-card" onclick="openWatchParty()">
+                        <div class="room-image" style="background: linear-gradient(135deg, #00CEC9, #00B894);">
+                            <div class="room-badge">
+                                <i class="fas fa-user-friends"></i> FRIENDS
+                            </div>
+                            <div class="room-type">
+                                <i class="fas fa-gamepad"></i> Gaming
+                            </div>
+                        </div>
+                        <div class="room-content">
+                            <h3 class="room-title">Sam's Game Night</h3>
+                            <div class="room-stats">
+                                <div class="room-players">
+                                    <i class="fas fa-users"></i>
+                                    <span>5 friends</span>
+                                </div>
+                                <div class="room-time">
+                                    <i class="fas fa-gamepad"></i>
+                                    <span>Board Games</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="for-you-section">
+                    <h3 class="for-you-title">
+                        <i class="fas fa-user-plus"></i> SUGGESTED FRIENDS
+                    </h3>
+
+                    <div class="featured-room" onclick="showComingSoon('Friend Suggestions')">
+                        <div class="featured-header" style="background: linear-gradient(135deg, #00CEC9, #00B894);">
+                            <h3 class="featured-title">FRIEND MATCHES</h3>
+                            <div class="featured-badge">
+                                <i class="fas fa-users"></i> 12 NEW
+                            </div>
+                        </div>
+                        <div class="featured-content">
+                            <div class="players-grid">
+                                <div>
+                                    <div class="player-count">8</div>
+                                    <div class="player-label">Similar Taste</div>
+                                </div>
+                                <div>
+                                    <div class="player-count">5</div>
+                                    <div class="player-label">Online Now</div>
+                                </div>
+                                <div>
+                                    <div class="player-count">3</div>
+                                    <div class="player-label">Nearby</div>
+                                </div>
+                            </div>
+                            <button class="join-btn" style="background: linear-gradient(135deg, #00CEC9, #00B894);" 
+                                    onclick="event.stopPropagation(); showComingSoon('Friend Suggestions');">
+                                <i class="fas fa-user-plus"></i> VIEW SUGGESTIONS
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Page 4: Random -->
+            <div class="page" id="page4">
+                <section class="tonights-vibes">
+                    <h2 class="section-title">RANDOM DISCOVERY</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px; font-weight: 500;">
+                        Discover random watch parties and meet new people
+                    </p>
+                </section>
+
+                <div class="rooms-grid">
+                    <div class="room-card" onclick="openWatchParty()" style="grid-column: span 2;">
+                        <div class="room-image" style="background: linear-gradient(135deg, #D300FF, #6A0DFF);">
+                            <div class="room-badge">
+                                <i class="fas fa-random"></i> RANDOM
+                            </div>
+                            <div class="room-type">
+                                <i class="fas fa-dice"></i> Surprise
+                            </div>
+                        </div>
+                        <div class="room-content">
+                            <h3 class="room-title">Random Watch Party</h3>
+                            <div class="room-stats">
+                                <div class="room-players">
+                                    <i class="fas fa-users"></i>
+                                    <span>47 watching</span>
+                                </div>
+                                <div class="room-time">
+                                    <i class="fas fa-dice"></i>
+                                    <span>Random Movie</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="for-you-section">
+                    <h3 class="for-you-title">
+                        <i class="fas fa-surprise"></i> SURPRISE ME
+                    </h3>
+
+                    <div class="featured-room" onclick="openWatchParty()">
+                        <div class="featured-header" style="background: linear-gradient(135deg, #D300FF, #6A0DFF);">
+                            <h3 class="featured-title">MYSTERY MOVIE NIGHT</h3>
+                            <div class="featured-badge">
+                                <i class="fas fa-question"></i> SURPRISE
+                            </div>
+                        </div>
+                        <div class="featured-content">
+                            <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px; font-weight: 500;">
+                                Join to discover a random movie with strangers!
+                            </p>
+                            <button class="join-btn" style="background: linear-gradient(135deg, #D300FF, #6A0DFF);" 
+                                    onclick="event.stopPropagation(); openWatchParty();">
+                                <i class="fas fa-random"></i> JOIN RANDOM
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Random Game -->
+                    <div class="guess-game" onclick="openWatchParty()">
+                        <div class="guess-game-header" style="background: linear-gradient(135deg, #FF6B6B, #FF4757);">
+                            <h3 class="guess-game-title">Random Chat Room</h3>
+                            <div class="guess-game-badge">
+                                <i class="fas fa-comments"></i> CHAT
+                            </div>
+                        </div>
+                        <div class="guess-game-content">
+                            <div class="game-image" style="background: linear-gradient(135deg, #FF6B6B, #FF4757);">
+                                <div class="movie-scene">💬</div>
+                            </div>
+                            <p class="game-description">Chat with random people about movies</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <div class="nav-items">
+                <a href="#" class="nav-item active" onclick="switchPage(0)">
+                    <i class="fas fa-film"></i>
+                    <span>Movies</span>
+                </a>
+                <a href="#" class="nav-item" onclick="switchPage(1)">
+                    <i class="fas fa-gamepad"></i>
+                    <span>Games</span>
+                </a>
+                <button class="start-party-btn" id="startPartyBtn" onclick="showPopup()">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <a href="#" class="nav-item" onclick="switchPage(2)">
+                    <i class="fas fa-user-friends"></i>
+                    <span>Friends</span>
+                </a>
+                <a href="#" class="nav-item" onclick="switchPage(3)">
+                    <i class="fas fa-random"></i>
+                    <span>Random</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- External Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="agora.js"></script>
+
+    <!-- Main Application Script -->
+    <script>
+        // Real movie data with actual poster URLs
+        const demoMovies = [
+            { 
+                title: "Inception", 
+                year: "2010", 
+                rating: "8.8", 
+                poster: "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_FMjpg_UX1000_.jpg",
+                genre: "Sci-Fi"
+            },
+            { 
+                title: "The Matrix", 
+                year: "1999", 
+                rating: "8.7", 
+                poster: "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_.jpg",
+                genre: "Action"
+            },
+            { 
+                title: "Interstellar", 
+                year: "2014", 
+                rating: "8.6", 
+                poster: "https://m.media-amazon.com/images/M/MV5BZjdkOTU3MDktN2IxOS00OGEyLWFmMjktY2FiMmZkNWIyODZiXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_.jpg",
+                genre: "Sci-Fi"
+            },
+            { 
+                title: "Parasite", 
+                year: "2019", 
+                rating: "8.6", 
+                poster: "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_.jpg",
+                genre: "Thriller"
+            },
+            { 
+                title: "Spirited Away", 
+                year: "2001", 
+                rating: "8.6", 
+                poster: "https://m.media-amazon.com/images/M/MV5BMjlmZmI5MDctNDE2YS00YWE0LWE5ZWItZDBhYWQ0NTcxNWRhXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_.jpg",
+                genre: "Animation"
+            },
+            { 
+                title: "The Dark Knight", 
+                year: "2008", 
+                rating: "9.0", 
+                poster: "https://m.media-amazon.com/images/M/MV5BMTMxNTMwODM0NF5BMl5BanBnXkFtZTcwODAyMTk2Mw@@._V1_.jpg",
+                genre: "Action"
+            }
+        ];
+
+        // Firebase Initialization
+        let firebaseApp;
+        let auth;
+        let db;
+
+        try {
+            firebaseApp = firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.database();
+            console.log("Firebase initialized successfully");
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+            showToast("Firebase initialization failed", "error");
+            window.location.href = "index.html";
+        }
+
+        // Firebase Authentication State Listener
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                console.log("User logged in:", user.email);
+                document.getElementById('mainApp').style.display = 'block';
+                updateUserProfile(user);
+                initializeApp();
+                checkUserData(user.uid);
+            } else {
+                console.log("User not logged in, redirecting to index.html");
+                window.location.href = "index.html";
+            }
+        });
+
+        // Initialize app when DOM loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Profile form submission
+            document.getElementById('profileForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const name = document.getElementById('userName').value;
+                const email = document.getElementById('userEmail').value;
+                const username = document.getElementById('userUsername').value;
+                
+                // Get current user
+                const currentUser = auth.currentUser;
+                
+                if (!currentUser) {
+                    showToast("You must be logged in to update profile", "error");
+                    return;
+                }
+                
+                if (username) {
+                    // Check username change limits (3 times per 3 months)
+                    const userRef = db.ref('users/' + currentUser.uid);
+                    const snapshot = await userRef.once('value');
+                    const userData = snapshot.val();
+                    
+                    if (userData && userData.usernameChanges >= 3) {
+                        const lastChange = new Date(userData.lastUsernameChange);
+                        const threeMonthsAgo = new Date();
+                        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+                        
+                        if (lastChange > threeMonthsAgo) {
+                            showToast("Username can only be changed 3 times every 3 months", "error");
+                            return;
+                        }
+                    }
+                }
+                
+                // Update Firebase user profile
+                try {
+                    await currentUser.updateProfile({
+                        displayName: name
+                    });
+                    
+                    await currentUser.updateEmail(email);
+                    
+                    // Save to Firebase database
+                    await db.ref('users/' + currentUser.uid).set({
+                        displayName: name,
+                        email: email,
+                        username: username || null,
+                        usernameChanges: firebase.database.ServerValue.increment(username ? 1 : 0),
+                        lastUsernameChange: username ? Date.now() : null,
+                        updatedAt: Date.now()
+                    }, { merge: true });
+                    
+                    showToast("Profile updated successfully!", "success");
+                } catch (error) {
+                    console.error("Profile update error:", error);
+                    showToast("Profile update failed: " + error.message, "error");
+                }
+                
+                // Update UI
+                updateUserProfile(currentUser);
+                closeProfileModal();
+            });
+
+            // Avatar upload
+            document.getElementById('avatarInput').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const avatarPreview = document.getElementById('avatarPreview');
+                        avatarPreview.innerHTML = `<img src="${event.target.result}" alt="Profile">`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+
+        // Update user profile in UI
+        function updateUserProfile(user) {
+            const profileBtn = document.getElementById('profileBtn');
+            const avatarPreview = document.getElementById('avatarPreview');
+            const userNameInput = document.getElementById('userName');
+            const userEmailInput = document.getElementById('userEmail');
+            const userUsernameInput = document.getElementById('userUsername');
+            
+            if (user) {
+                // Update profile button
+                if (user.photoURL) {
+                    profileBtn.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;border-radius:50%;">`;
+                } else if (user.displayName) {
+                    profileBtn.textContent = user.displayName.charAt(0).toUpperCase();
+                } else if (user.email) {
+                    profileBtn.textContent = user.email.charAt(0).toUpperCase();
+                } else {
+                    profileBtn.textContent = 'U';
+                }
+                
+                // Update profile modal
+                if (avatarPreview) {
+                    if (user.photoURL) {
+                        avatarPreview.innerHTML = `<img src="${user.photoURL}" alt="Profile">`;
+                    } else {
+                        const initials = user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U';
+                        avatarPreview.innerHTML = `<span id="avatarInitials">${initials}</span>`;
+                    }
+                }
+                
+                if (userNameInput) userNameInput.value = user.displayName || '';
+                if (userEmailInput) userEmailInput.value = user.email || '';
+                if (userUsernameInput) userUsernameInput.value = user.username || '';
+            }
+        }
+
+        // Check user data in Firebase
+        async function checkUserData(uid) {
+            if (!db) return;
+            
+            try {
+                const snapshot = await db.ref('users/' + uid).once('value');
+                const userData = snapshot.val();
+                
+                if (userData) {
+                    const currentUser = auth.currentUser;
+                    currentUser.username = userData.username;
+                    updateUserProfile(currentUser);
+                }
+            } catch (error) {
+                console.error("Error checking user data:", error);
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast';
+            
+            if (type === 'success') {
+                toast.style.background = 'linear-gradient(135deg, var(--success), #00b894)';
+            } else if (type === 'error') {
+                toast.style.background = 'linear-gradient(135deg, var(--red-accent), #ff6b6b)';
+            } else if (type === 'warning') {
+                toast.style.background = 'linear-gradient(135deg, var(--warning), #ffaa00)';
+            } else {
+                toast.style.background = 'linear-gradient(135deg, var(--info), #0095ff)';
+            }
+            
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Create room function with Firebase
+        async function createRoom(videoLink = null, visibility = 'public') {
+            const user = auth.currentUser;
+            
+            if (!user) {
+                showToast("Please login to create a room", "error");
+                return null;
+            }
+            
+            try {
+                const roomRef = db.ref('rooms').push();
+                const roomId = roomRef.key;
+                
+                const roomData = {
+                    videoLink,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    createdBy: user.uid,
+                    createdByName: user.displayName || user.email,
+                    status: 'active',
+                    visibility,
+                    participantsCount: 1,
+                    maxParticipants: 10,
+                    type: 'watch_party'
+                };
+                
+                await roomRef.set(roomData);
+                showToast("Room created successfully!", "success");
+                
+                return roomId;
+            } catch (error) {
+                console.error("Error creating room:", error);
+                showToast("Failed to create room: " + error.message, "error");
+                return null;
+            }
+        }
+
+        // Initialize app function
+        function initializeApp() {
+            // Load movie posters
+            loadMovies();
+            
+            // Setup swipe navigation
+            setupSwipeNavigation();
+            
+            // Setup search
+            setupSearch();
+            
+            // Add floating animation to plus button
+            setInterval(() => {
+                const btn = document.getElementById('startPartyBtn');
+                btn.style.transform = 'translateY(-8px)';
+                setTimeout(() => {
+                    btn.style.transform = '';
+                }, 1000);
+            }, 4000);
+            
+            // Simulate live updates
+            simulateLiveUpdates();
+            
+            // Initialize Agora
+            if (typeof initializeAgora === 'function') {
+                initializeAgora();
+            }
+        }
+
+        // Load movies with real posters
+        function loadMovies() {
+            const moviesGrid = document.getElementById('moviesGrid');
+            moviesGrid.innerHTML = '';
+            
+            demoMovies.forEach(movie => {
+                const movieElement = document.createElement('div');
+                movieElement.className = 'movie-poster';
+                movieElement.onclick = () => showComingSoon(`${movie.title} Watch Party`);
+                movieElement.innerHTML = `
+                    <img src="${movie.poster}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/300x450/1a1a2e/ffffff?text=${encodeURIComponent(movie.title)}'">
+                    <div class="movie-overlay">
+                        <div class="movie-title">${movie.title}</div>
+                        <div class="movie-meta">
+                            <span>${movie.year}</span>
+                            <span>⭐ ${movie.rating}</span>
+                        </div>
+                    </div>
+                `;
+                moviesGrid.appendChild(movieElement);
+            });
+        }
+
+        // Setup swipe navigation
+        function setupSwipeNavigation() {
+            const container = document.getElementById('pagesContainer');
+            let startX = 0;
+            let currentPage = 0;
+            const totalPages = 4;
+
+            container.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+            }, { passive: true });
+
+            container.addEventListener('touchend', (e) => {
+                const endX = e.changedTouches[0].clientX;
+                const diff = startX - endX;
+
+                if (Math.abs(diff) > 50) {
+                    if (diff > 0 && currentPage < totalPages - 1) {
+                        currentPage++;
+                    } else if (diff < 0 && currentPage > 0) {
+                        currentPage--;
+                    }
+                    switchPage(currentPage);
+                }
+            }, { passive: true });
+
+            // Arrow keys navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft' && currentPage < totalPages - 1) {
+                    currentPage++;
+                    switchPage(currentPage);
+                } else if (e.key === 'ArrowRight' && currentPage > 0) {
+                    currentPage--;
+                    switchPage(currentPage);
+                }
+            });
+
+            // Page indicator clicks
+            document.querySelectorAll('.page-indicator').forEach((indicator, index) => {
+                indicator.addEventListener('click', () => {
+                    currentPage = index;
+                    switchPage(currentPage);
+                });
+            });
+        }
+
+        // Switch page
+        function switchPage(pageIndex) {
+            const container = document.getElementById('pagesContainer');
+            const indicators = document.querySelectorAll('.page-indicator');
+            const navItems = document.querySelectorAll('.nav-item');
+            
+            // Scroll to page
+            container.style.transform = `translateX(-${pageIndex * 100}%)`;
+            container.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            
+            // Update indicators
+            indicators.forEach((indicator, index) => {
+                indicator.classList.toggle('active', index === pageIndex);
+            });
+            
+            // Update nav items
+            navItems.forEach((item, index) => {
+                item.classList.toggle('active', index === pageIndex);
+            });
+        }
+
+        // Setup search
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            
+            searchInput.addEventListener('focus', () => {
+                showComingSoon('Search Feature');
+                searchInput.blur();
+            });
+        }
+
+        // Show popup
+        function showPopup() {
+            const popup = document.getElementById('popupOverlay');
+            popup.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Close popup
+        function closePopup() {
+            const popup = document.getElementById('popupOverlay');
+            popup.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Open profile modal
+        function openProfileModal() {
+            const modal = document.getElementById('profileModal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Close profile modal
+        function closeProfileModal() {
+            const modal = document.getElementById('profileModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Show coming soon modal
+        function showComingSoon(feature) {
+            const modal = document.getElementById('comingSoonModal');
+            const description = document.getElementById('modalDescription');
+            const tryItBtn = document.getElementById('tryItBtn');
+            
+            description.textContent = `${feature} is currently in development. We're working hard to bring it to you soon!`;
+            
+            if (feature.includes('Watch') || feature.includes('Party')) {
+                tryItBtn.style.display = 'flex';
+            } else {
+                tryItBtn.style.display = 'none';
+            }
+            
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Close modal
+        function closeModal() {
+            const modal = document.getElementById('comingSoonModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Create watch party
+        async function createWatchParty() {
+            closePopup();
+            
+            const user = auth.currentUser;
+            
+            if (!user) {
+                showToast("Please login to create a watch party", "error");
+                return;
+            }
+            
+            showToast("Creating watch party...", "info");
+            
+            // Create room in Firebase
+            const roomId = await createRoom();
+            
+            if (roomId) {
+                setTimeout(() => {
+                    openWatchParty(roomId);
+                }, 1000);
+            }
+        }
+
+        // Create voice call
+        async function createVoiceCall() {
+            closePopup();
+            
+            const user = auth.currentUser;
+            
+            if (!user) {
+                showToast("Please login to create a voice call", "error");
+                return;
+            }
+            
+            showToast("Creating group voice call...", "info");
+            
+            // Create room in Firebase
+            const roomId = await createRoom(null, 'private');
+            
+            if (roomId) {
+                // Initialize Agora for voice call
+                if (typeof joinVoiceChannel === 'function') {
+                    try {
+                        await joinVoiceChannel(`voice-${roomId}`, user.uid);
+                        showToast("Voice call created! You're now in the voice channel.", "success");
+                    } catch (error) {
+                        console.error("Agora error:", error);
+                        showToast("Voice call created! Agora integration pending.", "info");
+                    }
+                }
+            }
+        }
+
+        // Open watch party page
+        function openWatchParty(roomId = null) {
+            if (roomId) {
+                showToast("Redirecting to watch party...", "info");
+                setTimeout(() => {
+                    window.location.href = `watch.html?room=${roomId}`;
+                }, 1500);
+            } else {
+                showToast("Join an existing watch party", "info");
+            }
+        }
+
+        // Simulate live updates
+        function simulateLiveUpdates() {
+            setInterval(() => {
+                // Update player counts
+                const counts = document.querySelectorAll('.player-count');
+                counts.forEach(count => {
+                    const current = parseInt(count.textContent);
+                    const change = Math.floor(Math.random() * 3) - 1;
+                    const newCount = Math.max(1, current + change);
+                    if (change !== 0) {
+                        count.textContent = newCount;
+                        count.style.animation = 'none';
+                        setTimeout(() => {
+                            count.style.animation = 'pulse 0.5s ease';
+                        }, 10);
+                    }
+                });
+                
+                // Update room player counts
+                const roomCounts = document.querySelectorAll('.room-players span');
+                roomCounts.forEach(count => {
+                    const text = count.textContent;
+                    const current = parseInt(text);
+                    if (!isNaN(current)) {
+                        const change = Math.floor(Math.random() * 3) - 1;
+                        const newCount = Math.max(1, current + change);
+                        if (change !== 0) {
+                            count.textContent = `${newCount} ${text.includes('playing') ? 'playing' : text.includes('watching') ? 'watching' : 'friends'}`;
+                        }
+                    }
+                });
+            }, 8000);
+        }
+
+        // Close popup on outside click
+        document.getElementById('popupOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePopup();
+            }
+        });
+
+        // Close modals on outside click
+        document.getElementById('comingSoonModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        document.getElementById('profileModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeProfileModal();
+            }
+        });
+
+        // Notification button click
+        document.getElementById('notificationBtn').addEventListener('click', function() {
+            this.style.transform = 'rotate(20deg)';
+            setTimeout(() => {
+                this.style.transform = 'rotate(0)';
+                showComingSoon('Notifications');
+            }, 300);
+        });
+
+        // Bottom nav items
+        document.querySelectorAll('.nav-item').forEach((item, index) => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                switchPage(index);
+            });
+        });
+
+        // Add click animation to room cards
+        document.querySelectorAll('.room-card, .featured-room, .guess-game, .best-room-card').forEach(element => {
+            element.addEventListener('click', function() {
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 200);
+            });
+        });
+
+        // Prevent zoom on mobile
+        document.addEventListener('touchmove', function(e) {
+            if (e.scale !== 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + N for new party
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                showPopup();
+            }
+            
+            // Escape to close modals
+            if (e.key === 'Escape') {
+                closePopup();
+                closeModal();
+                closeProfileModal();
+            }
+            
+            // Ctrl/Cmd + P for profile
+            if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                e.preventDefault();
+                openProfileModal();
+            }
+        });
+
+        // Sign out function (for profile modal if needed)
+        async function signOut() {
+            try {
+                await auth.signOut();
+                window.location.href = "index.html";
+            } catch (error) {
+                console.error("Sign out error:", error);
+                showToast("Sign out failed", "error");
+            }
+        }
+    </script>
+</body>
+</html>

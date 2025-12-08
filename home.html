@@ -215,6 +215,47 @@
             align-items: center;
         }
 
+        /* ===== User Profile ===== */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            background: var(--frosted-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--frosted-border);
+            border-radius: var(--button-radius);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .user-profile:hover {
+            background: rgba(138, 79, 255, 0.2);
+            border-color: rgba(138, 79, 255, 0.4);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gradient-button);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         /* ===== Enhanced Home Button ===== */
         .home-btn {
             padding: 12px 28px;
@@ -865,6 +906,10 @@
             .logo-animated {
                 min-width: 100px;
             }
+            
+            .user-name {
+                display: none;
+            }
         }
 
         @media (max-width: 480px) {
@@ -924,7 +969,7 @@
             <span class="logo-static">Let's </span>
             <span class="logo-animated">Connect</span>
         </h3>
-        <p style="color: var(--text-secondary);">Loading your watch party...</p>
+        <p style="color: var(--text-secondary);">Checking authentication...</p>
     </div>
 
     <!-- Main Container -->
@@ -937,6 +982,12 @@
             </a>
             
             <div class="header-actions">
+                <div class="user-profile" id="user-profile" onclick="showUserMenu()">
+                    <div class="user-avatar" id="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-name" id="user-name">Guest</div>
+                </div>
                 <a href="home.html" class="home-btn">
                     <i class="fas fa-home"></i>
                     Home
@@ -1059,6 +1110,7 @@
 
     <!-- External Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="firebase-config.js"></script>
     <script src="agora.js"></script>
@@ -1066,6 +1118,7 @@
     <script>
         // ===== Initialize Firebase =====
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const db = firebase.database();
 
         // ===== DOM Elements =====
@@ -1080,6 +1133,70 @@
         const animatedLogo = document.getElementById('animated-logo');
         const publicLabel = document.getElementById('public-label');
         const privateLabel = document.getElementById('private-label');
+        const userProfile = document.getElementById('user-profile');
+        const userName = document.getElementById('user-name');
+        const userAvatar = document.getElementById('user-avatar');
+
+        // ===== Current User Info =====
+        let currentUser = null;
+
+        // ===== Authentication Check =====
+        function checkAuth() {
+            return new Promise((resolve, reject) => {
+                auth.onAuthStateChanged((user) => {
+                    if (user) {
+                        currentUser = user;
+                        updateUserProfile();
+                        resolve(user);
+                    } else {
+                        // Not logged in, redirect to login page
+                        window.location.href = 'index.html';
+                        reject(new Error('Not authenticated'));
+                    }
+                }, (error) => {
+                    console.error('Auth state change error:', error);
+                    window.location.href = 'index.html';
+                    reject(error);
+                });
+            });
+        }
+
+        // ===== Update User Profile Display =====
+        function updateUserProfile() {
+            if (currentUser) {
+                const displayName = currentUser.displayName || currentUser.email || 'User';
+                const firstLetter = displayName.charAt(0).toUpperCase();
+                
+                userName.textContent = displayName;
+                userAvatar.textContent = firstLetter;
+                
+                // Set random gradient for avatar
+                const gradients = [
+                    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                    'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
+                ];
+                const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
+                userAvatar.style.background = randomGradient;
+            }
+        }
+
+        // ===== Show User Menu =====
+        function showUserMenu() {
+            if (currentUser) {
+                if (confirm('Do you want to sign out?')) {
+                    auth.signOut().then(() => {
+                        showToast('Signed out successfully', false, 'success');
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1000);
+                    }).catch((error) => {
+                        showToast('Error signing out: ' + error.message, true, 'error');
+                    });
+                }
+            }
+        }
 
         // ===== Animated Logo Functionality =====
         function startLogoAnimation() {
@@ -1108,31 +1225,40 @@
         });
 
         // ===== Initialize Page =====
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                loadingScreen.style.opacity = '0';
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // First check authentication
+                await checkAuth();
+                
+                // If we get here, user is authenticated
                 setTimeout(() => {
-                    loadingScreen.style.display = 'none';
-                    mainContainer.classList.remove('hidden');
-                    mainContainer.classList.add('fade-in');
-                    
-                    // Set default time to 30 minutes from now
-                    const now = new Date();
-                    now.setMinutes(now.getMinutes() + 30);
-                    const localDateTime = now.toISOString().slice(0, 16);
-                    document.getElementById('startTime').value = localDateTime;
-                    
-                    // Start logo animation
-                    startLogoAnimation();
-                    
-                    // Load popular parties
-                    loadPopularParties();
-                    
-                    // Set up auto-refresh for popular parties (every 5 minutes)
-                    setInterval(loadPopularParties, 5 * 60 * 1000);
-                    
-                }, 500);
-            }, 800);
+                    loadingScreen.style.opacity = '0';
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                        mainContainer.classList.remove('hidden');
+                        mainContainer.classList.add('fade-in');
+                        
+                        // Set default time to 30 minutes from now
+                        const now = new Date();
+                        now.setMinutes(now.getMinutes() + 30);
+                        const localDateTime = now.toISOString().slice(0, 16);
+                        document.getElementById('startTime').value = localDateTime;
+                        
+                        // Start logo animation
+                        startLogoAnimation();
+                        
+                        // Load popular parties
+                        loadPopularParties();
+                        
+                        // Set up auto-refresh for popular parties (every 5 minutes)
+                        setInterval(loadPopularParties, 5 * 60 * 1000);
+                        
+                    }, 500);
+                }, 800);
+            } catch (error) {
+                // Already redirected in checkAuth
+                console.log('Authentication failed, redirecting...');
+            }
         });
 
         // ===== Normalize Video Link =====
@@ -1155,6 +1281,12 @@
         createForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            if (!currentUser) {
+                showToast('Please login to create a room', true, 'error');
+                window.location.href = 'index.html';
+                return;
+            }
+            
             const raw = document.getElementById('videoLink').value.trim();
             const videoLink = normalizeLink(raw);
             const startTime = document.getElementById('startTime').value;
@@ -1172,27 +1304,42 @@
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
                 submitBtn.disabled = true;
 
-                const roomRef = db.ref('rooms').push();
-                const roomId = roomRef.key;
-                const startTimestamp = new Date(startTime).getTime();
+                // Get user info
+                const userId = currentUser.uid;
+                const userDisplayName = currentUser.displayName || currentUser.email || 'Anonymous';
+                const userEmail = currentUser.email || '';
                 
-                await roomRef.set({
+                // Create room data with user info
+                const roomData = {
                     videoLink,
                     scheduledStartTime: startTime,
-                    startTimestamp: startTimestamp,
+                    startTimestamp: new Date(startTime).getTime(),
                     createdAt: firebase.database.ServerValue.TIMESTAMP,
                     roomName: roomName || '',
                     visibility: visibility,
                     status: 'scheduled',
                     currentTime: 0,
-                    host: true,
+                    host: userId,
                     meta: {
-                        name: roomName || '',
+                        name: roomName || `Party by ${userDisplayName}`,
                         type: 'auto',
                         participants: 1,
-                        hostName: 'You'
+                        hostName: userDisplayName,
+                        hostId: userId,
+                        hostEmail: userEmail
+                    },
+                    createdBy: {
+                        uid: userId,
+                        name: userDisplayName,
+                        email: userEmail
                     }
-                });
+                };
+
+                // Push to database with proper authentication
+                const roomRef = db.ref('rooms').push();
+                const roomId = roomRef.key;
+                
+                await roomRef.set(roomData);
 
                 showToast('Room created successfully!', false, 'success');
                 
@@ -1212,6 +1359,14 @@
             } catch (error) {
                 console.error('Error creating room:', error);
                 showToast('Error: ' + error.message, true, 'error');
+                
+                // If permission denied, suggest re-login
+                if (error.message.includes('permission') || error.code === 'PERMISSION_DENIED') {
+                    showToast('Authentication error. Please login again.', true, 'error');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                }
             } finally {
                 const submitBtn = createForm.querySelector('button[type="submit"]');
                 submitBtn.innerHTML = originalText || '<i class="fas fa-plus-circle"></i> Create Room';
@@ -1274,7 +1429,7 @@
                 const isYouTube = party.videoLink && party.videoLink.includes('youtube');
                 const timeText = 'Live Now';
                 const viewerCount = party.meta?.participants || 1;
-                const hostName = party.meta?.hostName || 'Anonymous';
+                const hostName = party.meta?.hostName || party.createdBy?.name || 'Anonymous';
                 const roomName = party.roomName || party.meta?.name || `Party ${party.id.substring(0, 6)}`;
                 
                 const partyElement = document.createElement('div');

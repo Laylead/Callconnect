@@ -218,24 +218,24 @@
             font-weight: 400;
         }
 
-        .main-content {
+        .page {
+            min-height: calc(100vh - 180px);
             padding: 16px;
             overflow-y: auto;
             overflow-x: hidden;
             scrollbar-width: thin;
             scrollbar-color: var(--primary-purple) transparent;
-            height: calc(100vh - 180px);
         }
 
-        .main-content::-webkit-scrollbar {
+        .page::-webkit-scrollbar {
             width: 4px;
         }
 
-        .main-content::-webkit-scrollbar-track {
+        .page::-webkit-scrollbar-track {
             background: transparent;
         }
 
-        .main-content::-webkit-scrollbar-thumb {
+        .page::-webkit-scrollbar-thumb {
             background: var(--primary-purple);
             border-radius: 2px;
         }
@@ -831,7 +831,7 @@
             box-shadow: 0 0 50px rgba(106, 13, 255, 0.8);
         }
 
-        /* MODALS - UPDATED FOR RESPONSIVENESS */
+        /* MODALS */
         .popup-overlay {
             position: fixed;
             top: 0;
@@ -962,7 +962,7 @@
             font-weight: 500;
         }
 
-        /* Profile Modal - Updated */
+        /* Profile Modal */
         .profile-modal {
             position: fixed;
             top: 0;
@@ -1225,6 +1225,7 @@
             box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
             max-height: 90vh;
             overflow-y: auto;
+            position: relative;
         }
 
         .coming-soon-modal.active {
@@ -1428,8 +1429,8 @@
                 font-size: 14px;
             }
             
-            .main-content {
-                height: calc(100vh - 160px);
+            .page {
+                min-height: calc(100vh - 160px);
                 padding: 12px;
             }
             
@@ -1594,15 +1595,16 @@
                 
                 <div class="form-group">
                     <label class="form-label" for="userUsername">Username</label>
-                    <input type="text" id="userUsername" class="form-input" placeholder="Choose a username">
+                    <input type="text" id="userUsername" class="form-input" placeholder="Choose a unique username" required>
                     <div class="username-info">
                         <i class="fas fa-info-circle"></i>
-                        Must be unique. Can be changed 3 times per 3 months
+                        Must be unique. Can be changed 3 times per 3 months.
                     </div>
+                    <div id="usernameError" class="error-message" style="color: var(--red-accent); font-size: 12px; margin-top: 5px; display: none;"></div>
                 </div>
                 
                 <div class="form-actions">
-                    <button type="submit" class="form-btn save">
+                    <button type="submit" class="form-btn save" id="saveProfileBtn">
                         Save Changes
                     </button>
                     <button type="button" class="form-btn cancel" onclick="closeProfileModal()">
@@ -1629,9 +1631,6 @@
         <div class="modal-buttons">
             <button class="modal-btn secondary" onclick="closeModal()">
                 Got it!
-            </button>
-            <button class="modal-btn primary" onclick="openWatchParty()" id="tryItBtn">
-                <i class="fas fa-play"></i> Try Watch Party
             </button>
         </div>
     </div>
@@ -1699,7 +1698,7 @@
         </div>
 
         <!-- Main Content -->
-        <div class="main-content">
+        <div class="page" id="mainPage">
             <!-- Tonight's Vibes -->
             <section class="tonights-vibes">
                 <h2 class="section-title">TONIGHT'S VIBES</h2>
@@ -1875,7 +1874,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <script src="firebase-config.js"></script>
-    <script src="agora.js"></script>
 
     <!-- Main Application Script -->
     <script>
@@ -1945,12 +1943,20 @@
         }
 
         // Firebase Authentication State Listener
-        auth.onAuthStateChanged((user) => {
+        auth.onAuthStateChanged(async (user) => {
             if (user) {
                 console.log("User logged in:", user.email);
                 document.getElementById('mainApp').style.display = 'block';
-                loadUserData(user.uid);
+                
+                // Load user data
+                await loadUserData(user.uid);
+                
+                // Update profile UI
+                updateUserProfile(user);
+                
+                // Initialize app
                 initializeApp();
+                
             } else {
                 console.log("User not logged in, redirecting to index.html");
                 window.location.href = "index.html";
@@ -1963,101 +1969,182 @@
             document.getElementById('profileForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                const name = document.getElementById('userName').value;
-                const email = document.getElementById('userEmail').value;
-                const username = document.getElementById('userUsername').value.trim();
+                const saveBtn = document.getElementById('saveProfileBtn');
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                saveBtn.disabled = true;
+                
+                const name = document.getElementById('userName').value.trim();
+                const email = document.getElementById('userEmail').value.trim();
+                const username = document.getElementById('userUsername').value.trim().toLowerCase();
+                const usernameError = document.getElementById('usernameError');
                 
                 // Get current user
                 const currentUser = auth.currentUser;
                 
                 if (!currentUser) {
                     showToast("You must be logged in to update profile", "error");
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
                     return;
                 }
                 
-                // Validate username
-                if (username) {
-                    if (username.length < 3) {
-                        showToast("Username must be at least 3 characters", "error");
-                        return;
-                    }
-                    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-                        showToast("Username can only contain letters, numbers, and underscores", "error");
-                        return;
-                    }
+                // Validate inputs
+                if (!name || !email || !username) {
+                    showToast("Please fill in all required fields", "error");
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                    return;
+                }
+                
+                if (username.length < 3) {
+                    showToast("Username must be at least 3 characters", "error");
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                    return;
+                }
+                
+                if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                    showToast("Username can only contain letters, numbers, and underscores", "error");
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                    return;
+                }
+                
+                try {
+                    // Check if username is already taken (by another user)
+                    const usernameSnapshot = await db.ref('usernames/' + username).once('value');
                     
-                    // Check if username is already taken (excluding current user's username)
-                    if (username !== currentUserData?.username) {
-                        showToast("Checking username availability...", "info");
-                        const usernameCheck = await checkUsernameAvailability(username, currentUser.uid);
-                        if (!usernameCheck.available) {
-                            showToast(`Username "${username}" is already taken`, "error");
+                    if (usernameSnapshot.exists()) {
+                        const existingUserId = usernameSnapshot.val();
+                        
+                        // If username is taken by another user
+                        if (existingUserId !== currentUser.uid) {
+                            usernameError.textContent = "Username is already taken";
+                            usernameError.style.display = 'block';
+                            saveBtn.innerHTML = originalText;
+                            saveBtn.disabled = false;
                             return;
                         }
                     }
-                }
-                
-                // Show loading
-                showToast("Updating profile...", "info");
-                
-                try {
+                    
+                    // Hide username error if it was shown
+                    usernameError.style.display = 'none';
+                    
                     let photoURL = currentUser.photoURL;
                     
                     // Handle avatar upload
                     const avatarInput = document.getElementById('avatarInput');
                     if (avatarInput.files && avatarInput.files[0]) {
                         const file = avatarInput.files[0];
+                        
+                        // Check file size (max 5MB)
+                        if (file.size > 5 * 1024 * 1024) {
+                            showToast("Image size must be less than 5MB", "error");
+                            saveBtn.innerHTML = originalText;
+                            saveBtn.disabled = false;
+                            return;
+                        }
+                        
                         showToast("Uploading image...", "info");
                         
                         // Create a reference to the file location
-                        const storageRef = storage.ref('profile_images/' + currentUser.uid + '/' + Date.now() + '_' + file.name);
+                        const storageRef = storage.ref('profile_images/' + currentUser.uid + '/avatar.jpg');
                         
                         // Upload file
-                        await storageRef.put(file);
+                        const uploadTask = storageRef.put(file);
                         
-                        // Get download URL
-                        photoURL = await storageRef.getDownloadURL();
-                        console.log("Image uploaded to:", photoURL);
+                        // Wait for upload to complete
+                        await new Promise((resolve, reject) => {
+                            uploadTask.on('state_changed',
+                                null,
+                                reject,
+                                async () => {
+                                    try {
+                                        // Get download URL
+                                        photoURL = await storageRef.getDownloadURL();
+                                        console.log("Image uploaded to:", photoURL);
+                                        resolve();
+                                    } catch (error) {
+                                        reject(error);
+                                    }
+                                }
+                            );
+                        });
                     }
                     
-                    // Update Firebase user profile
+                    // Update Firebase Authentication profile
                     await currentUser.updateProfile({
                         displayName: name,
                         photoURL: photoURL
                     });
                     
+                    // Update email if changed
                     if (email !== currentUser.email) {
                         await currentUser.updateEmail(email);
+                        // Send verification email
+                        await currentUser.sendEmailVerification();
+                        showToast("Verification email sent to " + email, "info");
                     }
                     
-                    // Update username in database if changed
-                    if (username && username !== currentUserData?.username) {
-                        // Remove old username reference if exists
-                        if (currentUserData?.username) {
-                            await db.ref('usernames/' + currentUserData.username).remove();
+                    // Prepare updates for Realtime Database
+                    const updates = {};
+                    
+                    // If username changed, update usernames index
+                    if (currentUserData && currentUserData.username !== username) {
+                        // Remove old username from index
+                        if (currentUserData.username) {
+                            updates['usernames/' + currentUserData.username] = null;
                         }
-                        // Add new username reference
-                        await db.ref('usernames/' + username).set(currentUser.uid);
+                        // Add new username to index
+                        updates['usernames/' + username] = currentUser.uid;
+                    } else if (!currentUserData) {
+                        // First time setting username
+                        updates['usernames/' + username] = currentUser.uid;
                     }
                     
-                    // Save to Firebase database
-                    await db.ref('users/' + currentUser.uid).set({
+                    // Update user data
+                    updates['users/' + currentUser.uid] = {
                         displayName: name,
                         email: email,
-                        username: username || null,
+                        username: username,
                         photoURL: photoURL || null,
-                        updatedAt: Date.now()
-                    }, { merge: true });
+                        updatedAt: Date.now(),
+                        createdAt: currentUserData ? currentUserData.createdAt : Date.now()
+                    };
+                    
+                    // Save all updates to Firebase database
+                    await db.ref().update(updates);
                     
                     showToast("Profile updated successfully!", "success");
                     
+                    // Update local user data
+                    currentUserData = updates['users/' + currentUser.uid];
+                    
                     // Update UI
                     updateUserProfile(currentUser);
-                    closeProfileModal();
+                    
+                    // Close modal after delay
+                    setTimeout(() => {
+                        closeProfileModal();
+                    }, 1500);
                     
                 } catch (error) {
                     console.error("Profile update error:", error);
-                    showToast("Profile update failed: " + error.message, "error");
+                    
+                    let errorMessage = "Profile update failed";
+                    if (error.code === 'auth/requires-recent-login') {
+                        errorMessage = "Please re-authenticate to update email";
+                    } else if (error.code === 'storage/unauthorized') {
+                        errorMessage = "You don't have permission to upload images";
+                    } else {
+                        errorMessage = "Profile update failed: " + error.message;
+                    }
+                    
+                    showToast(errorMessage, "error");
+                } finally {
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
                 }
             });
 
@@ -2065,10 +2152,27 @@
             document.getElementById('avatarInput').addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
+                    // Check file type
+                    if (!file.type.startsWith('image/')) {
+                        showToast("Please select an image file", "error");
+                        return;
+                    }
+                    
+                    // Check file size (max 5MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                        showToast("Image size must be less than 5MB", "error");
+                        return;
+                    }
+                    
                     const reader = new FileReader();
                     reader.onload = function(event) {
                         const avatarPreview = document.getElementById('avatarPreview');
                         avatarPreview.innerHTML = `<img src="${event.target.result}" alt="Profile">`;
+                        
+                        // Temporarily update profile button too
+                        const profileBtn = document.getElementById('profileBtn');
+                        profileBtn.innerHTML = `<img src="${event.target.result}" alt="Profile">`;
+                        profileBtn.style.background = 'transparent';
                     };
                     reader.readAsDataURL(file);
                 }
@@ -2092,33 +2196,30 @@
                 showComingSoon('Search Feature');
                 this.blur();
             });
-        });
-
-        // Check username availability
-        async function checkUsernameAvailability(username, currentUserId) {
-            try {
-                // Check in usernames index
-                const snapshot = await db.ref('usernames/' + username).once('value');
-                if (snapshot.exists()) {
-                    const existingUserId = snapshot.val();
-                    if (existingUserId !== currentUserId) {
-                        return { available: false, message: "Username already taken" };
-                    }
+            
+            // Username input validation
+            document.getElementById('userUsername').addEventListener('input', function() {
+                const usernameError = document.getElementById('usernameError');
+                const username = this.value.trim().toLowerCase();
+                
+                if (username.length > 0 && username.length < 3) {
+                    usernameError.textContent = "Username must be at least 3 characters";
+                    usernameError.style.display = 'block';
+                } else if (!/^[a-zA-Z0-9_]+$/.test(username) && username.length > 0) {
+                    usernameError.textContent = "Only letters, numbers, and underscores allowed";
+                    usernameError.style.display = 'block';
+                } else {
+                    usernameError.style.display = 'none';
                 }
-                return { available: true };
-            } catch (error) {
-                console.error("Error checking username:", error);
-                return { available: false, message: "Error checking username" };
-            }
-        }
+            });
+        });
 
         // Load user data from Firebase
         async function loadUserData(uid) {
             try {
                 const snapshot = await db.ref('users/' + uid).once('value');
                 const userData = snapshot.val();
-                
-                currentUserData = userData || {};
+                currentUserData = userData;
                 
                 if (userData) {
                     // Update form fields
@@ -2132,12 +2233,6 @@
                         avatarPreview.innerHTML = `<img src="${userData.photoURL}" alt="Profile">`;
                     }
                 }
-                
-                // Update profile UI
-                const user = auth.currentUser;
-                if (user) {
-                    updateUserProfile(user);
-                }
             } catch (error) {
                 console.error("Error loading user data:", error);
             }
@@ -2146,35 +2241,45 @@
         // Update user profile in UI
         function updateUserProfile(user) {
             const profileBtn = document.getElementById('profileBtn');
-            const profileInitials = document.getElementById('profileInitials');
             const avatarPreview = document.getElementById('avatarPreview');
             const avatarInitials = document.getElementById('avatarInitials');
             
-            if (user) {
-                // Get initials
-                let initials = 'U';
-                if (user.displayName) {
-                    initials = user.displayName.charAt(0).toUpperCase();
-                } else if (user.email) {
-                    initials = user.email.charAt(0).toUpperCase();
-                }
+            if (user.photoURL) {
+                // Update profile button with image
+                profileBtn.innerHTML = `<img src="${user.photoURL}" alt="Profile">`;
+                profileBtn.style.background = 'transparent';
                 
-                // Update profile button
-                if (user.photoURL) {
-                    profileBtn.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;">`;
-                } else {
-                    profileInitials.textContent = initials;
-                }
-                
-                // Update profile modal avatar
+                // Update avatar preview in modal
                 if (avatarPreview) {
-                    if (user.photoURL) {
-                        avatarPreview.innerHTML = `<img src="${user.photoURL}" alt="Profile">`;
-                    } else {
-                        avatarInitials.textContent = initials;
-                    }
+                    avatarPreview.innerHTML = `<img src="${user.photoURL}" alt="Profile" style="width:100%;height:100%;object-fit:cover;">`;
+                }
+            } else {
+                // Use initials if no photo
+                const initials = getInitials(user.displayName || user.email || 'U');
+                profileBtn.innerHTML = `<span>${initials}</span>`;
+                profileBtn.style.background = 'linear-gradient(135deg, var(--primary-purple), var(--neon-magenta))';
+                
+                if (avatarPreview) {
+                    avatarPreview.innerHTML = `<span id="avatarInitials">${initials}</span>`;
                 }
             }
+            
+            // Update form fields if modal is open
+            if (user.displayName) {
+                document.getElementById('userName').value = user.displayName;
+            }
+            if (user.email) {
+                document.getElementById('userEmail').value = user.email;
+            }
+        }
+
+        // Get initials from name
+        function getInitials(name) {
+            return name
+                .split(' ')
+                .map(part => part.charAt(0).toUpperCase())
+                .join('')
+                .substring(0, 2);
         }
 
         // Show toast notification
@@ -2217,10 +2322,22 @@
             // Simulate live updates
             simulateLiveUpdates();
             
-            // Initialize Agora
-            if (typeof initializeAgora === 'function') {
-                initializeAgora();
-            }
+            // Mark current page as active in navigation
+            highlightCurrentPage();
+        }
+
+        // Highlight current page in navigation
+        function highlightCurrentPage() {
+            const currentPage = window.location.pathname.split('/').pop();
+            const navItems = document.querySelectorAll('.nav-item');
+            
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                const href = item.getAttribute('href');
+                if (href === currentPage || (currentPage === '' && href === 'dashboard.html')) {
+                    item.classList.add('active');
+                }
+            });
         }
 
         // Load movies with real posters
@@ -2265,6 +2382,17 @@
             const modal = document.getElementById('profileModal');
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
+            
+            // Load current user data into form
+            const user = auth.currentUser;
+            if (user) {
+                document.getElementById('userName').value = user.displayName || '';
+                document.getElementById('userEmail').value = user.email || '';
+                
+                if (currentUserData) {
+                    document.getElementById('userUsername').value = currentUserData.username || '';
+                }
+            }
         }
 
         // Close profile modal
@@ -2272,6 +2400,9 @@
             const modal = document.getElementById('profileModal');
             modal.classList.remove('active');
             document.body.style.overflow = 'auto';
+            
+            // Clear username error
+            document.getElementById('usernameError').style.display = 'none';
         }
 
         // Show coming soon modal

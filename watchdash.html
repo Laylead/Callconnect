@@ -218,8 +218,18 @@
             font-weight: 400;
         }
 
+        .pages-container {
+            display: flex;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            width: 100%;
+            height: calc(100vh - 180px);
+            position: relative;
+        }
+
         .page {
-            min-height: calc(100vh - 180px);
+            min-width: 100%;
+            height: 100%;
             padding: 16px;
             overflow-y: auto;
             overflow-x: hidden;
@@ -240,7 +250,38 @@
             border-radius: 2px;
         }
 
-        /* FEED PAGE STYLES */
+        .page-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px 0;
+            position: absolute;
+            bottom: 80px;
+            left: 0;
+            right: 0;
+            z-index: 10;
+        }
+
+        .page-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .page-indicator:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .page-indicator.active {
+            width: 32px;
+            background: linear-gradient(90deg, var(--primary-purple), var(--neon-magenta));
+            border-radius: 12px;
+        }
+
+        /* FEED PAGE STYLES (formerly Movies) */
         .tonights-vibes {
             padding: 0px 0 24px;
         }
@@ -739,99 +780,7 @@
             font-weight: 500;
         }
 
-        /* Bottom Navigation */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(5, 0, 22, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 12px 20px;
-            z-index: 100;
-        }
-
-        .nav-items {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 480px;
-            margin: 0 auto;
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 12px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 10px 16px;
-            border-radius: 16px;
-            min-width: 64px;
-            font-weight: 600;
-        }
-
-        .nav-item.active {
-            color: var(--primary-purple);
-            background: rgba(106, 13, 255, 0.15);
-            box-shadow: 0 4px 20px rgba(106, 13, 255, 0.2);
-        }
-
-        .nav-item i {
-            font-size: 22px;
-        }
-
-        .nav-item:hover {
-            color: var(--text-primary);
-            transform: translateY(-2px);
-        }
-
-        .start-party-btn {
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            color: white;
-            border: none;
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 0 30px rgba(106, 13, 255, 0.5);
-            margin-top: -30px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .start-party-btn::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transform: rotate(45deg);
-            transition: transform 0.6s;
-        }
-
-        .start-party-btn:hover::after {
-            transform: rotate(45deg) translate(50%, 50%);
-        }
-
-        .start-party-btn:hover {
-            transform: scale(1.15);
-            box-shadow: 0 0 50px rgba(106, 13, 255, 0.8);
-        }
-
-        /* MODALS */
+        /* MODALS - UPDATED FOR RESPONSIVENESS */
         .popup-overlay {
             position: fixed;
             top: 0;
@@ -962,7 +911,7 @@
             font-weight: 500;
         }
 
-        /* Profile Modal */
+        /* Profile Modal - Updated */
         .profile-modal {
             position: fixed;
             top: 0;
@@ -1225,7 +1174,6 @@
             box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
             max-height: 90vh;
             overflow-y: auto;
-            position: relative;
         }
 
         .coming-soon-modal.active {
@@ -1429,8 +1377,11 @@
                 font-size: 14px;
             }
             
+            .pages-container {
+                height: calc(100vh - 160px);
+            }
+            
             .page {
-                min-height: calc(100vh - 160px);
                 padding: 12px;
             }
             
@@ -1594,17 +1545,16 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label" for="userUsername">Username</label>
-                    <input type="text" id="userUsername" class="form-input" placeholder="Choose a unique username" required>
+                    <label class="form-label" for="userUsername">Username (Optional)</label>
+                    <input type="text" id="userUsername" class="form-input" placeholder="Choose a username">
                     <div class="username-info">
                         <i class="fas fa-info-circle"></i>
-                        Must be unique. Can be changed 3 times per 3 months.
+                        Can be changed 3 times per 3 months
                     </div>
-                    <div id="usernameError" class="error-message" style="color: var(--red-accent); font-size: 12px; margin-top: 5px; display: none;"></div>
                 </div>
                 
                 <div class="form-actions">
-                    <button type="submit" class="form-btn save" id="saveProfileBtn">
+                    <button type="submit" class="form-btn save">
                         Save Changes
                     </button>
                     <button type="button" class="form-btn cancel" onclick="closeProfileModal()">
@@ -1631,6 +1581,9 @@
         <div class="modal-buttons">
             <button class="modal-btn secondary" onclick="closeModal()">
                 Got it!
+            </button>
+            <button class="modal-btn primary" onclick="openWatchParty()" id="tryItBtn">
+                <i class="fas fa-play"></i> Try Watch Party
             </button>
         </div>
     </div>
@@ -1697,149 +1650,157 @@
             </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="page" id="mainPage">
-            <!-- Tonight's Vibes -->
-            <section class="tonights-vibes">
-                <h2 class="section-title">TONIGHT'S VIBES</h2>
-                <div class="vibes-buttons">
-                    <button class="vibe-btn truth" onclick="showComingSoon('Truth Game')">
-                        <i class="fas fa-star"></i> Truth
-                    </button>
-                    <button class="vibe-btn dare" onclick="showComingSoon('Dare Game')">
-                        <i class="fas fa-fire"></i> Dare
-                    </button>
-                </div>
-            </section>
+        <!-- Page Indicators -->
+        <div class="page-indicators">
+            <div class="page-indicator active" data-page="0"></div>
+        </div>
 
-            <!-- Movies Posters -->
-            <section class="movies-section">
-                <h3 class="for-you-title">
-                    <i class="fas fa-fire"></i> TRENDING MOVIES
-                </h3>
-                <div class="movies-grid" id="moviesGrid">
-                    <!-- Movie posters will be dynamically added -->
-                </div>
-            </section>
-
-            <!-- Rooms Grid -->
-            <div class="rooms-grid">
-                <div class="room-card" onclick="showComingSoon('Horror Night Room')">
-                    <div class="room-image" style="background: linear-gradient(135deg, #1a1a2e, #16213e);">
-                        <div class="room-badge">
-                            <span class="live-badge"></span> LIVE
-                        </div>
-                        <div class="room-type">
-                            <i class="fas fa-ghost"></i> Horror
-                        </div>
-                    </div>
-                    <div class="room-content">
-                        <h3 class="room-title">Horror Night Marathon</h3>
-                        <div class="room-stats">
-                            <div class="room-players">
-                                <i class="fas fa-users"></i>
-                                <span>127 watching</span>
-                            </div>
-                            <div class="room-time">
-                                <i class="far fa-clock"></i>
-                                <span>12 min ago</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="room-card" onclick="openWatchParty()">
-                    <div class="room-image" style="background: linear-gradient(135deg, #3a0ca3, #4361ee);">
-                        <div class="room-badge">
-                            <span class="live-badge"></span> LIVE
-                        </div>
-                        <div class="room-type">
-                            <i class="fas fa-gamepad"></i> Games
-                        </div>
-                    </div>
-                    <div class="room-content">
-                        <h3 class="room-title">Chill Games Night</h3>
-                        <div class="room-stats">
-                            <div class="room-players">
-                                <i class="fas fa-users"></i>
-                                <span>89 playing</span>
-                            </div>
-                            <div class="room-time">
-                                <i class="far fa-clock"></i>
-                                <span>15 min ago</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- For You Section -->
-            <section class="for-you-section">
-                <h3 class="for-you-title">
-                    <i class="fas fa-heart"></i> RECOMMENDED FOR YOU
-                </h3>
-
-                <!-- Featured Room -->
-                <div class="featured-room" onclick="openWatchParty()">
-                    <div class="featured-header">
-                        <h3 class="featured-title">UNO CHAOS</h3>
-                        <div class="featured-badge">
-                            <i class="fas fa-crown"></i> MOST POPULAR
-                        </div>
-                    </div>
-                    <div class="featured-content">
-                        <div class="players-grid">
-                            <div>
-                                <div class="player-count">4</div>
-                                <div class="player-label">Players</div>
-                            </div>
-                            <div>
-                                <div class="player-count">5</div>
-                                <div class="player-label">Waiting</div>
-                            </div>
-                            <div>
-                                <div class="player-count">4</div>
-                                <div class="player-label">Spectators</div>
-                            </div>
-                        </div>
-                        <button class="join-btn" onclick="event.stopPropagation(); openWatchParty();">
-                            <i class="fas fa-gamepad"></i> JOIN GAME
+        <!-- Pages Container -->
+        <div class="pages-container" id="pagesContainer">
+            <!-- Page 1: Feed (formerly Movies) -->
+            <div class="page" id="page1">
+                <!-- Tonight's Vibes -->
+                <section class="tonights-vibes">
+                    <h2 class="section-title">TONIGHT'S VIBES</h2>
+                    <div class="vibes-buttons">
+                        <button class="vibe-btn truth" onclick="showComingSoon('Truth Game')">
+                            <i class="fas fa-star"></i> Truth
+                        </button>
+                        <button class="vibe-btn dare" onclick="showComingSoon('Dare Game')">
+                            <i class="fas fa-fire"></i> Dare
                         </button>
                     </div>
-                </div>
+                </section>
 
-                <!-- Guess Game -->
-                <div class="guess-game" onclick="showComingSoon('Guess the Movie Game')">
-                    <div class="guess-game-header">
-                        <h3 class="guess-game-title">Guess the Movie Scene Challenge</h3>
-                        <div class="guess-game-badge">
-                            <i class="fas fa-lightbulb"></i> TRENDING
+                <!-- Movies Posters -->
+                <section class="movies-section">
+                    <h3 class="for-you-title">
+                        <i class="fas fa-fire"></i> TRENDING MOVIES
+                    </h3>
+                    <div class="movies-grid" id="moviesGrid">
+                        <!-- Movie posters will be dynamically added -->
+                    </div>
+                </section>
+
+                <!-- Rooms Grid -->
+                <div class="rooms-grid">
+                    <div class="room-card" onclick="showComingSoon('Horror Night Room')">
+                        <div class="room-image" style="background: linear-gradient(135deg, #1a1a2e, #16213e);">
+                            <div class="room-badge">
+                                <span class="live-badge"></span> LIVE
+                            </div>
+                            <div class="room-type">
+                                <i class="fas fa-ghost"></i> Horror
+                            </div>
+                        </div>
+                        <div class="room-content">
+                            <h3 class="room-title">Horror Night Marathon</h3>
+                            <div class="room-stats">
+                                <div class="room-players">
+                                    <i class="fas fa-users"></i>
+                                    <span>127 watching</span>
+                                </div>
+                                <div class="room-time">
+                                    <i class="far fa-clock"></i>
+                                    <span>12 min ago</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="guess-game-content">
-                        <div class="game-image">
-                            <div class="movie-scene">🎬</div>
-                        </div>
-                        <p class="game-description">Tap to join room and guess the movie from the scene</p>
-                    </div>
-                </div>
-            </section>
 
-            <!-- Best Room Section -->
-            <section class="best-room-section">
-                <h3 class="best-room-title">
-                    <i class="fas fa-trophy"></i> YOUR BEST ROOM
-                </h3>
-                <div class="best-room-card" onclick="showComingSoon('Movie Trivia Night')">
-                    <div class="best-room-avatar">
-                        <i class="fas fa-crown"></i>
-                    </div>
-                    <div class="best-room-info">
-                        <h4>Movie Trivia Night</h4>
-                        <p>You guessed 12/15 movies correctly! 🏆</p>
+                    <div class="room-card" onclick="openWatchParty()">
+                        <div class="room-image" style="background: linear-gradient(135deg, #3a0ca3, #4361ee);">
+                            <div class="room-badge">
+                                <span class="live-badge"></span> LIVE
+                            </div>
+                            <div class="room-type">
+                                <i class="fas fa-gamepad"></i> Games
+                            </div>
+                        </div>
+                        <div class="room-content">
+                            <h3 class="room-title">Chill Games Night</h3>
+                            <div class="room-stats">
+                                <div class="room-players">
+                                    <i class="fas fa-users"></i>
+                                    <span>89 playing</span>
+                                </div>
+                                <div class="room-time">
+                                    <i class="far fa-clock"></i>
+                                    <span>15 min ago</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </section>
+
+                <!-- For You Section -->
+                <section class="for-you-section">
+                    <h3 class="for-you-title">
+                        <i class="fas fa-heart"></i> RECOMMENDED FOR YOU
+                    </h3>
+
+                    <!-- Featured Room -->
+                    <div class="featured-room" onclick="openWatchParty()">
+                        <div class="featured-header">
+                            <h3 class="featured-title">UNO CHAOS</h3>
+                            <div class="featured-badge">
+                                <i class="fas fa-crown"></i> MOST POPULAR
+                            </div>
+                        </div>
+                        <div class="featured-content">
+                            <div class="players-grid">
+                                <div>
+                                    <div class="player-count">4</div>
+                                    <div class="player-label">Players</div>
+                                </div>
+                                <div>
+                                    <div class="player-count">5</div>
+                                    <div class="player-label">Waiting</div>
+                                </div>
+                                <div>
+                                    <div class="player-count">4</div>
+                                    <div class="player-label">Spectators</div>
+                                </div>
+                            </div>
+                            <button class="join-btn" onclick="event.stopPropagation(); openWatchParty();">
+                                <i class="fas fa-gamepad"></i> JOIN GAME
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Guess Game -->
+                    <div class="guess-game" onclick="showComingSoon('Guess the Movie Game')">
+                        <div class="guess-game-header">
+                            <h3 class="guess-game-title">Guess the Movie Scene Challenge</h3>
+                            <div class="guess-game-badge">
+                                <i class="fas fa-lightbulb"></i> TRENDING
+                            </div>
+                        </div>
+                        <div class="guess-game-content">
+                            <div class="game-image">
+                                <div class="movie-scene">🎬</div>
+                            </div>
+                            <p class="game-description">Tap to join room and guess the movie from the scene</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Best Room Section -->
+                <section class="best-room-section">
+                    <h3 class="best-room-title">
+                        <i class="fas fa-trophy"></i> YOUR BEST ROOM
+                    </h3>
+                    <div class="best-room-card" onclick="showComingSoon('Movie Trivia Night')">
+                        <div class="best-room-avatar">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div class="best-room-info">
+                            <h4>Movie Trivia Night</h4>
+                            <p>You guessed 12/15 movies correctly! 🏆</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
         </div>
 
         <!-- Bottom Navigation -->
@@ -1874,6 +1835,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <script src="firebase-config.js"></script>
+    <script src="agora.js"></script>
 
     <!-- Main Application Script -->
     <script>
@@ -1928,7 +1890,6 @@
         let auth;
         let db;
         let storage;
-        let currentUserData = null;
 
         try {
             firebaseApp = firebase.initializeApp(firebaseConfig);
@@ -1943,20 +1904,13 @@
         }
 
         // Firebase Authentication State Listener
-        auth.onAuthStateChanged(async (user) => {
+        auth.onAuthStateChanged((user) => {
             if (user) {
                 console.log("User logged in:", user.email);
                 document.getElementById('mainApp').style.display = 'block';
-                
-                // Load user data
-                await loadUserData(user.uid);
-                
-                // Update profile UI
                 updateUserProfile(user);
-                
-                // Initialize app
                 initializeApp();
-                
+                loadUserData(user.uid);
             } else {
                 console.log("User not logged in, redirecting to index.html");
                 window.location.href = "index.html";
@@ -1969,157 +1923,96 @@
             document.getElementById('profileForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                const saveBtn = document.getElementById('saveProfileBtn');
-                const originalText = saveBtn.innerHTML;
-                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-                saveBtn.disabled = true;
-                
-                const name = document.getElementById('userName').value.trim();
-                const email = document.getElementById('userEmail').value.trim();
-                const username = document.getElementById('userUsername').value.trim().toLowerCase();
-                const usernameError = document.getElementById('usernameError');
+                const name = document.getElementById('userName').value;
+                const email = document.getElementById('userEmail').value;
+                const username = document.getElementById('userUsername').value.trim();
                 
                 // Get current user
                 const currentUser = auth.currentUser;
                 
                 if (!currentUser) {
                     showToast("You must be logged in to update profile", "error");
-                    saveBtn.innerHTML = originalText;
-                    saveBtn.disabled = false;
                     return;
                 }
                 
-                // Validate inputs
-                if (!name || !email || !username) {
-                    showToast("Please fill in all required fields", "error");
-                    saveBtn.innerHTML = originalText;
-                    saveBtn.disabled = false;
-                    return;
-                }
-                
-                if (username.length < 3) {
-                    showToast("Username must be at least 3 characters", "error");
-                    saveBtn.innerHTML = originalText;
-                    saveBtn.disabled = false;
-                    return;
-                }
-                
-                if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-                    showToast("Username can only contain letters, numbers, and underscores", "error");
-                    saveBtn.innerHTML = originalText;
-                    saveBtn.disabled = false;
-                    return;
-                }
+                // Show loading
+                showToast("Updating profile...", "info");
                 
                 try {
-                    // Check if username is already taken (by another user)
-                    const usernameSnapshot = await db.ref('usernames/' + username).once('value');
-                    
-                    if (usernameSnapshot.exists()) {
-                        const existingUserId = usernameSnapshot.val();
-                        
-                        // If username is taken by another user
-                        if (existingUserId !== currentUser.uid) {
-                            usernameError.textContent = "Username is already taken";
-                            usernameError.style.display = 'block';
-                            saveBtn.innerHTML = originalText;
-                            saveBtn.disabled = false;
-                            return;
-                        }
-                    }
-                    
-                    // Hide username error if it was shown
-                    usernameError.style.display = 'none';
-                    
                     let photoURL = currentUser.photoURL;
                     
                     // Handle avatar upload
                     const avatarInput = document.getElementById('avatarInput');
                     if (avatarInput.files && avatarInput.files[0]) {
                         const file = avatarInput.files[0];
-                        
-                        // Check file size (max 5MB)
-                        if (file.size > 5 * 1024 * 1024) {
-                            showToast("Image size must be less than 5MB", "error");
-                            saveBtn.innerHTML = originalText;
-                            saveBtn.disabled = false;
-                            return;
-                        }
-                        
                         showToast("Uploading image...", "info");
                         
                         // Create a reference to the file location
-                        const storageRef = storage.ref('profile_images/' + currentUser.uid + '/avatar.jpg');
+                        const storageRef = storage.ref('profile_images/' + currentUser.uid + '/' + Date.now() + '_' + file.name);
                         
                         // Upload file
-                        const uploadTask = storageRef.put(file);
+                        await storageRef.put(file);
                         
-                        // Wait for upload to complete
-                        await new Promise((resolve, reject) => {
-                            uploadTask.on('state_changed',
-                                null,
-                                reject,
-                                async () => {
-                                    try {
-                                        // Get download URL
-                                        photoURL = await storageRef.getDownloadURL();
-                                        console.log("Image uploaded to:", photoURL);
-                                        resolve();
-                                    } catch (error) {
-                                        reject(error);
-                                    }
-                                }
-                            );
-                        });
+                        // Get download URL
+                        photoURL = await storageRef.getDownloadURL();
+                        console.log("Image uploaded to:", photoURL);
                     }
                     
-                    // Update Firebase Authentication profile
+                    // Check if username is unique if provided
+                    if (username) {
+                        // Check if username already exists
+                        const usernameSnapshot = await db.ref('usernames/' + username).once('value');
+                        if (usernameSnapshot.exists() && usernameSnapshot.val() !== currentUser.uid) {
+                            showToast("Username is already taken", "error");
+                            return;
+                        }
+                    }
+                    
+                    // Update Firebase user profile
                     await currentUser.updateProfile({
                         displayName: name,
                         photoURL: photoURL
                     });
                     
-                    // Update email if changed
                     if (email !== currentUser.email) {
                         await currentUser.updateEmail(email);
-                        // Send verification email
                         await currentUser.sendEmailVerification();
-                        showToast("Verification email sent to " + email, "info");
                     }
                     
-                    // Prepare updates for Realtime Database
+                    // Prepare updates for database
                     const updates = {};
-                    
-                    // If username changed, update usernames index
-                    if (currentUserData && currentUserData.username !== username) {
-                        // Remove old username from index
-                        if (currentUserData.username) {
-                            updates['usernames/' + currentUserData.username] = null;
-                        }
-                        // Add new username to index
-                        updates['usernames/' + username] = currentUser.uid;
-                    } else if (!currentUserData) {
-                        // First time setting username
-                        updates['usernames/' + username] = currentUser.uid;
-                    }
                     
                     // Update user data
                     updates['users/' + currentUser.uid] = {
                         displayName: name,
                         email: email,
-                        username: username,
                         photoURL: photoURL || null,
-                        updatedAt: Date.now(),
-                        createdAt: currentUserData ? currentUserData.createdAt : Date.now()
+                        updatedAt: Date.now()
                     };
                     
-                    // Save all updates to Firebase database
+                    // Handle username
+                    const currentUserData = await db.ref('users/' + currentUser.uid).once('value');
+                    const currentData = currentUserData.val();
+                    const oldUsername = currentData ? currentData.username : null;
+                    
+                    if (username) {
+                        updates['users/' + currentUser.uid + '/username'] = username;
+                        updates['usernames/' + username] = currentUser.uid;
+                        
+                        // Remove old username from usernames if it exists
+                        if (oldUsername && oldUsername !== username) {
+                            updates['usernames/' + oldUsername] = null;
+                        }
+                    } else if (oldUsername) {
+                        // Remove username if it's being cleared
+                        updates['users/' + currentUser.uid + '/username'] = null;
+                        updates['usernames/' + oldUsername] = null;
+                    }
+                    
+                    // Save to Firebase database
                     await db.ref().update(updates);
                     
                     showToast("Profile updated successfully!", "success");
-                    
-                    // Update local user data
-                    currentUserData = updates['users/' + currentUser.uid];
                     
                     // Update UI
                     updateUserProfile(currentUser);
@@ -2132,19 +2025,22 @@
                 } catch (error) {
                     console.error("Profile update error:", error);
                     
-                    let errorMessage = "Profile update failed";
-                    if (error.code === 'auth/requires-recent-login') {
-                        errorMessage = "Please re-authenticate to update email";
-                    } else if (error.code === 'storage/unauthorized') {
-                        errorMessage = "You don't have permission to upload images";
-                    } else {
-                        errorMessage = "Profile update failed: " + error.message;
+                    let errorMessage = "Profile update failed: ";
+                    switch(error.code) {
+                        case 'storage/unauthorized':
+                            errorMessage += "You don't have permission to upload images";
+                            break;
+                        case 'auth/requires-recent-login':
+                            errorMessage += "Please login again to update your email";
+                            break;
+                        case 'auth/email-already-in-use':
+                            errorMessage += "Email is already in use";
+                            break;
+                        default:
+                            errorMessage += error.message;
                     }
                     
                     showToast(errorMessage, "error");
-                } finally {
-                    saveBtn.innerHTML = originalText;
-                    saveBtn.disabled = false;
                 }
             });
 
@@ -2152,15 +2048,9 @@
             document.getElementById('avatarInput').addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
-                    // Check file type
-                    if (!file.type.startsWith('image/')) {
-                        showToast("Please select an image file", "error");
-                        return;
-                    }
-                    
                     // Check file size (max 5MB)
                     if (file.size > 5 * 1024 * 1024) {
-                        showToast("Image size must be less than 5MB", "error");
+                        showToast("Image must be less than 5MB", "error");
                         return;
                     }
                     
@@ -2196,22 +2086,6 @@
                 showComingSoon('Search Feature');
                 this.blur();
             });
-            
-            // Username input validation
-            document.getElementById('userUsername').addEventListener('input', function() {
-                const usernameError = document.getElementById('usernameError');
-                const username = this.value.trim().toLowerCase();
-                
-                if (username.length > 0 && username.length < 3) {
-                    usernameError.textContent = "Username must be at least 3 characters";
-                    usernameError.style.display = 'block';
-                } else if (!/^[a-zA-Z0-9_]+$/.test(username) && username.length > 0) {
-                    usernameError.textContent = "Only letters, numbers, and underscores allowed";
-                    usernameError.style.display = 'block';
-                } else {
-                    usernameError.style.display = 'none';
-                }
-            });
         });
 
         // Load user data from Firebase
@@ -2219,7 +2093,6 @@
             try {
                 const snapshot = await db.ref('users/' + uid).once('value');
                 const userData = snapshot.val();
-                currentUserData = userData;
                 
                 if (userData) {
                     // Update form fields
@@ -2242,7 +2115,6 @@
         function updateUserProfile(user) {
             const profileBtn = document.getElementById('profileBtn');
             const avatarPreview = document.getElementById('avatarPreview');
-            const avatarInitials = document.getElementById('avatarInitials');
             
             if (user.photoURL) {
                 // Update profile button with image
@@ -2251,35 +2123,19 @@
                 
                 // Update avatar preview in modal
                 if (avatarPreview) {
-                    avatarPreview.innerHTML = `<img src="${user.photoURL}" alt="Profile" style="width:100%;height:100%;object-fit:cover;">`;
+                    avatarPreview.innerHTML = `<img src="${user.photoURL}" alt="Profile">`;
                 }
             } else {
                 // Use initials if no photo
-                const initials = getInitials(user.displayName || user.email || 'U');
+                const initials = user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U';
                 profileBtn.innerHTML = `<span>${initials}</span>`;
                 profileBtn.style.background = 'linear-gradient(135deg, var(--primary-purple), var(--neon-magenta))';
                 
                 if (avatarPreview) {
-                    avatarPreview.innerHTML = `<span id="avatarInitials">${initials}</span>`;
+                    const avatarInitials = document.getElementById('avatarInitials');
+                    avatarInitials.textContent = initials;
                 }
             }
-            
-            // Update form fields if modal is open
-            if (user.displayName) {
-                document.getElementById('userName').value = user.displayName;
-            }
-            if (user.email) {
-                document.getElementById('userEmail').value = user.email;
-            }
-        }
-
-        // Get initials from name
-        function getInitials(name) {
-            return name
-                .split(' ')
-                .map(part => part.charAt(0).toUpperCase())
-                .join('')
-                .substring(0, 2);
         }
 
         // Show toast notification
@@ -2310,6 +2166,12 @@
             // Load movie posters
             loadMovies();
             
+            // Setup page switching
+            setupPageSwitching();
+            
+            // Ensure first page is active
+            switchPage(0);
+            
             // Add floating animation to plus button
             setInterval(() => {
                 const btn = document.getElementById('startPartyBtn');
@@ -2322,22 +2184,10 @@
             // Simulate live updates
             simulateLiveUpdates();
             
-            // Mark current page as active in navigation
-            highlightCurrentPage();
-        }
-
-        // Highlight current page in navigation
-        function highlightCurrentPage() {
-            const currentPage = window.location.pathname.split('/').pop();
-            const navItems = document.querySelectorAll('.nav-item');
-            
-            navItems.forEach(item => {
-                item.classList.remove('active');
-                const href = item.getAttribute('href');
-                if (href === currentPage || (currentPage === '' && href === 'dashboard.html')) {
-                    item.classList.add('active');
-                }
-            });
+            // Initialize Agora
+            if (typeof initializeAgora === 'function') {
+                initializeAgora();
+            }
         }
 
         // Load movies with real posters
@@ -2363,6 +2213,46 @@
             });
         }
 
+        // Setup page switching
+        function setupPageSwitching() {
+            // Page indicator clicks
+            document.querySelectorAll('.page-indicator').forEach((indicator, index) => {
+                indicator.addEventListener('click', () => {
+                    switchPage(index);
+                });
+            });
+        }
+
+        // Switch page
+        function switchPage(pageIndex) {
+            const container = document.getElementById('pagesContainer');
+            const indicators = document.querySelectorAll('.page-indicator');
+            
+            // Remove active class from all
+            indicators.forEach(indicator => indicator.classList.remove('active'));
+            
+            // Add active class to current
+            indicators[pageIndex].classList.add('active');
+            
+            // Scroll to page with animation
+            container.style.transform = `translateX(-${pageIndex * 100}%)`;
+            container.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            
+            // Add a visual feedback animation for the page
+            const currentPage = document.getElementById(`page${pageIndex + 1}`);
+            if (currentPage) {
+                currentPage.style.animation = 'none';
+                setTimeout(() => {
+                    currentPage.style.animation = 'fadeInUp 0.5s ease-out';
+                }, 10);
+            }
+            
+            // Close any open modals when switching pages
+            closePopup();
+            closeModal();
+            closeProfileModal();
+        }
+
         // Show popup
         function showPopup() {
             const popup = document.getElementById('popupOverlay');
@@ -2382,17 +2272,6 @@
             const modal = document.getElementById('profileModal');
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
-            
-            // Load current user data into form
-            const user = auth.currentUser;
-            if (user) {
-                document.getElementById('userName').value = user.displayName || '';
-                document.getElementById('userEmail').value = user.email || '';
-                
-                if (currentUserData) {
-                    document.getElementById('userUsername').value = currentUserData.username || '';
-                }
-            }
         }
 
         // Close profile modal
@@ -2400,9 +2279,6 @@
             const modal = document.getElementById('profileModal');
             modal.classList.remove('active');
             document.body.style.overflow = 'auto';
-            
-            // Clear username error
-            document.getElementById('usernameError').style.display = 'none';
         }
 
         // Show coming soon modal

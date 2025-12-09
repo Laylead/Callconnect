@@ -160,6 +160,9 @@
             font-size: 16px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .profile-btn:hover {
@@ -281,7 +284,7 @@
             border-radius: 12px;
         }
 
-        /* FEED PAGE STYLES (formerly Movies) */
+        /* FEED PAGE STYLES */
         .tonights-vibes {
             padding: 0px 0 24px;
         }
@@ -942,6 +945,7 @@
             border-radius: 16px;
             min-width: 64px;
             font-weight: 600;
+            cursor: pointer;
         }
 
         .nav-item.active {
@@ -999,7 +1003,7 @@
             box-shadow: 0 0 50px rgba(106, 13, 255, 0.8);
         }
 
-        /* MODALS - UPDATED FOR RESPONSIVENESS */
+        /* MODALS */
         .popup-overlay {
             position: fixed;
             top: 0;
@@ -1130,7 +1134,7 @@
             font-weight: 500;
         }
 
-        /* Profile Modal - Updated */
+        /* Profile Modal */
         .profile-modal {
             position: fixed;
             top: 0;
@@ -1925,7 +1929,7 @@
 
         <!-- Pages Container -->
         <div class="pages-container" id="pagesContainer">
-            <!-- Page 1: Feed (formerly Movies) -->
+            <!-- Page 1: Feed -->
             <div class="page" id="page1">
                 <!-- Tonight's Vibes -->
                 <section class="tonights-vibes">
@@ -2253,7 +2257,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <script src="firebase-config.js"></script>
-    <script src="agora.js"></script>
 
     <!-- Main Application Script -->
     <script>
@@ -2337,7 +2340,7 @@
 
         // Initialize app when DOM loads
         document.addEventListener('DOMContentLoaded', function() {
-            // Profile form submission
+            // Profile form submission - FIXED VERSION
             document.getElementById('profileForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
@@ -2345,7 +2348,6 @@
                 const email = document.getElementById('userEmail').value;
                 const username = document.getElementById('userUsername').value;
                 
-                // Get current user
                 const currentUser = auth.currentUser;
                 
                 if (!currentUser) {
@@ -2353,27 +2355,67 @@
                     return;
                 }
                 
-                // Show loading
                 showToast("Updating profile...", "info");
                 
                 try {
                     let photoURL = currentUser.photoURL;
                     
-                    // Handle avatar upload
+                    // Handle avatar upload - FIXED UPLOAD
                     const avatarInput = document.getElementById('avatarInput');
                     if (avatarInput.files && avatarInput.files[0]) {
                         const file = avatarInput.files[0];
+                        
+                        // Validate file
+                        if (!file.type.startsWith('image/')) {
+                            showToast("Please select an image file (JPEG, PNG, etc.)", "error");
+                            return;
+                        }
+                        
+                        if (file.size > 5 * 1024 * 1024) {
+                            showToast("Image size should be less than 5MB", "error");
+                            return;
+                        }
+                        
                         showToast("Uploading image...", "info");
                         
-                        // Create a reference to the file location
-                        const storageRef = storage.ref('profile_images/' + currentUser.uid + '/' + Date.now() + '_' + file.name);
+                        // Create a reference with unique filename
+                        const timestamp = Date.now();
+                        const fileName = `${timestamp}_${file.name}`;
+                        const storageRef = storage.ref(`profile_images/${currentUser.uid}/${fileName}`);
                         
-                        // Upload file
-                        await storageRef.put(file);
-                        
-                        // Get download URL
-                        photoURL = await storageRef.getDownloadURL();
-                        console.log("Image uploaded to:", photoURL);
+                        // Upload file with proper error handling
+                        try {
+                            // Create upload task
+                            const uploadTask = storageRef.put(file);
+                            
+                            // Wait for upload to complete
+                            await new Promise((resolve, reject) => {
+                                uploadTask.on('state_changed',
+                                    (snapshot) => {
+                                        // Progress can be tracked here if needed
+                                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                        console.log('Upload is ' + progress + '% done');
+                                    },
+                                    (error) => {
+                                        reject(error);
+                                    },
+                                    async () => {
+                                        try {
+                                            // Get download URL
+                                            photoURL = await uploadTask.snapshot.ref.getDownloadURL();
+                                            console.log("Image uploaded to:", photoURL);
+                                            resolve();
+                                        } catch (urlError) {
+                                            reject(urlError);
+                                        }
+                                    }
+                                );
+                            });
+                        } catch (uploadError) {
+                            console.error("Upload error:", uploadError);
+                            showToast("Image upload failed: " + uploadError.message, "error");
+                            return;
+                        }
                     }
                     
                     // Update Firebase user profile
@@ -2382,24 +2424,37 @@
                         photoURL: photoURL
                     });
                     
+                    // Update email if changed
                     if (email !== currentUser.email) {
-                        await currentUser.updateEmail(email);
+                        try {
+                            await currentUser.updateEmail(email);
+                        } catch (emailError) {
+                            console.error("Email update error:", emailError);
+                            showToast("Email update failed. Please re-authenticate.", "error");
+                            return;
+                        }
                     }
                     
                     // Save to Firebase database
-                    await db.ref('users/' + currentUser.uid).set({
+                    const userData = {
                         displayName: name,
                         email: email,
                         username: username || null,
                         photoURL: photoURL || null,
                         updatedAt: Date.now()
-                    }, { merge: true });
+                    };
+                    
+                    await db.ref('users/' + currentUser.uid).set(userData, { merge: true });
                     
                     showToast("Profile updated successfully!", "success");
                     
                     // Update UI
                     updateUserProfile(currentUser);
-                    closeProfileModal();
+                    
+                    // Close modal after a short delay
+                    setTimeout(() => {
+                        closeProfileModal();
+                    }, 1500);
                     
                 } catch (error) {
                     console.error("Profile update error:", error);
@@ -2419,7 +2474,6 @@
                         // Temporarily update profile button too
                         const profileBtn = document.getElementById('profileBtn');
                         profileBtn.innerHTML = `<img src="${event.target.result}" alt="Profile">`;
-                        profileBtn.style.background = 'transparent';
                     };
                     reader.readAsDataURL(file);
                 }
@@ -2443,6 +2497,9 @@
                 showComingSoon('Search Feature');
                 this.blur();
             });
+            
+            // Setup page navigation
+            setupPageNavigation();
         });
 
         // Load user data from Firebase
@@ -2472,25 +2529,36 @@
         function updateUserProfile(user) {
             const profileBtn = document.getElementById('profileBtn');
             const avatarPreview = document.getElementById('avatarPreview');
+            const avatarInitials = document.getElementById('avatarInitials');
             
-            if (user.photoURL) {
-                // Update profile button with image
-                profileBtn.innerHTML = `<img src="${user.photoURL}" alt="Profile">`;
-                profileBtn.style.background = 'transparent';
-                
-                // Update avatar preview in modal
-                if (avatarPreview) {
-                    avatarPreview.innerHTML = `<img src="${user.photoURL}" alt="Profile" style="width:100%;height:100%;object-fit:cover;">`;
+            if (user) {
+                // Get initials
+                let initials = 'U';
+                if (user.displayName) {
+                    initials = user.displayName.charAt(0).toUpperCase();
+                } else if (user.email) {
+                    initials = user.email.charAt(0).toUpperCase();
                 }
-            } else {
-                // Use initials if no photo
-                const initials = user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U';
-                profileBtn.innerHTML = `<span>${initials}</span>`;
-                profileBtn.style.background = 'linear-gradient(135deg, var(--primary-purple), var(--neon-magenta))';
                 
-                if (avatarPreview) {
-                    avatarPreview.innerHTML = `<span id="avatarInitials">${initials}</span>`;
+                // Update profile button
+                if (user.photoURL) {
+                    profileBtn.innerHTML = `<img src="${user.photoURL}" alt="Profile">`;
+                } else {
+                    profileBtn.innerHTML = `<span>${initials}</span>`;
                 }
+                
+                // Update profile modal avatar
+                if (avatarPreview) {
+                    if (user.photoURL) {
+                        avatarPreview.innerHTML = `<img src="${user.photoURL}" alt="Profile">`;
+                    } else {
+                        avatarInitials.textContent = initials;
+                    }
+                }
+                
+                // Update form fields
+                document.getElementById('userName').value = user.displayName || '';
+                document.getElementById('userEmail').value = user.email || '';
             }
         }
 
@@ -2500,6 +2568,13 @@
             toast.textContent = message;
             toast.className = 'toast';
             
+            // Remove any existing classes
+            toast.classList.remove('success', 'error', 'warning', 'info');
+            
+            // Add appropriate class
+            toast.classList.add(type);
+            
+            // Set background color based on type
             if (type === 'success') {
                 toast.style.background = 'linear-gradient(135deg, var(--success), #00b894)';
             } else if (type === 'error') {
@@ -2522,8 +2597,8 @@
             // Load movie posters
             loadMovies();
             
-            // Setup page switching
-            setupPageSwitching();
+            // Setup page navigation
+            setupPageNavigation();
             
             // Ensure first page is active
             switchPage(0);
@@ -2539,11 +2614,6 @@
             
             // Simulate live updates
             simulateLiveUpdates();
-            
-            // Initialize Agora
-            if (typeof initializeAgora === 'function') {
-                initializeAgora();
-            }
             
             // Add click event to all "Try Watch Party Now" buttons
             document.querySelectorAll('.try-now-btn').forEach(btn => {
@@ -2574,8 +2644,8 @@
             });
         }
 
-        // Setup page switching
-        function setupPageSwitching() {
+        // Setup page navigation
+        function setupPageNavigation() {
             // Page indicator clicks
             document.querySelectorAll('.page-indicator').forEach((indicator, index) => {
                 indicator.addEventListener('click', () => {
@@ -2593,11 +2663,17 @@
             });
         }
 
-        // Switch page
+        // Switch page - FIXED VERSION
         function switchPage(pageIndex) {
             const container = document.getElementById('pagesContainer');
             const indicators = document.querySelectorAll('.page-indicator');
             const navItems = document.querySelectorAll('.nav-item');
+            
+            // Validate page index
+            if (pageIndex < 0 || pageIndex >= indicators.length) {
+                console.error('Invalid page index:', pageIndex);
+                return;
+            }
             
             // Remove active class from all
             indicators.forEach(indicator => indicator.classList.remove('active'));
@@ -2624,6 +2700,8 @@
             closePopup();
             closeModal();
             closeProfileModal();
+            
+            console.log(`Switched to page ${pageIndex + 1}`);
         }
 
         // Show popup
@@ -2769,6 +2847,17 @@
                 const current = Array.from(document.querySelectorAll('.page-indicator')).findIndex(ind => ind.classList.contains('active'));
                 if (current < 3) switchPage(current + 1);
             }
+        });
+        
+        // Ensure pages are properly visible on load
+        window.addEventListener('load', function() {
+            // Force a reflow to ensure pages are visible
+            const container = document.getElementById('pagesContainer');
+            container.style.display = 'none';
+            setTimeout(() => {
+                container.style.display = 'flex';
+                switchPage(0);
+            }, 10);
         });
     </script>
 </body>

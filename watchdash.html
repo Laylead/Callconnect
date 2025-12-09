@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DEMO | Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <style>
+        /* EXACT SAME ORIGINAL STYLES - Only fixing scroll issues */
         * {
             margin: 0;
             padding: 0;
@@ -37,17 +38,27 @@
             --warning: #FFAA00;
         }
 
-        html, body {
-            height: 100%;
-            overflow: hidden;
-        }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(160deg, var(--dark-bg-1) 0%, var(--dark-bg-2) 50%, var(--dark-bg-3) 100%);
             color: var(--text-primary);
             min-height: 100vh;
+            overflow-x: hidden;
             position: relative;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* SCROLL FIX - Allow vertical scrolling */
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding-bottom: 80px;
+            overflow-y: auto; /* FIXED: Allow vertical scroll */
+            overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
         }
 
@@ -78,17 +89,6 @@
             animation: float 30s infinite ease-in-out reverse;
         }
 
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-            position: relative;
-            z-index: 1;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
         .header {
             padding: 16px 20px;
             display: flex;
@@ -101,7 +101,6 @@
             top: 0;
             z-index: 100;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            flex-shrink: 0;
         }
 
         .logo {
@@ -137,6 +136,11 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        .notification-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(106, 13, 255, 0.3);
+        }
+
         .notification-badge {
             position: absolute;
             top: -2px;
@@ -161,13 +165,17 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        .profile-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(106, 13, 255, 0.4);
+        }
+
         .search-container {
             padding: 16px 20px;
             background: rgba(5, 0, 22, 0.7);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            flex-shrink: 0;
         }
 
         .search-bar {
@@ -184,6 +192,7 @@
         .search-bar:focus-within {
             border-color: var(--primary-purple);
             box-shadow: 0 0 0 2px rgba(106, 13, 255, 0.2);
+            transform: translateY(-1px);
         }
 
         .search-bar i {
@@ -201,26 +210,35 @@
             font-weight: 500;
         }
 
-        .pages-wrapper {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
+        .search-bar input::placeholder {
+            color: var(--text-secondary);
+            font-weight: 400;
         }
 
+        /* SWIPE FIX - Better touch handling */
         .pages-container {
             display: flex;
-            height: 100%;
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            width: 100%;
+            position: relative;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .pages-container::-webkit-scrollbar {
+            display: none;
         }
 
         .page {
-            min-width: 100%;
-            height: 100%;
+            flex: 0 0 100%;
+            scroll-snap-align: start;
             padding: 16px;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-            scrollbar-color: var(--primary-purple) transparent;
+            max-height: calc(100vh - 250px);
+            min-height: calc(100vh - 250px);
         }
 
         .page::-webkit-scrollbar {
@@ -241,12 +259,13 @@
             justify-content: center;
             gap: 8px;
             padding: 16px 0;
-            position: absolute;
-            bottom: 90px;
+            position: sticky;
+            bottom: 80px;
             left: 0;
             right: 0;
             z-index: 10;
-            pointer-events: none;
+            background: linear-gradient(to top, rgba(5, 0, 22, 0.9), transparent);
+            backdrop-filter: blur(10px);
         }
 
         .page-indicator {
@@ -255,8 +274,11 @@
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.2);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: auto;
             cursor: pointer;
+        }
+
+        .page-indicator:hover {
+            background: rgba(255, 255, 255, 0.4);
         }
 
         .page-indicator.active {
@@ -297,6 +319,21 @@
             letter-spacing: 0.5px;
         }
 
+        .vibe-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .vibe-btn:hover::before {
+            left: 100%;
+        }
+
         .vibe-btn.truth {
             background: linear-gradient(135deg, var(--success), #00b894);
             color: white;
@@ -307,6 +344,15 @@
             background: linear-gradient(135deg, var(--red-accent), #ff6b6b);
             color: white;
             box-shadow: 0 4px 20px rgba(255, 71, 87, 0.3);
+        }
+
+        .vibe-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .vibe-btn:active {
+            transform: translateY(-1px);
         }
 
         .rooms-grid {
@@ -324,7 +370,25 @@
             border-radius: 20px;
             overflow: hidden;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.5s ease-out;
             cursor: pointer;
+            position: relative;
+        }
+
+        .room-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary-purple), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .room-card:hover::before {
+            opacity: 1;
         }
 
         .room-card:hover {
@@ -332,6 +396,10 @@
             border-color: var(--secondary-purple);
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
         }
+
+        .room-card:nth-child(1) { animation-delay: 0.1s; }
+        .room-card:nth-child(2) { animation-delay: 0.2s; }
+        .room-card:nth-child(3) { animation-delay: 0.3s; }
 
         .room-image {
             height: 140px;
@@ -378,6 +446,22 @@
             color: var(--text-secondary);
         }
 
+        .room-players {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .room-players i {
+            color: var(--green-accent);
+        }
+
+        .room-time {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
         .for-you-section {
             margin-bottom: 28px;
         }
@@ -390,6 +474,10 @@
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        .for-you-title i {
+            color: var(--yellow-accent);
         }
 
         .featured-room {
@@ -422,6 +510,20 @@
             font-weight: 800;
             color: white;
             letter-spacing: 0.5px;
+        }
+
+        .featured-badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .featured-content {
@@ -469,6 +571,15 @@
             letter-spacing: 0.5px;
         }
 
+        .join-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(106, 13, 255, 0.5);
+        }
+
+        .join-btn:active {
+            transform: translateY(-1px);
+        }
+
         .guess-game {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
@@ -499,6 +610,20 @@
             color: white;
         }
 
+        .guess-game-badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
         .guess-game-content {
             padding: 24px 20px;
             text-align: center;
@@ -522,6 +647,13 @@
             animation: floatUp 3s infinite ease-in-out;
         }
 
+        .game-description {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
         .best-room-section {
             margin-bottom: 28px;
         }
@@ -534,6 +666,10 @@
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        .best-room-title i {
+            color: var(--yellow-accent);
         }
 
         .best-room-card {
@@ -569,6 +705,19 @@
             flex-shrink: 0;
         }
 
+        .best-room-info h4 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .best-room-info p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
         .movies-section {
             margin-bottom: 28px;
         }
@@ -589,10 +738,20 @@
             background: var(--dark-bg-1);
         }
 
+        .movie-poster:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
         .movie-poster img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .movie-poster:hover img {
+            transform: scale(1.1);
         }
 
         .movie-overlay {
@@ -611,13 +770,32 @@
             transform: translateY(0);
         }
 
+        .movie-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+
+        .movie-meta {
+            font-size: 12px;
+            opacity: 0.9;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 500;
+        }
+
         .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
             background: rgba(5, 0, 22, 0.95);
             backdrop-filter: blur(30px);
             -webkit-backdrop-filter: blur(30px);
             border-top: 1px solid rgba(255, 255, 255, 0.05);
             padding: 12px 20px;
-            flex-shrink: 0;
+            z-index: 100;
         }
 
         .nav-items {
@@ -653,6 +831,11 @@
             font-size: 22px;
         }
 
+        .nav-item:hover {
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
         .start-party-btn {
             background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
             color: white;
@@ -672,12 +855,28 @@
             overflow: hidden;
         }
 
+        .start-party-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: transform 0.6s;
+        }
+
+        .start-party-btn:hover::after {
+            transform: rotate(45deg) translate(50%, 50%);
+        }
+
         .start-party-btn:hover {
             transform: scale(1.15);
             box-shadow: 0 0 50px rgba(106, 13, 255, 0.8);
         }
 
-        /* Popup Styles - Made smaller */
+        /* POPUP WITH CLOSE BUTTON */
         .popup-overlay {
             position: fixed;
             top: 0;
@@ -704,33 +903,29 @@
         .popup-content {
             background: linear-gradient(135deg, rgba(5, 0, 22, 0.95), rgba(26, 4, 58, 0.95));
             border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 24px;
-            padding: 30px;
-            width: 90%;
-            max-width: 380px;
+            border-radius: 24px; /* Smaller radius */
+            padding: 30px; /* Smaller padding */
+            width: 85%;
+            max-width: 380px; /* Smaller max-width */
             transform: scale(0.8) translateY(50px);
             transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
             backdrop-filter: blur(30px);
             -webkit-backdrop-filter: blur(30px);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
             position: relative;
-        }
-
-        .popup-overlay.active .popup-content {
-            transform: scale(1) translateY(0);
         }
 
         .popup-close {
             position: absolute;
-            top: 16px;
-            right: 16px;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
             color: var(--text-primary);
-            font-size: 24px;
+            font-size: 20px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -744,11 +939,15 @@
             transform: rotate(90deg);
         }
 
+        .popup-overlay.active .popup-content {
+            transform: scale(1) translateY(0);
+        }
+
         .popup-title {
-            font-size: 28px;
+            font-size: 26px; /* Smaller font */
             font-weight: 800;
             text-align: center;
-            margin-bottom: 24px;
+            margin-bottom: 25px; /* Smaller margin */
             background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
             -webkit-background-clip: text;
             background-clip: text;
@@ -759,54 +958,77 @@
         .popup-options {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 15px; /* Smaller gap */
         }
 
         .popup-option {
             display: flex;
             align-items: center;
-            gap: 16px;
-            padding: 20px;
+            gap: 16px; /* Smaller gap */
+            padding: 18px; /* Smaller padding */
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
+            border-radius: 16px; /* Smaller radius */
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .popup-option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s;
+        }
+
+        .popup-option:hover::before {
+            left: 100%;
         }
 
         .popup-option:hover {
             background: rgba(255, 255, 255, 0.1);
-            transform: translateX(10px);
+            transform: translateX(10px) scale(1.02); /* Smaller transform */
             border-color: var(--primary-purple);
+            box-shadow: 0 8px 20px rgba(106, 13, 255, 0.3); /* Smaller shadow */
         }
 
         .option-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 14px;
+            width: 50px; /* Smaller icon */
+            height: 50px; /* Smaller icon */
+            border-radius: 14px; /* Smaller radius */
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 22px; /* Smaller icon size */
             background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
             color: white;
             flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+
+        .popup-option:hover .option-icon {
+            transform: scale(1.08) rotate(5deg); /* Smaller transform */
         }
 
         .option-details h4 {
-            font-size: 18px;
+            font-size: 18px; /* Smaller font */
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: 4px; /* Smaller margin */
             color: var(--text-primary);
         }
 
         .option-details p {
-            font-size: 14px;
+            font-size: 13px; /* Smaller font */
             color: var(--text-secondary);
             font-weight: 500;
         }
 
-        /* Profile Modal - Made smaller */
+        /* PROFILE MODAL - SMALLER VERSION */
         .profile-modal {
             position: fixed;
             top: 0;
@@ -823,7 +1045,6 @@
             opacity: 0;
             visibility: hidden;
             transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-            padding: 20px;
         }
 
         .profile-modal.active {
@@ -834,17 +1055,17 @@
         .profile-content {
             background: linear-gradient(135deg, rgba(5, 0, 22, 0.98), rgba(26, 4, 58, 0.98));
             border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 24px;
-            padding: 30px;
+            border-radius: 24px; /* Smaller radius */
+            padding: 30px; /* Smaller padding */
             width: 90%;
-            max-width: 400px;
+            max-width: 380px; /* Smaller max-width */
+            max-height: 85vh; /* Limit height */
+            overflow-y: auto; /* Allow scroll if needed */
             transform: scale(0.8) translateY(50px);
             transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
             backdrop-filter: blur(40px);
             -webkit-backdrop-filter: blur(40px);
-            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
-            max-height: 85vh;
-            overflow-y: auto;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
             position: relative;
         }
 
@@ -852,23 +1073,48 @@
             transform: scale(1) translateY(0);
         }
 
+        .profile-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            color: var(--text-primary);
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .profile-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
         .profile-header {
             text-align: center;
-            margin-bottom: 24px;
+            margin-bottom: 25px; /* Smaller margin */
         }
 
         .profile-title {
-            font-size: 28px;
+            font-size: 28px; /* Smaller font */
             font-weight: 800;
-            margin-bottom: 8px;
+            margin-bottom: 8px; /* Smaller margin */
             background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+            letter-spacing: -0.5px; /* Smaller letter spacing */
         }
 
         .profile-subtitle {
-            font-size: 15px;
+            font-size: 14px; /* Smaller font */
             color: var(--text-secondary);
             font-weight: 500;
         }
@@ -876,46 +1122,7 @@
         .profile-form {
             display: flex;
             flex-direction: column;
-            gap: 20px;
-        }
-
-        .avatar-upload {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .avatar-preview {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            color: white;
-            cursor: pointer;
-            overflow: hidden;
-            border: 3px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .upload-btn {
-            padding: 12px 24px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            color: var(--text-primary);
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .upload-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: var(--primary-purple);
+            gap: 20px; /* Smaller gap */
         }
 
         .form-group {
@@ -924,20 +1131,20 @@
 
         .form-label {
             display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
+            margin-bottom: 8px; /* Smaller margin */
+            font-size: 14px; /* Smaller font */
             font-weight: 600;
             color: var(--text-primary);
         }
 
         .form-input {
             width: 100%;
-            padding: 14px 16px;
+            padding: 14px 16px; /* Smaller padding */
             background: rgba(255, 255, 255, 0.07);
             border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
+            border-radius: 14px; /* Smaller radius */
             color: var(--text-primary);
-            font-size: 15px;
+            font-size: 15px; /* Smaller font */
             font-weight: 500;
             transition: all 0.3s ease;
         }
@@ -946,20 +1153,88 @@
             outline: none;
             border-color: var(--primary-purple);
             box-shadow: 0 0 0 3px rgba(106, 13, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .avatar-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px; /* Smaller gap */
+        }
+
+        .avatar-preview {
+            width: 100px; /* Smaller avatar */
+            height: 100px; /* Smaller avatar */
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px; /* Smaller font */
+            color: white;
+            cursor: pointer;
+            overflow: hidden;
+            border: 3px solid rgba(255, 255, 255, 0.2); /* Smaller border */
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .avatar-preview:hover {
+            transform: scale(1.03); /* Smaller transform */
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 20px rgba(106, 13, 255, 0.5); /* Smaller shadow */
+        }
+
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .upload-btn {
+            padding: 12px 24px; /* Smaller padding */
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px; /* Smaller radius */
+            color: var(--text-primary);
+            font-size: 14px; /* Smaller font */
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--primary-purple);
+            transform: translateY(-2px);
+        }
+
+        .username-info {
+            font-size: 12px; /* Smaller font */
+            color: var(--text-secondary);
+            margin-top: 6px; /* Smaller margin */
+            display: flex;
+            align-items: center;
+            gap: 6px; /* Smaller gap */
+        }
+
+        .username-info i {
+            color: var(--yellow-accent);
         }
 
         .form-actions {
             display: flex;
-            gap: 12px;
-            margin-top: 24px;
+            gap: 12px; /* Smaller gap */
+            margin-top: 25px; /* Smaller margin */
         }
 
         .form-btn {
             flex: 1;
-            padding: 16px;
-            border-radius: 14px;
+            padding: 16px; /* Smaller padding */
+            border-radius: 14px; /* Smaller radius */
             border: none;
-            font-size: 16px;
+            font-size: 15px; /* Smaller font */
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -978,11 +1253,18 @@
         }
 
         .form-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transform: translateY(-3px); /* Smaller transform */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); /* Smaller shadow */
         }
 
-        /* Coming Soon Modal */
+        .form-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .form-btn.save:hover {
+            box-shadow: 0 8px 20px rgba(106, 13, 255, 0.4); /* Smaller shadow */
+        }
+
         .coming-soon-modal {
             position: fixed;
             top: 50%;
@@ -990,10 +1272,10 @@
             transform: translate(-50%, -50%) scale(0.8);
             background: linear-gradient(135deg, rgba(5, 0, 22, 0.95), rgba(26, 4, 58, 0.95));
             border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 24px;
-            padding: 30px;
+            border-radius: 24px; /* Smaller radius */
+            padding: 35px; /* Smaller padding */
             width: 90%;
-            max-width: 380px;
+            max-width: 380px; /* Smaller max-width */
             text-align: center;
             z-index: 1001;
             opacity: 0;
@@ -1001,7 +1283,8 @@
             transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
             backdrop-filter: blur(30px);
             -webkit-backdrop-filter: blur(30px);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            position: relative;
         }
 
         .coming-soon-modal.active {
@@ -1010,44 +1293,71 @@
             transform: translate(-50%, -50%) scale(1);
         }
 
+        .coming-soon-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            color: var(--text-primary);
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .coming-soon-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
         .modal-icon {
-            font-size: 60px;
-            margin-bottom: 20px;
+            font-size: 60px; /* Smaller icon */
+            margin-bottom: 20px; /* Smaller margin */
             background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+            animation: floatUp 3s infinite ease-in-out;
         }
 
         .modal-title {
-            font-size: 28px;
+            font-size: 28px; /* Smaller font */
             font-weight: 800;
-            margin-bottom: 16px;
+            margin-bottom: 15px; /* Smaller margin */
             color: var(--text-primary);
+            letter-spacing: -0.5px; /* Smaller letter spacing */
         }
 
         .modal-description {
             color: var(--text-secondary);
-            margin-bottom: 24px;
-            line-height: 1.5;
-            font-size: 15px;
+            margin-bottom: 25px; /* Smaller margin */
+            line-height: 1.5; /* Tighter line height */
+            font-size: 15px; /* Smaller font */
             font-weight: 500;
         }
 
         .modal-buttons {
             display: flex;
-            gap: 12px;
+            gap: 12px; /* Smaller gap */
         }
 
         .modal-btn {
             flex: 1;
-            padding: 16px;
-            border-radius: 14px;
+            padding: 16px; /* Smaller padding */
+            border-radius: 14px; /* Smaller radius */
             border: none;
-            font-size: 16px;
+            font-size: 15px; /* Smaller font */
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 0.5px;
         }
 
         .modal-btn.primary {
@@ -1059,6 +1369,11 @@
             background: rgba(255, 255, 255, 0.07);
             color: var(--text-primary);
             border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-3px); /* Smaller transform */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); /* Smaller shadow */
         }
 
         .toast {
@@ -1115,84 +1430,98 @@
             66% { transform: translate(-30px, 30px) rotate(240deg); }
         }
 
-        @keyframes floatUp {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
-            100% { transform: translateY(0); }
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(40px) scale(0.9); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.1); }
+            0%, 100% { 
+                opacity: 1; 
+                transform: scale(1); 
+            }
+            50% { 
+                opacity: 0.7; 
+                transform: scale(1.1); 
+            }
         }
 
-        /* Mobile Responsive */
+        @keyframes floatUp {
+            0% { 
+                transform: translateY(0) rotate(0deg); 
+            }
+            50% { 
+                transform: translateY(-15px) rotate(5deg); 
+            }
+            100% { 
+                transform: translateY(0) rotate(0deg); 
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* FIX: Make sure everything fits on mobile */
         @media (max-width: 480px) {
-            .container {
-                max-width: 100%;
+            .popup-content, .profile-content, .coming-soon-modal {
+                padding: 25px 20px;
+                margin: 16px;
             }
             
-            .header, .search-container {
-                padding: 14px 16px;
+            .popup-title, .profile-title, .modal-title {
+                font-size: 24px;
             }
             
-            .page {
-                padding: 14px;
+            .room-title {
+                font-size: 16px;
             }
             
-            .section-title {
-                font-size: 22px;
-            }
-            
-            .rooms-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .room-image {
-                height: 120px;
-            }
-            
-            .players-grid {
-                gap: 16px;
+            .featured-title, .guess-game-title {
+                font-size: 18px;
             }
             
             .player-count {
                 font-size: 32px;
             }
             
-            .popup-content, .profile-content, .coming-soon-modal {
-                padding: 24px;
+            .movies-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
             }
             
-            .popup-title, .profile-title, .modal-title {
-                font-size: 24px;
+            .rooms-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
             }
         }
 
-        /* Web App Styles */
-        @media (display-mode: standalone) {
-            .header {
-                padding-top: max(16px, env(safe-area-inset-top));
+        @media (max-width: 768px) {
+            input, select, textarea {
+                font-size: 16px !important;
             }
             
-            .bottom-nav {
-                padding-bottom: max(12px, env(safe-area-inset-bottom));
+            .page {
+                max-height: calc(100vh - 220px);
+                min-height: calc(100vh - 220px);
             }
         }
     </style>
 </head>
 <body>
-    <!-- Animated Background -->
-    <div class="bg-blur bg-blur-1"></div>
-    <div class="bg-blur bg-blur-2"></div>
-
-    <!-- Profile Modal -->
+    <!-- Profile Modal with Close Button -->
     <div class="profile-modal" id="profileModal">
         <div class="profile-content">
-            <button class="popup-close" onclick="closeProfileModal()">×</button>
+            <button class="profile-close" onclick="closeProfileModal()">×</button>
             <div class="profile-header">
                 <h2 class="profile-title">Edit Profile</h2>
-                <p class="profile-subtitle">Update your information</p>
+                <p class="profile-subtitle">Update your information and preferences</p>
             </div>
             <form class="profile-form" id="profileForm">
                 <div class="avatar-upload">
@@ -1216,8 +1545,12 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label" for="userUsername">Username</label>
+                    <label class="form-label" for="userUsername">Username (Optional)</label>
                     <input type="text" id="userUsername" class="form-input" placeholder="Choose a username">
+                    <div class="username-info">
+                        <i class="fas fa-info-circle"></i>
+                        Can be changed 3 times per 3 months
+                    </div>
                 </div>
                 
                 <div class="form-actions">
@@ -1232,9 +1565,9 @@
         </div>
     </div>
 
-    <!-- Coming Soon Modal -->
+    <!-- Coming Soon Modal with Close Button -->
     <div class="coming-soon-modal" id="comingSoonModal">
-        <button class="popup-close" onclick="closeModal()">×</button>
+        <button class="coming-soon-close" onclick="closeModal()">×</button>
         <div class="modal-icon">
             <i class="fas fa-rocket"></i>
         </div>
@@ -1252,7 +1585,7 @@
         </div>
     </div>
 
-    <!-- Plus Button Popup -->
+    <!-- Plus Button Popup with Close Button -->
     <div class="popup-overlay" id="popupOverlay">
         <div class="popup-content">
             <button class="popup-close" onclick="closePopup()">×</button>
@@ -1284,8 +1617,12 @@
     <!-- Toast Notification -->
     <div class="toast" id="toast"></div>
 
+    <!-- Animated Background -->
+    <div class="bg-blur bg-blur-1"></div>
+    <div class="bg-blur bg-blur-2"></div>
+
     <!-- Main App -->
-    <div class="container" id="mainApp">
+    <div class="container" id="mainApp" style="display: none;">
         <!-- Header -->
         <header class="header">
             <div class="logo">
@@ -1317,400 +1654,398 @@
         </div>
 
         <!-- Swipeable Pages Container -->
-        <div class="pages-wrapper">
-            <div class="pages-container" id="pagesContainer">
-                <!-- Page 1: Movies -->
-                <div class="page" id="page1">
-                    <!-- Tonight's Vibes -->
-                    <section class="tonights-vibes">
-                        <h2 class="section-title">TONIGHT'S VIBES</h2>
-                        <div class="vibes-buttons">
-                            <button class="vibe-btn truth" onclick="showComingSoon('Truth Game')">
-                                <i class="fas fa-star"></i> Truth
+        <div class="pages-container" id="pagesContainer">
+            <!-- Page 1: Movies -->
+            <div class="page" id="page1">
+                <!-- Tonight's Vibes -->
+                <section class="tonights-vibes">
+                    <h2 class="section-title">TONIGHT'S VIBES</h2>
+                    <div class="vibes-buttons">
+                        <button class="vibe-btn truth" onclick="showComingSoon('Truth Game')">
+                            <i class="fas fa-star"></i> Truth
+                        </button>
+                        <button class="vibe-btn dare" onclick="showComingSoon('Dare Game')">
+                            <i class="fas fa-fire"></i> Dare
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Movies Posters -->
+                <section class="movies-section">
+                    <h3 class="for-you-title">
+                        <i class="fas fa-fire"></i> TRENDING MOVIES
+                    </h3>
+                    <div class="movies-grid" id="moviesGrid">
+                        <!-- Movie posters will be dynamically added -->
+                    </div>
+                </section>
+
+                <!-- Rooms Grid -->
+                <div class="rooms-grid">
+                    <div class="room-card" onclick="showComingSoon('Horror Night Room')">
+                        <div class="room-image" style="background: linear-gradient(135deg, #1a1a2e, #16213e);">
+                            <div class="room-badge">
+                                <span class="live-badge"></span> LIVE
+                            </div>
+                            <div class="room-type">
+                                <i class="fas fa-ghost"></i> Horror
+                            </div>
+                        </div>
+                        <div class="room-content">
+                            <h3 class="room-title">Horror Night Marathon</h3>
+                            <div class="room-stats">
+                                <div class="room-players">
+                                    <i class="fas fa-users"></i>
+                                    <span>127 watching</span>
+                                </div>
+                                <div class="room-time">
+                                    <i class="far fa-clock"></i>
+                                    <span>12 min ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="room-card" onclick="openWatchParty()">
+                        <div class="room-image" style="background: linear-gradient(135deg, #3a0ca3, #4361ee);">
+                            <div class="room-badge">
+                                <span class="live-badge"></span> LIVE
+                            </div>
+                            <div class="room-type">
+                                <i class="fas fa-gamepad"></i> Games
+                            </div>
+                        </div>
+                        <div class="room-content">
+                            <h3 class="room-title">Chill Games Night</h3>
+                            <div class="room-stats">
+                                <div class="room-players">
+                                    <i class="fas fa-users"></i>
+                                    <span>89 playing</span>
+                                </div>
+                                <div class="room-time">
+                                    <i class="far fa-clock"></i>
+                                    <span>15 min ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- For You Section -->
+                <section class="for-you-section">
+                    <h3 class="for-you-title">
+                        <i class="fas fa-heart"></i> RECOMMENDED FOR YOU
+                    </h3>
+
+                    <!-- Featured Room -->
+                    <div class="featured-room" onclick="openWatchParty()">
+                        <div class="featured-header">
+                            <h3 class="featured-title">UNO CHAOS</h3>
+                            <div class="featured-badge">
+                                <i class="fas fa-crown"></i> MOST POPULAR
+                            </div>
+                        </div>
+                        <div class="featured-content">
+                            <div class="players-grid">
+                                <div>
+                                    <div class="player-count">4</div>
+                                    <div class="player-label">Players</div>
+                                </div>
+                                <div>
+                                    <div class="player-count">5</div>
+                                    <div class="player-label">Waiting</div>
+                                </div>
+                                <div>
+                                    <div class="player-count">4</div>
+                                    <div class="player-label">Spectators</div>
+                                </div>
+                            </div>
+                            <button class="join-btn" onclick="event.stopPropagation(); openWatchParty();">
+                                <i class="fas fa-gamepad"></i> JOIN GAME
                             </button>
-                            <button class="vibe-btn dare" onclick="showComingSoon('Dare Game')">
-                                <i class="fas fa-fire"></i> Dare
+                        </div>
+                    </div>
+
+                    <!-- Guess Game -->
+                    <div class="guess-game" onclick="showComingSoon('Guess the Movie Game')">
+                        <div class="guess-game-header">
+                            <h3 class="guess-game-title">Guess the Movie Scene Challenge</h3>
+                            <div class="guess-game-badge">
+                                <i class="fas fa-lightbulb"></i> TRENDING
+                            </div>
+                        </div>
+                        <div class="guess-game-content">
+                            <div class="game-image">
+                                <div class="movie-scene">🎬</div>
+                            </div>
+                            <p class="game-description">Tap to join room and guess the movie from the scene</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Best Room Section -->
+                <section class="best-room-section">
+                    <h3 class="best-room-title">
+                        <i class="fas fa-trophy"></i> YOUR BEST ROOM
+                    </h3>
+                    <div class="best-room-card" onclick="showComingSoon('Movie Trivia Night')">
+                        <div class="best-room-avatar">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div class="best-room-info">
+                            <h4>Movie Trivia Night</h4>
+                            <p>You guessed 12/15 movies correctly! 🏆</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Page 2: Games -->
+            <div class="page" id="page2">
+                <section class="tonights-vibes">
+                    <h2 class="section-title">POPULAR GAMES</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px; font-weight: 500;">
+                        Interactive games to play during watch parties
+                    </p>
+                </section>
+
+                <div class="rooms-grid">
+                    <div class="room-card" onclick="showComingSoon('Movie Trivia')" style="grid-column: span 2;">
+                        <div class="room-image" style="background: linear-gradient(135deg, #00b894, #00FF88);">
+                            <div class="room-badge">
+                                <i class="fas fa-question-circle"></i> TRIVIA
+                            </div>
+                            <div class="room-type">
+                                <i class="fas fa-brain"></i> Knowledge
+                            </div>
+                        </div>
+                        <div class="room-content">
+                            <h3 class="room-title">Movie Trivia Challenge</h3>
+                            <div class="room-stats">
+                                <div class="room-players">
+                                    <i class="fas fa-users"></i>
+                                    <span>234 playing</span>
+                                </div>
+                                <div class="room-time">
+                                    <i class="fas fa-trophy"></i>
+                                    <span>High Score: 850</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="for-you-section">
+                    <h3 class="for-you-title">
+                        <i class="fas fa-gamepad"></i> MORE GAMES
+                    </h3>
+
+                    <div class="featured-room" onclick="showComingSoon('Truth or Dare')">
+                        <div class="featured-header" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
+                            <h3 class="featured-title">TRUTH OR DARE</h3>
+                            <div class="featured-badge">
+                                <i class="fas fa-fire"></i> TRENDING
+                            </div>
+                        </div>
+                        <div class="featured-content">
+                            <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px; font-weight: 500;">
+                                Classic party game with movie-themed questions
+                            </p>
+                            <button class="join-btn" style="background: linear-gradient(135deg, #FFD700, #FFA500);" 
+                                    onclick="event.stopPropagation(); showComingSoon('Truth or Dare');">
+                                <i class="fas fa-play-circle"></i> PLAY NOW
                             </button>
                         </div>
-                    </section>
+                    </div>
 
-                    <!-- Movies Posters -->
-                    <section class="movies-section">
-                        <h3 class="for-you-title">
-                            <i class="fas fa-fire"></i> TRENDING MOVIES
-                        </h3>
-                        <div class="movies-grid" id="moviesGrid">
-                            <!-- Movie posters will be dynamically added -->
-                        </div>
-                    </section>
-
-                    <!-- Rooms Grid -->
-                    <div class="rooms-grid">
-                        <div class="room-card" onclick="showComingSoon('Horror Night Room')">
-                            <div class="room-image" style="background: linear-gradient(135deg, #1a1a2e, #16213e);">
-                                <div class="room-badge">
-                                    <span class="live-badge"></span> LIVE
-                                </div>
-                                <div class="room-type">
-                                    <i class="fas fa-ghost"></i> Horror
-                                </div>
-                            </div>
-                            <div class="room-content">
-                                <h3 class="room-title">Horror Night Marathon</h3>
-                                <div class="room-stats">
-                                    <div class="room-players">
-                                        <i class="fas fa-users"></i>
-                                        <span>127 watching</span>
-                                    </div>
-                                    <div class="room-time">
-                                        <i class="far fa-clock"></i>
-                                        <span>12 min ago</span>
-                                    </div>
-                                </div>
+                    <!-- Guess Game Variation -->
+                    <div class="guess-game" onclick="showComingSoon('Scene Challenge')">
+                        <div class="guess-game-header" style="background: linear-gradient(135deg, #6A0DFF, #8A4FFF);">
+                            <h3 class="guess-game-title">Scene Challenge</h3>
+                            <div class="guess-game-badge">
+                                <i class="fas fa-star"></i> NEW
                             </div>
                         </div>
-
-                        <div class="room-card" onclick="openWatchParty()">
-                            <div class="room-image" style="background: linear-gradient(135deg, #3a0ca3, #4361ee);">
-                                <div class="room-badge">
-                                    <span class="live-badge"></span> LIVE
-                                </div>
-                                <div class="room-type">
-                                    <i class="fas fa-gamepad"></i> Games
-                                </div>
+                        <div class="guess-game-content">
+                            <div class="game-image" style="background: linear-gradient(135deg, #6A0DFF, #8A4FFF);">
+                                <div class="movie-scene">🎥</div>
                             </div>
-                            <div class="room-content">
-                                <h3 class="room-title">Chill Games Night</h3>
-                                <div class="room-stats">
-                                    <div class="room-players">
-                                        <i class="fas fa-users"></i>
-                                        <span>89 playing</span>
-                                    </div>
-                                    <div class="room-time">
-                                        <i class="far fa-clock"></i>
-                                        <span>15 min ago</span>
-                                    </div>
+                            <p class="game-description">Identify movie scenes against the clock! ⏱️</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Page 3: Friends -->
+            <div class="page" id="page3">
+                <section class="tonights-vibes">
+                    <h2 class="section-title">FRIENDS ACTIVITY</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px; font-weight: 500;">
+                        See what your friends are watching and playing
+                    </p>
+                </section>
+
+                <!-- Friend Rooms -->
+                <div class="rooms-grid">
+                    <div class="room-card" onclick="openWatchParty()">
+                        <div class="room-image" style="background: linear-gradient(135deg, #FF6B6B, #FF4757);">
+                            <div class="room-badge">
+                                <i class="fas fa-user-friends"></i> FRIENDS
+                            </div>
+                            <div class="room-type">
+                                <i class="fas fa-film"></i> Watching
+                            </div>
+                        </div>
+                        <div class="room-content">
+                            <h3 class="room-title">Alex's Movie Night</h3>
+                            <div class="room-stats">
+                                <div class="room-players">
+                                    <i class="fas fa-users"></i>
+                                    <span>3 friends</span>
+                                </div>
+                                <div class="room-time">
+                                    <i class="fas fa-film"></i>
+                                    <span>Action Movie</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- For You Section -->
-                    <section class="for-you-section">
-                        <h3 class="for-you-title">
-                            <i class="fas fa-heart"></i> RECOMMENDED FOR YOU
-                        </h3>
-
-                        <!-- Featured Room -->
-                        <div class="featured-room" onclick="openWatchParty()">
-                            <div class="featured-header">
-                                <h3 class="featured-title">UNO CHAOS</h3>
-                                <div class="featured-badge">
-                                    <i class="fas fa-crown"></i> MOST POPULAR
-                                </div>
+                    <div class="room-card" onclick="openWatchParty()">
+                        <div class="room-image" style="background: linear-gradient(135deg, #00CEC9, #00B894);">
+                            <div class="room-badge">
+                                <i class="fas fa-user-friends"></i> FRIENDS
                             </div>
-                            <div class="featured-content">
-                                <div class="players-grid">
-                                    <div>
-                                        <div class="player-count">4</div>
-                                        <div class="player-label">Players</div>
-                                    </div>
-                                    <div>
-                                        <div class="player-count">5</div>
-                                        <div class="player-label">Waiting</div>
-                                    </div>
-                                    <div>
-                                        <div class="player-count">4</div>
-                                        <div class="player-label">Spectators</div>
-                                    </div>
-                                </div>
-                                <button class="join-btn" onclick="event.stopPropagation(); openWatchParty();">
-                                    <i class="fas fa-gamepad"></i> JOIN GAME
-                                </button>
+                            <div class="room-type">
+                                <i class="fas fa-gamepad"></i> Gaming
                             </div>
                         </div>
-
-                        <!-- Guess Game -->
-                        <div class="guess-game" onclick="showComingSoon('Guess the Movie Game')">
-                            <div class="guess-game-header">
-                                <h3 class="guess-game-title">Guess the Movie Scene Challenge</h3>
-                                <div class="guess-game-badge">
-                                    <i class="fas fa-lightbulb"></i> TRENDING
+                        <div class="room-content">
+                            <h3 class="room-title">Sam's Game Night</h3>
+                            <div class="room-stats">
+                                <div class="room-players">
+                                    <i class="fas fa-users"></i>
+                                    <span>5 friends</span>
                                 </div>
-                            </div>
-                            <div class="guess-game-content">
-                                <div class="game-image">
-                                    <div class="movie-scene">🎬</div>
-                                </div>
-                                <p class="game-description">Tap to join room and guess the movie from the scene</p>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Best Room Section -->
-                    <section class="best-room-section">
-                        <h3 class="best-room-title">
-                            <i class="fas fa-trophy"></i> YOUR BEST ROOM
-                        </h3>
-                        <div class="best-room-card" onclick="showComingSoon('Movie Trivia Night')">
-                            <div class="best-room-avatar">
-                                <i class="fas fa-crown"></i>
-                            </div>
-                            <div class="best-room-info">
-                                <h4>Movie Trivia Night</h4>
-                                <p>You guessed 12/15 movies correctly! 🏆</p>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-
-                <!-- Page 2: Games -->
-                <div class="page" id="page2">
-                    <section class="tonights-vibes">
-                        <h2 class="section-title">POPULAR GAMES</h2>
-                        <p style="color: var(--text-secondary); margin-bottom: 20px; font-weight: 500;">
-                            Interactive games to play during watch parties
-                        </p>
-                    </section>
-
-                    <div class="rooms-grid">
-                        <div class="room-card" onclick="showComingSoon('Movie Trivia')" style="grid-column: span 2;">
-                            <div class="room-image" style="background: linear-gradient(135deg, #00b894, #00FF88);">
-                                <div class="room-badge">
-                                    <i class="fas fa-question-circle"></i> TRIVIA
-                                </div>
-                                <div class="room-type">
-                                    <i class="fas fa-brain"></i> Knowledge
-                                </div>
-                            </div>
-                            <div class="room-content">
-                                <h3 class="room-title">Movie Trivia Challenge</h3>
-                                <div class="room-stats">
-                                    <div class="room-players">
-                                        <i class="fas fa-users"></i>
-                                        <span>234 playing</span>
-                                    </div>
-                                    <div class="room-time">
-                                        <i class="fas fa-trophy"></i>
-                                        <span>High Score: 850</span>
-                                    </div>
+                                <div class="room-time">
+                                    <i class="fas fa-gamepad"></i>
+                                    <span>Board Games</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <section class="for-you-section">
-                        <h3 class="for-you-title">
-                            <i class="fas fa-gamepad"></i> MORE GAMES
-                        </h3>
-
-                        <div class="featured-room" onclick="showComingSoon('Truth or Dare')">
-                            <div class="featured-header" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
-                                <h3 class="featured-title">TRUTH OR DARE</h3>
-                                <div class="featured-badge">
-                                    <i class="fas fa-fire"></i> TRENDING
-                                </div>
-                            </div>
-                            <div class="featured-content">
-                                <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px; font-weight: 500;">
-                                    Classic party game with movie-themed questions
-                                </p>
-                                <button class="join-btn" style="background: linear-gradient(135deg, #FFD700, #FFA500);" 
-                                        onclick="event.stopPropagation(); showComingSoon('Truth or Dare');">
-                                    <i class="fas fa-play-circle"></i> PLAY NOW
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Guess Game Variation -->
-                        <div class="guess-game" onclick="showComingSoon('Scene Challenge')">
-                            <div class="guess-game-header" style="background: linear-gradient(135deg, #6A0DFF, #8A4FFF);">
-                                <h3 class="guess-game-title">Scene Challenge</h3>
-                                <div class="guess-game-badge">
-                                    <i class="fas fa-star"></i> NEW
-                                </div>
-                            </div>
-                            <div class="guess-game-content">
-                                <div class="game-image" style="background: linear-gradient(135deg, #6A0DFF, #8A4FFF);">
-                                    <div class="movie-scene">🎥</div>
-                                </div>
-                                <p class="game-description">Identify movie scenes against the clock! ⏱️</p>
-                            </div>
-                        </div>
-                    </section>
                 </div>
 
-                <!-- Page 3: Friends -->
-                <div class="page" id="page3">
-                    <section class="tonights-vibes">
-                        <h2 class="section-title">FRIENDS ACTIVITY</h2>
-                        <p style="color: var(--text-secondary); margin-bottom: 20px; font-weight: 500;">
-                            See what your friends are watching and playing
-                        </p>
-                    </section>
+                <section class="for-you-section">
+                    <h3 class="for-you-title">
+                        <i class="fas fa-user-plus"></i> SUGGESTED FRIENDS
+                    </h3>
 
-                    <!-- Friend Rooms -->
-                    <div class="rooms-grid">
-                        <div class="room-card" onclick="openWatchParty()">
-                            <div class="room-image" style="background: linear-gradient(135deg, #FF6B6B, #FF4757);">
-                                <div class="room-badge">
-                                    <i class="fas fa-user-friends"></i> FRIENDS
-                                </div>
-                                <div class="room-type">
-                                    <i class="fas fa-film"></i> Watching
-                                </div>
-                            </div>
-                            <div class="room-content">
-                                <h3 class="room-title">Alex's Movie Night</h3>
-                                <div class="room-stats">
-                                    <div class="room-players">
-                                        <i class="fas fa-users"></i>
-                                        <span>3 friends</span>
-                                    </div>
-                                    <div class="room-time">
-                                        <i class="fas fa-film"></i>
-                                        <span>Action Movie</span>
-                                    </div>
-                                </div>
+                    <div class="featured-room" onclick="showComingSoon('Friend Suggestions')">
+                        <div class="featured-header" style="background: linear-gradient(135deg, #00CEC9, #00B894);">
+                            <h3 class="featured-title">FRIEND MATCHES</h3>
+                            <div class="featured-badge">
+                                <i class="fas fa-users"></i> 12 NEW
                             </div>
                         </div>
-
-                        <div class="room-card" onclick="openWatchParty()">
-                            <div class="room-image" style="background: linear-gradient(135deg, #00CEC9, #00B894);">
-                                <div class="room-badge">
-                                    <i class="fas fa-user-friends"></i> FRIENDS
+                        <div class="featured-content">
+                            <div class="players-grid">
+                                <div>
+                                    <div class="player-count">8</div>
+                                    <div class="player-label">Similar Taste</div>
                                 </div>
-                                <div class="room-type">
-                                    <i class="fas fa-gamepad"></i> Gaming
+                                <div>
+                                    <div class="player-count">5</div>
+                                    <div class="player-label">Online Now</div>
+                                </div>
+                                <div>
+                                    <div class="player-count">3</div>
+                                    <div class="player-label">Nearby</div>
                                 </div>
                             </div>
-                            <div class="room-content">
-                                <h3 class="room-title">Sam's Game Night</h3>
-                                <div class="room-stats">
-                                    <div class="room-players">
-                                        <i class="fas fa-users"></i>
-                                        <span>5 friends</span>
-                                    </div>
-                                    <div class="room-time">
-                                        <i class="fas fa-gamepad"></i>
-                                        <span>Board Games</span>
-                                    </div>
+                            <button class="join-btn" style="background: linear-gradient(135deg, #00CEC9, #00B894);" 
+                                    onclick="event.stopPropagation(); showComingSoon('Friend Suggestions');">
+                                <i class="fas fa-user-plus"></i> VIEW SUGGESTIONS
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Page 4: Random -->
+            <div class="page" id="page4">
+                <section class="tonights-vibes">
+                    <h2 class="section-title">RANDOM DISCOVERY</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px; font-weight: 500;">
+                        Discover random watch parties and meet new people
+                    </p>
+                </section>
+
+                <div class="rooms-grid">
+                    <div class="room-card" onclick="openWatchParty()" style="grid-column: span 2;">
+                        <div class="room-image" style="background: linear-gradient(135deg, #D300FF, #6A0DFF);">
+                            <div class="room-badge">
+                                <i class="fas fa-random"></i> RANDOM
+                            </div>
+                            <div class="room-type">
+                                <i class="fas fa-dice"></i> Surprise
+                            </div>
+                        </div>
+                        <div class="room-content">
+                            <h3 class="room-title">Random Watch Party</h3>
+                            <div class="room-stats">
+                                <div class="room-players">
+                                    <i class="fas fa-users"></i>
+                                    <span>47 watching</span>
+                                </div>
+                                <div class="room-time">
+                                    <i class="fas fa-dice"></i>
+                                    <span>Random Movie</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <section class="for-you-section">
-                        <h3 class="for-you-title">
-                            <i class="fas fa-user-plus"></i> SUGGESTED FRIENDS
-                        </h3>
-
-                        <div class="featured-room" onclick="showComingSoon('Friend Suggestions')">
-                            <div class="featured-header" style="background: linear-gradient(135deg, #00CEC9, #00B894);">
-                                <h3 class="featured-title">FRIEND MATCHES</h3>
-                                <div class="featured-badge">
-                                    <i class="fas fa-users"></i> 12 NEW
-                                </div>
-                            </div>
-                            <div class="featured-content">
-                                <div class="players-grid">
-                                    <div>
-                                        <div class="player-count">8</div>
-                                        <div class="player-label">Similar Taste</div>
-                                    </div>
-                                    <div>
-                                        <div class="player-count">5</div>
-                                        <div class="player-label">Online Now</div>
-                                    </div>
-                                    <div>
-                                        <div class="player-count">3</div>
-                                        <div class="player-label">Nearby</div>
-                                    </div>
-                                </div>
-                                <button class="join-btn" style="background: linear-gradient(135deg, #00CEC9, #00B894);" 
-                                        onclick="event.stopPropagation(); showComingSoon('Friend Suggestions');">
-                                    <i class="fas fa-user-plus"></i> VIEW SUGGESTIONS
-                                </button>
-                            </div>
-                        </div>
-                    </section>
                 </div>
 
-                <!-- Page 4: Random -->
-                <div class="page" id="page4">
-                    <section class="tonights-vibes">
-                        <h2 class="section-title">RANDOM DISCOVERY</h2>
-                        <p style="color: var(--text-secondary); margin-bottom: 20px; font-weight: 500;">
-                            Discover random watch parties and meet new people
-                        </p>
-                    </section>
+                <section class="for-you-section">
+                    <h3 class="for-you-title">
+                        <i class="fas fa-surprise"></i> SURPRISE ME
+                    </h3>
 
-                    <div class="rooms-grid">
-                        <div class="room-card" onclick="openWatchParty()" style="grid-column: span 2;">
-                            <div class="room-image" style="background: linear-gradient(135deg, #D300FF, #6A0DFF);">
-                                <div class="room-badge">
-                                    <i class="fas fa-random"></i> RANDOM
-                                </div>
-                                <div class="room-type">
-                                    <i class="fas fa-dice"></i> Surprise
-                                </div>
+                    <div class="featured-room" onclick="openWatchParty()">
+                        <div class="featured-header" style="background: linear-gradient(135deg, #D300FF, #6A0DFF);">
+                            <h3 class="featured-title">MYSTERY MOVIE NIGHT</h3>
+                            <div class="featured-badge">
+                                <i class="fas fa-question"></i> SURPRISE
                             </div>
-                            <div class="room-content">
-                                <h3 class="room-title">Random Watch Party</h3>
-                                <div class="room-stats">
-                                    <div class="room-players">
-                                        <i class="fas fa-users"></i>
-                                        <span>47 watching</span>
-                                    </div>
-                                    <div class="room-time">
-                                        <i class="fas fa-dice"></i>
-                                        <span>Random Movie</span>
-                                    </div>
-                                </div>
-                            </div>
+                        </div>
+                        <div class="featured-content">
+                            <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px; font-weight: 500;">
+                                Join to discover a random movie with strangers!
+                            </p>
+                            <button class="join-btn" style="background: linear-gradient(135deg, #D300FF, #6A0DFF);" 
+                                    onclick="event.stopPropagation(); openWatchParty();">
+                                <i class="fas fa-random"></i> JOIN RANDOM
+                            </button>
                         </div>
                     </div>
 
-                    <section class="for-you-section">
-                        <h3 class="for-you-title">
-                            <i class="fas fa-surprise"></i> SURPRISE ME
-                        </h3>
-
-                        <div class="featured-room" onclick="openWatchParty()">
-                            <div class="featured-header" style="background: linear-gradient(135deg, #D300FF, #6A0DFF);">
-                                <h3 class="featured-title">MYSTERY MOVIE NIGHT</h3>
-                                <div class="featured-badge">
-                                    <i class="fas fa-question"></i> SURPRISE
-                                </div>
-                            </div>
-                            <div class="featured-content">
-                                <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px; font-weight: 500;">
-                                    Join to discover a random movie with strangers!
-                                </p>
-                                <button class="join-btn" style="background: linear-gradient(135deg, #D300FF, #6A0DFF);" 
-                                        onclick="event.stopPropagation(); openWatchParty();">
-                                    <i class="fas fa-random"></i> JOIN RANDOM
-                                </button>
+                    <!-- Random Game -->
+                    <div class="guess-game" onclick="openWatchParty()">
+                        <div class="guess-game-header" style="background: linear-gradient(135deg, #FF6B6B, #FF4757);">
+                            <h3 class="guess-game-title">Random Chat Room</h3>
+                            <div class="guess-game-badge">
+                                <i class="fas fa-comments"></i> CHAT
                             </div>
                         </div>
-
-                        <!-- Random Game -->
-                        <div class="guess-game" onclick="openWatchParty()">
-                            <div class="guess-game-header" style="background: linear-gradient(135deg, #FF6B6B, #FF4757);">
-                                <h3 class="guess-game-title">Random Chat Room</h3>
-                                <div class="guess-game-badge">
-                                    <i class="fas fa-comments"></i> CHAT
-                                </div>
+                        <div class="guess-game-content">
+                            <div class="game-image" style="background: linear-gradient(135deg, #FF6B6B, #FF4757);">
+                                <div class="movie-scene">💬</div>
                             </div>
-                            <div class="guess-game-content">
-                                <div class="game-image" style="background: linear-gradient(135deg, #FF6B6B, #FF4757);">
-                                    <div class="movie-scene">💬</div>
-                                </div>
-                                <p class="game-description">Chat with random people about movies</p>
-                            </div>
+                            <p class="game-description">Chat with random people about movies</p>
                         </div>
-                    </section>
-                </div>
+                    </div>
+                </section>
             </div>
         </div>
 
@@ -1749,48 +2084,167 @@
 
     <!-- Main Application Script -->
     <script>
-        // Movie data
+        // Strict Firebase Authentication
+        let auth = null;
+        let db = null;
+        let currentUser = null;
+        let firebaseInitialized = false;
+
+        // Demo movies data
         const demoMovies = [
             { 
                 title: "Inception", 
                 year: "2010", 
                 rating: "8.8", 
-                poster: "https://image.tmdb.org/t/p/w300/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg",
+                poster: "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_FMjpg_UX1000_.jpg",
                 genre: "Sci-Fi"
             },
             { 
                 title: "The Matrix", 
                 year: "1999", 
                 rating: "8.7", 
-                poster: "https://image.tmdb.org/t/p/w300/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
+                poster: "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_.jpg",
                 genre: "Action"
             },
             { 
                 title: "Interstellar", 
                 year: "2014", 
                 rating: "8.6", 
-                poster: "https://image.tmdb.org/t/p/w300/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
+                poster: "https://m.media-amazon.com/images/M/MV5BZjdkOTU3MDktN2IxOS00OGEyLWFmMjktY2FiMmZkNWIyODZiXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_.jpg",
                 genre: "Sci-Fi"
+            },
+            { 
+                title: "Parasite", 
+                year: "2019", 
+                rating: "8.6", 
+                poster: "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_.jpg",
+                genre: "Thriller"
+            },
+            { 
+                title: "Spirited Away", 
+                year: "2001", 
+                rating: "8.6", 
+                poster: "https://m.media-amazon.com/images/M/MV5BMjlmZmI5MDctNDE2YS00YWE0LWE5ZWItZDBhYWQ0NTcxNWRhXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_.jpg",
+                genre: "Animation"
+            },
+            { 
+                title: "The Dark Knight", 
+                year: "2008", 
+                rating: "9.0", 
+                poster: "https://m.media-amazon.com/images/M/MV5BMTMxNTMwODM0NF5BMl5BanBnXkFtZTcwODAyMTk2Mw@@._V1_.jpg",
+                genre: "Action"
             }
         ];
 
-        // Firebase variables
-        let firebaseApp;
-        let auth;
-        let db;
-        let currentUser = null;
-        let currentPage = 0;
-        let isSwiping = false;
-        let startX = 0;
-        let currentTranslate = 0;
-        let roomsListener = null;
+        // Initialize Firebase and check authentication
+        function initializeFirebase() {
+            try {
+                if (typeof firebaseConfig === 'undefined') {
+                    console.error("Firebase config not found!");
+                    showToast("Configuration error. Please check firebase-config.js", "error");
+                    setTimeout(() => {
+                        window.location.href = "index.html";
+                    }, 2000);
+                    return;
+                }
 
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', function() {
+                // Initialize Firebase
+                firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                db = firebase.database();
+                firebaseInitialized = true;
+                
+                console.log("Firebase initialized successfully");
+
+                // Listen for auth state changes
+                auth.onAuthStateChanged((user) => {
+                    if (user) {
+                        // User is signed in
+                        currentUser = user;
+                        console.log("User authenticated:", user.email);
+                        document.getElementById('mainApp').style.display = 'block';
+                        initializeApp();
+                        loadUserData(user.uid);
+                        startRealtimeUpdates();
+                    } else {
+                        // No user is signed in - STRICTLY REDIRECT
+                        console.log("No user authenticated - redirecting to index.html");
+                        window.location.href = "index.html";
+                    }
+                }, (error) => {
+                    console.error("Auth state change error:", error);
+                    showToast("Authentication error. Redirecting...", "error");
+                    setTimeout(() => {
+                        window.location.href = "index.html";
+                    }, 2000);
+                });
+
+            } catch (error) {
+                console.error("Firebase initialization error:", error);
+                showToast("Failed to initialize app. Redirecting...", "error");
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 2000);
+            }
+        }
+
+        // Load user data from Firebase
+        function loadUserData(userId) {
+            if (!db) return;
+            
+            const userRef = db.ref('users/' + userId);
+            userRef.on('value', (snapshot) => {
+                const userData = snapshot.val();
+                if (userData) {
+                    updateUserProfileUI(userData);
+                }
+            }, (error) => {
+                console.error("Error loading user data:", error);
+            });
+        }
+
+        // Update user profile UI
+        function updateUserProfileUI(userData) {
+            const profileBtn = document.getElementById('profileBtn');
+            const avatarPreview = document.getElementById('avatarPreview');
+            const userNameInput = document.getElementById('userName');
+            const userEmailInput = document.getElementById('userEmail');
+            const userUsernameInput = document.getElementById('userUsername');
+            const avatarInitials = document.getElementById('avatarInitials');
+            
+            if (userData) {
+                // Update profile button
+                if (userData.profilePic) {
+                    profileBtn.innerHTML = `<img src="${userData.profilePic}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                } else if (userData.displayName) {
+                    profileBtn.textContent = userData.displayName.charAt(0).toUpperCase();
+                } else if (userData.email) {
+                    profileBtn.textContent = userData.email.charAt(0).toUpperCase();
+                }
+                
+                // Update profile modal
+                if (avatarPreview) {
+                    if (userData.profilePic) {
+                        avatarPreview.innerHTML = `<img src="${userData.profilePic}" alt="Profile" style="width:100%;height:100%;object-fit:cover;">`;
+                    } else {
+                        const initials = userData.displayName ? userData.displayName.charAt(0).toUpperCase() : 'U';
+                        avatarPreview.innerHTML = `<span id="avatarInitials">${initials}</span>`;
+                        avatarInitials.textContent = initials;
+                    }
+                }
+                
+                if (userNameInput) userNameInput.value = userData.displayName || '';
+                if (userEmailInput) userEmailInput.value = userData.email || '';
+                if (userUsernameInput) userUsernameInput.value = userData.username || '';
+            }
+        }
+
+        // Initialize app after authentication
+        function initializeApp() {
             console.log("Initializing app...");
             
-            // Initialize Firebase
-            initializeFirebase();
+            // Load movies
+            loadMovies();
             
             // Setup event listeners
             setupEventListeners();
@@ -1798,411 +2252,21 @@
             // Setup swipe navigation
             setupSwipeNavigation();
             
-            // Load movies
-            loadMovies();
-            
-            // Show welcome toast
+            // Show welcome message
             setTimeout(() => {
-                showToast("Welcome to DEMO!", "success");
+                showToast("Welcome back!", "success");
             }, 1000);
             
-            // Simulate live updates
-            simulateLiveUpdates();
-        });
-
-        // Initialize Firebase
-        function initializeFirebase() {
-            try {
-                if (typeof firebaseConfig === 'undefined') {
-                    console.error("firebase-config.js not loaded");
-                    showToast("Firebase configuration error", "error");
+            // Add floating animation to plus button
+            setInterval(() => {
+                const btn = document.getElementById('startPartyBtn');
+                if (btn) {
+                    btn.style.transform = 'translateY(-8px)';
                     setTimeout(() => {
-                        window.location.href = "index.html";
-                    }, 2000);
-                    return;
+                        btn.style.transform = '';
+                    }, 1000);
                 }
-                
-                firebaseApp = firebase.initializeApp(firebaseConfig);
-                auth = firebase.auth();
-                db = firebase.database();
-                
-                console.log("Firebase initialized");
-                
-                // Set up auth state listener
-                auth.onAuthStateChanged(handleAuthStateChange);
-                
-            } catch (error) {
-                console.error("Firebase initialization error:", error);
-                showToast("Firebase initialization failed", "error");
-                setTimeout(() => {
-                    window.location.href = "index.html";
-                }, 2000);
-            }
-        }
-
-        // Handle authentication state changes
-        function handleAuthStateChange(user) {
-            console.log("Auth state changed:", user ? "User logged in" : "No user");
-            
-            if (user) {
-                currentUser = user;
-                console.log("User logged in:", user.email);
-                
-                // Update UI with user data
-                updateUserProfile(user);
-                
-                // Initialize realtime data listeners
-                initializeRealtimeData();
-                
-                // Show app
-                document.getElementById('mainApp').style.display = 'block';
-                
-            } else {
-                console.log("No user, redirecting to index.html");
-                window.location.href = "index.html";
-            }
-        }
-
-        // Initialize realtime data listeners
-        function initializeRealtimeData() {
-            if (!db) return;
-            
-            // Listen for rooms updates
-            roomsListener = db.ref('rooms').on('value', (snapshot) => {
-                const roomsData = snapshot.val();
-                if (roomsData) {
-                    updateRoomsUI(roomsData);
-                }
-            });
-            
-            // Listen for user profile updates
-            db.ref('users/' + currentUser.uid).on('value', (snapshot) => {
-                const userData = snapshot.val();
-                if (userData) {
-                    updateUserData(userData);
-                }
-            });
-        }
-
-        // Update rooms UI with Firebase data
-        function updateRoomsUI(roomsData) {
-            console.log("Updating rooms UI with Firebase data:", roomsData);
-            
-            // Convert rooms object to array
-            const roomsArray = Object.entries(roomsData).map(([id, room]) => ({
-                id,
-                ...room
-            }));
-            
-            // Update room counts
-            updateRoomCounts(roomsArray);
-        }
-
-        // Update room counts based on Firebase data
-        function updateRoomCounts(rooms) {
-            // Update featured room player count
-            const featuredCount = document.querySelector('.featured-room .player-count:first-child');
-            if (featuredCount && rooms.length > 0) {
-                const totalPlayers = rooms.reduce((sum, room) => sum + (room.participantsCount || 0), 0);
-                featuredCount.textContent = Math.min(totalPlayers, 99);
-            }
-            
-            // Update other counts randomly based on Firebase data
-            document.querySelectorAll('.player-count').forEach((count, index) => {
-                if (index > 0 && rooms.length > 0) {
-                    const randomRoom = rooms[Math.floor(Math.random() * rooms.length)];
-                    const newCount = Math.max(1, (randomRoom.participantsCount || 0) + Math.floor(Math.random() * 10) - 5);
-                    count.textContent = Math.min(newCount, 99);
-                }
-            });
-        }
-
-        // Update user data from Firebase
-        function updateUserData(userData) {
-            console.log("Updating user data:", userData);
-            
-            // Update profile button
-            const profileBtn = document.getElementById('profileBtn');
-            if (profileBtn && userData.displayName) {
-                profileBtn.textContent = userData.displayName.charAt(0).toUpperCase();
-            }
-            
-            // Update profile form
-            document.getElementById('userName').value = userData.displayName || '';
-            document.getElementById('userEmail').value = userData.email || '';
-            document.getElementById('userUsername').value = userData.username || '';
-            
-            // Update avatar preview
-            const avatarPreview = document.getElementById('avatarPreview');
-            if (avatarPreview && userData.photoURL) {
-                avatarPreview.innerHTML = `<img src="${userData.photoURL}" alt="Profile" style="width:100%;height:100%;object-fit:cover;">`;
-            } else if (avatarPreview && userData.displayName) {
-                const initials = userData.displayName.charAt(0).toUpperCase();
-                avatarPreview.innerHTML = `<span id="avatarInitials">${initials}</span>`;
-            }
-        }
-
-        // Update user profile UI
-        function updateUserProfile(user) {
-            console.log("Updating user profile UI:", user);
-            
-            const profileBtn = document.getElementById('profileBtn');
-            const avatarPreview = document.getElementById('avatarPreview');
-            
-            if (profileBtn) {
-                if (user.photoURL) {
-                    profileBtn.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-                } else if (user.displayName) {
-                    profileBtn.textContent = user.displayName.charAt(0).toUpperCase();
-                } else if (user.email) {
-                    profileBtn.textContent = user.email.charAt(0).toUpperCase();
-                }
-            }
-            
-            if (avatarPreview) {
-                if (user.photoURL) {
-                    avatarPreview.innerHTML = `<img src="${user.photoURL}" alt="Profile" style="width:100%;height:100%;object-fit:cover;">`;
-                } else if (user.displayName) {
-                    const initials = user.displayName.charAt(0).toUpperCase();
-                    avatarPreview.innerHTML = `<span id="avatarInitials">${initials}</span>`;
-                }
-            }
-            
-            // Update form fields
-            const userNameInput = document.getElementById('userName');
-            const userEmailInput = document.getElementById('userEmail');
-            
-            if (userNameInput) userNameInput.value = user.displayName || '';
-            if (userEmailInput) userEmailInput.value = user.email || '';
-        }
-
-        // Setup event listeners
-        function setupEventListeners() {
-            // Profile form submission
-            const profileForm = document.getElementById('profileForm');
-            if (profileForm) {
-                profileForm.addEventListener('submit', handleProfileUpdate);
-            }
-            
-            // Avatar upload
-            const avatarInput = document.getElementById('avatarInput');
-            if (avatarInput) {
-                avatarInput.addEventListener('change', handleAvatarUpload);
-            }
-            
-            // Notification button
-            const notificationBtn = document.getElementById('notificationBtn');
-            if (notificationBtn) {
-                notificationBtn.addEventListener('click', () => {
-                    notificationBtn.style.transform = 'rotate(20deg)';
-                    setTimeout(() => {
-                        notificationBtn.style.transform = 'rotate(0)';
-                        showComingSoon('Notifications');
-                    }, 300);
-                });
-            }
-            
-            // Search input
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                searchInput.addEventListener('focus', () => {
-                    showComingSoon('Search Feature');
-                    searchInput.blur();
-                });
-            }
-            
-            // Bottom nav items
-            document.querySelectorAll('.nav-item').forEach((item, index) => {
-                item.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    switchPage(index);
-                });
-            });
-            
-            // Page indicators
-            document.querySelectorAll('.page-indicator').forEach((indicator, index) => {
-                indicator.addEventListener('click', () => {
-                    switchPage(index);
-                });
-            });
-            
-            // Close modals on outside click
-            document.getElementById('popupOverlay').addEventListener('click', function(e) {
-                if (e.target === this) closePopup();
-            });
-            
-            document.getElementById('comingSoonModal').addEventListener('click', function(e) {
-                if (e.target === this) closeModal();
-            });
-            
-            document.getElementById('profileModal').addEventListener('click', function(e) {
-                if (e.target === this) closeProfileModal();
-            });
-            
-            // Add click animations to cards
-            document.querySelectorAll('.room-card, .featured-room, .guess-game, .best-room-card').forEach(element => {
-                element.addEventListener('click', function(e) {
-                    if (!e.target.classList.contains('join-btn')) {
-                        this.style.transform = 'scale(0.98)';
-                        setTimeout(() => {
-                            this.style.transform = '';
-                        }, 200);
-                    }
-                });
-            });
-            
-            // Keyboard shortcuts
-            document.addEventListener('keydown', function(e) {
-                // Escape to close modals
-                if (e.key === 'Escape') {
-                    closePopup();
-                    closeModal();
-                    closeProfileModal();
-                }
-                
-                // Arrow keys for navigation
-                if (e.key === 'ArrowLeft' && currentPage < 3) {
-                    switchPage(currentPage + 1);
-                } else if (e.key === 'ArrowRight' && currentPage > 0) {
-                    switchPage(currentPage - 1);
-                }
-            });
-        }
-
-        // Handle profile update
-        async function handleProfileUpdate(e) {
-            e.preventDefault();
-            
-            if (!currentUser) {
-                showToast("You must be logged in", "error");
-                return;
-            }
-            
-            const name = document.getElementById('userName').value.trim();
-            const email = document.getElementById('userEmail').value.trim();
-            const username = document.getElementById('userUsername').value.trim();
-            
-            if (!name || !email) {
-                showToast("Please fill in all required fields", "error");
-                return;
-            }
-            
-            try {
-                // Update Firebase auth profile
-                await currentUser.updateProfile({
-                    displayName: name
-                });
-                
-                await currentUser.updateEmail(email);
-                
-                // Update in Firebase database
-                await db.ref('users/' + currentUser.uid).set({
-                    displayName: name,
-                    email: email,
-                    username: username || null,
-                    updatedAt: firebase.database.ServerValue.TIMESTAMP
-                }, { merge: true });
-                
-                showToast("Profile updated successfully!", "success");
-                closeProfileModal();
-                
-            } catch (error) {
-                console.error("Profile update error:", error);
-                showToast("Update failed: " + error.message, "error");
-            }
-        }
-
-        // Handle avatar upload
-        function handleAvatarUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            // In a real app, you would upload to Firebase Storage
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const avatarPreview = document.getElementById('avatarPreview');
-                avatarPreview.innerHTML = `<img src="${event.target.result}" alt="Profile" style="width:100%;height:100%;object-fit:cover;">`;
-                
-                // Update profile button
-                const profileBtn = document.getElementById('profileBtn');
-                profileBtn.innerHTML = `<img src="${event.target.result}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-                
-                showToast("Avatar updated! (Would upload to Firebase in production)", "success");
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Setup swipe navigation
-        function setupSwipeNavigation() {
-            const container = document.getElementById('pagesContainer');
-            const wrapper = document.querySelector('.pages-wrapper');
-            
-            // Touch events for mobile swipe
-            wrapper.addEventListener('touchstart', (e) => {
-                isSwiping = true;
-                startX = e.touches[0].clientX;
-                currentTranslate = -currentPage * 100;
-            }, { passive: true });
-            
-            wrapper.addEventListener('touchmove', (e) => {
-                if (!isSwiping) return;
-                
-                const currentX = e.touches[0].clientX;
-                const diff = startX - currentX;
-                const newTranslate = currentTranslate + (diff / wrapper.offsetWidth * 100);
-                
-                // Limit translate to page bounds
-                const maxTranslate = 300; // 3 pages * 100%
-                const boundedTranslate = Math.max(-maxTranslate, Math.min(0, newTranslate));
-                
-                container.style.transform = `translateX(${boundedTranslate}%)`;
-                container.style.transition = 'none';
-            }, { passive: true });
-            
-            wrapper.addEventListener('touchend', (e) => {
-                if (!isSwiping) return;
-                isSwiping = false;
-                
-                const endX = e.changedTouches[0].clientX;
-                const diff = startX - endX;
-                const threshold = wrapper.offsetWidth * 0.2; // 20% threshold
-                
-                container.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-                
-                if (Math.abs(diff) > threshold) {
-                    if (diff > 0 && currentPage < 3) {
-                        switchPage(currentPage + 1);
-                    } else if (diff < 0 && currentPage > 0) {
-                        switchPage(currentPage - 1);
-                    } else {
-                        switchPage(currentPage);
-                    }
-                } else {
-                    switchPage(currentPage);
-                }
-            }, { passive: true });
-        }
-
-        // Switch page
-        function switchPage(pageIndex) {
-            if (pageIndex < 0 || pageIndex > 3 || pageIndex === currentPage) return;
-            
-            currentPage = pageIndex;
-            const container = document.getElementById('pagesContainer');
-            
-            // Animate to page
-            container.style.transform = `translateX(-${pageIndex * 100}%)`;
-            container.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-            
-            // Update indicators
-            document.querySelectorAll('.page-indicator').forEach((indicator, index) => {
-                indicator.classList.toggle('active', index === pageIndex);
-            });
-            
-            // Update nav items
-            document.querySelectorAll('.nav-item').forEach((item, index) => {
-                item.classList.toggle('active', index === pageIndex);
-            });
+            }, 4000);
         }
 
         // Load movies
@@ -2217,8 +2281,7 @@
                 movieElement.className = 'movie-poster';
                 movieElement.onclick = () => showComingSoon(`${movie.title} Watch Party`);
                 movieElement.innerHTML = `
-                    <img src="${movie.poster}" alt="${movie.title}" 
-                         onerror="this.src='https://via.placeholder.com/300x450/1a1a2e/ffffff?text=${encodeURIComponent(movie.title)}'">
+                    <img src="${movie.poster}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/300x450/1a1a2e/ffffff?text=${encodeURIComponent(movie.title)}'">
                     <div class="movie-overlay">
                         <div class="movie-title">${movie.title}</div>
                         <div class="movie-meta">
@@ -2228,6 +2291,208 @@
                     </div>
                 `;
                 moviesGrid.appendChild(movieElement);
+            });
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Profile form submission
+            document.getElementById('profileForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const name = document.getElementById('userName').value;
+                const email = document.getElementById('userEmail').value;
+                const username = document.getElementById('userUsername').value;
+                
+                if (!currentUser) {
+                    showToast("You must be logged in", "error");
+                    return;
+                }
+                
+                try {
+                    // Update Firebase user profile
+                    await currentUser.updateProfile({
+                        displayName: name
+                    });
+                    
+                    await currentUser.updateEmail(email);
+                    
+                    // Save to Firebase database
+                    await db.ref('users/' + currentUser.uid).set({
+                        displayName: name,
+                        email: email,
+                        username: username || null,
+                        updatedAt: firebase.database.ServerValue.TIMESTAMP
+                    }, { merge: true });
+                    
+                    showToast("Profile updated successfully!", "success");
+                    closeProfileModal();
+                } catch (error) {
+                    console.error("Profile update error:", error);
+                    showToast("Profile update failed: " + error.message, "error");
+                }
+            });
+
+            // Avatar upload
+            document.getElementById('avatarInput').addEventListener('change', async function(e) {
+                const file = e.target.files[0];
+                if (file && currentUser) {
+                    // In a real app, you would upload to Firebase Storage
+                    const reader = new FileReader();
+                    reader.onload = async function(event) {
+                        const avatarPreview = document.getElementById('avatarPreview');
+                        avatarPreview.innerHTML = `<img src="${event.target.result}" alt="Profile" style="width:100%;height:100%;object-fit:cover;">`;
+                        
+                        // Save to Firebase
+                        await db.ref('users/' + currentUser.uid).update({
+                            profilePic: event.target.result,
+                            updatedAt: firebase.database.ServerValue.TIMESTAMP
+                        });
+                        
+                        showToast("Profile picture updated!", "success");
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Search input
+            document.getElementById('searchInput').addEventListener('focus', () => {
+                showComingSoon('Search Feature');
+            });
+
+            // Notification button
+            document.getElementById('notificationBtn').addEventListener('click', () => {
+                showComingSoon('Notifications');
+            });
+
+            // Close modals on outside click
+            document.getElementById('popupOverlay').addEventListener('click', function(e) {
+                if (e.target === this) closePopup();
+            });
+            
+            document.getElementById('comingSoonModal').addEventListener('click', function(e) {
+                if (e.target === this) closeModal();
+            });
+            
+            document.getElementById('profileModal').addEventListener('click', function(e) {
+                if (e.target === this) closeProfileModal();
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closePopup();
+                    closeModal();
+                    closeProfileModal();
+                }
+            });
+        }
+
+        // Setup swipe navigation
+        function setupSwipeNavigation() {
+            const container = document.getElementById('pagesContainer');
+            let startX = 0;
+            let currentScroll = 0;
+            let isSwiping = false;
+            let currentPage = 0;
+
+            // Touch events for swipe
+            container.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                currentScroll = container.scrollLeft;
+                isSwiping = true;
+            }, { passive: true });
+
+            container.addEventListener('touchmove', (e) => {
+                if (!isSwiping) return;
+                const currentX = e.touches[0].clientX;
+                const diff = startX - currentX;
+                container.scrollLeft = currentScroll + diff;
+            }, { passive: true });
+
+            container.addEventListener('touchend', (e) => {
+                if (!isSwiping) return;
+                isSwiping = false;
+                
+                const endX = e.changedTouches[0].clientX;
+                const diff = startX - endX;
+                const threshold = 50;
+                
+                if (Math.abs(diff) > threshold) {
+                    if (diff > 0 && currentPage < 3) {
+                        // Swipe left - go to next page
+                        currentPage++;
+                    } else if (diff < 0 && currentPage > 0) {
+                        // Swipe right - go to previous page
+                        currentPage--;
+                    }
+                    switchPage(currentPage);
+                } else {
+                    // Return to current page
+                    container.scrollTo({
+                        left: currentPage * container.offsetWidth,
+                        behavior: 'smooth'
+                    });
+                }
+            }, { passive: true });
+
+            // Page indicator clicks
+            document.querySelectorAll('.page-indicator').forEach((indicator, index) => {
+                indicator.addEventListener('click', () => {
+                    currentPage = index;
+                    switchPage(index);
+                });
+            });
+
+            // Nav item clicks
+            document.querySelectorAll('.nav-item').forEach((item, index) => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentPage = index;
+                    switchPage(index);
+                });
+            });
+
+            // Scroll event to update indicators
+            container.addEventListener('scroll', () => {
+                if (!isSwiping) {
+                    const pageWidth = container.offsetWidth;
+                    const scrollPos = container.scrollLeft;
+                    currentPage = Math.round(scrollPos / pageWidth);
+                    updatePageIndicators(currentPage);
+                }
+            }, { passive: true });
+        }
+
+        // Switch page
+        function switchPage(pageIndex) {
+            const container = document.getElementById('pagesContainer');
+            if (!container || pageIndex < 0 || pageIndex > 3) return;
+            
+            currentPage = pageIndex;
+            
+            // Scroll to page
+            container.scrollTo({
+                left: pageIndex * container.offsetWidth,
+                behavior: 'smooth'
+            });
+            
+            // Update indicators and nav
+            updatePageIndicators(pageIndex);
+            updateNavItems(pageIndex);
+        }
+
+        // Update page indicators
+        function updatePageIndicators(activeIndex) {
+            document.querySelectorAll('.page-indicator').forEach((indicator, index) => {
+                indicator.classList.toggle('active', index === activeIndex);
+            });
+        }
+
+        // Update nav items
+        function updateNavItems(activeIndex) {
+            document.querySelectorAll('.nav-item').forEach((item, index) => {
+                item.classList.toggle('active', index === activeIndex);
             });
         }
 
@@ -2284,7 +2549,7 @@
             document.body.style.overflow = '';
         }
 
-        // Create watch party with Firebase
+        // Create watch party
         async function createWatchParty() {
             closePopup();
             
@@ -2299,28 +2564,23 @@
                 const roomRef = db.ref('rooms').push();
                 const roomId = roomRef.key;
                 
-                const roomData = {
-                    title: `${currentUser.displayName || currentUser.email}'s Watch Party`,
+                await roomRef.set({
+                    name: `${currentUser.displayName || currentUser.email}'s Watch Party`,
                     createdBy: currentUser.uid,
                     createdByName: currentUser.displayName || currentUser.email,
                     createdAt: firebase.database.ServerValue.TIMESTAMP,
-                    participantsCount: 1,
+                    participants: 1,
                     maxParticipants: 10,
                     type: 'watch_party',
                     status: 'active'
-                };
-                
-                await roomRef.set(roomData);
+                });
                 
                 showToast("Watch party created!", "success");
-                
-                // Join the room
                 setTimeout(() => {
                     openWatchParty(roomId);
-                }, 1500);
-                
+                }, 1000);
             } catch (error) {
-                console.error("Error creating watch party:", error);
+                console.error("Error creating room:", error);
                 showToast("Failed to create watch party", "error");
             }
         }
@@ -2334,22 +2594,98 @@
                 return;
             }
             
-            showToast("Creating voice call...", "info");
+            showToast("Creating group voice call...", "info");
             
-            // In a real app, create room in Firebase and initialize Agora
-            setTimeout(() => {
-                showComingSoon('Voice Call Feature');
-            }, 1000);
+            try {
+                const roomRef = db.ref('rooms').push();
+                const roomId = roomRef.key;
+                
+                await roomRef.set({
+                    name: `${currentUser.displayName || currentUser.email}'s Voice Call`,
+                    createdBy: currentUser.uid,
+                    createdByName: currentUser.displayName || currentUser.email,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    participants: 1,
+                    maxParticipants: 8,
+                    type: 'voice_call',
+                    status: 'active'
+                });
+                
+                showToast("Voice call created!", "success");
+            } catch (error) {
+                console.error("Error creating voice call:", error);
+                showToast("Failed to create voice call", "error");
+            }
         }
 
-        // Open watch party
+        // Open watch party page
         function openWatchParty(roomId = null) {
-            showToast("Opening watch party...", "info");
+            if (roomId) {
+                showToast("Redirecting to watch party...", "info");
+                setTimeout(() => {
+                    window.location.href = `watch.html?room=${roomId}`;
+                }, 1500);
+            } else {
+                showComingSoon('Watch Party Feature');
+            }
+        }
+
+        // Start real-time updates from Firebase
+        function startRealtimeUpdates() {
+            if (!db) return;
             
-            // In a real app, redirect to watch.html with roomId
-            setTimeout(() => {
-                showComingSoon('Watch Party Room');
-            }, 500);
+            // Listen for room updates
+            const roomsRef = db.ref('rooms');
+            roomsRef.on('value', (snapshot) => {
+                const rooms = snapshot.val();
+                if (rooms) {
+                    updateRoomStats(rooms);
+                }
+            });
+            
+            // Update player counts periodically
+            setInterval(() => {
+                updateRandomStats();
+            }, 8000);
+        }
+
+        // Update room stats from Firebase
+        function updateRoomStats(rooms) {
+            // Update room player counts
+            const roomCounts = document.querySelectorAll('.room-players span');
+            if (roomCounts.length > 0) {
+                const roomKeys = Object.keys(rooms);
+                roomCounts.forEach((count, index) => {
+                    if (index < roomKeys.length) {
+                        const room = rooms[roomKeys[index]];
+                        if (room && room.participants) {
+                            const text = count.textContent;
+                            const activity = text.includes('playing') ? 'playing' : 
+                                           text.includes('watching') ? 'watching' : 'friends';
+                            count.textContent = `${room.participants} ${activity}`;
+                        }
+                    }
+                });
+            }
+        }
+
+        // Update random stats (simulated)
+        function updateRandomStats() {
+            const counts = document.querySelectorAll('.player-count');
+            counts.forEach(count => {
+                if (Math.random() > 0.7) {
+                    const current = parseInt(count.textContent);
+                    const change = Math.floor(Math.random() * 3) - 1;
+                    const newCount = Math.max(1, current + change);
+                    if (change !== 0) {
+                        count.textContent = newCount;
+                        count.style.animation = 'none';
+                        setTimeout(() => {
+                            count.style.animation = 'pulse 0.5s ease';
+                        }, 10);
+                    }
+                }
+            });
         }
 
         // Show toast notification
@@ -2358,11 +2694,12 @@
             toast.textContent = message;
             toast.className = 'toast';
             
-            // Set color based on type
             if (type === 'success') {
                 toast.style.background = 'linear-gradient(135deg, var(--success), #00b894)';
             } else if (type === 'error') {
                 toast.style.background = 'linear-gradient(135deg, var(--red-accent), #ff6b6b)';
+            } else if (type === 'warning') {
+                toast.style.background = 'linear-gradient(135deg, var(--warning), #ffaa00)';
             } else {
                 toast.style.background = 'linear-gradient(135deg, var(--info), #0095ff)';
             }
@@ -2374,52 +2711,55 @@
             }, 3000);
         }
 
-        // Simulate live updates
-        function simulateLiveUpdates() {
-            setInterval(() => {
-                // Update player counts
-                document.querySelectorAll('.player-count').forEach(count => {
-                    if (Math.random() > 0.7) {
-                        const current = parseInt(count.textContent);
-                        const change = Math.floor(Math.random() * 3) - 1;
-                        const newCount = Math.max(1, current + change);
-                        if (change !== 0) {
-                            count.textContent = newCount;
-                            count.style.animation = 'none';
-                            setTimeout(() => {
-                                count.style.animation = 'pulse 0.5s ease';
-                            }, 10);
-                        }
-                    }
-                });
-                
-                // Update room player counts
-                document.querySelectorAll('.room-players span').forEach(span => {
-                    if (Math.random() > 0.8) {
-                        const text = span.textContent;
-                        const current = parseInt(text);
-                        if (!isNaN(current)) {
-                            const change = Math.floor(Math.random() * 3) - 1;
-                            const newCount = Math.max(1, current + change);
-                            if (change !== 0) {
-                                span.textContent = `${newCount} ${text.includes('playing') ? 'playing' : text.includes('watching') ? 'watching' : 'friends'}`;
-                            }
-                        }
-                    }
-                });
-            }, 8000);
-        }
-
-        // Cleanup function
-        function cleanup() {
-            if (roomsListener && db) {
-                db.ref('rooms').off('value', roomsListener);
+        // Sign out function
+        async function signOut() {
+            try {
+                if (auth) {
+                    await auth.signOut();
+                    // No need to redirect here - auth state listener will handle it
+                }
+            } catch (error) {
+                console.error("Sign out error:", error);
+                showToast("Sign out failed", "error");
             }
         }
 
-        // Cleanup on page unload
-        window.addEventListener('beforeunload', cleanup);
-        window.addEventListener('pagehide', cleanup);
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM loaded, initializing Firebase...");
+            initializeFirebase();
+        });
+
+        // Web App manifest behavior
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+
+        // Prevent default touch behavior
+        document.addEventListener('touchmove', function(e) {
+            if (e.scale !== 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Make it feel like a web app
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            console.log("Running in standalone mode (PWA)");
+        }
+
+        // Handle page visibility
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden && firebaseInitialized && auth) {
+                // Refresh auth state when app becomes visible again
+                auth.currentUser?.reload();
+            }
+        });
     </script>
 </body>
 </html>

@@ -5,13 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DEMO | Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        /* ===== RESET & BASE ===== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         :root {
@@ -35,34 +40,43 @@
             --success: #00D68F;
             --info: #0095FF;
             --warning: #FFAA00;
+            --safe-area-top: env(safe-area-inset-top);
+            --safe-area-bottom: env(safe-area-inset-bottom);
+        }
+
+        html {
+            font-size: 14px;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             background: linear-gradient(160deg, var(--dark-bg-1) 0%, var(--dark-bg-2) 50%, var(--dark-bg-3) 100%);
             color: var(--text-primary);
             min-height: 100vh;
             overflow-x: hidden;
             position: relative;
             touch-action: pan-y;
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
         }
 
+        /* ===== OPTIMIZED BACKGROUND ===== */
         .bg-blur {
             position: fixed;
             border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.15;
+            filter: blur(60px);
+            opacity: 0.12;
             z-index: 0;
             pointer-events: none;
+            will-change: transform;
         }
 
         .bg-blur-1 {
             width: 300px;
             height: 300px;
             background: radial-gradient(circle, var(--primary-purple) 0%, transparent 70%);
-            top: -100px;
-            left: -100px;
-            animation: float 25s infinite ease-in-out;
+            top: -150px;
+            left: -150px;
+            animation: float 20s infinite ease-in-out;
         }
 
         .bg-blur-2 {
@@ -71,40 +85,43 @@
             background: radial-gradient(circle, var(--neon-magenta) 0%, transparent 70%);
             bottom: -100px;
             right: -100px;
-            animation: float 30s infinite ease-in-out reverse;
+            animation: float 25s infinite ease-in-out reverse;
         }
 
+        /* ===== MAIN CONTAINER ===== */
         .container {
-            width: 100%;
+            max-width: 100%;
             margin: 0 auto;
             position: relative;
             z-index: 1;
             min-height: 100vh;
-            padding-bottom: 80px;
+            padding-bottom: 70px;
             overflow: hidden;
         }
 
+        /* ===== HEADER ===== */
         .header {
             padding: 12px 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: rgba(5, 0, 22, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: rgba(5, 0, 22, 0.85);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             position: sticky;
-            top: 0;
+            top: var(--safe-area-top);
             z-index: 100;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            height: 56px;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             font-weight: 800;
-            font-size: 20px;
-            letter-spacing: 1px;
+            font-size: 18px;
+            letter-spacing: 0.5px;
             background: linear-gradient(135deg, var(--primary-purple), var(--light-purple));
             -webkit-background-clip: text;
             background-clip: text;
@@ -118,22 +135,24 @@
             gap: 12px;
         }
 
-        .notification-btn {
-            position: relative;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
+        .notification-btn, .profile-btn {
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            color: var(--text-primary);
-            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            font-size: 16px;
         }
 
-        .notification-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(106, 13, 255, 0.3);
+        .notification-btn {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            position: relative;
         }
 
         .notification-badge {
@@ -149,36 +168,23 @@
         }
 
         .profile-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
             background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
             border: 2px solid rgba(255, 255, 255, 0.2);
             color: white;
             font-weight: bold;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             overflow: hidden;
         }
 
-        .profile-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 20px rgba(106, 13, 255, 0.4);
+        .profile-btn span {
+            font-size: 14px;
         }
 
-        .profile-btn img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
+        /* ===== SEARCH ===== */
         .search-container {
             padding: 12px 16px;
             background: rgba(5, 0, 22, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
         }
 
         .search-bar {
@@ -189,18 +195,18 @@
             border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 12px;
             padding: 10px 14px;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
 
         .search-bar:focus-within {
             border-color: var(--primary-purple);
-            box-shadow: 0 0 0 2px rgba(106, 13, 255, 0.2);
-            transform: translateY(-1px);
+            box-shadow: 0 0 0 2px rgba(106, 13, 255, 0.15);
         }
 
         .search-bar i {
             color: var(--text-secondary);
             font-size: 16px;
+            flex-shrink: 0;
         }
 
         .search-bar input {
@@ -219,29 +225,75 @@
             font-weight: 400;
         }
 
+        /* ===== FEED CONTENT ===== */
         .feed-page {
-            padding: 12px;
+            padding: 16px;
             overflow-y: auto;
-            height: calc(100vh - 140px);
-            scrollbar-width: thin;
-            scrollbar-color: var(--primary-purple) transparent;
-            -webkit-overflow-scrolling: touch;
+            height: calc(100vh - 56px - 56px - 60px);
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
 
         .feed-page::-webkit-scrollbar {
-            width: 3px;
+            display: none;
         }
 
-        .feed-page::-webkit-scrollbar-track {
-            background: transparent;
+        /* ===== SECTIONS ===== */
+        .section-title {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            letter-spacing: -0.3px;
         }
 
-        .feed-page::-webkit-scrollbar-thumb {
-            background: var(--primary-purple);
-            border-radius: 2px;
+        /* ===== VIBES BUTTONS ===== */
+        .vibes-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
-        /* TRENDING SECTIONS */
+        .vibe-btn {
+            padding: 14px 0;
+            border-radius: 14px;
+            border: none;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.3px;
+        }
+
+        .vibe-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .vibe-btn:active::after {
+            left: 100%;
+        }
+
+        .vibe-btn.truth {
+            background: linear-gradient(135deg, var(--success), #00b894);
+            color: white;
+        }
+
+        .vibe-btn.dare {
+            background: linear-gradient(135deg, var(--red-accent), #ff6b6b);
+            color: white;
+        }
+
+        /* ===== TRENDING SECTIONS ===== */
         .trending-section {
             margin-bottom: 24px;
         }
@@ -255,9 +307,15 @@
 
         .trending-title {
             font-size: 18px;
-            font-weight: 800;
+            font-weight: 700;
             color: var(--text-primary);
-            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .trending-title i {
+            font-size: 16px;
         }
 
         .view-all-btn {
@@ -269,13 +327,7 @@
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .view-all-btn:hover {
-            background: rgba(106, 13, 255, 0.2);
-            border-color: var(--primary-purple);
+            transition: all 0.2s ease;
         }
 
         .trending-container {
@@ -288,10 +340,9 @@
             gap: 12px;
             overflow-x: auto;
             scroll-behavior: smooth;
-            padding: 4px 4px 12px 4px;
+            padding: 4px 2px 12px 2px;
             scrollbar-width: none;
             -ms-overflow-style: none;
-            -webkit-overflow-scrolling: touch;
         }
 
         .trending-scroller::-webkit-scrollbar {
@@ -302,21 +353,19 @@
             flex: 0 0 85vw;
             max-width: 280px;
             background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             border: 1px solid var(--glass-border);
             border-radius: 16px;
             overflow: hidden;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            animation: fadeInUp 0.5s ease-out;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             position: relative;
+            animation: fadeInUp 0.3s ease-out;
         }
 
-        .trending-card:hover {
-            transform: translateY(-6px) scale(1.02);
-            border-color: var(--secondary-purple);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        .trending-card:active {
+            transform: scale(0.98);
         }
 
         .trending-image {
@@ -324,6 +373,7 @@
             width: 100%;
             background-size: cover;
             background-position: center;
+            background-color: #1a1a2e;
             position: relative;
         }
 
@@ -334,15 +384,14 @@
             background: rgba(0, 0, 0, 0.8);
             color: white;
             padding: 4px 8px;
-            border-radius: 16px;
-            font-size: 10px;
+            border-radius: 12px;
+            font-size: 11px;
             font-weight: 700;
             display: flex;
             align-items: center;
             gap: 4px;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            z-index: 2;
         }
 
         .trending-content {
@@ -355,21 +404,13 @@
             margin-bottom: 6px;
             color: var(--text-primary);
             line-height: 1.3;
-            display: -webkit-box;
-            -webkit-line-clamp: 1;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
         }
 
         .trending-details {
             font-size: 12px;
             color: var(--text-secondary);
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             line-height: 1.4;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
         }
 
         .trending-stats {
@@ -380,609 +421,28 @@
             color: var(--text-secondary);
         }
 
-        .trending-players {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .trending-players i {
-            color: var(--green-accent);
-            font-size: 10px;
-        }
-
-        .trending-time {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .trending-time i {
-            font-size: 10px;
-        }
-
-        /* WATCH PARTY SPECIFIC */
-        .watch-party-preview {
-            width: 100%;
-            height: 90px;
-            background: #000;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-bottom: 8px;
-            position: relative;
-        }
-
-        .watch-party-preview iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        .preview-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            text-align: center;
-            padding: 12px;
-        }
-
-        .preview-overlay i {
-            font-size: 20px;
-            margin-bottom: 4px;
-            color: var(--primary-purple);
-        }
-
-        .preview-overlay div {
-            font-size: 12px;
-            margin-bottom: 2px;
-        }
-
-        .preview-overlay small {
-            font-size: 10px;
-            opacity: 0.8;
-        }
-
-        /* AGORA FLOATING WIDGET */
-        .agora-widget {
-            position: fixed;
-            bottom: 90px;
-            right: 16px;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            cursor: pointer;
-            z-index: 1000;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 6px 20px rgba(106, 13, 255, 0.4);
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: floatWidget 3s ease-in-out infinite;
-        }
-
-        @keyframes floatWidget {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-5px) rotate(5deg); }
-        }
-
-        .agora-widget:hover {
-            transform: scale(1.1) rotate(15deg);
-            box-shadow: 0 10px 30px rgba(106, 13, 255, 0.6);
-        }
-
-        .agora-widget.active {
-            width: 100vw;
-            height: 100vh;
-            bottom: 0;
-            right: 0;
-            border-radius: 0;
-            border: none;
-            transform: none !important;
-            animation: none;
-            z-index: 2000;
-        }
-
-        .agora-widget-icon {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 20px;
-        }
-
-        .agora-widget-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-
-        .galaxy-ui {
-            display: none;
-            width: 100%;
-            height: 100%;
-            position: relative;
-            overflow: hidden;
-            background: linear-gradient(135deg, #000428, #004e92);
-        }
-
-        .agora-widget.active .galaxy-ui {
-            display: block;
-        }
-
-        .sun {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #ffd700, #ffaa00);
-            border-radius: 50%;
-            box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
-            animation: pulse 2s infinite;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #333;
-            font-weight: bold;
-            font-size: 12px;
-            text-align: center;
-            padding: 8px;
-            z-index: 10;
-            word-break: break-word;
-        }
-
-        .planet {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 10px;
-            font-weight: bold;
-            box-shadow: 0 0 15px rgba(106, 13, 255, 0.5);
-            z-index: 5;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .planet:hover {
-            transform: scale(1.3);
-            z-index: 20;
-            box-shadow: 0 0 25px rgba(106, 13, 255, 0.8);
-        }
-
-        .galaxy-controls {
-            position: absolute;
-            top: 20px;
-            left: 0;
-            right: 0;
-            display: flex;
-            gap: 8px;
-            padding: 0 16px;
-            z-index: 100;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .galaxy-btn {
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            min-width: 120px;
-            justify-content: center;
-            margin-bottom: 4px;
-        }
-
-        .galaxy-btn:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: translateY(-2px);
-        }
-
-        .call-notification {
-            position: fixed;
-            top: 20px;
-            left: 16px;
-            right: 16px;
-            background: rgba(5, 0, 22, 0.95);
-            border: 1px solid var(--primary-purple);
-            border-radius: 12px;
-            padding: 12px;
-            backdrop-filter: blur(20px);
-            z-index: 2000;
-            display: none;
-            animation: slideInDown 0.3s ease;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        .call-notification.active {
-            display: block;
-        }
-
-        .call-notification-content {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .caller-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            flex-shrink: 0;
-        }
-
-        .call-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .call-info strong {
-            display: block;
-            font-size: 14px;
-            margin-bottom: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .call-info div {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .call-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .call-btn {
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            flex: 1;
-        }
-
-        .accept-call {
-            background: var(--success);
-            color: white;
-        }
-
-        .reject-call {
-            background: var(--red-accent);
-            color: white;
-        }
-
-        /* Friends Selector Modal */
-        .friends-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            opacity: 0;
-            transition: all 0.3s ease;
-            padding: 16px;
-        }
-
-        .friends-modal.active {
-            display: flex;
-            opacity: 1;
-        }
-
-        .friends-content {
-            background: linear-gradient(135deg, rgba(5, 0, 22, 0.98), rgba(26, 4, 58, 0.98));
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 20px;
-            padding: 20px;
-            width: 100%;
-            max-width: 400px;
-            max-height: 80vh;
-            overflow-y: auto;
-            position: relative;
-            animation: scaleIn 0.3s ease;
-        }
-
-        .friends-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .friends-title {
-            font-size: 20px;
-            font-weight: 800;
-            color: var(--text-primary);
-        }
-
-        .friends-close {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: var(--text-primary);
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .friends-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .friend-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .friend-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateX(5px);
-        }
-
-        .friend-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            flex-shrink: 0;
-        }
-
-        .friend-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .friend-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .friend-status {
-            font-size: 12px;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .status-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--text-secondary);
-        }
-
-        .status-indicator.online {
-            background: var(--success);
-            animation: pulse 1.5s infinite;
-        }
-
-        .friend-checkbox {
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .friend-checkbox.checked {
-            background: var(--primary-purple);
-            border-color: var(--primary-purple);
-        }
-
-        .friends-actions {
-            margin-top: 20px;
-            display: flex;
-            gap: 12px;
-        }
-
-        .start-call-btn {
-            flex: 1;
-            padding: 12px;
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .start-call-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(106, 13, 255, 0.4);
-        }
-
-        /* TONIGHT'S VIBES */
-        .tonights-vibes {
-            padding: 0px 0 20px;
-        }
-
-        .section-title {
-            font-size: 20px;
-            font-weight: 800;
-            margin-bottom: 16px;
-            color: var(--text-primary);
-            letter-spacing: -0.3px;
-        }
-
-        .vibes-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-
-        .vibe-btn {
-            flex: 1;
-            padding: 16px 0;
-            border-radius: 14px;
-            border: none;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            letter-spacing: 0.3px;
-        }
-
-        .vibe-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.6s;
-        }
-
-        .vibe-btn:hover::before {
-            left: 100%;
-        }
-
-        .vibe-btn.truth {
-            background: linear-gradient(135deg, var(--success), #00b894);
-            color: white;
-            box-shadow: 0 4px 15px rgba(0, 214, 143, 0.3);
-        }
-
-        .vibe-btn.dare {
-            background: linear-gradient(135deg, var(--red-accent), #ff6b6b);
-            color: white;
-            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
-        }
-
-        .vibe-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .vibe-btn:active {
-            transform: translateY(-1px);
-        }
-
+        /* ===== ROOMS GRID ===== */
         .rooms-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 12px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .room-card {
             background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             border: 1px solid var(--glass-border);
             border-radius: 16px;
             overflow: hidden;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            animation: fadeInUp 0.5s ease-out;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
-            position: relative;
+            animation: fadeInUp 0.3s ease-out;
         }
 
-        .room-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--primary-purple), transparent);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .room-card:hover::before {
-            opacity: 1;
-        }
-
-        .room-card:hover {
-            transform: translateY(-6px);
-            border-color: var(--secondary-purple);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        .room-card:active {
+            transform: scale(0.98);
         }
 
         .room-image {
@@ -1000,904 +460,14 @@
             background: rgba(0, 0, 0, 0.8);
             color: white;
             padding: 4px 8px;
-            border-radius: 16px;
-            font-size: 10px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
-
-        .room-content {
-            padding: 12px;
-        }
-
-        .room-title {
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 6px;
-            color: var(--text-primary);
-            line-height: 1.3;
-            display: -webkit-box;
-            -webkit-line-clamp: 1;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .room-stats {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            border-radius: 12px;
             font-size: 11px;
-            color: var(--text-secondary);
-        }
-
-        .room-players {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .room-players i {
-            color: var(--green-accent);
-            font-size: 10px;
-        }
-
-        .room-time {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .room-time i {
-            font-size: 10px;
-        }
-
-        .for-you-section {
-            margin-bottom: 24px;
-        }
-
-        .for-you-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .for-you-title i {
-            color: var(--yellow-accent);
-            font-size: 16px;
-        }
-
-        .featured-room {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            overflow: hidden;
-            margin-bottom: 16px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-        }
-
-        .featured-room:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
-        }
-
-        .featured-header {
-            padding: 16px;
-            background: linear-gradient(90deg, var(--primary-purple), var(--neon-magenta));
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .featured-title {
-            font-size: 18px;
-            font-weight: 800;
-            color: white;
-            letter-spacing: 0.3px;
-        }
-
-        .featured-badge {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 12px;
             font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-        }
-
-        .featured-content {
-            padding: 20px 16px;
-        }
-
-        .players-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            text-align: center;
-            margin-bottom: 16px;
-        }
-
-        .player-count {
-            font-size: 28px;
-            font-weight: 900;
-            color: var(--text-primary);
-            line-height: 1;
-        }
-
-        .player-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-top: 4px;
-            font-weight: 500;
-        }
-
-        .join-btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            color: white;
-            border: none;
-            border-radius: 14px;
-            font-size: 14px;
-            font-weight: 700;
-            margin-top: 16px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            letter-spacing: 0.3px;
-        }
-
-        .join-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(106, 13, 255, 0.4);
-        }
-
-        .join-btn:active {
-            transform: translateY(-1px);
-        }
-
-        .guess-game {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .guess-game:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
-        }
-
-        .guess-game-header {
-            padding: 16px;
-            background: linear-gradient(90deg, #ff6b6b, #ffa502);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .guess-game-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: white;
-        }
-
-        .guess-game-badge {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 12px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
-
-        .guess-game-content {
-            padding: 20px 16px;
-            text-align: center;
-        }
-
-        .game-image {
-            width: 100%;
-            height: 100px;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            border-radius: 14px;
-            margin-bottom: 16px;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .movie-scene {
-            font-size: 36px;
-            animation: floatUp 3s infinite ease-in-out;
-        }
-
-        .game-description {
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-            font-weight: 500;
-        }
-
-        .best-room-section {
-            margin-bottom: 24px;
-        }
-
-        .best-room-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .best-room-title i {
-            color: var(--yellow-accent);
-            font-size: 16px;
-        }
-
-        .best-room-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-        }
-
-        .best-room-card:hover {
-            transform: translateY(-6px);
-            border-color: var(--secondary-purple);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .best-room-avatar {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-            flex-shrink: 0;
-        }
-
-        .best-room-info h4 {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 4px;
-            color: var(--text-primary);
-        }
-
-        .best-room-info p {
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        /* Bottom Navigation */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(5, 0, 22, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 8px 16px;
-            z-index: 100;
-        }
-
-        .nav-items {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 480px;
-            margin: 0 auto;
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 10px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 8px 12px;
-            border-radius: 12px;
-            min-width: 56px;
-            font-weight: 600;
-        }
-
-        .nav-item.active {
-            color: var(--primary-purple);
-            background: rgba(106, 13, 255, 0.15);
-            box-shadow: 0 4px 15px rgba(106, 13, 255, 0.2);
-        }
-
-        .nav-item i {
-            font-size: 18px;
-        }
-
-        .nav-item:hover {
-            color: var(--text-primary);
-            transform: translateY(-2px);
-        }
-
-        .start-party-btn {
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            color: white;
-            border: none;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 0 25px rgba(106, 13, 255, 0.5);
-            margin-top: -24px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .start-party-btn::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transform: rotate(45deg);
-            transition: transform 0.6s;
-        }
-
-        .start-party-btn:hover::after {
-            transform: rotate(45deg) translate(50%, 50%);
-        }
-
-        .start-party-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 40px rgba(106, 13, 255, 0.7);
-        }
-
-        /* MODALS */
-        .popup-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            padding: 16px;
-        }
-
-        .popup-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .popup-content {
-            background: linear-gradient(135deg, rgba(5, 0, 22, 0.98), rgba(26, 4, 58, 0.98));
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 20px;
-            padding: 24px;
-            width: 100%;
-            max-width: 360px;
-            max-height: 80vh;
-            overflow-y: auto;
-            position: relative;
-            animation: scaleIn 0.3s ease;
-        }
-
-        .popup-close {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: var(--text-primary);
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
-
-        .popup-close:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .popup-title {
-            font-size: 24px;
-            font-weight: 800;
-            text-align: center;
-            margin-bottom: 20px;
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .popup-options {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .popup-option {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .popup-option:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateX(8px);
-            border-color: var(--primary-purple);
-        }
-
-        .option-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            color: white;
-            flex-shrink: 0;
-        }
-
-        .option-details h4 {
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 4px;
-            color: var(--text-primary);
-        }
-
-        .option-details p {
-            font-size: 12px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        /* Profile Modal */
-        .profile-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            opacity: 0;
-            transition: all 0.3s ease;
-            padding: 16px;
-        }
-
-        .profile-modal.active {
-            display: flex;
-            opacity: 1;
-        }
-
-        .profile-content {
-            background: linear-gradient(135deg, rgba(5, 0, 22, 0.98), rgba(26, 4, 58, 0.98));
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 20px;
-            padding: 24px;
-            width: 100%;
-            max-width: 360px;
-            max-height: 80vh;
-            overflow-y: auto;
-            position: relative;
-            animation: scaleIn 0.3s ease;
-        }
-
-        .profile-close {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: var(--text-primary);
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
-
-        .profile-close:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .profile-header {
-            text-align: center;
-            margin-bottom: 24px;
-        }
-
-        .profile-title {
-            font-size: 24px;
-            font-weight: 800;
-            margin-bottom: 6px;
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .profile-subtitle {
-            font-size: 12px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .profile-form {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .form-group {
-            position: relative;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.07);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            color: var(--text-primary);
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary-purple);
-            box-shadow: 0 0 0 3px rgba(106, 13, 255, 0.2);
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .avatar-upload {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .avatar-preview {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            color: white;
-            cursor: pointer;
-            overflow: hidden;
-            border: 3px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .avatar-preview img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .upload-btn {
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            color: var(--text-primary);
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .upload-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: var(--primary-purple);
-            transform: translateY(-2px);
-        }
-
-        .username-info {
-            font-size: 10px;
-            color: var(--text-secondary);
-            margin-top: 4px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .username-info i {
-            color: var(--yellow-accent);
-            font-size: 10px;
-        }
-
-        .form-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 24px;
-        }
-
-        .form-btn {
-            padding: 14px;
-            border-radius: 12px;
-            border: none;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            text-align: center;
-        }
-
-        .form-btn.save {
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            color: white;
-        }
-
-        .form-btn.cancel {
-            background: rgba(255, 255, 255, 0.07);
-            color: var(--text-primary);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .form-btn.logout {
-            background: linear-gradient(135deg, #FF4757, #ff6b6b);
-            color: white;
-            margin-top: 8px;
-        }
-
-        .form-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .form-btn.save:hover {
-            box-shadow: 0 8px 20px rgba(106, 13, 255, 0.3);
-        }
-
-        .form-btn.logout:hover {
-            box-shadow: 0 8px 20px rgba(255, 71, 87, 0.3);
-        }
-
-        /* Coming Soon Modal */
-        .coming-soon-modal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.9);
-            background: linear-gradient(135deg, rgba(5, 0, 22, 0.98), rgba(26, 4, 58, 0.98));
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 20px;
-            padding: 24px;
-            width: 90%;
-            max-width: 360px;
-            text-align: center;
-            z-index: 1001;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .coming-soon-modal.active {
-            opacity: 1;
-            visibility: visible;
-            transform: translate(-50%, -50%) scale(1);
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: var(--text-primary);
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
-
-        .modal-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            animation: floatUp 3s infinite ease-in-out;
-        }
-
-        .modal-title {
-            font-size: 24px;
-            font-weight: 800;
-            margin-bottom: 12px;
-            color: var(--text-primary);
-        }
-
-        .modal-description {
-            color: var(--text-secondary);
-            margin-bottom: 24px;
-            line-height: 1.5;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .modal-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .modal-btn {
-            padding: 14px;
-            border-radius: 12px;
-            border: none;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            text-align: center;
-        }
-
-        .modal-btn.primary {
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            color: white;
-        }
-
-        .modal-btn.secondary {
-            background: rgba(255, 255, 255, 0.07);
-            color: var(--text-primary);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .modal-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-100px);
-            background: rgba(5, 0, 22, 0.9);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 12px 20px;
-            color: white;
-            font-weight: 600;
-            z-index: 3000;
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-            font-size: 14px;
-            max-width: 90%;
-            text-align: center;
-            word-break: break-word;
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .live-badge {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: var(--primary-purple);
-            border-radius: 50%;
-            margin-right: 6px;
-            animation: pulse 1.5s infinite;
         }
 
         .room-type {
@@ -1914,6 +484,704 @@
             -webkit-backdrop-filter: blur(10px);
         }
 
+        .room-content {
+            padding: 12px;
+        }
+
+        .room-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+
+        .room-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .room-players, .room-time {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ===== FEATURED ROOMS ===== */
+        .featured-room, .guess-game, .best-room-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+
+        .featured-room:active, .guess-game:active, .best-room-card:active {
+            transform: scale(0.98);
+        }
+
+        .featured-header, .guess-game-header {
+            padding: 12px;
+            background: linear-gradient(90deg, var(--primary-purple), var(--neon-magenta));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .featured-title, .guess-game-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: 0.3px;
+        }
+
+        .featured-badge, .guess-game-badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .featured-content, .guess-game-content {
+            padding: 16px 12px;
+        }
+
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .player-count {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .player-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .join-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            margin-top: 12px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .join-btn:active {
+            transform: scale(0.98);
+        }
+
+        .game-image {
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .movie-scene {
+            font-size: 36px;
+            animation: floatUp 3s infinite ease-in-out;
+        }
+
+        .game-description {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .best-room-card {
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .best-room-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .best-room-info h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .best-room-info p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* ===== BOTTOM NAVIGATION ===== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(5, 0, 22, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+            z-index: 100;
+            height: 70px;
+        }
+
+        .nav-items {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 480px;
+            margin: 0 auto;
+            height: 100%;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 10px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 8px;
+            border-radius: 12px;
+            min-width: 56px;
+            font-weight: 600;
+        }
+
+        .nav-item.active {
+            color: var(--primary-purple);
+            background: rgba(106, 13, 255, 0.15);
+        }
+
+        .nav-item i {
+            font-size: 18px;
+        }
+
+        .start-party-btn {
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            color: white;
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 20px rgba(106, 13, 255, 0.3);
+            margin-top: -24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .start-party-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* ===== AGORA FLOATING WIDGET ===== */
+        .agora-widget {
+            position: fixed;
+            bottom: 80px;
+            right: 16px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 25px rgba(106, 13, 255, 0.3);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .agora-widget:active {
+            transform: scale(0.95);
+        }
+
+        .agora-widget.active {
+            width: 100vw;
+            height: 100vh;
+            bottom: 0;
+            right: 0;
+            border-radius: 0;
+            border: none;
+            transform: none;
+        }
+
+        .agora-widget-icon {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .agora-widget-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .galaxy-ui {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(160deg, var(--dark-bg-1) 0%, var(--dark-bg-2) 50%, var(--dark-bg-3) 100%);
+        }
+
+        .agora-widget.active .galaxy-ui {
+            display: block;
+        }
+
+        .galaxy-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 16px;
+            background: rgba(5, 0, 22, 0.9);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .call-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .call-stats {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .galaxy-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 0 16px;
+            z-index: 10;
+        }
+
+        .galaxy-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .galaxy-btn:active {
+            transform: scale(0.95);
+        }
+
+        .galaxy-btn.end-call {
+            background: var(--red-accent);
+        }
+
+        .sun {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            border-radius: 50%;
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
+            animation: pulse 2s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+            padding: 8px;
+            z-index: 5;
+        }
+
+        .planet {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(106, 13, 255, 0.5);
+            z-index: 4;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .planet.muted {
+            background: linear-gradient(135deg, #666, #999);
+        }
+
+        /* ===== FRIENDS MODAL ===== */
+        .friends-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .friends-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .friends-header {
+            padding: 16px;
+            background: rgba(5, 0, 22, 0.9);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .friends-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .friends-close {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 24px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .friends-close:active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .friends-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .friend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .friend-item:active {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(0.98);
+        }
+
+        .friend-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .friend-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .friend-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .friend-status {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .status-dot.offline {
+            background: var(--text-secondary);
+        }
+
+        .friend-select {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--text-secondary);
+            border-radius: 6px;
+            background: transparent;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .friend-item.selected .friend-select {
+            background: var(--primary-purple);
+            border-color: var(--primary-purple);
+        }
+
+        .friend-item.selected .friend-select::after {
+            content: '✓';
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .start-call-btn {
+            margin: 16px;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .start-call-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* ===== MODALS ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            padding: 16px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, rgba(5, 0, 22, 0.98), rgba(26, 4, 58, 0.98));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 24px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .modal-close:active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: rgba(5, 0, 22, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 20px;
+            color: white;
+            font-weight: 600;
+            z-index: 3000;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            font-size: 14px;
+            max-width: 90%;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ===== ANIMATIONS ===== */
         @keyframes float {
             0%, 100% { transform: translate(0, 0) rotate(0deg); }
             33% { transform: translate(30px, -40px) rotate(120deg); }
@@ -1923,7 +1191,7 @@
         @keyframes fadeInUp {
             from { 
                 opacity: 0; 
-                transform: translateY(30px) scale(0.95); 
+                transform: translateY(20px) scale(0.95); 
             }
             to { 
                 opacity: 1; 
@@ -1938,7 +1206,7 @@
             }
             50% { 
                 opacity: 0.7; 
-                transform: scale(1.1); 
+                transform: scale(1.05); 
             }
         }
 
@@ -1954,246 +1222,184 @@
             }
         }
 
-        @keyframes slideInDown {
+        @keyframes orbit {
             from {
-                transform: translateY(-100%);
-                opacity: 0;
+                transform: rotate(0deg) translateX(120px) rotate(0deg);
             }
             to {
-                transform: translateY(0);
-                opacity: 1;
+                transform: rotate(360deg) translateX(120px) rotate(-360deg);
             }
         }
 
-        @keyframes scaleIn {
-            from {
-                transform: scale(0.9);
-                opacity: 0;
+        /* ===== RESPONSIVE ===== */
+        @media (min-width: 400px) {
+            html {
+                font-size: 15px;
             }
-            to {
-                transform: scale(1);
-                opacity: 1;
+            
+            .trending-card {
+                flex: 0 0 280px;
+            }
+            
+            .agora-widget {
+                width: 55px;
+                height: 55px;
             }
         }
 
-        /* Optimizations for better performance */
-        .trending-card,
-        .room-card,
-        .featured-room,
-        .guess-game,
-        .best-room-card {
-            will-change: transform;
-            backface-visibility: hidden;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* Responsive adjustments */
-        @media (min-width: 480px) {
+        @media (min-width: 768px) {
             .container {
                 max-width: 480px;
                 margin: 0 auto;
             }
             
-            .trending-card {
-                flex: 0 0 260px;
-            }
-            
-            .call-notification {
-                left: 50%;
-                transform: translateX(-50%);
-                width: auto;
-            }
-        }
-
-        @media (max-width: 360px) {
             .header {
-                padding: 10px 12px;
+                padding: 16px 20px;
+                height: 64px;
             }
             
             .logo {
-                font-size: 18px;
+                font-size: 20px;
             }
             
-            .notification-btn,
-            .profile-btn {
-                width: 32px;
-                height: 32px;
-                font-size: 14px;
-            }
-            
-            .search-container {
-                padding: 10px 12px;
-            }
-            
-            .search-bar {
-                padding: 8px 12px;
-            }
-            
-            .search-bar i {
-                font-size: 14px;
-            }
-            
-            .search-bar input {
-                font-size: 13px;
+            .notification-btn, .profile-btn {
+                width: 40px;
+                height: 40px;
             }
             
             .feed-page {
-                padding: 10px;
-                height: calc(100vh - 130px);
-            }
-            
-            .section-title {
-                font-size: 18px;
-            }
-            
-            .vibe-btn {
-                padding: 14px 0;
-                font-size: 13px;
-            }
-            
-            .rooms-grid {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-            
-            .room-image {
-                height: 90px;
-            }
-            
-            .trending-card {
-                flex: 0 0 80vw;
-            }
-            
-            .trending-image {
-                height: 100px;
+                height: calc(100vh - 64px - 64px - 68px);
             }
             
             .agora-widget {
-                width: 45px;
-                height: 45px;
-                bottom: 85px;
-                right: 12px;
-            }
-            
-            .agora-widget-icon {
-                font-size: 18px;
-            }
-            
-            .sun {
-                width: 70px;
-                height: 70px;
-                font-size: 11px;
-            }
-            
-            .planet {
-                width: 35px;
-                height: 35px;
-                font-size: 9px;
-            }
-            
-            .galaxy-btn {
-                padding: 6px 12px;
-                font-size: 11px;
-                min-width: 100px;
-            }
-            
-            .bottom-nav {
-                padding: 6px 12px;
-            }
-            
-            .nav-item {
-                padding: 6px 10px;
-                min-width: 50px;
-            }
-            
-            .nav-item i {
-                font-size: 16px;
-            }
-            
-            .start-party-btn {
-                width: 50px;
-                height: 50px;
-                font-size: 22px;
-                margin-top: -20px;
+                width: 60px;
+                height: 60px;
+                bottom: 90px;
+                right: 20px;
             }
         }
 
         @media (max-width: 320px) {
-            .trending-card {
-                flex: 0 0 85vw;
-            }
-            
-            .featured-title,
-            .guess-game-title {
-                font-size: 14px;
-            }
-            
-            .player-count {
-                font-size: 24px;
-            }
-            
-            .best-room-avatar {
-                width: 50px;
-                height: 50px;
-                font-size: 20px;
-            }
-            
-            .best-room-info h4 {
-                font-size: 16px;
-            }
-        }
-
-        /* High DPI screens */
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-            .trending-card,
-            .room-card,
-            .featured-room,
-            .guess-game,
-            .best-room-card {
-                border-width: 0.5px;
-            }
-        }
-
-        /* Prevent text size adjustment on orientation change */
-        @media screen and (orientation: landscape) {
-            .feed-page {
-                height: calc(100vh - 120px);
+            .rooms-grid {
+                grid-template-columns: 1fr;
             }
             
             .trending-card {
-                flex: 0 0 45vw;
+                flex: 0 0 90vw;
             }
             
-            .trending-image {
-                height: 80px;
-            }
-            
-            .watch-party-preview {
-                height: 70px;
+            .galaxy-btn {
+                min-width: 100px;
+                padding: 10px 16px;
+                font-size: 13px;
             }
         }
 
-        /* iOS specific fixes */
-        @supports (-webkit-touch-callout: none) {
-            .feed-page {
-                -webkit-overflow-scrolling: touch;
+        /* ===== LOADING STATES ===== */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ===== UTILITY CLASSES ===== */
+        .live-badge {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: var(--primary-purple);
+            border-radius: 50%;
+            margin-right: 4px;
+            animation: pulse 1.5s infinite;
+        }
+
+        .hide {
+            display: none !important;
+        }
+
+        .show {
+            display: block !important;
+        }
+
+        /* ===== PERFORMANCE OPTIMIZATIONS ===== */
+        .will-change-transform {
+            will-change: transform;
+        }
+
+        .will-change-opacity {
+            will-change: opacity;
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-purple);
+            border-radius: 2px;
+        }
+
+        /* ===== TOUCH OPTIMIZATIONS ===== */
+        @media (hover: hover) {
+            .notification-btn:hover, .profile-btn:hover {
+                transform: translateY(-2px);
             }
             
-            input,
-            textarea {
-                font-size: 16px !important;
+            .vibe-btn:hover {
+                transform: translateY(-2px);
+            }
+            
+            .trending-card:hover {
+                transform: translateY(-4px);
+            }
+            
+            .room-card:hover {
+                transform: translateY(-4px);
+            }
+            
+            .agora-widget:hover {
+                transform: scale(1.1);
+            }
+            
+            .friend-item:hover {
+                background: rgba(255, 255, 255, 0.1);
             }
         }
     </style>
 </head>
 <body>
+    <!-- Friends Modal -->
+    <div class="friends-modal" id="friendsModal">
+        <div class="friends-header">
+            <h2 class="friends-title">Add Friends to Call</h2>
+            <button class="friends-close" onclick="closeFriendsModal()">×</button>
+        </div>
+        <div class="friends-list" id="friendsList">
+            <!-- Friends will be loaded here -->
+        </div>
+        <button class="start-call-btn" onclick="startCallWithFriends()">
+            <i class="fas fa-phone"></i> Start Call
+        </button>
+    </div>
+
     <!-- Profile Modal -->
-    <div class="profile-modal" id="profileModal">
-        <div class="profile-content">
-            <button class="profile-close" onclick="closeProfileModal()">×</button>
-            <div class="profile-header">
-                <h2 class="profile-title">Edit Profile</h2>
-                <p class="profile-subtitle">Update your information and preferences</p>
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Profile</h2>
+                <button class="modal-close" onclick="closeProfileModal()">×</button>
             </div>
             <form class="profile-form" id="profileForm">
                 <div class="avatar-upload">
@@ -2217,12 +1423,8 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label" for="userUsername">Username (Optional)</label>
+                    <label class="form-label" for="userUsername">Username</label>
                     <input type="text" id="userUsername" class="form-input" placeholder="Choose a username">
-                    <div class="username-info">
-                        <i class="fas fa-info-circle"></i>
-                        Can be changed 3 times per 3 months
-                    </div>
                 </div>
                 
                 <div class="form-actions">
@@ -2240,49 +1442,37 @@
         </div>
     </div>
 
-    <!-- Friends Selector Modal -->
-    <div class="friends-modal" id="friendsModal">
-        <div class="friends-content">
-            <div class="friends-header">
-                <h3 class="friends-title">Select Friends to Call</h3>
-                <button class="friends-close" onclick="closeFriendsModal()">×</button>
+    <!-- Coming Soon Modal -->
+    <div class="modal-overlay" id="comingSoonModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Coming Soon!</h2>
+                <button class="modal-close" onclick="closeModal()">×</button>
             </div>
-            <div class="friends-list" id="friendsList">
-                <!-- Friends will be loaded here -->
+            <div class="modal-icon">
+                <i class="fas fa-rocket"></i>
             </div>
-            <div class="friends-actions">
-                <button class="start-call-btn" onclick="startCallWithFriends()">
-                    <i class="fas fa-phone"></i> Start Call
+            <p class="modal-description" id="modalDescription">
+                This feature is currently in development. We're working hard to bring it to you soon!
+            </p>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeModal()">
+                    Got it!
+                </button>
+                <button class="modal-btn primary" onclick="openWatchParty()" id="tryItBtn">
+                    <i class="fas fa-play"></i> Try Watch Party
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Coming Soon Modal -->
-    <div class="coming-soon-modal" id="comingSoonModal">
-        <button class="modal-close" onclick="closeModal()">×</button>
-        <div class="modal-icon">
-            <i class="fas fa-rocket"></i>
-        </div>
-        <h2 class="modal-title">Coming Soon!</h2>
-        <p class="modal-description" id="modalDescription">
-            This feature is currently in development. We're working hard to bring it to you soon!
-        </p>
-        <div class="modal-buttons">
-            <button class="modal-btn secondary" onclick="closeModal()">
-                Got it!
-            </button>
-            <button class="modal-btn primary" onclick="openWatchParty()" id="tryItBtn">
-                <i class="fas fa-play"></i> Try Watch Party
-            </button>
-        </div>
-    </div>
-
     <!-- Plus Button Popup -->
-    <div class="popup-overlay" id="popupOverlay">
-        <div class="popup-content">
-            <button class="popup-close" onclick="closePopup()">×</button>
-            <h2 class="popup-title">Create New</h2>
+    <div class="modal-overlay" id="popupOverlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Create New</h2>
+                <button class="modal-close" onclick="closePopup()">×</button>
+            </div>
             <div class="popup-options">
                 <div class="popup-option" onclick="openWatchParty()">
                     <div class="option-icon">
@@ -2290,7 +1480,7 @@
                     </div>
                     <div class="option-details">
                         <h4>Watch Party</h4>
-                        <p>Synchronize videos with friends in real-time</p>
+                        <p>Synchronize videos with friends</p>
                     </div>
                 </div>
                 
@@ -2307,46 +1497,32 @@
         </div>
     </div>
 
-    <!-- Call Notification -->
-    <div class="call-notification" id="callNotification">
-        <div class="call-notification-content">
-            <div class="caller-avatar" id="callerAvatar">
-                <span>J</span>
-            </div>
-            <div class="call-info">
-                <strong id="callerName">John Doe</strong>
-                <div>is calling you</div>
-                <div class="call-actions">
-                    <button class="call-btn accept-call" onclick="acceptCall()">
-                        <i class="fas fa-phone"></i> Accept
-                    </button>
-                    <button class="call-btn reject-call" onclick="rejectCall()">
-                        <i class="fas fa-phone-slash"></i> Decline
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Agora Floating Widget -->
     <div class="agora-widget" id="agoraWidget">
         <div class="agora-widget-icon" id="agoraIcon">
             <span id="callIcon">📞</span>
         </div>
         <div class="galaxy-ui" id="galaxyUI">
-            <div class="galaxy-controls">
-                <button class="galaxy-btn" onclick="toggleMic()">
-                    <i class="fas fa-microphone"></i> Mute
-                </button>
-                <button class="galaxy-btn" onclick="closeGalaxy()">
-                    <i class="fas fa-times"></i> Close
-                </button>
-                <button class="galaxy-btn" onclick="viewAllUsers()">
-                    <i class="fas fa-users"></i> View All
-                </button>
+            <div class="galaxy-header">
+                <div>
+                    <div class="call-title">Group Call</div>
+                    <div class="call-stats" id="callStats">4 participants</div>
+                </div>
+                <div class="call-time" id="callTime">00:00</div>
             </div>
             <div class="sun" id="hostSun">
                 You (Host)
+            </div>
+            <div class="galaxy-controls">
+                <button class="galaxy-btn" onclick="toggleMic()" id="micBtn">
+                    <i class="fas fa-microphone"></i> Mute
+                </button>
+                <button class="galaxy-btn end-call" onclick="endCall()">
+                    <i class="fas fa-phone-slash"></i> End
+                </button>
+                <button class="galaxy-btn" onclick="addMoreFriends()">
+                    <i class="fas fa-user-plus"></i> Add
+                </button>
             </div>
         </div>
     </div>
@@ -2380,7 +1556,7 @@
         <div class="search-container">
             <div class="search-bar">
                 <i class="fas fa-search"></i>
-                <input type="text" placeholder="Search rooms, watch parties, or games..." id="searchInput">
+                <input type="text" placeholder="Search rooms, parties, or games..." id="searchInput">
             </div>
         </div>
 
@@ -2411,7 +1587,7 @@
                 </div>
                 <div class="trending-container">
                     <div class="trending-scroller" id="trendingRooms">
-                        <!-- Trending rooms will be loaded from Firebase -->
+                        <!-- Trending rooms will be loaded dynamically -->
                     </div>
                 </div>
             </section>
@@ -2420,7 +1596,7 @@
             <section class="trending-section">
                 <div class="trending-header">
                     <h3 class="trending-title">
-                        <i class="fas fa-bolt"></i> TRENDING WATCH PARTIES
+                        <i class="fas fa-bolt"></i> WATCH PARTIES
                     </h3>
                     <button class="view-all-btn" onclick="viewAll('watch')">
                         View All
@@ -2428,24 +1604,7 @@
                 </div>
                 <div class="trending-container">
                     <div class="trending-scroller" id="trendingWatchParties">
-                        <!-- Trending watch parties will be loaded from Firebase -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- Trending Games -->
-            <section class="trending-section">
-                <div class="trending-header">
-                    <h3 class="trending-title">
-                        <i class="fas fa-gamepad"></i> TRENDING GAMES
-                    </h3>
-                    <button class="view-all-btn" onclick="viewAll('games')">
-                        View All
-                    </button>
-                </div>
-                <div class="trending-container">
-                    <div class="trending-scroller" id="trendingGames">
-                        <!-- Trending games will be loaded from Firebase -->
+                        <!-- Trending watch parties -->
                     </div>
                 </div>
             </section>
@@ -2606,34 +1765,8 @@
 
     <!-- Main Application Script -->
     <script>
-        // Performance optimizations
-        const requestIdleCallback = window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
-        const cancelIdleCallback = window.cancelIdleCallback || ((id) => clearTimeout(id));
-
-        // Firebase Initialization
-        let firebaseApp;
-        let auth;
-        let db;
-        let storage;
-
-        // Initialize Firebase
-        function initializeFirebase() {
-            try {
-                firebaseApp = firebase.initializeApp(firebaseConfig);
-                auth = firebase.auth();
-                db = firebase.database();
-                storage = firebase.storage();
-                console.log("Firebase initialized successfully");
-            } catch (error) {
-                console.error("Firebase initialization error:", error);
-                showToast("Firebase initialization failed", "error");
-                setTimeout(() => {
-                    window.location.href = "index.html";
-                }, 2000);
-            }
-        }
-
-        // Agora Variables
+        // ===== CONFIGURATION =====
+        let firebaseApp, auth, db, storage;
         let agoraAppId = '';
         let agoraToken = '';
         let agoraChannel = '';
@@ -2644,495 +1777,269 @@
         let isMuted = false;
         let callUsers = [];
         let selectedFriends = new Set();
+        let callTimer = null;
+        let callStartTime = null;
 
-        // Initialize when DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Firebase
-            initializeFirebase();
-            
-            // Set up auth state listener
-            auth.onAuthStateChanged(handleAuthStateChange);
-            
-            // Initialize event listeners
-            initializeEventListeners();
-            
-            // Initialize trending scrollers
-            initTrendingScrollers();
-            
-            // Load data when idle
-            requestIdleCallback(() => {
-                if (auth.currentUser) {
-                    loadTrendingData();
-                }
-            });
-        });
-
-        // Handle auth state changes
-        function handleAuthStateChange(user) {
-            if (user) {
-                console.log("User logged in:", user.email);
-                document.getElementById('mainApp').style.display = 'block';
-                updateUserProfile(user);
-                initializeApp();
-                loadUserData(user.uid);
-                
-                // Initialize Agora Widget
-                initAgoraWidget(user);
-            } else {
-                console.log("User not logged in, redirecting to index.html");
+        // ===== INITIALIZATION =====
+        function initFirebase() {
+            try {
+                firebaseApp = firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                db = firebase.database();
+                storage = firebase.storage();
+                console.log("Firebase initialized");
+            } catch (error) {
+                console.error("Firebase init error:", error);
+                showToast("App initialization failed", "error");
                 window.location.href = "index.html";
             }
         }
 
-        // Initialize event listeners
-        function initializeEventListeners() {
-            // Profile form submission
-            document.getElementById('profileForm').addEventListener('submit', handleProfileSubmit);
+        function initAgora() {
+            try {
+                // Agora configuration will be loaded from agora.js
+                console.log("Agora initialized");
+            } catch (error) {
+                console.error("Agora init error:", error);
+            }
+        }
 
-            // Avatar upload preview
+        // ===== DOM READY =====
+        document.addEventListener('DOMContentLoaded', function() {
+            initFirebase();
+            initAgora();
+            
+            // Initialize UI components
+            initUIComponents();
+            
+            // Check auth state
+            auth.onAuthStateChanged(handleAuthState);
+        });
+
+        // ===== AUTH HANDLING =====
+        function handleAuthState(user) {
+            if (user) {
+                console.log("User logged in:", user.email);
+                updateUserProfile(user);
+                loadUserData(user.uid);
+                loadTrendingData();
+                initAgoraWidget(user);
+            } else {
+                console.log("User not logged in, redirecting");
+                window.location.href = "index.html";
+            }
+        }
+
+        // ===== UI INITIALIZATION =====
+        function initUIComponents() {
+            // Profile form
+            document.getElementById('profileForm').addEventListener('submit', handleProfileUpdate);
             document.getElementById('avatarInput').addEventListener('change', handleAvatarUpload);
-
-            // Close modals on outside click
-            document.getElementById('popupOverlay').addEventListener('click', function(e) {
-                if (e.target === this) closePopup();
-            });
             
-            document.getElementById('profileModal').addEventListener('click', function(e) {
-                if (e.target === this) closeProfileModal();
-            });
-            
-            document.getElementById('comingSoonModal').addEventListener('click', function(e) {
-                if (e.target === this) closeModal();
-            });
-            
-            document.getElementById('friendsModal').addEventListener('click', function(e) {
-                if (e.target === this) closeFriendsModal();
-            });
-
-            // Search input focus
+            // Search input
             document.getElementById('searchInput').addEventListener('focus', function() {
                 showComingSoon('Search Feature');
                 this.blur();
             });
-
-            // Click animations
-            document.querySelectorAll('.room-card, .featured-room, .guess-game, .best-room-card, .trending-card').forEach(element => {
-                element.addEventListener('click', function() {
-                    this.style.transform = 'scale(0.95)';
-                    setTimeout(() => {
-                        this.style.transform = '';
-                    }, 200);
-                });
-            });
-
+            
+            // Trending scrollers
+            initTrendingScrollers();
+            
+            // Agora widget click
+            document.getElementById('agoraWidget').addEventListener('click', handleAgoraWidgetClick);
+            
+            // Close modals on outside click
+            setupModalCloseHandlers();
+            
             // Keyboard shortcuts
-            document.addEventListener('keydown', handleKeyboardShortcuts);
-
-            // Prevent zoom on double tap
-            let lastTouchEnd = 0;
-            document.addEventListener('touchend', function(event) {
-                const now = (new Date()).getTime();
-                if (now - lastTouchEnd <= 300) {
-                    event.preventDefault();
-                }
-                lastTouchEnd = now;
-            }, false);
-
-            // Handle orientation change
-            window.addEventListener('orientationchange', function() {
-                setTimeout(() => {
-                    window.scrollTo(0, 0);
-                    if (isInCall && document.getElementById('agoraWidget').classList.contains('active')) {
-                        initGalaxyUI();
-                    }
-                }, 300);
-            });
-
-            // Handle visibility change for performance
-            document.addEventListener('visibilitychange', function() {
-                if (document.hidden) {
-                    // Page is hidden, pause heavy animations
-                } else {
-                    // Page is visible, resume animations
-                }
-            });
+            setupKeyboardShortcuts();
+            
+            // Touch optimizations
+            setupTouchOptimizations();
+            
+            // Simulate incoming call after delay
+            setTimeout(simulateIncomingCall, 15000);
         }
 
-        // Handle profile form submission
-        async function handleProfileSubmit(e) {
-            e.preventDefault();
-            
-            const name = document.getElementById('userName').value;
-            const email = document.getElementById('userEmail').value;
-            const username = document.getElementById('userUsername').value.trim();
-            
-            const currentUser = auth.currentUser;
-            
-            if (!currentUser) {
-                showToast("You must be logged in to update profile", "error");
-                return;
-            }
-            
-            showToast("Updating profile...", "info");
-            
-            try {
-                // Check username uniqueness
-                if (username) {
-                    const userSnapshot = await db.ref('users/' + currentUser.uid).once('value');
-                    const currentUserData = userSnapshot.val();
-                    const currentUsername = currentUserData ? currentUserData.username : null;
-                    
-                    if (username !== currentUsername) {
-                        const usernameSnapshot = await db.ref('usernames/' + username.toLowerCase()).once('value');
-                        if (usernameSnapshot.exists()) {
-                            showToast("Username already taken. Please choose another.", "error");
-                            return;
-                        }
-                    }
-                }
-                
-                let photoURL = currentUser.photoURL;
-                
-                // Handle avatar upload
-                const avatarInput = document.getElementById('avatarInput');
-                if (avatarInput.files && avatarInput.files[0]) {
-                    const file = avatarInput.files[0];
-                    showToast("Uploading image...", "info");
-                    
-                    const storageRef = storage.ref('profile_images/' + currentUser.uid + '/' + Date.now() + '_' + file.name);
-                    await storageRef.put(file);
-                    photoURL = await storageRef.getDownloadURL();
-                }
-                
-                // Get current user data
-                const userSnapshot = await db.ref('users/' + currentUser.uid).once('value');
-                const currentUserData = userSnapshot.val();
-                const oldUsername = currentUserData ? currentUserData.username : null;
-                
-                // Update Firebase auth profile
-                await currentUser.updateProfile({
-                    displayName: name,
-                    photoURL: photoURL
-                });
-                
-                if (email !== currentUser.email) {
-                    await currentUser.updateEmail(email);
-                }
-                
-                // Update usernames index
-                if (oldUsername !== username) {
-                    if (oldUsername) {
-                        await db.ref('usernames/' + oldUsername.toLowerCase()).remove();
-                    }
-                    if (username) {
-                        await db.ref('usernames/' + username.toLowerCase()).set(currentUser.uid);
-                    }
-                }
-                
-                // Save to database
-                await db.ref('users/' + currentUser.uid).set({
-                    displayName: name,
-                    email: email,
-                    username: username || null,
-                    photoURL: photoURL || null,
-                    updatedAt: Date.now()
-                }, { merge: true });
-                
-                showToast("Profile updated successfully!", "success");
-                updateUserProfile(currentUser);
-                updateAgoraWidgetIcon(currentUser);
-                
-                setTimeout(() => {
-                    closeProfileModal();
-                }, 1500);
-                
-            } catch (error) {
-                console.error("Profile update error:", error);
-                showToast("Profile update failed: " + error.message, "error");
-            }
-        }
-
-        // Handle avatar upload
-        function handleAvatarUpload(e) {
-            const file = e.target.files[0];
-            if (file) {
-                // Validate file size (max 5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                    showToast("Image must be less than 5MB", "error");
-                    return;
-                }
-                
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const avatarPreview = document.getElementById('avatarPreview');
-                    avatarPreview.innerHTML = `<img src="${event.target.result}" alt="Profile" loading="lazy">`;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // Handle keyboard shortcuts
-        function handleKeyboardShortcuts(e) {
-            // Ctrl/Cmd + N for new party
-            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-                e.preventDefault();
-                showPopup();
-            }
-            
-            // Escape to close modals
-            if (e.key === 'Escape') {
-                closePopup();
-                closeModal();
-                closeProfileModal();
-                closeFriendsModal();
-                closeGalaxy();
-            }
-            
-            // Ctrl/Cmd + P for profile
-            if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-                e.preventDefault();
-                openProfileModal();
-            }
-            
-            // Ctrl/Cmd + G for galaxy
-            if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
-                e.preventDefault();
-                toggleGalaxyUI();
-            }
-        }
-
-        // Initialize Agora Widget
+        // ===== AGORA WIDGET =====
         function initAgoraWidget(user) {
-            const agoraWidget = document.getElementById('agoraWidget');
-            
-            // Set user profile picture or initials
-            updateAgoraWidgetIcon(user);
-            
-            // Toggle widget behavior
-            agoraWidget.addEventListener('click', function(e) {
-                e.stopPropagation();
-                if (!isInCall) {
-                    // Show friends selector
-                    openFriendsModal();
-                } else {
-                    // Toggle galaxy UI
-                    toggleGalaxyUI();
-                }
-            });
-            
-            // Make widget draggable on mobile
-            let isDragging = false;
-            let startX, startY, initialX, initialY;
-            
-            agoraWidget.addEventListener('touchstart', function(e) {
-                if (isInCall && this.classList.contains('active')) return;
-                
-                isDragging = false;
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY;
-                initialX = this.offsetLeft;
-                initialY = this.offsetTop;
-                
-                e.preventDefault();
-            }, { passive: false });
-            
-            agoraWidget.addEventListener('touchmove', function(e) {
-                if (isInCall && this.classList.contains('active')) return;
-                
-                const currentX = e.touches[0].clientX;
-                const currentY = e.touches[0].clientY;
-                const dx = currentX - startX;
-                const dy = currentY - startY;
-                
-                if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-                    isDragging = true;
-                    this.style.transition = 'none';
-                    
-                    let newX = initialX + dx;
-                    let newY = initialY + dy;
-                    
-                    // Keep within screen bounds
-                    const maxX = window.innerWidth - this.offsetWidth;
-                    const maxY = window.innerHeight - this.offsetHeight;
-                    
-                    newX = Math.max(16, Math.min(newX, maxX - 16));
-                    newY = Math.max(16, Math.min(newY, maxY - 16));
-                    
-                    this.style.left = 'auto';
-                    this.style.right = 'auto';
-                    this.style.bottom = 'auto';
-                    this.style.top = newY + 'px';
-                    this.style.left = newX + 'px';
-                }
-                
-                e.preventDefault();
-            }, { passive: false });
-            
-            agoraWidget.addEventListener('touchend', function(e) {
-                if (isDragging) {
-                    this.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-                    
-                    // Snap to nearest edge
-                    const x = parseInt(this.style.left);
-                    const y = parseInt(this.style.top);
-                    const width = this.offsetWidth;
-                    const height = this.offsetHeight;
-                    const screenWidth = window.innerWidth;
-                    const screenHeight = window.innerHeight;
-                    
-                    // Determine which edge is closer
-                    const toLeft = x;
-                    const toRight = screenWidth - x - width;
-                    const toTop = y;
-                    const toBottom = screenHeight - y - height;
-                    
-                    const minDistance = Math.min(toLeft, toRight, toTop, toBottom);
-                    
-                    let finalX = x;
-                    let finalY = y;
-                    
-                    if (minDistance === toLeft) {
-                        finalX = 16;
-                    } else if (minDistance === toRight) {
-                        finalX = screenWidth - width - 16;
-                    } else if (minDistance === toTop) {
-                        finalY = 16;
-                    } else {
-                        finalY = screenHeight - height - 90; // Above bottom nav
-                    }
-                    
-                    this.style.left = finalX + 'px';
-                    this.style.top = finalY + 'px';
-                    
-                    isDragging = false;
-                    e.preventDefault();
-                    return;
-                }
-            });
+            const agoraIcon = document.getElementById('agoraIcon');
+            if (user.photoURL) {
+                agoraIcon.innerHTML = `<img src="${user.photoURL}" alt="Profile" loading="lazy">`;
+            } else {
+                const initials = user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U';
+                agoraIcon.innerHTML = `<span>${initials}</span>`;
+            }
         }
 
-        // Update Agora widget icon
+        function handleAgoraWidgetClick(e) {
+            if (!isInCall) {
+                // Open friends modal to start a call
+                e.stopPropagation();
+                openFriendsModal();
+            } else {
+                // Toggle galaxy UI
+                const widget = document.getElementById('agoraWidget');
+                widget.classList.toggle('active');
+                if (widget.classList.contains('active')) {
+                    initGalaxyUI();
+                }
+            }
+        }
+
         function updateAgoraWidgetIcon(user) {
             const agoraIcon = document.getElementById('agoraIcon');
             if (user.photoURL) {
                 agoraIcon.innerHTML = `<img src="${user.photoURL}" alt="Profile" loading="lazy">`;
             } else {
                 const initials = user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U';
-                agoraIcon.innerHTML = `<span style="font-size:18px;">${initials}</span>`;
+                agoraIcon.innerHTML = `<span>${initials}</span>`;
             }
         }
 
-        // Toggle Galaxy UI
-        function toggleGalaxyUI() {
-            const agoraWidget = document.getElementById('agoraWidget');
-            agoraWidget.classList.toggle('active');
-            
-            if (agoraWidget.classList.contains('active')) {
-                document.body.style.overflow = 'hidden';
-                initGalaxyUI();
-            } else {
-                document.body.style.overflow = 'auto';
-            }
-        }
-
-        // Open friends modal
+        // ===== FRIENDS MODAL =====
         function openFriendsModal() {
-            const modal = document.getElementById('friendsModal');
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
             loadFriendsList();
+            document.getElementById('friendsModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
 
-        // Close friends modal
         function closeFriendsModal() {
-            const modal = document.getElementById('friendsModal');
-            modal.classList.remove('active');
+            document.getElementById('friendsModal').classList.remove('active');
             document.body.style.overflow = 'auto';
             selectedFriends.clear();
         }
 
-        // Load friends list
         async function loadFriendsList() {
             const friendsList = document.getElementById('friendsList');
-            friendsList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);">Loading friends...</div>';
+            friendsList.innerHTML = '';
             
-            // Simulate loading from Firebase
-            setTimeout(() => {
-                const demoFriends = [
-                    { id: 1, name: 'Alex Johnson', online: true },
-                    { id: 2, name: 'Sam Wilson', online: true },
-                    { id: 3, name: 'Taylor Swift', online: false },
-                    { id: 4, name: 'John Doe', online: true },
-                    { id: 5, name: 'Emma Watson', online: true },
-                    { id: 6, name: 'Chris Evans', online: false }
-                ];
+            // Demo friends data - in real app, fetch from Firebase
+            const demoFriends = [
+                { id: '1', name: 'Alex Johnson', status: 'online', initial: 'A' },
+                { id: '2', name: 'Sam Wilson', status: 'online', initial: 'S' },
+                { id: '3', name: 'Taylor Swift', status: 'offline', initial: 'T' },
+                { id: '4', name: 'Jordan Lee', status: 'online', initial: 'J' },
+                { id: '5', name: 'Casey Smith', status: 'online', initial: 'C' },
+                { id: '6', name: 'Morgan Reed', status: 'offline', initial: 'M' }
+            ];
+            
+            demoFriends.forEach(friend => {
+                const friendItem = document.createElement('div');
+                friendItem.className = 'friend-item';
+                friendItem.dataset.id = friend.id;
                 
-                friendsList.innerHTML = '';
-                demoFriends.forEach(friend => {
-                    const friendItem = document.createElement('div');
-                    friendItem.className = 'friend-item';
-                    friendItem.innerHTML = `
-                        <div class="friend-avatar">${friend.name.charAt(0)}</div>
-                        <div class="friend-info">
-                            <div class="friend-name">${friend.name}</div>
-                            <div class="friend-status">
-                                <span class="status-indicator ${friend.online ? 'online' : ''}"></span>
-                                <span>${friend.online ? 'Online' : 'Offline'}</span>
-                            </div>
+                friendItem.innerHTML = `
+                    <div class="friend-avatar">${friend.initial}</div>
+                    <div class="friend-info">
+                        <div class="friend-name">${friend.name}</div>
+                        <div class="friend-status">
+                            <span class="status-dot ${friend.status}"></span>
+                            ${friend.status === 'online' ? 'Online' : 'Offline'}
                         </div>
-                        <div class="friend-checkbox ${selectedFriends.has(friend.id) ? 'checked' : ''}" 
-                             onclick="toggleFriendSelection(${friend.id}, this)">
-                            ${selectedFriends.has(friend.id) ? '✓' : ''}
-                        </div>
-                    `;
-                    friendsList.appendChild(friendItem);
+                    </div>
+                    <div class="friend-select"></div>
+                `;
+                
+                friendItem.addEventListener('click', function(e) {
+                    if (!e.target.classList.contains('friend-select')) {
+                        const id = this.dataset.id;
+                        if (selectedFriends.has(id)) {
+                            selectedFriends.delete(id);
+                            this.classList.remove('selected');
+                        } else {
+                            selectedFriends.add(id);
+                            this.classList.add('selected');
+                        }
+                    }
                 });
-            }, 300);
+                
+                friendsList.appendChild(friendItem);
+            });
         }
 
-        // Toggle friend selection
-        function toggleFriendSelection(friendId, element) {
-            if (selectedFriends.has(friendId)) {
-                selectedFriends.delete(friendId);
-                element.classList.remove('checked');
-                element.innerHTML = '';
-            } else {
-                selectedFriends.add(friendId);
-                element.classList.add('checked');
-                element.innerHTML = '✓';
-            }
-        }
-
-        // Start call with selected friends
         function startCallWithFriends() {
             if (selectedFriends.size === 0) {
-                showToast("Select at least one friend to call", "warning");
+                showToast("Select at least one friend", "error");
                 return;
             }
             
             closeFriendsModal();
-            showToast("Starting group call...", "info");
-            
-            // In a real app, initialize Agora SDK here
-            isInCall = true;
-            document.getElementById('callIcon').textContent = '📞';
+            startGroupCall();
             
             // Add selected friends to call
             callUsers = Array.from(selectedFriends).map(id => ({
-                id: id,
-                name: `Friend ${id}`,
-                isMuted: false
+                id,
+                name: getFriendName(id),
+                isMuted: false,
+                isVideoOn: false
             }));
             
-            showToast(`Call started with ${selectedFriends.size} friends`, "success");
-            
-            // Open galaxy UI
-            setTimeout(() => {
-                toggleGalaxyUI();
-            }, 500);
+            showToast(`Starting call with ${selectedFriends.size} friends...`, "success");
         }
 
-        // Initialize Galaxy UI
+        function addMoreFriends() {
+            closeGalaxyUI();
+            openFriendsModal();
+        }
+
+        function getFriendName(id) {
+            const names = {
+                '1': 'Alex Johnson',
+                '2': 'Sam Wilson',
+                '3': 'Taylor Swift',
+                '4': 'Jordan Lee',
+                '5': 'Casey Smith',
+                '6': 'Morgan Reed'
+            };
+            return names[id] || 'Friend';
+        }
+
+        // ===== GROUP CALL =====
+        function startGroupCall() {
+            isInCall = true;
+            document.getElementById('callIcon').textContent = '📞';
+            
+            // Show galaxy UI
+            const widget = document.getElementById('agoraWidget');
+            widget.classList.add('active');
+            
+            // Start call timer
+            callStartTime = Date.now();
+            updateCallTimer();
+            callTimer = setInterval(updateCallTimer, 1000);
+            
+            // Initialize UI
+            initGalaxyUI();
+            
+            showToast("Group call started", "success");
+        }
+
+        function endCall() {
+            isInCall = false;
+            closeGalaxyUI();
+            
+            // Clear timer
+            if (callTimer) {
+                clearInterval(callTimer);
+                callTimer = null;
+            }
+            
+            // Reset widget
+            document.getElementById('callIcon').textContent = '📞';
+            document.getElementById('agoraWidget').classList.remove('active');
+            
+            // Clear users
+            callUsers = [];
+            selectedFriends.clear();
+            
+            showToast("Call ended", "info");
+        }
+
+        function closeGalaxyUI() {
+            document.getElementById('agoraWidget').classList.remove('active');
+        }
+
         function initGalaxyUI() {
             const galaxyUI = document.getElementById('galaxyUI');
             const hostSun = document.getElementById('hostSun');
@@ -3140,33 +2047,18 @@
             // Clear existing planets
             document.querySelectorAll('.planet').forEach(planet => planet.remove());
             
-            // Calculate responsive positions
-            const isLandscape = window.innerWidth > window.innerHeight;
-            const baseRadius = isLandscape ? 120 : 100;
-            const planetSize = isLandscape ? 35 : 30;
-            
-            // Update sun size
-            hostSun.style.width = `${isLandscape ? 70 : 60}px`;
-            hostSun.style.height = `${isLandscape ? 70 : 60}px`;
-            hostSun.style.fontSize = isLandscape ? '11px' : '10px';
-            
             // Add planets for each user in call
             callUsers.forEach((user, index) => {
                 const planet = document.createElement('div');
-                planet.className = 'planet';
+                planet.className = `planet ${user.isMuted ? 'muted' : ''}`;
                 planet.id = `planet-${user.id}`;
                 planet.textContent = user.name.charAt(0);
                 planet.title = `${user.name} ${user.isMuted ? '(Muted)' : ''}`;
-                planet.style.background = user.isMuted ? 
-                    'linear-gradient(135deg, #666, #999)' : 
-                    'linear-gradient(135deg, var(--primary-purple), var(--neon-magenta))';
-                planet.style.width = `${planetSize}px`;
-                planet.style.height = `${planetSize}px`;
-                planet.style.fontSize = `${planetSize * 0.3}px`;
                 
-                // Calculate orbit position
+                // Calculate orbit position for mobile
+                const isMobile = window.innerWidth <= 768;
+                const radius = isMobile ? 100 : 150;
                 const angle = (index / callUsers.length) * 360;
-                const radius = baseRadius + (index % 2) * 30; // Alternate radius for depth
                 const x = radius * Math.cos(angle * Math.PI / 180);
                 const y = radius * Math.sin(angle * Math.PI / 180);
                 
@@ -3177,150 +2069,186 @@
                 // Add click event
                 planet.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    showUserOptions(user);
+                    toggleUserMute(user.id);
                 });
                 
                 galaxyUI.appendChild(planet);
             });
+            
+            // Update call stats
+            document.getElementById('callStats').textContent = `${callUsers.length + 1} participants`;
         }
 
-        // Show user options
-        function showUserOptions(user) {
-            const options = [
-                `${user.isMuted ? 'Unmute' : 'Mute'} ${user.name}`,
-                `Remove ${user.name} from call`,
-                `Add ${user.name} as friend`,
-                'View profile'
-            ];
-            
-            showToast(`Options for ${user.name}`, "info");
-            
-            // In a real app, show a context menu
-            setTimeout(() => {
-                const action = confirm(`${user.name}\n\n1. ${user.isMuted ? 'Unmute' : 'Mute'}\n2. Remove\n3. Add friend\n4. View profile\n\nClick OK to toggle mute`);
-                
-                if (action) {
-                    user.isMuted = !user.isMuted;
-                    showToast(`${user.name} ${user.isMuted ? 'muted' : 'unmuted'}`, "success");
-                    initGalaxyUI();
-                }
-            }, 100);
-        }
-
-        // Toggle microphone
         function toggleMic() {
             isMuted = !isMuted;
-            showToast(`Microphone ${isMuted ? 'muted' : 'unmuted'}`, "success");
+            const micBtn = document.getElementById('micBtn');
+            const icon = micBtn.querySelector('i');
             
-            // Update UI
-            const micBtn = document.querySelector('.galaxy-btn i');
-            if (micBtn) {
-                micBtn.className = isMuted ? 'fas fa-microphone-slash' : 'fas fa-microphone';
-                micBtn.parentElement.innerHTML = `${isMuted ? '<i class="fas fa-microphone-slash"></i> Unmute' : '<i class="fas fa-microphone"></i> Mute'}`;
+            if (isMuted) {
+                icon.className = 'fas fa-microphone-slash';
+                micBtn.innerHTML = '<i class="fas fa-microphone-slash"></i> Unmute';
+                showToast("Microphone muted", "info");
+            } else {
+                icon.className = 'fas fa-microphone';
+                micBtn.innerHTML = '<i class="fas fa-microphone"></i> Mute';
+                showToast("Microphone unmuted", "success");
             }
         }
 
-        // Close galaxy UI
-        function closeGalaxy() {
-            document.getElementById('agoraWidget').classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
-
-        // View all users
-        function viewAllUsers() {
-            showToast(`Viewing all ${callUsers.length} users in call`, "info");
-            
-            // Create a simple modal
-            const userList = callUsers.map(u => `• ${u.name} ${u.isMuted ? '(Muted)' : ''}`).join('\n');
-            alert(`Users in call:\n\n${userList}`);
-        }
-
-        // Simulate incoming call (for demo)
-        function simulateIncomingCall() {
-            const notification = document.getElementById('callNotification');
-            const callerName = document.getElementById('callerName');
-            const callerAvatar = document.getElementById('callerAvatar');
-            
-            const demoCallers = [
-                { name: 'Alex Johnson', initial: 'A' },
-                { name: 'Sam Wilson', initial: 'S' },
-                { name: 'Taylor Swift', initial: 'T' }
-            ];
-            
-            const caller = demoCallers[Math.floor(Math.random() * demoCallers.length)];
-            callerName.textContent = caller.name;
-            callerAvatar.innerHTML = `<span>${caller.initial}</span>`;
-            
-            notification.classList.add('active');
-            
-            // Auto decline after 30 seconds
-            setTimeout(() => {
-                if (notification.classList.contains('active')) {
-                    rejectCall();
+        function toggleUserMute(userId) {
+            const user = callUsers.find(u => u.id === userId);
+            if (user) {
+                user.isMuted = !user.isMuted;
+                const planet = document.getElementById(`planet-${userId}`);
+                if (planet) {
+                    planet.classList.toggle('muted', user.isMuted);
+                    planet.title = `${user.name} ${user.isMuted ? '(Muted)' : ''}`;
+                    showToast(`${user.name} ${user.isMuted ? 'muted' : 'unmuted'}`, "info");
                 }
-            }, 30000);
+            }
         }
 
-        // Accept call
-        function acceptCall() {
-            const notification = document.getElementById('callNotification');
-            notification.classList.remove('active');
+        function updateCallTimer() {
+            if (!callStartTime) return;
             
-            showToast("Call accepted", "success");
+            const elapsed = Date.now() - callStartTime;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
             
-            // Start call
-            isInCall = true;
-            document.getElementById('callIcon').textContent = '📞';
-            
-            // Add demo users
-            callUsers = [
-                { id: 1, name: 'Alex Johnson', isMuted: false },
-                { id: 2, name: 'Sam Wilson', isMuted: true }
+            document.getElementById('callTime').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // ===== TRENDING DATA =====
+        function loadTrendingData() {
+            loadTrendingRooms();
+            loadTrendingWatchParties();
+            loadTrendingGames();
+        }
+
+        function loadTrendingRooms() {
+            const container = document.getElementById('trendingRooms');
+            const rooms = [
+                {
+                    id: 1,
+                    name: "Horror Movie Night",
+                    description: "Watching classic horror films",
+                    image: "linear-gradient(135deg, #1a1a2e, #16213e)",
+                    players: 42,
+                    badge: "🔥 HOT"
+                },
+                {
+                    id: 2,
+                    name: "Anime Marathon",
+                    description: "24-hour anime streaming party",
+                    image: "linear-gradient(135deg, #3a0ca3, #4361ee)",
+                    players: 89,
+                    badge: "⚡ TRENDING"
+                },
+                {
+                    id: 3,
+                    name: "Karaoke Party",
+                    description: "Sing your heart out with friends",
+                    image: "linear-gradient(135deg, #ff6b6b, #ffa502)",
+                    players: 56,
+                    badge: "🎤 LIVE"
+                }
             ];
             
-            // Open galaxy UI
-            setTimeout(() => {
-                toggleGalaxyUI();
-            }, 500);
+            container.innerHTML = rooms.map(room => `
+                <div class="trending-card" onclick="showToast('Opening ${room.name}...', 'info')">
+                    <div class="trending-image" style="background: ${room.image}">
+                        <div class="trending-badge">
+                            <span class="live-badge"></span> ${room.badge}
+                        </div>
+                    </div>
+                    <div class="trending-content">
+                        <h4 class="trending-name">${room.name}</h4>
+                        <p class="trending-details">${room.description}</p>
+                        <div class="trending-stats">
+                            <div class="trending-players">
+                                <i class="fas fa-users"></i>
+                                <span>${room.players} active</span>
+                            </div>
+                            <div class="trending-time">
+                                <i class="fas fa-circle"></i>
+                                <span>LIVE</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        // Reject call
-        function rejectCall() {
-            const notification = document.getElementById('callNotification');
-            notification.classList.remove('active');
-            showToast("Call declined", "info");
-        }
-
-        // Initialize trending scrollers
-        function initTrendingScrollers() {
-            const scrollers = document.querySelectorAll('.trending-scroller');
+        function loadTrendingWatchParties() {
+            const container = document.getElementById('trendingWatchParties');
+            const parties = [
+                {
+                    id: 1,
+                    name: "Marvel Movie Marathon",
+                    description: "Watching all Marvel movies in order",
+                    image: "linear-gradient(135deg, #1e3c72, #2a5298)",
+                    players: 156,
+                    badge: "🎬 LIVE"
+                },
+                {
+                    id: 2,
+                    name: "Football Finals",
+                    description: "Championship game watch party",
+                    image: "linear-gradient(135deg, #00b894, #00cec9)",
+                    players: 234,
+                    badge: "⚽ LIVE"
+                }
+            ];
             
-            scrollers.forEach(scroller => {
+            container.innerHTML = parties.map(party => `
+                <div class="trending-card" onclick="openWatchParty()">
+                    <div class="trending-image" style="background: ${party.image}">
+                        <div class="trending-badge">
+                            <span class="live-badge"></span> ${party.badge}
+                        </div>
+                    </div>
+                    <div class="trending-content">
+                        <h4 class="trending-name">${party.name}</h4>
+                        <p class="trending-details">${party.description}</p>
+                        <div class="trending-stats">
+                            <div class="trending-players">
+                                <i class="fas fa-users"></i>
+                                <span>${party.players} watching</span>
+                            </div>
+                            <div class="trending-time">
+                                <i class="far fa-clock"></i>
+                                <span>Live Now</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadTrendingGames() {
+            // Similar implementation for games
+        }
+
+        // ===== UI UTILITIES =====
+        function initTrendingScrollers() {
+            document.querySelectorAll('.trending-scroller').forEach(scroller => {
                 let isDown = false;
                 let startX;
                 let scrollLeft;
-                let velocity = 0;
-                let animationId;
                 
-                // Mouse events
                 scroller.addEventListener('mousedown', (e) => {
                     isDown = true;
-                    scroller.style.cursor = 'grabbing';
                     startX = e.pageX - scroller.offsetLeft;
                     scrollLeft = scroller.scrollLeft;
-                    velocity = 0;
-                    cancelAnimationFrame(animationId);
                 });
                 
                 scroller.addEventListener('mouseleave', () => {
                     isDown = false;
-                    scroller.style.cursor = 'grab';
                 });
                 
                 scroller.addEventListener('mouseup', () => {
                     isDown = false;
-                    scroller.style.cursor = 'grab';
-                    applyMomentum();
                 });
                 
                 scroller.addEventListener('mousemove', (e) => {
@@ -3328,350 +2256,23 @@
                     e.preventDefault();
                     const x = e.pageX - scroller.offsetLeft;
                     const walk = (x - startX) * 2;
-                    const prevScrollLeft = scroller.scrollLeft;
                     scroller.scrollLeft = scrollLeft - walk;
-                    velocity = scroller.scrollLeft - prevScrollLeft;
                 });
                 
-                // Touch events
-                let touchStartX;
-                let touchScrollLeft;
-                
+                // Touch support
                 scroller.addEventListener('touchstart', (e) => {
-                    touchStartX = e.touches[0].pageX;
-                    touchScrollLeft = scroller.scrollLeft;
-                    velocity = 0;
-                    cancelAnimationFrame(animationId);
-                }, { passive: true });
+                    startX = e.touches[0].pageX - scroller.offsetLeft;
+                    scrollLeft = scroller.scrollLeft;
+                });
                 
                 scroller.addEventListener('touchmove', (e) => {
-                    const x = e.touches[0].pageX;
-                    const walk = (x - touchStartX) * 2;
-                    const prevScrollLeft = scroller.scrollLeft;
-                    scroller.scrollLeft = touchScrollLeft - walk;
-                    velocity = scroller.scrollLeft - prevScrollLeft;
-                }, { passive: true });
-                
-                scroller.addEventListener('touchend', () => {
-                    applyMomentum();
-                }, { passive: true });
-                
-                // Apply momentum scrolling
-                function applyMomentum() {
-                    const friction = 0.95;
-                    
-                    function animate() {
-                        velocity *= friction;
-                        scroller.scrollLeft += velocity;
-                        
-                        if (Math.abs(velocity) > 0.5) {
-                            animationId = requestAnimationFrame(animate);
-                        }
-                    }
-                    
-                    animationId = requestAnimationFrame(animate);
-                }
-                
-                // Set initial cursor
-                scroller.style.cursor = 'grab';
+                    const x = e.touches[0].pageX - scroller.offsetLeft;
+                    const walk = (x - startX) * 2;
+                    scroller.scrollLeft = scrollLeft - walk;
+                });
             });
         }
 
-        // Load trending data
-        function loadTrendingData() {
-            loadTrendingRooms();
-            loadTrendingWatchParties();
-            loadTrendingGames();
-        }
-
-        // Load trending rooms
-        function loadTrendingRooms() {
-            const roomsContainer = document.getElementById('trendingRooms');
-            
-            // Demo data
-            const trendingRooms = [
-                {
-                    id: 1,
-                    name: "Horror Movie Night",
-                    description: "Watching classic horror films with live reactions",
-                    image: "https://images.unsplash.com/photo-1531259683007-016a7b628fc3?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-                    players: 42,
-                    type: "LIVE",
-                    badge: "🔥 HOT"
-                },
-                {
-                    id: 2,
-                    name: "Anime Marathon",
-                    description: "24-hour anime streaming party",
-                    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-                    players: 89,
-                    type: "LIVE",
-                    badge: "⚡ TRENDING"
-                },
-                {
-                    id: 3,
-                    name: "Karaoke Party",
-                    description: "Sing your heart out with friends",
-                    image: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-                    players: 56,
-                    type: "UPCOMING",
-                    badge: "🎤 LIVE"
-                }
-            ];
-            
-            roomsContainer.innerHTML = '';
-            
-            trendingRooms.forEach(room => {
-                const roomCard = createTrendingCard(room, 'room');
-                roomsContainer.appendChild(roomCard);
-            });
-        }
-
-        // Load trending watch parties
-        function loadTrendingWatchParties() {
-            const partiesContainer = document.getElementById('trendingWatchParties');
-            
-            // Demo data
-            const trendingParties = [
-                {
-                    id: 1,
-                    name: "Marvel Movie Marathon",
-                    description: "Watching all Marvel movies in order",
-                    image: "https://images.unsplash.com/photo-1635805737707-575885ab0820?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-                    players: 156,
-                    type: "LIVE",
-                    badge: "🎬 LIVE",
-                    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-                    time: "Live Now"
-                },
-                {
-                    id: 2,
-                    name: "Football Finals Watch",
-                    description: "Championship game watch party",
-                    image: "https://images.unsplash.com/photo-1531416738519-cf1b25c203cc?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-                    players: 234,
-                    type: "UPCOMING",
-                    badge: "⏰ SOON",
-                    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-                    time: "Starts in 30 min"
-                }
-            ];
-            
-            partiesContainer.innerHTML = '';
-            
-            trendingParties.forEach(party => {
-                const partyCard = createTrendingCard(party, 'watch');
-                partiesContainer.appendChild(partyCard);
-            });
-        }
-
-        // Load trending games
-        function loadTrendingGames() {
-            const gamesContainer = document.getElementById('trendingGames');
-            
-            // Demo data
-            const trendingGames = [
-                {
-                    id: 1,
-                    name: "Among Us Tournament",
-                    description: "Find the imposter! Weekly tournament",
-                    image: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-                    players: 78,
-                    type: "LIVE",
-                    badge: "🎮 LIVE"
-                },
-                {
-                    id: 2,
-                    name: "Chess Championship",
-                    description: "International chess tournament",
-                    image: "https://images.unsplash.com/photo-1586165368502-1bad197a6461?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-                    players: 45,
-                    type: "LIVE",
-                    badge: "♟️ LIVE"
-                },
-                {
-                    id: 3,
-                    name: "Poker Night",
-                    description: "High stakes poker tournament",
-                    image: "https://images.unsplash.com/photo-1611597617014-9970403724e9?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-                    players: 32,
-                    type: "UPCOMING",
-                    badge: "🃏 SOON"
-                }
-            ];
-            
-            gamesContainer.innerHTML = '';
-            
-            trendingGames.forEach(game => {
-                const gameCard = createTrendingCard(game, 'game');
-                gamesContainer.appendChild(gameCard);
-            });
-        }
-
-        // Create trending card
-        function createTrendingCard(item, type) {
-            const card = document.createElement('div');
-            card.className = 'trending-card';
-            
-            let url = '';
-            switch(type) {
-                case 'room': url = `rooms.html?id=${item.id}`; break;
-                case 'watch': url = `watch.html?id=${item.id}`; break;
-                case 'game': url = `games.html?id=${item.id}`; break;
-            }
-            
-            card.onclick = () => {
-                showToast(`Opening ${item.name}...`, "info");
-                setTimeout(() => {
-                    window.location.href = url;
-                }, 300);
-            };
-            
-            let content = '';
-            
-            if (type === 'watch') {
-                content = `
-                    <div class="trending-image" style="background-image: url('${item.image}')">
-                        <div class="trending-badge">
-                            <span class="live-badge"></span> ${item.badge}
-                        </div>
-                    </div>
-                    <div class="trending-content">
-                        <div class="watch-party-preview">
-                            <iframe src="${item.videoUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
-                            <div class="preview-overlay">
-                                <i class="fas fa-lock"></i>
-                                <div>Join to continue watching</div>
-                                <small>Free preview ended</small>
-                            </div>
-                        </div>
-                        <h4 class="trending-name">${item.name}</h4>
-                        <p class="trending-details">${item.description}</p>
-                        <div class="trending-stats">
-                            <div class="trending-players">
-                                <i class="fas fa-users"></i>
-                                <span>${item.players} watching</span>
-                            </div>
-                            <div class="trending-time">
-                                <i class="far fa-clock"></i>
-                                <span>${item.time}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                content = `
-                    <div class="trending-image" style="background-image: url('${item.image}')">
-                        <div class="trending-badge">
-                            <span class="live-badge"></span> ${item.badge}
-                        </div>
-                    </div>
-                    <div class="trending-content">
-                        <h4 class="trending-name">${item.name}</h4>
-                        <p class="trending-details">${item.description}</p>
-                        <div class="trending-stats">
-                            <div class="trending-players">
-                                <i class="fas fa-users"></i>
-                                <span>${item.players} ${type === 'game' ? 'playing' : 'active'}</span>
-                            </div>
-                            <div class="trending-time">
-                                <i class="fas fa-circle"></i>
-                                <span>${item.type}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            card.innerHTML = content;
-            return card;
-        }
-
-        // View all items
-        function viewAll(type) {
-            let url = '';
-            let title = '';
-            
-            switch(type) {
-                case 'rooms':
-                    url = 'rooms.html';
-                    title = 'All Trending Rooms';
-                    break;
-                case 'watch':
-                    url = 'watch.html';
-                    title = 'All Watch Parties';
-                    break;
-                case 'games':
-                    url = 'games.html';
-                    title = 'All Trending Games';
-                    break;
-            }
-            
-            showToast(`Opening ${title}...`, "info");
-            setTimeout(() => {
-                window.location.href = url;
-            }, 300);
-        }
-
-        // Load user data from Firebase
-        async function loadUserData(uid) {
-            try {
-                const snapshot = await db.ref('users/' + uid).once('value');
-                const userData = snapshot.val();
-                
-                if (userData) {
-                    document.getElementById('userName').value = userData.displayName || '';
-                    document.getElementById('userEmail').value = userData.email || '';
-                    document.getElementById('userUsername').value = userData.username || '';
-                    
-                    if (userData.photoURL) {
-                        const avatarPreview = document.getElementById('avatarPreview');
-                        avatarPreview.innerHTML = `<img src="${userData.photoURL}" alt="Profile" loading="lazy">`;
-                    }
-                }
-            } catch (error) {
-                console.error("Error loading user data:", error);
-            }
-        }
-
-        // Update user profile in UI
-        function updateUserProfile(user) {
-            const profileBtn = document.getElementById('profileBtn');
-            const profileInitials = document.getElementById('profileInitials');
-            const avatarPreview = document.getElementById('avatarPreview');
-            const avatarInitials = document.getElementById('avatarInitials');
-            
-            if (user) {
-                let initials = 'U';
-                if (user.displayName) {
-                    initials = user.displayName.charAt(0).toUpperCase();
-                } else if (user.email) {
-                    initials = user.email.charAt(0).toUpperCase();
-                }
-                
-                // Update profile button
-                if (user.photoURL) {
-                    profileBtn.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;" loading="lazy">`;
-                } else {
-                    profileInitials.textContent = initials;
-                }
-                
-                // Update profile modal avatar
-                if (avatarPreview) {
-                    if (user.photoURL) {
-                        avatarPreview.innerHTML = `<img src="${user.photoURL}" alt="Profile" loading="lazy">`;
-                    } else {
-                        avatarInitials.textContent = initials;
-                    }
-                }
-                
-                // Update form fields
-                document.getElementById('userName').value = user.displayName || '';
-                document.getElementById('userEmail').value = user.email || '';
-            }
-        }
-
-        // Show toast notification
         function showToast(message, type = 'info') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
@@ -3698,164 +2299,343 @@
             }, 3000);
         }
 
-        // Initialize app function
-        function initializeApp() {
-            // Add floating animation to plus button
-            setInterval(() => {
-                const btn = document.getElementById('startPartyBtn');
-                btn.style.transform = 'translateY(-6px)';
-                setTimeout(() => {
-                    btn.style.transform = '';
-                }, 800);
-            }, 4000);
+        // ===== MODAL HANDLERS =====
+        function setupModalCloseHandlers() {
+            document.getElementById('popupOverlay').addEventListener('click', function(e) {
+                if (e.target === this) closePopup();
+            });
             
-            // Simulate live updates
-            simulateLiveUpdates();
+            document.getElementById('profileModal').addEventListener('click', function(e) {
+                if (e.target === this) closeProfileModal();
+            });
             
-            // Simulate incoming call after delay
-            setTimeout(() => {
-                simulateIncomingCall();
-            }, 15000);
+            document.getElementById('comingSoonModal').addEventListener('click', function(e) {
+                if (e.target === this) closeModal();
+            });
+            
+            document.getElementById('friendsModal').addEventListener('click', function(e) {
+                if (e.target === this) closeFriendsModal();
+            });
         }
 
-        // Show popup
         function showPopup() {
-            const popup = document.getElementById('popupOverlay');
-            popup.classList.add('active');
+            document.getElementById('popupOverlay').classList.add('active');
             document.body.style.overflow = 'hidden';
         }
 
-        // Close popup
         function closePopup() {
-            const popup = document.getElementById('popupOverlay');
-            popup.classList.remove('active');
+            document.getElementById('popupOverlay').classList.remove('active');
             document.body.style.overflow = 'auto';
         }
 
-        // Open profile modal
         function openProfileModal() {
-            const modal = document.getElementById('profileModal');
-            modal.classList.add('active');
+            document.getElementById('profileModal').classList.add('active');
             document.body.style.overflow = 'hidden';
         }
 
-        // Close profile modal
         function closeProfileModal() {
-            const modal = document.getElementById('profileModal');
-            modal.classList.remove('active');
+            document.getElementById('profileModal').classList.remove('active');
             document.body.style.overflow = 'auto';
         }
 
-        // Show coming soon modal
         function showComingSoon(feature) {
-            const modal = document.getElementById('comingSoonModal');
-            const description = document.getElementById('modalDescription');
-            
-            description.textContent = `${feature} is currently in development. We're working hard to bring it to you soon!`;
-            
-            modal.classList.add('active');
+            document.getElementById('modalDescription').textContent = 
+                `${feature} is coming soon! We're working hard to bring it to you.`;
+            document.getElementById('comingSoonModal').classList.add('active');
             document.body.style.overflow = 'hidden';
         }
 
-        // Close modal
         function closeModal() {
-            const modal = document.getElementById('comingSoonModal');
-            modal.classList.remove('active');
+            document.getElementById('comingSoonModal').classList.remove('active');
             document.body.style.overflow = 'auto';
         }
 
-        // Open watch party page
         function openWatchParty() {
             closeModal();
             closePopup();
             showToast("Opening Watch Party...", "info");
             setTimeout(() => {
                 window.location.href = "watch.html";
-            }, 300);
+            }, 500);
         }
 
-        // Simulate live updates
-        function simulateLiveUpdates() {
-            setInterval(() => {
-                // Update player counts
-                const counts = document.querySelectorAll('.player-count');
-                counts.forEach(count => {
-                    const current = parseInt(count.textContent);
-                    const change = Math.floor(Math.random() * 3) - 1;
-                    const newCount = Math.max(1, current + change);
-                    if (change !== 0) {
-                        count.textContent = newCount;
-                        count.style.animation = 'none';
-                        setTimeout(() => {
-                            count.style.animation = 'pulse 0.5s ease';
-                        }, 10);
-                    }
-                });
+        // ===== USER PROFILE =====
+        async function loadUserData(uid) {
+            try {
+                const snapshot = await db.ref('users/' + uid).once('value');
+                const userData = snapshot.val();
                 
-                // Update trending counts
-                const trendingCounts = document.querySelectorAll('.trending-players span');
-                trendingCounts.forEach(count => {
-                    const text = count.textContent;
-                    const current = parseInt(text);
-                    if (!isNaN(current)) {
-                        const change = Math.floor(Math.random() * 5) - 2;
-                        const newCount = Math.max(1, current + change);
-                        if (change !== 0) {
-                            count.textContent = `${newCount} ${text.includes('watching') ? 'watching' : text.includes('playing') ? 'playing' : 'active'}`;
-                        }
+                if (userData) {
+                    document.getElementById('userName').value = userData.displayName || '';
+                    document.getElementById('userEmail').value = userData.email || '';
+                    document.getElementById('userUsername').value = userData.username || '';
+                    
+                    if (userData.photoURL) {
+                        document.getElementById('avatarPreview').innerHTML = 
+                            `<img src="${userData.photoURL}" alt="Profile" loading="lazy">`;
                     }
-                });
-                
-                // Update room player counts
-                const roomCounts = document.querySelectorAll('.room-players span');
-                roomCounts.forEach(count => {
-                    const text = count.textContent;
-                    const current = parseInt(text);
-                    if (!isNaN(current)) {
-                        const change = Math.floor(Math.random() * 3) - 1;
-                        const newCount = Math.max(1, current + change);
-                        if (change !== 0) {
-                            count.textContent = `${newCount} ${text.includes('playing') ? 'playing' : text.includes('watching') ? 'watching' : 'friends'}`;
-                        }
-                    }
-                });
-            }, 10000);
+                }
+            } catch (error) {
+                console.error("Error loading user data:", error);
+            }
         }
 
-        // Sign out function
+        async function handleProfileUpdate(e) {
+            e.preventDefault();
+            
+            const user = auth.currentUser;
+            if (!user) {
+                showToast("Please log in first", "error");
+                return;
+            }
+            
+            const name = document.getElementById('userName').value;
+            const email = document.getElementById('userEmail').value;
+            const username = document.getElementById('userUsername').value.trim();
+            
+            showToast("Updating profile...", "info");
+            
+            try {
+                let photoURL = user.photoURL;
+                
+                // Handle avatar upload
+                const avatarInput = document.getElementById('avatarInput');
+                if (avatarInput.files[0]) {
+                    const file = avatarInput.files[0];
+                    const storageRef = storage.ref(`profile_images/${user.uid}/${Date.now()}_${file.name}`);
+                    await storageRef.put(file);
+                    photoURL = await storageRef.getDownloadURL();
+                }
+                
+                // Update user profile
+                await user.updateProfile({
+                    displayName: name,
+                    photoURL: photoURL
+                });
+                
+                if (email !== user.email) {
+                    await user.updateEmail(email);
+                }
+                
+                // Save to database
+                await db.ref('users/' + user.uid).set({
+                    displayName: name,
+                    email: email,
+                    username: username || null,
+                    photoURL: photoURL || null,
+                    updatedAt: Date.now()
+                }, { merge: true });
+                
+                showToast("Profile updated!", "success");
+                updateUserProfile(user);
+                
+                setTimeout(closeProfileModal, 1000);
+                
+            } catch (error) {
+                console.error("Profile update error:", error);
+                showToast("Update failed: " + error.message, "error");
+            }
+        }
+
+        function handleAvatarUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('avatarPreview').innerHTML = 
+                        `<img src="${event.target.result}" alt="Profile">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function updateUserProfile(user) {
+            const profileBtn = document.getElementById('profileBtn');
+            const profileInitials = document.getElementById('profileInitials');
+            const avatarPreview = document.getElementById('avatarPreview');
+            
+            let initials = 'U';
+            if (user.displayName) {
+                initials = user.displayName.charAt(0).toUpperCase();
+            } else if (user.email) {
+                initials = user.email.charAt(0).toUpperCase();
+            }
+            
+            if (user.photoURL) {
+                profileBtn.innerHTML = `<img src="${user.photoURL}" alt="Profile" loading="lazy">`;
+                avatarPreview.innerHTML = `<img src="${user.photoURL}" alt="Profile" loading="lazy">`;
+            } else {
+                profileInitials.textContent = initials;
+                document.getElementById('avatarInitials').textContent = initials;
+            }
+            
+            document.getElementById('userName').value = user.displayName || '';
+            document.getElementById('userEmail').value = user.email || '';
+        }
+
+        // ===== SIMULATION FUNCTIONS =====
+        function simulateIncomingCall() {
+            // Demo simulation - can be removed in production
+            if (!isInCall && Math.random() > 0.7) {
+                showToast("Incoming call simulation", "info");
+                setTimeout(() => {
+                    if (!isInCall) {
+                        const demoFriends = ['Alex Johnson', 'Sam Wilson', 'Taylor Swift'];
+                        const randomFriend = demoFriends[Math.floor(Math.random() * demoFriends.length)];
+                        showToast(`${randomFriend} is calling...`, "info");
+                    }
+                }, 2000);
+            }
+        }
+
+        // ===== KEYBOARD SHORTCUTS =====
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                    e.preventDefault();
+                    showPopup();
+                }
+                
+                if (e.key === 'Escape') {
+                    closePopup();
+                    closeModal();
+                    closeProfileModal();
+                    closeFriendsModal();
+                    closeGalaxyUI();
+                }
+                
+                if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                    e.preventDefault();
+                    openProfileModal();
+                }
+                
+                if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
+                    e.preventDefault();
+                    if (isInCall) {
+                        document.getElementById('agoraWidget').classList.toggle('active');
+                        if (document.getElementById('agoraWidget').classList.contains('active')) {
+                            initGalaxyUI();
+                        }
+                    }
+                }
+            });
+        }
+
+        // ===== TOUCH OPTIMIZATIONS =====
+        function setupTouchOptimizations() {
+            // Add touch feedback to all interactive elements
+            document.querySelectorAll('button, .room-card, .trending-card, .friend-item').forEach(el => {
+                el.addEventListener('touchstart', function() {
+                    this.classList.add('active');
+                });
+                
+                el.addEventListener('touchend', function() {
+                    this.classList.remove('active');
+                });
+            });
+            
+            // Prevent zoom on double tap
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(event) {
+                const now = Date.now();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+        }
+
+        // ===== NAVIGATION =====
+        function viewAll(type) {
+            const urls = {
+                'rooms': 'rooms.html',
+                'watch': 'watch.html',
+                'games': 'games.html'
+            };
+            
+            showToast(`Opening ${type}...`, "info");
+            setTimeout(() => {
+                window.location.href = urls[type] || 'feed.html';
+            }, 500);
+        }
+
+        // ===== SIGN OUT =====
         async function signOut() {
             try {
                 await auth.signOut();
-                showToast("Signed out successfully", "success");
+                showToast("Signed out", "success");
                 setTimeout(() => {
                     window.location.href = "index.html";
                 }, 1000);
             } catch (error) {
                 console.error("Sign out error:", error);
-                showToast("Sign out failed: " + error.message, "error");
+                showToast("Sign out failed", "error");
             }
         }
 
-        // Performance: Lazy load images
-        function lazyLoadImages() {
-            const images = document.querySelectorAll('img[data-src]');
-            
-            const imageObserver = new IntersectionObserver((entries, observer) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const img = entry.target;
-                        img.src = img.dataset.src;
-                        img.removeAttribute('data-src');
-                        observer.unobserve(img);
-                    }
-                });
-            });
-            
-            images.forEach(img => imageObserver.observe(img));
+        // ===== PERFORMANCE OPTIMIZATIONS =====
+        // Debounce function for scroll/resize events
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
         }
 
-        // Initialize lazy loading
-        window.addEventListener('load', lazyLoadImages);
+        // Throttle function for scroll events
+        function throttle(func, limit) {
+            let inThrottle;
+            return function() {
+                const args = arguments;
+                const context = this;
+                if (!inThrottle) {
+                    func.apply(context, args);
+                    inThrottle = true;
+                    setTimeout(() => inThrottle = false, limit);
+                }
+            };
+        }
+
+        // Optimize window resize
+        window.addEventListener('resize', debounce(function() {
+            if (isInCall && document.getElementById('agoraWidget').classList.contains('active')) {
+                initGalaxyUI();
+            }
+        }, 250));
+
+        // Optimize scroll performance
+        window.addEventListener('scroll', throttle(function() {
+            // Handle any scroll-based animations
+        }, 100));
+
+        // Preload critical resources
+        function preloadResources() {
+            const resources = [
+                'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2',
+                'https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa2JL7SUc.woff2'
+            ];
+            
+            resources.forEach(resource => {
+                const link = document.createElement('link');
+                link.rel = 'preload';
+                link.as = 'font';
+                link.href = resource;
+                link.crossOrigin = 'anonymous';
+                document.head.appendChild(link);
+            });
+        }
+
+        // Initialize preload on idle callback
+        if ('requestIdleCallback' in window) {
+            window.requestIdleCallback(preloadResources);
+        } else {
+            setTimeout(preloadResources, 1000);
+        }
     </script>
 </body>
 </html>

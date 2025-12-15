@@ -208,6 +208,7 @@
             background-position: center;
             background-repeat: no-repeat;
             transition: transform 0.3s ease;
+            cursor: pointer;
         }
 
         .feed-card::before {
@@ -469,17 +470,6 @@
             border: 2px solid var(--dark-bg-2);
         }
 
-        .action-btn.join {
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            border: none;
-            box-shadow: 0 8px 25px rgba(106, 13, 255, 0.4);
-        }
-
-        .action-btn.join:hover {
-            transform: scale(1.1);
-            box-shadow: 0 12px 30px rgba(106, 13, 255, 0.6);
-        }
-
         /* ===== LIVE INDICATOR ===== */
         .live-indicator {
             position: absolute;
@@ -515,7 +505,7 @@
         /* ===== MINIMAL CALL WIDGET ===== */
         .call-widget {
             position: fixed;
-            bottom: 120px; /* Lifted up from 80px to 120px */
+            bottom: 140px; /* Moved up higher */
             right: 16px;
             width: 48px;
             height: 48px;
@@ -1030,6 +1020,7 @@
             z-index: 3000;
             display: none;
             flex-direction: column;
+            overflow: hidden;
         }
 
         .watch-reel-overlay.active {
@@ -1076,6 +1067,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            position: relative;
         }
 
         .reel-video-player {
@@ -1100,6 +1092,7 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
+            z-index: 5;
         }
 
         .reel-progress {
@@ -1187,6 +1180,7 @@
             font-size: 14px;
             font-weight: 600;
             backdrop-filter: blur(10px);
+            z-index: 5;
         }
 
         .reel-join-prompt {
@@ -1202,6 +1196,8 @@
             backdrop-filter: blur(20px);
             display: none;
             z-index: 20;
+            width: 90%;
+            max-width: 400px;
         }
 
         .reel-join-prompt.active {
@@ -1218,6 +1214,29 @@
         .reel-join-prompt p {
             color: var(--text-secondary);
             margin-bottom: 20px;
+        }
+
+        .reel-scroll-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        .reel-item {
+            width: 100%;
+            height: 100%;
+            scroll-snap-align: start;
+            position: relative;
+            display: none;
+        }
+
+        .reel-item.active {
+            display: block;
         }
 
         /* ===== PROFILE MODAL UPGRADED ===== */
@@ -1759,7 +1778,7 @@
             .call-widget {
                 width: 44px;
                 height: 44px;
-                bottom: 95px; /* Adjusted for lifted position */
+                bottom: 115px; /* Adjusted for lifted position */
                 right: 12px;
             }
             
@@ -2100,37 +2119,8 @@
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <div class="watch-reel-container">
-            <div class="reel-video-player">
-                <video class="reel-video" id="reelVideo" controls></video>
-                <div class="reel-timer" id="reelTimer">00:00 / 01:00</div>
-                <div class="reel-join-prompt" id="reelJoinPrompt">
-                    <h3>Continue Watching?</h3>
-                    <p>Join the watch party to keep watching beyond 1 minute</p>
-                    <button class="reel-action-btn join" onclick="joinWatchParty()">
-                        <i class="fas fa-play-circle"></i> Join Party
-                    </button>
-                </div>
-                <div class="reel-controls">
-                    <div class="reel-progress">
-                        <div class="reel-progress-fill" id="reelProgress"></div>
-                    </div>
-                    <div class="reel-actions">
-                        <div class="reel-viewers">
-                            <i class="fas fa-users"></i>
-                            <span id="reelViewers">0</span> watching
-                        </div>
-                        <div class="reel-action-buttons">
-                            <button class="reel-action-btn" onclick="likeReel()">
-                                <i class="fas fa-heart"></i>
-                            </button>
-                            <button class="reel-action-btn join" onclick="joinWatchParty()">
-                                <i class="fas fa-play-circle"></i> Join
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="watch-reel-container" id="reelScrollContainer">
+            <!-- Reel items will be dynamically added here -->
         </div>
     </div>
 
@@ -2253,7 +2243,7 @@
         <nav class="bottom-nav">
             <div class="nav-items">
                 <a href="dashboard.html" class="nav-item active">
-                    <i class="fas fa-film"></i>
+                    <i class="fas fa-stream"></i> <!-- Changed from fa-film to fa-stream -->
                     <span>Feed</span>
                 </a>
                 <a href="javascript:void(0)" class="nav-item" onclick="showGamesFeed()">
@@ -2280,8 +2270,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.18.2.js"></script>
     <script src="firebase-config.js"></script>
-    <script src="agora.js"></script>
 
     <!-- Main Application Script -->
     <script>
@@ -2304,8 +2294,8 @@
         }
 
         // Agora Variables
-        let agoraAppId = '';
-        let agoraToken = '';
+        let agoraAppId = '2eeb75dd736e4b65aec0f6f042239aeb'; // Demo Agora App ID
+        let agoraToken = null;
         let agoraChannel = '';
         let agoraClient = null;
         let agoraLocalStream = null;
@@ -2322,6 +2312,8 @@
         let currentWatchReel = null;
         let reelVideoTimer = null;
         let reelVideoDuration = 0;
+        let currentReelIndex = 0;
+        let reelItems = [];
 
         // Firebase Authentication State Listener
         auth.onAuthStateChanged((user) => {
@@ -2484,8 +2476,8 @@
                 if (e.target === this) closeWatchReel();
             });
             
-            // Swipe gestures
-            setupSwipeGestures();
+            // Swipe gestures for reel view
+            setupReelSwipeGestures();
             
             // Keyboard shortcuts
             document.addEventListener('keydown', function(e) {
@@ -2662,6 +2654,14 @@
                 feedCard.dataset.id = card.id;
                 feedCard.dataset.type = card.cardType;
                 
+                // Add click event to open card
+                feedCard.addEventListener('click', function(e) {
+                    // Don't trigger if clicking on action buttons
+                    if (!e.target.closest('.card-actions')) {
+                        openCard(card);
+                    }
+                });
+                
                 // Generate random avatar colors for friends
                 const avatarColors = [
                     'linear-gradient(135deg, #FF6B6B, #FF8E8E)',
@@ -2738,15 +2738,12 @@
                                 ${formattedViewers} viewers
                             </div>
                             <div class="card-actions">
-                                <button class="${likeBtnClass}" onclick="likeRoom(${card.id}, this)">
+                                <button class="${likeBtnClass}" onclick="likeRoom(${card.id}, this, event)">
                                     <i class="${likeIcon}"></i>
                                     <span class="like-count">${likeCount}</span>
                                 </button>
-                                <button class="action-btn" onclick="shareRoom(${card.id})">
+                                <button class="action-btn" onclick="shareRoom(${card.id}, event)">
                                     <i class="fas fa-share"></i>
-                                </button>
-                                <button class="action-btn join" onclick="${card.cardType === 'watch-party' ? `openWatchReel(${card.id})` : `joinRoom(${card.id})`}">
-                                    <i class="fas ${card.cardType === 'watch-party' ? 'fa-play' : 'fa-arrow-right'}"></i>
                                 </button>
                             </div>
                         </div>
@@ -2770,6 +2767,17 @@
             setTimeout(() => {
                 document.getElementById('swipeHint').style.opacity = '0';
             }, 3000);
+        }
+
+        function openCard(card) {
+            if (card.cardType === 'watch-party') {
+                openWatchReel(card.id);
+            } else {
+                showToast(`Opening ${card.title}...`, "info");
+                setTimeout(() => {
+                    showToast(`Joined ${card.title}`, "success");
+                }, 800);
+            }
         }
 
         function formatNumber(num) {
@@ -2809,7 +2817,9 @@
             }
         }
 
-        async function likeRoom(roomId, button) {
+        async function likeRoom(roomId, button, event) {
+            if (event) event.stopPropagation();
+            
             const currentUser = auth.currentUser;
             if (!currentUser) {
                 showToast("Please login to like rooms", "error");
@@ -2854,184 +2864,247 @@
 
         // ===== WATCH PARTY REEL SYSTEM =====
         async function openWatchReel(roomId) {
-            const room = feedCards.find(card => card.id === roomId);
-            if (!room || !room.videoUrl) {
+            const watchParties = feedCards.filter(card => card.cardType === 'watch-party');
+            const startIndex = watchParties.findIndex(card => card.id === roomId);
+            
+            if (startIndex === -1) {
                 showToast("Watch party not available", "error");
                 return;
             }
             
-            currentWatchReel = room;
-            const overlay = document.getElementById('watchReelOverlay');
-            const video = document.getElementById('reelVideo');
-            const title = document.getElementById('reelTitle');
-            const viewers = document.getElementById('reelViewers');
+            currentReelIndex = startIndex;
+            const container = document.getElementById('reelScrollContainer');
+            container.innerHTML = '';
+            reelItems = [];
             
-            // Set initial values
-            title.textContent = room.title;
-            viewers.textContent = formatNumber(room.viewers);
-            
-            // Show loading
-            showToast("Loading watch party...", "info");
-            
-            try {
-                // In real app, fetch from Firebase
-                video.src = room.videoUrl;
-                video.load();
+            // Create reel items
+            watchParties.forEach((party, index) => {
+                const reelItem = document.createElement('div');
+                reelItem.className = 'reel-item';
+                reelItem.dataset.index = index;
+                reelItem.dataset.id = party.id;
                 
-                video.onloadeddata = function() {
-                    overlay.classList.add('active');
-                    document.body.style.overflow = 'hidden';
+                if (index === startIndex) {
+                    reelItem.classList.add('active');
+                }
+                
+                const videoUrl = party.videoUrl || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+                
+                reelItem.innerHTML = `
+                    <video class="reel-video" data-id="${party.id}" preload="auto" playsinline webkit-playsinline>
+                        <source src="${videoUrl}" type="video/mp4">
+                    </video>
+                    <div class="reel-timer" id="reelTimer-${party.id}">00:00 / 01:00</div>
+                    <div class="reel-join-prompt" id="reelJoinPrompt-${party.id}">
+                        <h3>Continue Watching?</h3>
+                        <p>Join the watch party to keep watching beyond 1 minute</p>
+                        <button class="reel-action-btn join" onclick="joinWatchParty(${party.id})">
+                            <i class="fas fa-play-circle"></i> Join Party
+                        </button>
+                    </div>
+                    <div class="reel-controls">
+                        <div class="reel-progress">
+                            <div class="reel-progress-fill" id="reelProgress-${party.id}"></div>
+                        </div>
+                        <div class="reel-actions">
+                            <div class="reel-viewers">
+                                <i class="fas fa-users"></i>
+                                <span id="reelViewers-${party.id}">${formatNumber(party.viewers)}</span> watching
+                            </div>
+                            <div class="reel-action-buttons">
+                                <button class="reel-action-btn" onclick="likeReel(${party.id})">
+                                    <i class="fas fa-heart"></i>
+                                </button>
+                                <button class="reel-action-btn join" onclick="joinWatchParty(${party.id})">
+                                    <i class="fas fa-play-circle"></i> Join
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(reelItem);
+                reelItems.push({
+                    element: reelItem,
+                    party: party,
+                    video: reelItem.querySelector('.reel-video'),
+                    timer: null,
+                    played60s: false
+                });
+            });
+            
+            // Show the overlay
+            document.getElementById('watchReelOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Play the first video
+            setTimeout(() => {
+                playCurrentReel();
+            }, 500);
+        }
+
+        function setupReelSwipeGestures() {
+            const container = document.getElementById('reelScrollContainer');
+            let startY = 0;
+            let isSwiping = false;
+            
+            container.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+                isSwiping = true;
+            }, { passive: true });
+            
+            container.addEventListener('touchmove', (e) => {
+                if (!isSwiping) return;
+                
+                const deltaY = e.touches[0].clientY - startY;
+                
+                // If significant vertical swipe
+                if (Math.abs(deltaY) > 50) {
+                    e.preventDefault();
                     
-                    // Start playing after a delay
-                    setTimeout(() => {
-                        video.play().catch(e => console.log("Autoplay prevented:", e));
-                        startReelTimer();
-                    }, 500);
-                };
+                    if (deltaY > 0 && currentReelIndex > 0) {
+                        // Swipe down - go to previous reel
+                        changeReel(currentReelIndex - 1);
+                        isSwiping = false;
+                    } else if (deltaY < 0 && currentReelIndex < reelItems.length - 1) {
+                        // Swipe up - go to next reel
+                        changeReel(currentReelIndex + 1);
+                        isSwiping = false;
+                    }
+                }
+            }, { passive: false });
+            
+            container.addEventListener('touchend', () => {
+                isSwiping = false;
+            });
+            
+            // Also support mouse wheel
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
                 
-                video.onerror = function() {
-                    showToast("Failed to load video", "error");
-                    video.src = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-                    video.load();
-                };
-                
-            } catch (error) {
-                console.error("Error loading watch party:", error);
-                showToast("Error loading watch party", "error");
-            }
+                if (e.deltaY > 0 && currentReelIndex < reelItems.length - 1) {
+                    // Scroll down - go to next reel
+                    changeReel(currentReelIndex + 1);
+                } else if (e.deltaY < 0 && currentReelIndex > 0) {
+                    // Scroll up - go to previous reel
+                    changeReel(currentReelIndex - 1);
+                }
+            }, { passive: false });
         }
 
-        function closeWatchReel() {
-            const overlay = document.getElementById('watchReelOverlay');
-            const video = document.getElementById('reelVideo');
-            const joinPrompt = document.getElementById('reelJoinPrompt');
+        function changeReel(newIndex) {
+            if (newIndex < 0 || newIndex >= reelItems.length) return;
             
-            overlay.classList.remove('active');
-            document.body.style.overflow = 'auto';
-            
-            video.pause();
-            video.currentTime = 0;
-            
-            if (reelVideoTimer) {
-                clearInterval(reelVideoTimer);
-                reelVideoTimer = null;
+            // Pause current video
+            if (reelItems[currentReelIndex]) {
+                const currentVideo = reelItems[currentReelIndex].video;
+                currentVideo.pause();
+                
+                if (reelItems[currentReelIndex].timer) {
+                    clearInterval(reelItems[currentReelIndex].timer);
+                    reelItems[currentReelIndex].timer = null;
+                }
+                
+                reelItems[currentReelIndex].element.classList.remove('active');
             }
             
-            joinPrompt.classList.remove('active');
-            currentWatchReel = null;
+            // Update index and play new video
+            currentReelIndex = newIndex;
+            reelItems[currentReelIndex].element.classList.add('active');
+            
+            // Update title
+            document.getElementById('reelTitle').textContent = reelItems[currentReelIndex].party.title;
+            
+            // Play the new video
+            setTimeout(() => {
+                playCurrentReel();
+            }, 300);
         }
 
-        function startReelTimer() {
-            const video = document.getElementById('reelVideo');
-            const progress = document.getElementById('reelProgress');
-            const timer = document.getElementById('reelTimer');
-            const joinPrompt = document.getElementById('reelJoinPrompt');
+        function playCurrentReel() {
+            const currentReel = reelItems[currentReelIndex];
+            if (!currentReel) return;
             
-            if (reelVideoTimer) {
-                clearInterval(reelVideoTimer);
+            const video = currentReel.video;
+            const progress = document.getElementById(`reelProgress-${currentReel.party.id}`);
+            const timer = document.getElementById(`reelTimer-${currentReel.party.id}`);
+            const joinPrompt = document.getElementById(`reelJoinPrompt-${currentReel.party.id}`);
+            
+            // Reset if previously played 60s
+            if (currentReel.played60s) {
+                video.currentTime = 60;
+                joinPrompt.classList.add('active');
+            } else {
+                video.currentTime = 0;
+                joinPrompt.classList.remove('active');
             }
             
-            reelVideoTimer = setInterval(() => {
-                if (video.currentTime >= 60) { // 1 minute limit
+            video.play().catch(e => {
+                console.log("Autoplay prevented:", e);
+                // Show play button overlay if autoplay is blocked
+            });
+            
+            // Start progress timer
+            if (currentReel.timer) {
+                clearInterval(currentReel.timer);
+            }
+            
+            currentReel.timer = setInterval(() => {
+                if (video.currentTime >= 60 && !currentReel.played60s) {
                     video.pause();
                     joinPrompt.classList.add('active');
-                    clearInterval(reelVideoTimer);
+                    currentReel.played60s = true;
+                    clearInterval(currentReel.timer);
                 }
                 
                 const progressPercent = (video.currentTime / 60) * 100;
-                progress.style.width = progressPercent + '%';
+                if (progress) progress.style.width = progressPercent + '%';
                 
                 const currentTime = Math.floor(video.currentTime);
                 const minutes = Math.floor(currentTime / 60);
                 const seconds = currentTime % 60;
-                timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} / 01:00`;
-            }, 1000);
+                if (timer) timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} / 01:00`;
+            }, 100);
         }
 
-        function joinWatchParty() {
-            if (currentWatchReel) {
-                showToast(`Joining ${currentWatchReel.title}...`, "info");
-                setTimeout(() => {
-                    showToast(`Joined ${currentWatchReel.title}`, "success");
-                    document.getElementById('reelJoinPrompt').classList.remove('active');
-                    
-                    // Reset timer to allow continued watching
-                    const video = document.getElementById('reelVideo');
+        function closeWatchReel() {
+            // Pause all videos and clear timers
+            reelItems.forEach(reel => {
+                if (reel.video) {
+                    reel.video.pause();
+                }
+                if (reel.timer) {
+                    clearInterval(reel.timer);
+                    reel.timer = null;
+                }
+            });
+            
+            document.getElementById('watchReelOverlay').classList.remove('active');
+            document.body.style.overflow = 'auto';
+            reelItems = [];
+            currentReelIndex = 0;
+        }
+
+        function joinWatchParty(partyId) {
+            const reelIndex = reelItems.findIndex(item => item.party.id === partyId);
+            if (reelIndex !== -1) {
+                reelItems[reelIndex].played60s = false;
+                const joinPrompt = document.getElementById(`reelJoinPrompt-${partyId}`);
+                joinPrompt.classList.remove('active');
+                
+                if (reelIndex === currentReelIndex) {
+                    const video = reelItems[reelIndex].video;
                     video.currentTime = 60;
                     video.play();
-                    startReelTimer();
-                }, 1000);
+                    playCurrentReel();
+                }
+                
+                showToast(`Joined watch party!`, "success");
             }
         }
 
-        function likeReel() {
-            if (currentWatchReel) {
-                likeRoom(currentWatchReel.id);
-            }
-        }
-
-        // ===== SWIPE GESTURES =====
-        function setupSwipeGestures() {
-            const feed = document.getElementById('verticalFeed');
-            let startY = 0;
-            let startX = 0;
-            let isSwiping = false;
-            
-            feed.addEventListener('touchstart', (e) => {
-                startY = e.touches[0].clientY;
-                startX = e.touches[0].clientX;
-                isSwiping = true;
-            }, { passive: true });
-            
-            feed.addEventListener('touchmove', (e) => {
-                if (!isSwiping) return;
-                
-                const deltaY = e.touches[0].clientY - startY;
-                const deltaX = e.touches[0].clientX - startX;
-                
-                if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
-            
-            feed.addEventListener('touchend', (e) => {
-                isSwiping = false;
-            });
-            
-            // Double tap to like
-            let lastTap = 0;
-            feed.addEventListener('touchend', (e) => {
-                const currentTime = new Date().getTime();
-                const tapLength = currentTime - lastTap;
-                
-                if (tapLength < 300 && tapLength > 0) {
-                    const currentCard = feedCards[currentFeedIndex];
-                    if (currentCard) {
-                        const likeBtn = document.querySelector(`.feed-card[data-index="${currentFeedIndex}"] .action-btn:first-child`);
-                        likeRoom(currentCard.id, likeBtn);
-                        showHeartAnimation(e);
-                    }
-                }
-                lastTap = currentTime;
-            });
-        }
-
-        function showHeartAnimation(event) {
-            const heart = document.createElement('div');
-            heart.innerHTML = '❤️';
-            heart.style.position = 'fixed';
-            heart.style.fontSize = '60px';
-            heart.style.zIndex = '10000';
-            heart.style.pointerEvents = 'none';
-            heart.style.left = `${event.changedTouches[0].clientX - 30}px`;
-            heart.style.top = `${event.changedTouches[0].clientY - 30}px`;
-            heart.style.animation = 'floatUp 1s ease-out forwards';
-            
-            document.body.appendChild(heart);
-            
-            setTimeout(() => {
-                heart.remove();
-            }, 1000);
+        function likeReel(partyId) {
+            likeRoom(partyId);
         }
 
         // ===== CALL SYSTEM WITH AGORA =====
@@ -3071,15 +3144,14 @@
                 // Initialize Agora RTC client
                 agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
                 
-                // In real app, get these from your server
-                agoraAppId = "YOUR_AGORA_APP_ID";
+                // Generate unique channel name
                 agoraChannel = "demo-channel-" + Date.now();
                 agoraUid = Math.floor(Math.random() * 10000);
                 
                 // Join the channel
                 await agoraClient.join(agoraAppId, agoraChannel, agoraToken, agoraUid);
                 
-                // Create local stream
+                // Create local audio stream
                 agoraLocalStream = await AgoraRTC.createStream({
                     streamID: agoraUid,
                     audio: true,
@@ -3088,17 +3160,25 @@
                 });
                 
                 await agoraLocalStream.init();
-                await agoraLocalStream.play("userAudio");
+                
+                // Publish local stream
+                await agoraClient.publish(agoraLocalStream);
                 
                 // Subscribe to remote streams
                 agoraClient.on("stream-added", async (evt) => {
-                    await agoraClient.subscribe(evt.stream);
-                    evt.stream.play("remoteAudio" + evt.stream.getId());
-                    addParticipantToGalaxy(evt.stream);
+                    const remoteStream = evt.stream;
+                    await agoraClient.subscribe(remoteStream);
+                    addParticipantToGalaxy(remoteStream);
                 });
                 
                 agoraClient.on("stream-removed", (evt) => {
                     removeParticipantFromGalaxy(evt.stream);
+                });
+                
+                agoraClient.on("stream-subscribed", (evt) => {
+                    const remoteStream = evt.stream;
+                    // Play remote stream (audio only)
+                    remoteStream.play("remote-audio-" + remoteStream.getId());
                 });
                 
                 isInCall = true;
@@ -3112,7 +3192,7 @@
                 return true;
             } catch (error) {
                 console.error("Agora call error:", error);
-                showToast("Failed to start call", "error");
+                showToast("Failed to start call: " + error.message, "error");
                 return false;
             }
         }
@@ -3156,13 +3236,14 @@
                 avatar.innerHTML = participant.avatar;
                 avatar.style.background = `linear-gradient(135deg, ${participant.color}, ${participant.color}99)`;
                 
-                // Calculate orbit position (like planets around sun)
+                // Calculate orbit position (planets around sun)
                 const radius = 150 + (index % 3) * 50;
                 const speed = 20 + (index % 3) * 10;
                 const angle = (index * 360) / Math.max(callParticipants.length, 1);
                 
                 avatar.style.animation = `orbit ${speed}s linear infinite`;
                 avatar.style.transform = `rotate(${angle}deg) translateX(${radius}px) rotate(-${angle}deg)`;
+                avatar.style.transformOrigin = 'center';
                 
                 // Add click event to mute/unmute
                 avatar.addEventListener('click', (e) => {
@@ -3368,6 +3449,9 @@
             callParticipants = [];
             selectedFriends.clear();
             
+            // Clear galaxy UI
+            document.querySelectorAll('.participant-avatar').forEach(p => p.remove());
+            
             showToast('Call ended', 'info');
         }
 
@@ -3564,7 +3648,6 @@
         function createWatchParty() {
             closePopup();
             showToast("Creating watch party...", "info");
-            // In real app, navigate to watch party creation
             setTimeout(() => {
                 showToast("Watch party created!", "success");
             }, 1000);
@@ -3666,12 +3749,17 @@
                 });
                 
                 // Update reel viewers if active
-                if (currentWatchReel) {
-                    const reelViewers = document.getElementById('reelViewers');
-                    const current = parseInt(reelViewers.textContent) || currentWatchReel.viewers;
-                    const change = Math.floor(Math.random() * 5) - 2;
-                    const newCount = Math.max(10, current + change);
-                    reelViewers.textContent = formatNumber(newCount);
+                if (reelItems.length > 0 && currentReelIndex < reelItems.length) {
+                    const currentReel = reelItems[currentReelIndex];
+                    if (currentReel) {
+                        const reelViewers = document.getElementById(`reelViewers-${currentReel.party.id}`);
+                        if (reelViewers) {
+                            const current = parseInt(reelViewers.textContent) || currentReel.party.viewers;
+                            const change = Math.floor(Math.random() * 5) - 2;
+                            const newCount = Math.max(10, current + change);
+                            reelViewers.textContent = formatNumber(newCount);
+                        }
+                    }
                 }
             }, 8000);
         }
@@ -3683,6 +3771,9 @@
                 if (isInCall) {
                     await endCall();
                 }
+                
+                // Close watch reel if open
+                closeWatchReel();
                 
                 await auth.signOut();
                 showToast("Signed out successfully", "success");
@@ -3696,7 +3787,9 @@
         }
 
         // Room interactions
-        function shareRoom(roomId) {
+        function shareRoom(roomId, event) {
+            if (event) event.stopPropagation();
+            
             const currentCard = feedCards.find(card => card.id === roomId);
             if (currentCard) {
                 if (navigator.share) {
@@ -3708,16 +3801,6 @@
                 } else {
                     showToast(`Shared ${currentCard.title}`, "info");
                 }
-            }
-        }
-
-        function joinRoom(roomId) {
-            const currentCard = feedCards.find(card => card.id === roomId);
-            if (currentCard) {
-                showToast(`Joining ${currentCard.title}...`, "info");
-                setTimeout(() => {
-                    showToast(`Joined ${currentCard.title}`, "success");
-                }, 800);
             }
         }
 

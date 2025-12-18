@@ -90,6 +90,132 @@
             animation: float 30s infinite ease-in-out reverse;
         }
 
+        /* ===== LOADING ANIMATION ===== */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--dark-bg-3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 1;
+            visibility: visible;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .radio-loader {
+            text-align: center;
+        }
+
+        .radio-icon {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            margin: 0 auto 30px;
+        }
+
+        .radio-icon-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+            position: relative;
+            animation: pulseGlow 2s infinite ease-in-out;
+            box-shadow: 0 0 60px rgba(106, 13, 255, 0.5),
+                        0 0 100px rgba(211, 0, 255, 0.3);
+        }
+
+        .radio-icon-inner::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            opacity: 0.3;
+            filter: blur(20px);
+            z-index: -1;
+            animation: pulseRing 2s infinite ease-in-out;
+        }
+
+        .radio-waves {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px;
+            height: 180px;
+        }
+
+        .wave {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px solid var(--primary-purple);
+            border-radius: 50%;
+            opacity: 0;
+            animation: waveExpand 2s infinite ease-out;
+        }
+
+        .wave:nth-child(2) { animation-delay: 0.5s; }
+        .wave:nth-child(3) { animation-delay: 1s; }
+
+        .loading-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: textPulse 2s infinite;
+        }
+
+        .loading-subtext {
+            font-size: 14px;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 60px rgba(106, 13, 255, 0.5), 0 0 100px rgba(211, 0, 255, 0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 0 80px rgba(106, 13, 255, 0.7), 0 0 120px rgba(211, 0, 255, 0.5); }
+        }
+
+        @keyframes pulseRing {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+        }
+
+        @keyframes waveExpand {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        @keyframes textPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
         /* ===== MAIN CONTAINER ===== */
         .container {
             max-width: 100%;
@@ -116,6 +242,12 @@
             z-index: 1000;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             height: 60px;
+            transform: translateY(0);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .header.hidden {
+            transform: translateY(-100%);
         }
 
         .logo {
@@ -193,8 +325,8 @@
         }
 
         .feed-card {
-            height: calc(100vh - 100px);
-            min-height: calc(100vh - 100px);
+            height: calc(100vh - 130px);
+            min-height: calc(100vh - 130px);
             scroll-snap-align: start;
             position: relative;
             overflow: hidden;
@@ -357,7 +489,6 @@
         .card-actions {
             display: flex;
             gap: 12px;
-            width: 174px;
         }
 
         .action-btn {
@@ -383,13 +514,13 @@
             background: rgba(255, 255, 255, 0.25);
         }
 
-        .action-btn.liked {
+        .action-btn.saved {
             background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
             border: none;
             box-shadow: 0 8px 25px rgba(106, 13, 255, 0.4);
         }
 
-        .action-btn.liked i {
+        .action-btn.saved i {
             color: white;
         }
 
@@ -400,7 +531,7 @@
             animation: pulse 1.5s infinite;
         }
 
-        .like-count {
+        .save-count {
             position: absolute;
             top: -5px;
             right: -5px;
@@ -1065,8 +1196,8 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
 
-        /* ===== LIKE POPUP ===== */
-        .like-popup {
+        /* ===== SAVE POPUP ===== */
+        .save-popup {
             position: fixed;
             top: 50%;
             left: 50%;
@@ -1084,29 +1215,29 @@
             backdrop-filter: blur(40px);
         }
 
-        .like-popup.active {
+        .save-popup.active {
             opacity: 1;
             visibility: visible;
             transform: translate(-50%, -50%) scale(1);
         }
 
-        .like-popup-content {
+        .save-popup-content {
             text-align: center;
         }
 
-        .like-popup-icon {
+        .save-popup-icon {
             font-size: 48px;
             color: var(--primary-purple);
             margin-bottom: 16px;
         }
 
-        .like-popup h3 {
+        .save-popup h3 {
             font-size: 20px;
             margin-bottom: 12px;
             color: var(--text-primary);
         }
 
-        .like-popup p {
+        .save-popup p {
             color: var(--text-secondary);
             margin-bottom: 20px;
             line-height: 1.5;
@@ -1193,8 +1324,8 @@
             }
             
             .feed-card {
-                height: calc(100vh - 80px);
-                min-height: calc(100vh - 80px);
+                height: calc(100vh - 126px);
+                min-height: calc(100vh - 126px);
                 padding: 16px;
             }
             
@@ -1211,10 +1342,6 @@
                 width: 44px;
                 height: 44px;
                 font-size: 18px;
-            }
-            
-            .card-actions {
-                width: 154px;
             }
             
             .audio-player-container {
@@ -1255,6 +1382,19 @@
             .audio-controls {
                 gap: 20px;
                 margin: 20px 0;
+            }
+            
+            .radio-icon {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .radio-icon-inner {
+                font-size: 40px;
+            }
+            
+            .loading-text {
+                font-size: 18px;
             }
             
             .bottom-nav {
@@ -1301,17 +1441,6 @@
                 font-size: 13px;
             }
             
-            .card-stats {
-                flex-direction: column;
-                gap: 15px;
-                align-items: flex-start;
-            }
-            
-            .card-actions {
-                width: 100%;
-                justify-content: flex-start;
-            }
-            
             .action-btn {
                 width: 42px;
                 height: 42px;
@@ -1352,6 +1481,19 @@
             
             .audio-controls {
                 gap: 15px;
+            }
+            
+            .radio-icon {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .radio-icon-inner {
+                font-size: 32px;
+            }
+            
+            .loading-text {
+                font-size: 16px;
             }
         }
 
@@ -1486,6 +1628,24 @@
     </style>
 </head>
 <body>
+    <!-- Loading Animation -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="radio-loader">
+            <div class="radio-icon">
+                <div class="radio-icon-inner">
+                    <i class="fas fa-podcast"></i>
+                </div>
+                <div class="radio-waves">
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                </div>
+            </div>
+            <h3 class="loading-text">RADIO</h3>
+            <p class="loading-subtext">Loading amazing stories...</p>
+        </div>
+    </div>
+
     <!-- Profile Modal -->
     <div class="modal-overlay" id="profileModal">
         <div class="modal-content">
@@ -1644,15 +1804,15 @@
         </div>
     </div>
 
-    <!-- Like Popup Modal -->
-    <div class="like-popup" id="likePopup">
-        <div class="like-popup-content">
-            <div class="like-popup-icon">
-                <i class="fas fa-heart"></i>
+    <!-- Save Popup Modal -->
+    <div class="save-popup" id="savePopup">
+        <div class="save-popup-content">
+            <div class="save-popup-icon">
+                <i class="fas fa-bookmark"></i>
             </div>
-            <h3>Save to Favorites</h3>
-            <p>Liking this story will save it to your Saved section for easy access later.</p>
-            <button class="form-btn submit" onclick="closeLikePopup()">
+            <h3>Save to Collection</h3>
+            <p>Saving this story will add it to your Saved section for easy access later.</p>
+            <button class="form-btn submit" onclick="closeSavePopup()">
                 Got it!
             </button>
             <div class="dont-show-again">
@@ -1678,7 +1838,7 @@
     <!-- Main App -->
     <div class="container" id="mainApp">
         <!-- Header -->
-        <header class="header">
+        <header class="header" id="mainHeader">
             <div class="logo">
                 <span>RADIO</span>
             </div>
@@ -1759,16 +1919,18 @@
         // Variables
         let currentFeedIndex = 0;
         let feedCards = [];
-        let likedStories = new Set();
+        let savedStories = new Set();
         let currentAudio = null;
         let currentPlayingCard = null;
-        let likePopupCount = 0;
-        let dontShowLikePopup = false;
+        let savePopupCount = 0;
+        let dontShowSavePopup = false;
         let cachedStories = null;
         let lastUpdateTime = null;
         let currentPlayingStory = null;
         let audioUpdateInterval = null;
         let isAudioPlayerOpen = false;
+        let lastScrollTop = 0;
+        let isHeaderVisible = true;
 
         // Firebase Authentication State Listener
         auth.onAuthStateChanged((user) => {
@@ -1776,20 +1938,22 @@
                 console.log("User logged in:", user.email);
                 updateUserProfile(user);
                 loadUserData(user.uid);
-                loadLikedStories(user.uid);
-                loadFeed();
+                loadSavedStories(user.uid);
+                setTimeout(() => {
+                    loadFeed();
+                }, 1500);
                 simulateLiveUpdates();
                 
-                // Load like popup preference
-                const popupPref = localStorage.getItem('dontShowLikePopup');
+                // Load save popup preference
+                const popupPref = localStorage.getItem('dontShowSavePopup');
                 if (popupPref === 'true') {
-                    dontShowLikePopup = true;
+                    dontShowSavePopup = true;
                 }
                 
-                // Load like popup count
-                const popupCount = localStorage.getItem('likePopupCount');
+                // Load save popup count
+                const popupCount = localStorage.getItem('savePopupCount');
                 if (popupCount) {
-                    likePopupCount = parseInt(popupCount);
+                    savePopupCount = parseInt(popupCount);
                 }
             } else {
                 console.log("User not logged in, redirecting to index.html");
@@ -1901,7 +2065,7 @@
                         authorId: currentUser.uid,
                         authorName: currentUser.displayName || 'Anonymous',
                         createdAt: Date.now(),
-                        likes: 0,
+                        saves: 0,
                         plays: 0,
                         tags: []
                     });
@@ -1949,8 +2113,8 @@
                 if (e.target === this) closeStoryModal();
             });
             
-            document.getElementById('likePopup').addEventListener('click', function(e) {
-                if (e.target === this) closeLikePopup();
+            document.getElementById('savePopup').addEventListener('click', function(e) {
+                if (e.target === this) closeSavePopup();
             });
             
             document.getElementById('audioPlayerPopup').addEventListener('click', function(e) {
@@ -1967,7 +2131,7 @@
                 if (e.key === 'Escape') {
                     closeProfileModal();
                     closeStoryModal();
-                    closeLikePopup();
+                    closeSavePopup();
                     closeAudioPlayer();
                 }
                 
@@ -1995,6 +2159,28 @@
                     e.preventDefault();
                     skipForward();
                 }
+            });
+
+            // Header hide/show on scroll
+            const verticalFeed = document.getElementById('verticalFeed');
+            verticalFeed.addEventListener('scroll', function() {
+                const scrollTop = verticalFeed.scrollTop;
+                
+                if (scrollTop > lastScrollTop && scrollTop > 100) {
+                    // Scrolling down - hide header
+                    if (isHeaderVisible) {
+                        document.getElementById('mainHeader').classList.add('hidden');
+                        isHeaderVisible = false;
+                    }
+                } else if (scrollTop < lastScrollTop) {
+                    // Scrolling up - show header
+                    if (!isHeaderVisible) {
+                        document.getElementById('mainHeader').classList.remove('hidden');
+                        isHeaderVisible = true;
+                    }
+                }
+                
+                lastScrollTop = scrollTop;
             });
         });
 
@@ -2056,7 +2242,7 @@
                     viewers: 1245,
                     type: "podcast",
                     icon: "🎙️",
-                    likes: 42,
+                    saves: 42,
                     cardType: "podcast",
                     startTime: "45 min",
                     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
@@ -2072,7 +2258,7 @@
                     viewers: 2892,
                     type: "audio",
                     icon: "🔍",
-                    likes: 131,
+                    saves: 131,
                     cardType: "audio",
                     startTime: "32 min",
                     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
@@ -2088,7 +2274,7 @@
                     viewers: 1567,
                     type: "radio",
                     icon: "🔬",
-                    likes: 78,
+                    saves: 78,
                     cardType: "radio",
                     startTime: "28 min",
                     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
@@ -2104,7 +2290,7 @@
                     viewers: 2341,
                     type: "podcast",
                     icon: "📜",
-                    likes: 156,
+                    saves: 156,
                     cardType: "podcast",
                     startTime: "60 min",
                     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
@@ -2120,7 +2306,7 @@
                     viewers: 1456,
                     type: "audio",
                     icon: "📜",
-                    likes: 89,
+                    saves: 89,
                     cardType: "audio",
                     startTime: "52 min",
                     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
@@ -2136,7 +2322,7 @@
                     viewers: 3890,
                     type: "radio",
                     icon: "🧘",
-                    likes: 273,
+                    saves: 273,
                     cardType: "radio",
                     startTime: "25 min",
                     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
@@ -2152,7 +2338,7 @@
                     viewers: 3321,
                     type: "podcast",
                     icon: "💻",
-                    likes: 124,
+                    saves: 124,
                     cardType: "podcast",
                     startTime: "38 min",
                     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
@@ -2168,7 +2354,7 @@
                     viewers: 2789,
                     type: "audio",
                     icon: "🎷",
-                    likes: 188,
+                    saves: 188,
                     cardType: "audio",
                     startTime: "75 min",
                     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
@@ -2234,10 +2420,10 @@
                     return `<span class="${className}">${tag.toUpperCase().replace('-', ' ')}</span>`;
                 }).join('');
                 
-                const isLiked = likedStories.has(card.id.toString());
-                const likeBtnClass = isLiked ? 'action-btn liked' : 'action-btn';
-                const likeIcon = isLiked ? 'fas fa-heart' : 'far fa-heart';
-                const likeCount = card.likes || 0;
+                const isSaved = savedStories.has(card.id.toString());
+                const saveBtnClass = isSaved ? 'action-btn saved' : 'action-btn';
+                const saveIcon = isSaved ? 'fas fa-bookmark' : 'far fa-bookmark';
+                const saveCount = card.saves || 0;
                 
                 // Format viewers count with K/M
                 const formattedViewers = formatNumber(card.viewers);
@@ -2270,9 +2456,9 @@
                                 <button class="action-btn play-btn" onclick="playStory(${card.id}, this, event)">
                                     <i class="fas fa-play"></i>
                                 </button>
-                                <button class="${likeBtnClass}" onclick="likeStory(${card.id}, this, event)">
-                                    <i class="${likeIcon}"></i>
-                                    <span class="like-count">${likeCount}</span>
+                                <button class="${saveBtnClass}" onclick="saveStory(${card.id}, this, event)">
+                                    <i class="${saveIcon}"></i>
+                                    <span class="save-count">${saveCount}</span>
                                 </button>
                                 <button class="action-btn" onclick="shareStory(${card.id}, event)">
                                     <i class="fas fa-share"></i>
@@ -2292,6 +2478,11 @@
                 scrollIndicator.appendChild(dot);
             });
             
+            // Hide loading animation
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }, 500);
+            
             // Update scroll indicator on scroll
             feedContainer.addEventListener('scroll', updateScrollIndicator);
             
@@ -2304,7 +2495,7 @@
         function updateScrollIndicator() {
             const feed = document.getElementById('verticalFeed');
             const scrollPos = feed.scrollTop;
-            const cardHeight = window.innerHeight - 80;
+            const cardHeight = window.innerHeight - 130;
             const currentIndex = Math.round(scrollPos / cardHeight);
             
             document.querySelectorAll('.scroll-dot').forEach((dot, index) => {
@@ -2542,99 +2733,99 @@
             }
         }
 
-        // ===== LIKE SYSTEM =====
-        async function loadLikedStories(userId) {
+        // ===== SAVE SYSTEM =====
+        async function loadSavedStories(userId) {
             try {
-                const snapshot = await db.ref('user_likes/' + userId).once('value');
+                const snapshot = await db.ref('user_saves/' + userId).once('value');
                 if (snapshot.exists()) {
-                    const likes = snapshot.val();
-                    Object.keys(likes).forEach(storyId => {
-                        likedStories.add(storyId);
+                    const saves = snapshot.val();
+                    Object.keys(saves).forEach(storyId => {
+                        savedStories.add(storyId);
                     });
                 }
             } catch (error) {
-                console.error("Error loading liked stories:", error);
+                console.error("Error loading saved stories:", error);
             }
         }
 
-        async function likeStory(storyId, button, event) {
+        async function saveStory(storyId, button, event) {
             if (event) event.stopPropagation();
             
             const currentUser = auth.currentUser;
             if (!currentUser) {
-                showToast("Please login to like stories", "error");
+                showToast("Please login to save stories", "error");
                 return;
             }
 
             const storyIdStr = storyId.toString();
-            const isLiked = likedStories.has(storyIdStr);
-            const storyRef = db.ref('stories/' + storyIdStr + '/likes');
-            const userLikeRef = db.ref('user_likes/' + currentUser.uid + '/' + storyIdStr);
+            const isSaved = savedStories.has(storyIdStr);
+            const storyRef = db.ref('stories/' + storyIdStr + '/saves');
+            const userSaveRef = db.ref('user_saves/' + currentUser.uid + '/' + storyIdStr);
             
             try {
-                if (isLiked) {
-                    // Unlike
-                    likedStories.delete(storyIdStr);
+                if (isSaved) {
+                    // Unsave
+                    savedStories.delete(storyIdStr);
                     await storyRef.transaction(current => (current || 1) - 1);
-                    await userLikeRef.remove();
+                    await userSaveRef.remove();
                     
                     if (button) {
-                        button.classList.remove('liked');
-                        button.innerHTML = '<i class="far fa-heart"></i><span class="like-count">' + (parseInt(button.querySelector('.like-count').textContent) - 1) + '</span>';
+                        button.classList.remove('saved');
+                        button.innerHTML = '<i class="far fa-bookmark"></i><span class="save-count">' + (parseInt(button.querySelector('.save-count').textContent) - 1) + '</span>';
                     }
                     
                     showToast("Removed from saved", "info");
                 } else {
-                    // Like - show popup if needed
-                    if (!dontShowLikePopup && likePopupCount < 3) {
-                        showLikePopup();
-                        likePopupCount++;
-                        localStorage.setItem('likePopupCount', likePopupCount.toString());
+                    // Save - show popup if needed
+                    if (!dontShowSavePopup && savePopupCount < 3) {
+                        showSavePopup();
+                        savePopupCount++;
+                        localStorage.setItem('savePopupCount', savePopupCount.toString());
                     }
                     
-                    likedStories.add(storyIdStr);
+                    savedStories.add(storyIdStr);
                     await storyRef.transaction(current => (current || 0) + 1);
-                    await userLikeRef.set(true);
+                    await userSaveRef.set(true);
                     
                     if (button) {
-                        button.classList.add('liked');
-                        const currentLikes = parseInt(button.querySelector('.like-count').textContent) || 0;
-                        button.innerHTML = '<i class="fas fa-heart"></i><span class="like-count">' + (currentLikes + 1) + '</span>';
+                        button.classList.add('saved');
+                        const currentSaves = parseInt(button.querySelector('.save-count').textContent) || 0;
+                        button.innerHTML = '<i class="fas fa-bookmark"></i><span class="save-count">' + (currentSaves + 1) + '</span>';
                     }
                     
-                    showToast("Story saved to favorites!", "success");
+                    showToast("Story saved to collection!", "success");
                 }
                 
                 // Update cache if exists
                 if (cachedStories) {
                     const storyIndex = cachedStories.findIndex(card => card.id.toString() === storyIdStr);
                     if (storyIndex !== -1) {
-                        cachedStories[storyIndex].likes = isLiked ? 
-                            (cachedStories[storyIndex].likes - 1) : 
-                            (cachedStories[storyIndex].likes + 1);
+                        cachedStories[storyIndex].saves = isSaved ? 
+                            (cachedStories[storyIndex].saves - 1) : 
+                            (cachedStories[storyIndex].saves + 1);
                         localStorage.setItem('radioStories', JSON.stringify(cachedStories));
                     }
                 }
             } catch (error) {
-                console.error("Error liking story:", error);
+                console.error("Error saving story:", error);
                 showToast("Failed to save story. Please try again.", "error");
             }
         }
 
-        function showLikePopup() {
-            const popup = document.getElementById('likePopup');
+        function showSavePopup() {
+            const popup = document.getElementById('savePopup');
             popup.classList.add('active');
         }
 
-        function closeLikePopup() {
-            const popup = document.getElementById('likePopup');
+        function closeSavePopup() {
+            const popup = document.getElementById('savePopup');
             popup.classList.remove('active');
             
             // Check if user selected "Don't show again"
             const dontShowAgain = document.getElementById('dontShowAgain').checked;
             if (dontShowAgain) {
-                dontShowLikePopup = true;
-                localStorage.setItem('dontShowLikePopup', 'true');
+                dontShowSavePopup = true;
+                localStorage.setItem('dontShowSavePopup', 'true');
             }
         }
 

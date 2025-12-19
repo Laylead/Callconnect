@@ -1,0 +1,2930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RADIO | Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* ===== RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        :root {
+            --primary-purple: #6A0DFF;
+            --secondary-purple: #8A4FFF;
+            --light-purple: #CBB2FF;
+            --neon-magenta: #D300FF;
+            --dark-bg-1: #1A043A;
+            --dark-bg-2: #09001F;
+            --dark-bg-3: #050016;
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --border-light: rgba(255, 255, 255, 0.12);
+            --text-primary: #F8F8FF;
+            --text-secondary: #C8C8D9;
+            --text-accent: #CBB2FF;
+            --green-accent: #00FF88;
+            --red-accent: #FF4757;
+            --yellow-accent: #FFD700;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --success: #00D68F;
+            --info: #0095FF;
+            --warning: #FFAA00;
+            --safe-area-top: env(safe-area-inset-top);
+            --safe-area-bottom: env(safe-area-inset-bottom);
+        }
+
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(160deg, var(--dark-bg-1) 0%, var(--dark-bg-2) 50%, var(--dark-bg-3) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            touch-action: pan-y;
+            padding: env(safe-area-inset-top) 0 env(safe-area-bottom) 0;
+            overscroll-behavior: none;
+        }
+
+        /* ===== PERFECT BACKGROUND ===== */
+        .bg-blur {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: 0;
+            pointer-events: none;
+            will-change: transform;
+        }
+
+        .bg-blur-1 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--primary-purple) 0%, transparent 70%);
+            top: -200px;
+            left: -200px;
+            animation: float 25s infinite ease-in-out;
+        }
+
+        .bg-blur-2 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, var(--neon-magenta) 0%, transparent 70%);
+            bottom: -150px;
+            right: -150px;
+            animation: float 30s infinite ease-in-out reverse;
+        }
+
+        /* ===== LOADING ANIMATION ===== */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--dark-bg-3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 1;
+            visibility: visible;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .radio-loader {
+            text-align: center;
+        }
+
+        .radio-icon {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            margin: 0 auto 30px;
+        }
+
+        .radio-icon-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+            position: relative;
+            animation: pulseGlow 2s infinite ease-in-out;
+            box-shadow: 0 0 60px rgba(106, 13, 255, 0.5),
+                        0 0 100px rgba(211, 0, 255, 0.3);
+        }
+
+        .radio-icon-inner::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            opacity: 0.3;
+            filter: blur(20px);
+            z-index: -1;
+            animation: pulseRing 2s infinite ease-in-out;
+        }
+
+        .radio-waves {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px;
+            height: 180px;
+        }
+
+        .wave {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px solid var(--primary-purple);
+            border-radius: 50%;
+            opacity: 0;
+            animation: waveExpand 2s infinite ease-out;
+        }
+
+        .wave:nth-child(2) { animation-delay: 0.5s; }
+        .wave:nth-child(3) { animation-delay: 1s; }
+
+        .loading-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: textPulse 2s infinite;
+        }
+
+        .loading-subtext {
+            font-size: 14px;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 60px rgba(106, 13, 255, 0.5), 0 0 100px rgba(211, 0, 255, 0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 0 80px rgba(106, 13, 255, 0.7), 0 0 120px rgba(211, 0, 255, 0.5); }
+        }
+
+        @keyframes pulseRing {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+        }
+
+        @keyframes waveExpand {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        @keyframes textPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* ===== ADMIN CONTAINER ===== */
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        /* ===== ADMIN HEADER ===== */
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .admin-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 28px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .admin-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+        }
+
+        .admin-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+        }
+
+        .admin-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-name {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .admin-email {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .admin-logout {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--red-accent), #ff6b6b);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .admin-logout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 71, 87, 0.3);
+        }
+
+        /* ===== ADMIN NAVIGATION ===== */
+        .admin-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 10px;
+        }
+
+        .nav-tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            color: white;
+            box-shadow: 0 8px 20px rgba(106, 13, 255, 0.3);
+        }
+
+        /* ===== ADMIN CONTENT ===== */
+        .admin-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            min-height: 600px;
+        }
+
+        @media (max-width: 1200px) {
+            .admin-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== SIDEBAR ===== */
+        .admin-sidebar {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            padding: 25px;
+            height: fit-content;
+        }
+
+        .sidebar-section {
+            margin-bottom: 30px;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-stats {
+            display: grid;
+            gap: 15px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .quick-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .quick-action {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quick-action:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        /* ===== MAIN CONTENT AREA ===== */
+        .admin-main {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            padding: 25px;
+            min-height: 600px;
+        }
+
+        /* ===== DASHBOARD ===== */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-purple);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .card-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .card-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .card-trend {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .card-trend.positive {
+            color: var(--success);
+        }
+
+        .card-trend.negative {
+            color: var(--red-accent);
+        }
+
+        /* ===== TABLES ===== */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .data-table td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .table-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .table-btn.view {
+            background: rgba(0, 149, 255, 0.1);
+            color: var(--info);
+            border: 1px solid rgba(0, 149, 255, 0.2);
+        }
+
+        .table-btn.edit {
+            background: rgba(255, 170, 0, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(255, 170, 0, 0.2);
+        }
+
+        .table-btn.delete {
+            background: rgba(255, 71, 87, 0.1);
+            color: var(--red-accent);
+            border: 1px solid rgba(255, 71, 87, 0.2);
+        }
+
+        .table-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* ===== FORMS ===== */
+        .form-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-purple);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .form-btn {
+            padding: 14px 28px;
+            border-radius: 12px;
+            border: none;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .form-btn.primary {
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            color: white;
+        }
+
+        .form-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .form-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* ===== TAGS INPUT ===== */
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .tag {
+            background: rgba(106, 13, 255, 0.2);
+            color: var(--primary-purple);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tag-remove {
+            background: none;
+            border: none;
+            color: var(--primary-purple);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tags-input {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .tags-input input {
+            flex: 1;
+        }
+
+        .tags-input button {
+            padding: 10px 20px;
+            background: var(--primary-purple);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* ===== MODALS ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: rgba(5, 0, 22, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        /* ===== LOADING STATES ===== */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-purple);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===== ALERTS ===== */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .alert.success {
+            background: rgba(0, 214, 143, 0.1);
+            border: 1px solid rgba(0, 214, 143, 0.2);
+            color: var(--success);
+        }
+
+        .alert.error {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid rgba(255, 71, 87, 0.2);
+            color: var(--red-accent);
+        }
+
+        .alert.warning {
+            background: rgba(255, 170, 0, 0.1);
+            border: 1px solid rgba(255, 170, 0, 0.2);
+            color: var(--warning);
+        }
+
+        /* ===== SEARCH AND FILTER ===== */
+        .search-filter {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .filter-select {
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            min-width: 150px;
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            .admin-container {
+                padding: 15px;
+            }
+
+            .admin-header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .admin-nav {
+                justify-content: center;
+            }
+
+            .nav-tab {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-filter {
+                flex-direction: column;
+            }
+
+            .filter-select {
+                width: 100%;
+            }
+        }
+
+        /* ===== ACCESS DENIED ===== */
+        .access-denied {
+            text-align: center;
+            padding: 100px 20px;
+        }
+
+        .access-denied-icon {
+            font-size: 80px;
+            color: var(--red-accent);
+            margin-bottom: 30px;
+        }
+
+        .access-denied h2 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .access-denied p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.5;
+        }
+
+        /* ===== UTILITY CLASSES ===== */
+        .hide {
+            display: none !important;
+        }
+
+        .show {
+            display: block !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* ===== TAB CONTENT ===== */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="radio-loader">
+            <div class="radio-icon">
+                <div class="radio-icon-inner">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="radio-waves">
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                </div>
+            </div>
+            <h3 class="loading-text">RADIO ADMIN</h3>
+            <p class="loading-subtext">Loading admin panel...</p>
+        </div>
+    </div>
+
+    <!-- Access Denied Screen -->
+    <div class="access-denied hide" id="accessDenied">
+        <div class="access-denied-icon">
+            <i class="fas fa-ban"></i>
+        </div>
+        <h2>Access Denied</h2>
+        <p>This admin panel is restricted to authorized personnel only. Please contact the system administrator if you believe this is an error.</p>
+        <button class="form-btn primary" onclick="window.location.href='dashboard.html'">
+            <i class="fas fa-arrow-left"></i>
+            <span>Return to Dashboard</span>
+        </button>
+    </div>
+
+    <!-- Admin Panel (Only shown if user is admin) -->
+    <div class="admin-container hide" id="adminPanel">
+        <!-- Admin Header -->
+        <header class="admin-header">
+            <div class="admin-logo">
+                <i class="fas fa-shield-alt"></i>
+                <span>RADIO ADMIN</span>
+            </div>
+            <div class="admin-info">
+                <div class="admin-user">
+                    <div class="admin-avatar" id="adminAvatar">
+                        A
+                    </div>
+                    <div class="admin-details">
+                        <div class="admin-name" id="adminName">Admin</div>
+                        <div class="admin-email" id="adminEmail">mynumba100@gmail.com</div>
+                    </div>
+                </div>
+                <button class="admin-logout" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="admin-nav">
+            <button class="nav-tab active" onclick="switchTab('dashboard')">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </button>
+            <button class="nav-tab" onclick="switchTab('users')">
+                <i class="fas fa-users"></i>
+                <span>Users</span>
+            </button>
+            <button class="nav-tab" onclick="switchTab('stories')">
+                <i class="fas fa-book"></i>
+                <span>Stories</span>
+            </button>
+            <button class="nav-tab" onclick="switchTab('podcasts')">
+                <i class="fas fa-podcast"></i>
+                <span>Podcasts</span>
+            </button>
+            <button class="nav-tab" onclick="switchTab('content')">
+                <i class="fas fa-plus-circle"></i>
+                <span>Add Content</span>
+            </button>
+            <button class="nav-tab" onclick="switchTab('submissions')">
+                <i class="fas fa-inbox"></i>
+                <span>Submissions</span>
+            </button>
+            <button class="nav-tab" onclick="switchTab('categories')">
+                <i class="fas fa-tags"></i>
+                <span>Categories</span>
+            </button>
+        </nav>
+
+        <!-- Admin Content -->
+        <div class="admin-content">
+            <!-- Sidebar -->
+            <aside class="admin-sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Quick Stats</span>
+                    </h3>
+                    <div class="sidebar-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Total Users</span>
+                            <span class="stat-value" id="statUsers">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Total Stories</span>
+                            <span class="stat-value" id="statStories">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Total Podcasts</span>
+                            <span class="stat-value" id="statPodcasts">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Pending Reviews</span>
+                            <span class="stat-value" id="statPending">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">
+                        <i class="fas fa-bolt"></i>
+                        <span>Quick Actions</span>
+                    </h3>
+                    <div class="quick-actions">
+                        <button class="quick-action" onclick="switchTab('content')">
+                            <i class="fas fa-plus"></i>
+                            <span>Add New Story</span>
+                        </button>
+                        <button class="quick-action" onclick="switchTab('content', 'podcast')">
+                            <i class="fas fa-microphone"></i>
+                            <span>Add New Podcast</span>
+                        </button>
+                        <button class="quick-action" onclick="switchTab('submissions')">
+                            <i class="fas fa-inbox"></i>
+                            <span>Review Submissions</span>
+                        </button>
+                        <button class="quick-action" onclick="refreshStats()">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Refresh Stats</span>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="admin-main">
+                <!-- Alerts Container -->
+                <div id="alertContainer"></div>
+
+                <!-- Dashboard Tab -->
+                <div id="dashboardTab" class="tab-content active">
+                    <h2>Dashboard Overview</h2>
+                    <p class="text-secondary">Welcome to the RADIO Admin Panel. Here's what's happening today.</p>
+                    
+                    <div class="dashboard-grid">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div>
+                                    <div class="card-title">Total Users</div>
+                                    <div class="card-subtitle">Registered users</div>
+                                </div>
+                            </div>
+                            <div class="card-value" id="dashboardUsers">0</div>
+                            <div class="card-trend positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+12% this week</span>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon">
+                                    <i class="fas fa-headphones"></i>
+                                </div>
+                                <div>
+                                    <div class="card-title">Total Content</div>
+                                    <div class="card-subtitle">Stories & podcasts</div>
+                                </div>
+                            </div>
+                            <div class="card-value" id="dashboardContent">0</div>
+                            <div class="card-trend positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+8% this week</span>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon">
+                                    <i class="fas fa-play-circle"></i>
+                                </div>
+                                <div>
+                                    <div class="card-title">Total Plays</div>
+                                    <div class="card-subtitle">All time plays</div>
+                                </div>
+                            </div>
+                            <div class="card-value" id="dashboardPlays">0</div>
+                            <div class="card-trend positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+15% this week</span>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <div class="card-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div>
+                                    <div class="card-title">Pending Reviews</div>
+                                    <div class="card-subtitle">Awaiting approval</div>
+                                </div>
+                            </div>
+                            <div class="card-value" id="dashboardPending">0</div>
+                            <div class="card-trend negative">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>Needs attention</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top: 40px; margin-bottom: 20px;">Recent Activity</h3>
+                    <div id="recentActivity">
+                        <p>Loading recent activity...</p>
+                    </div>
+                </div>
+
+                <!-- Users Tab -->
+                <div id="usersTab" class="tab-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2>User Management</h2>
+                        <button class="form-btn primary" onclick="exportUsers()">
+                            <i class="fas fa-download"></i>
+                            <span>Export Users</span>
+                        </button>
+                    </div>
+                    
+                    <div class="search-filter">
+                        <div class="search-box">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" class="search-input" id="userSearch" placeholder="Search users by name or email..." oninput="searchUsers()">
+                        </div>
+                        <select class="filter-select" id="userFilter" onchange="filterUsers()">
+                            <option value="all">All Users</option>
+                            <option value="active">Active</option>
+                            <option value="recent">Recent (Last 7 days)</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Joined</th>
+                                    <th>Stories</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTable">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 40px;">
+                                        <p>Loading users...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Stories Tab -->
+                <div id="storiesTab" class="tab-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2>Story Management</h2>
+                        <button class="form-btn primary" onclick="switchTab('content')">
+                            <i class="fas fa-plus"></i>
+                            <span>Add New Story</span>
+                        </button>
+                    </div>
+                    
+                    <div class="search-filter">
+                        <div class="search-box">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" class="search-input" id="storySearch" placeholder="Search stories..." oninput="searchStories()">
+                        </div>
+                        <select class="filter-select" id="storyFilter" onchange="filterStories()">
+                            <option value="all">All Stories</option>
+                            <option value="published">Published</option>
+                            <option value="draft">Draft</option>
+                            <option value="featured">Featured</option>
+                            <option value="trending">Trending</option>
+                        </select>
+                        <select class="filter-select" id="storyCategory" onchange="filterStories()">
+                            <option value="all">All Categories</option>
+                        </select>
+                    </div>
+                    
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Author</th>
+                                    <th>Category</th>
+                                    <th>Plays</th>
+                                    <th>Likes</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="storiesTable">
+                                <tr>
+                                    <td colspan="8" style="text-align: center; padding: 40px;">
+                                        <p>Loading stories...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Podcasts Tab -->
+                <div id="podcastsTab" class="tab-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2>Podcast Management</h2>
+                        <button class="form-btn primary" onclick="switchTab('content', 'podcast')">
+                            <i class="fas fa-plus"></i>
+                            <span>Add New Podcast</span>
+                        </button>
+                    </div>
+                    
+                    <div class="search-filter">
+                        <div class="search-box">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" class="search-input" id="podcastSearch" placeholder="Search podcasts..." oninput="searchPodcasts()">
+                        </div>
+                        <select class="filter-select" id="podcastFilter" onchange="filterPodcasts()">
+                            <option value="all">All Podcasts</option>
+                            <option value="published">Published</option>
+                            <option value="draft">Draft</option>
+                            <option value="series">Series</option>
+                            <option value="episode">Single Episode</option>
+                        </select>
+                        <select class="filter-select" id="podcastCategory" onchange="filterPodcasts()">
+                            <option value="all">All Categories</option>
+                        </select>
+                    </div>
+                    
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Host</th>
+                                    <th>Episodes</th>
+                                    <th>Plays</th>
+                                    <th>Duration</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="podcastsTable">
+                                <tr>
+                                    <td colspan="8" style="text-align: center; padding: 40px;">
+                                        <p>Loading podcasts...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Add Content Tab -->
+                <div id="contentTab" class="tab-content">
+                    <h2>Add New Content</h2>
+                    <p class="text-secondary">Create new stories, podcasts, or audio content.</p>
+                    
+                    <div class="form-container">
+                        <div style="margin-bottom: 30px;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                                <button class="form-btn secondary" id="contentTypeStory" onclick="setContentType('story')">Story</button>
+                                <button class="form-btn secondary" id="contentTypePodcast" onclick="setContentType('podcast')">Podcast</button>
+                                <button class="form-btn secondary" id="contentTypeAudio" onclick="setContentType('audio')">Audio</button>
+                            </div>
+                        </div>
+
+                        <form id="contentForm" onsubmit="saveContent(event)">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label" for="contentTitle">Title *</label>
+                                    <input type="text" id="contentTitle" class="form-input" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="contentAuthor">Author/Host *</label>
+                                    <input type="text" id="contentAuthor" class="form-input" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="contentCategory">Category *</label>
+                                    <select id="contentCategory" class="form-select" required>
+                                        <option value="">Select Category</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="contentTypeSelect">Content Type *</label>
+                                    <select id="contentTypeSelect" class="form-select" required>
+                                        <option value="story">Story</option>
+                                        <option value="podcast">Podcast</option>
+                                        <option value="audio">Audio Story</option>
+                                        <option value="radio">Radio Show</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="contentDuration">Duration (MM:SS)</label>
+                                    <input type="text" id="contentDuration" class="form-input" placeholder="45:30">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="contentAudioUrl">Audio URL *</label>
+                                    <input type="url" id="contentAudioUrl" class="form-input" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="contentThumbnail">Thumbnail URL (Optional)</label>
+                                    <input type="url" id="contentThumbnail" class="form-input" placeholder="https://example.com/image.jpg">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Tags</label>
+                                    <div class="tags-input">
+                                        <input type="text" id="tagInput" class="form-input" placeholder="Add a tag">
+                                        <button type="button" onclick="addTag()">Add</button>
+                                    </div>
+                                    <div class="tags-container" id="tagsContainer"></div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="contentDescription">Description *</label>
+                                <textarea id="contentDescription" class="form-textarea" required></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="contentContent">Full Content (Optional)</label>
+                                <textarea id="contentContent" class="form-textarea" rows="6"></textarea>
+                            </div>
+
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label" for="contentStatus">Status</label>
+                                    <select id="contentStatus" class="form-select">
+                                        <option value="published">Published</option>
+                                        <option value="draft">Draft</option>
+                                        <option value="pending">Pending Review</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="contentFeatured">Featured</label>
+                                    <select id="contentFeatured" class="form-select">
+                                        <option value="false">No</option>
+                                        <option value="true">Yes</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="form-btn primary">
+                                    <i class="fas fa-save"></i>
+                                    <span>Save Content</span>
+                                </button>
+                                <button type="button" class="form-btn secondary" onclick="clearForm()">
+                                    <i class="fas fa-times"></i>
+                                    <span>Clear Form</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Submissions Tab -->
+                <div id="submissionsTab" class="tab-content">
+                    <h2>User Submissions</h2>
+                    <p class="text-secondary">Review and manage stories submitted by users.</p>
+                    
+                    <div class="search-filter">
+                        <div class="search-box">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" class="search-input" id="submissionSearch" placeholder="Search submissions..." oninput="searchSubmissions()">
+                        </div>
+                        <select class="filter-select" id="submissionFilter" onchange="filterSubmissions()">
+                            <option value="all">All Submissions</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                    
+                    <div id="submissionsList">
+                        <div style="text-align: center; padding: 40px;">
+                            <p>Loading submissions...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categories Tab -->
+                <div id="categoriesTab" class="tab-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2>Category Management</h2>
+                        <button class="form-btn primary" onclick="showAddCategoryModal()">
+                            <i class="fas fa-plus"></i>
+                            <span>Add Category</span>
+                        </button>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="categoryType">Category Type</label>
+                            <select id="categoryType" class="form-select" onchange="loadCategories()">
+                                <option value="all">All Categories</option>
+                                <option value="story">Story Categories</option>
+                                <option value="podcast">Podcast Categories</option>
+                                <option value="audio">Audio Categories</option>
+                                <option value="tag">Tags</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="overflow-x: auto; margin-top: 20px;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Count</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categoriesTable">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 40px;">
+                                        <p>Loading categories...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Confirm Deletion</h3>
+                <button class="modal-close" onclick="closeModal('deleteModal')">×</button>
+            </div>
+            <p>Are you sure you want to delete this item? This action cannot be undone.</p>
+            <div class="form-actions" style="margin-top: 30px;">
+                <button class="form-btn primary" onclick="confirmDelete()">Yes, Delete</button>
+                <button class="form-btn secondary" onclick="closeModal('deleteModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Content</h3>
+                <button class="modal-close" onclick="closeModal('editModal')">×</button>
+            </div>
+            <form id="editForm" onsubmit="updateContent(event)">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label class="form-label" for="editTitle">Title</label>
+                    <input type="text" id="editTitle" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="editDescription">Description</label>
+                    <textarea id="editDescription" class="form-input" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="form-btn primary">Update</button>
+                    <button type="button" class="form-btn secondary" onclick="closeModal('editModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="viewModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="viewTitle"></h3>
+                <button class="modal-close" onclick="closeModal('viewModal')">×</button>
+            </div>
+            <div id="viewContent">
+                Loading content...
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="categoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Category</h3>
+                <button class="modal-close" onclick="closeModal('categoryModal')">×</button>
+            </div>
+            <form id="categoryForm" onsubmit="saveCategory(event)">
+                <div class="form-group">
+                    <label class="form-label" for="categoryName">Category Name *</label>
+                    <input type="text" id="categoryName" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="categoryTypeModal">Category Type *</label>
+                    <select id="categoryTypeModal" class="form-select" required>
+                        <option value="story">Story</option>
+                        <option value="podcast">Podcast</option>
+                        <option value="audio">Audio</option>
+                        <option value="radio">Radio</option>
+                        <option value="tag">Tag</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="categoryDescription">Description (Optional)</label>
+                    <textarea id="categoryDescription" class="form-input"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="form-btn primary">Save Category</button>
+                    <button type="button" class="form-btn secondary" onclick="closeModal('categoryModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Animated Background -->
+    <div class="bg-blur bg-blur-1"></div>
+    <div class="bg-blur bg-blur-2"></div>
+
+    <!-- External Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <!-- Admin Panel Script -->
+    <script>
+        // Firebase Initialization
+        let firebaseApp;
+        let auth;
+        let db;
+        const ADMIN_EMAIL = "mynumba100@gmail.com";
+
+        try {
+            firebaseApp = firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.database();
+            console.log("Firebase initialized successfully");
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+            showAlert("Firebase initialization failed. Please check your configuration.", "error");
+        }
+
+        // Global Variables
+        let currentUser = null;
+        let currentTab = 'dashboard';
+        let itemsToDelete = null;
+        let currentContentType = 'story';
+        let tags = [];
+        let categories = [];
+        let allUsers = [];
+        let allStories = [];
+        let allPodcasts = [];
+        let allSubmissions = [];
+
+        // Initialize Admin Panel
+        document.addEventListener('DOMContentLoaded', function() {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    if (user.email === ADMIN_EMAIL) {
+                        currentUser = user;
+                        initializeAdminPanel();
+                    } else {
+                        showAccessDenied();
+                    }
+                } else {
+                    // Not logged in, redirect to login
+                    showAlert("Please login to access the admin panel", "error");
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 2000);
+                }
+            });
+        });
+
+        function initializeAdminPanel() {
+            // Show admin panel
+            document.getElementById('adminPanel').classList.remove('hide');
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            
+            // Update admin info
+            updateAdminInfo();
+            
+            // Load initial data
+            loadDashboardStats();
+            loadCategories();
+            loadUsers();
+            loadStories();
+            loadPodcasts();
+            loadSubmissions();
+            
+            // Setup event listeners
+            setupEventListeners();
+        }
+
+        function showAccessDenied() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            document.getElementById('accessDenied').classList.remove('hide');
+        }
+
+        function updateAdminInfo() {
+            const avatar = document.getElementById('adminAvatar');
+            const name = document.getElementById('adminName');
+            const email = document.getElementById('adminEmail');
+            
+            if (currentUser) {
+                // Set avatar
+                if (currentUser.photoURL) {
+                    avatar.innerHTML = `<img src="${currentUser.photoURL}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                } else {
+                    const initials = currentUser.displayName ? 
+                        currentUser.displayName.charAt(0).toUpperCase() : 
+                        currentUser.email.charAt(0).toUpperCase();
+                    avatar.textContent = initials;
+                }
+                
+                // Set name and email
+                name.textContent = currentUser.displayName || 'Admin';
+                email.textContent = currentUser.email;
+            }
+        }
+
+        function setupEventListeners() {
+            // Setup tag input
+            document.getElementById('tagInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTag();
+                }
+            });
+        }
+
+        // ===== TAB MANAGEMENT =====
+        function switchTab(tabName, param = null) {
+            // Update active tab
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Set new active tab
+            const tabElement = Array.from(document.querySelectorAll('.nav-tab')).find(tab => 
+                tab.textContent.includes(tabName.charAt(0).toUpperCase() + tabName.slice(1)) ||
+                tab.getAttribute('onclick').includes(tabName)
+            );
+            
+            if (tabElement) {
+                tabElement.classList.add('active');
+            }
+            
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            currentTab = tabName;
+            
+            // Handle specific tab actions
+            if (tabName === 'content' && param) {
+                setContentType(param);
+            }
+            
+            // Refresh tab data
+            switch(tabName) {
+                case 'dashboard':
+                    loadDashboardStats();
+                    break;
+                case 'users':
+                    loadUsers();
+                    break;
+                case 'stories':
+                    loadStories();
+                    break;
+                case 'podcasts':
+                    loadPodcasts();
+                    break;
+                case 'submissions':
+                    loadSubmissions();
+                    break;
+                case 'categories':
+                    loadCategories();
+                    break;
+            }
+        }
+
+        // ===== DASHBOARD FUNCTIONS =====
+        async function loadDashboardStats() {
+            try {
+                // Load users count
+                const usersSnapshot = await db.ref('users').once('value');
+                const usersCount = usersSnapshot.exists() ? Object.keys(usersSnapshot.val()).length : 0;
+                document.getElementById('statUsers').textContent = usersCount;
+                document.getElementById('dashboardUsers').textContent = usersCount;
+                
+                // Load stories count
+                const storiesSnapshot = await db.ref('stories').once('value');
+                let storiesCount = 0;
+                let totalPlays = 0;
+                
+                if (storiesSnapshot.exists()) {
+                    storiesSnapshot.forEach(child => {
+                        storiesCount++;
+                        const story = child.val();
+                        totalPlays += story.plays || 0;
+                    });
+                }
+                
+                document.getElementById('statStories').textContent = storiesCount;
+                document.getElementById('dashboardContent').textContent = storiesCount;
+                document.getElementById('dashboardPlays').textContent = formatNumber(totalPlays);
+                
+                // Load pending submissions
+                const submissionsSnapshot = await db.ref('story_submissions').once('value');
+                let pendingCount = 0;
+                
+                if (submissionsSnapshot.exists()) {
+                    submissionsSnapshot.forEach(child => {
+                        const submission = child.val();
+                        if (submission.status === 'pending') {
+                            pendingCount++;
+                        }
+                    });
+                }
+                
+                document.getElementById('statPending').textContent = pendingCount;
+                document.getElementById('dashboardPending').textContent = pendingCount;
+                
+                // Load recent activity
+                loadRecentActivity();
+                
+            } catch (error) {
+                console.error("Error loading dashboard stats:", error);
+                showAlert("Failed to load dashboard statistics", "error");
+            }
+        }
+
+        async function loadRecentActivity() {
+            try {
+                const recentActivity = document.getElementById('recentActivity');
+                let activityHtml = '';
+                
+                // Get recent users (last 5)
+                const usersSnapshot = await db.ref('users').orderByChild('createdAt').limitToLast(5).once('value');
+                if (usersSnapshot.exists()) {
+                    usersSnapshot.forEach(child => {
+                        const user = child.val();
+                        const date = new Date(user.createdAt || Date.now());
+                        activityHtml += `
+                            <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 10px;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="font-weight: 600;">New user registered</span>
+                                    <span style="color: var(--text-secondary); font-size: 12px;">${formatDate(date)}</span>
+                                </div>
+                                <div style="color: var(--text-secondary); font-size: 14px;">${user.displayName || user.email}</div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                recentActivity.innerHTML = activityHtml || '<p>No recent activity</p>';
+                
+            } catch (error) {
+                console.error("Error loading recent activity:", error);
+                document.getElementById('recentActivity').innerHTML = '<p>Error loading activity</p>';
+            }
+        }
+
+        function refreshStats() {
+            loadDashboardStats();
+            showAlert("Stats refreshed successfully", "success");
+        }
+
+        // ===== USER MANAGEMENT =====
+        async function loadUsers() {
+            try {
+                const usersSnapshot = await db.ref('users').once('value');
+                allUsers = [];
+                
+                if (usersSnapshot.exists()) {
+                    usersSnapshot.forEach(child => {
+                        const user = child.val();
+                        user.id = child.key;
+                        allUsers.push(user);
+                    });
+                }
+                
+                renderUsersTable();
+                
+            } catch (error) {
+                console.error("Error loading users:", error);
+                showAlert("Failed to load users", "error");
+            }
+        }
+
+        function renderUsersTable(filteredUsers = null) {
+            const users = filteredUsers || allUsers;
+            const table = document.getElementById('usersTable');
+            
+            if (users.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px;">
+                            <p>No users found</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let tableHtml = '';
+            users.forEach(user => {
+                const date = new Date(user.createdAt || Date.now());
+                const storiesCount = user.storyCount || 0;
+                
+                tableHtml += `
+                    <tr>
+                        <td>${user.id.substring(0, 8)}...</td>
+                        <td>${user.displayName || 'No name'}</td>
+                        <td>${user.email || 'No email'}</td>
+                        <td>${formatDate(date)}</td>
+                        <td>${storiesCount}</td>
+                        <td>
+                            <span style="padding: 4px 8px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(0, 214, 143, 0.1); color: var(--success);">
+                                Active
+                            </span>
+                        </td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="table-btn view" onclick="viewUser('${user.id}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="table-btn delete" onclick="deleteUser('${user.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            table.innerHTML = tableHtml;
+        }
+
+        function searchUsers() {
+            const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+            const filteredUsers = allUsers.filter(user => 
+                (user.displayName && user.displayName.toLowerCase().includes(searchTerm)) ||
+                (user.email && user.email.toLowerCase().includes(searchTerm))
+            );
+            renderUsersTable(filteredUsers);
+        }
+
+        function filterUsers() {
+            const filter = document.getElementById('userFilter').value;
+            let filteredUsers = allUsers;
+            
+            if (filter === 'recent') {
+                const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+                filteredUsers = allUsers.filter(user => 
+                    (user.createdAt || Date.now()) > weekAgo
+                );
+            } else if (filter === 'inactive') {
+                const monthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+                filteredUsers = allUsers.filter(user => 
+                    (user.lastLoginAt || 0) < monthAgo
+                );
+            }
+            
+            renderUsersTable(filteredUsers);
+        }
+
+        function viewUser(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            if (user) {
+                document.getElementById('viewTitle').textContent = user.displayName || 'User Details';
+                document.getElementById('viewContent').innerHTML = `
+                    <div style="margin-bottom: 20px;">
+                        <strong>Email:</strong> ${user.email || 'N/A'}<br>
+                        <strong>User ID:</strong> ${user.id}<br>
+                        <strong>Joined:</strong> ${formatDate(new Date(user.createdAt || Date.now()))}<br>
+                        <strong>Last Login:</strong> ${user.lastLoginAt ? formatDate(new Date(user.lastLoginAt)) : 'Never'}<br>
+                        <strong>Photo URL:</strong> ${user.photoURL || 'None'}<br>
+                        <strong>Stories Submitted:</strong> ${user.storyCount || 0}
+                    </div>
+                `;
+                openModal('viewModal');
+            }
+        }
+
+        async function deleteUser(userId) {
+            itemsToDelete = { type: 'user', id: userId };
+            document.querySelector('#deleteModal .modal-title').textContent = 'Delete User';
+            openModal('deleteModal');
+        }
+
+        function exportUsers() {
+            const csv = [
+                ['ID', 'Name', 'Email', 'Joined Date', 'Stories'],
+                ...allUsers.map(user => [
+                    user.id,
+                    user.displayName || '',
+                    user.email || '',
+                    formatDate(new Date(user.createdAt || Date.now())),
+                    user.storyCount || 0
+                ])
+            ].map(row => row.join(',')).join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `users_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showAlert("Users exported successfully", "success");
+        }
+
+        // ===== STORY MANAGEMENT =====
+        async function loadStories() {
+            try {
+                const storiesSnapshot = await db.ref('stories').once('value');
+                allStories = [];
+                
+                if (storiesSnapshot.exists()) {
+                    storiesSnapshot.forEach(child => {
+                        const story = child.val();
+                        story.id = child.key;
+                        allStories.push(story);
+                    });
+                }
+                
+                renderStoriesTable();
+                populateCategoryFilters();
+                
+            } catch (error) {
+                console.error("Error loading stories:", error);
+                showAlert("Failed to load stories", "error");
+            }
+        }
+
+        function renderStoriesTable(filteredStories = null) {
+            const stories = filteredStories || allStories;
+            const table = document.getElementById('storiesTable');
+            
+            if (stories.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px;">
+                            <p>No stories found</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let tableHtml = '';
+            stories.forEach(story => {
+                const date = new Date(story.createdAt || Date.now());
+                const status = story.status || 'published';
+                const statusColor = status === 'published' ? 'success' : 
+                                   status === 'draft' ? 'warning' : 'secondary';
+                
+                tableHtml += `
+                    <tr>
+                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            ${story.title || 'Untitled'}
+                        </td>
+                        <td>${story.author || 'Unknown'}</td>
+                        <td>${story.category || 'Uncategorized'}</td>
+                        <td>${formatNumber(story.plays || 0)}</td>
+                        <td>${formatNumber(story.likes || 0)}</td>
+                        <td>
+                            <span style="padding: 4px 8px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(var(--${statusColor}), 0.1); color: var(--${statusColor});">
+                                ${status.charAt(0).toUpperCase() + status.slice(1)}
+                            </span>
+                        </td>
+                        <td>${formatDate(date, true)}</td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="table-btn view" onclick="viewContent('${story.id}', 'story')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="table-btn edit" onclick="editContent('${story.id}', 'story')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="table-btn delete" onclick="deleteContent('${story.id}', 'story')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            table.innerHTML = tableHtml;
+        }
+
+        function searchStories() {
+            const searchTerm = document.getElementById('storySearch').value.toLowerCase();
+            const filteredStories = allStories.filter(story => 
+                (story.title && story.title.toLowerCase().includes(searchTerm)) ||
+                (story.author && story.author.toLowerCase().includes(searchTerm)) ||
+                (story.description && story.description.toLowerCase().includes(searchTerm))
+            );
+            renderStoriesTable(filteredStories);
+        }
+
+        function filterStories() {
+            const filter = document.getElementById('storyFilter').value;
+            const category = document.getElementById('storyCategory').value;
+            
+            let filteredStories = allStories;
+            
+            if (filter !== 'all') {
+                filteredStories = filteredStories.filter(story => {
+                    if (filter === 'published') return story.status === 'published';
+                    if (filter === 'draft') return story.status === 'draft';
+                    if (filter === 'featured') return story.featured === true;
+                    if (filter === 'trending') return (story.plays || 0) > 1000;
+                    return true;
+                });
+            }
+            
+            if (category !== 'all') {
+                filteredStories = filteredStories.filter(story => 
+                    story.category === category
+                );
+            }
+            
+            renderStoriesTable(filteredStories);
+        }
+
+        // ===== PODCAST MANAGEMENT =====
+        async function loadPodcasts() {
+            try {
+                const podcastsSnapshot = await db.ref('stories').once('value');
+                allPodcasts = [];
+                
+                if (podcastsSnapshot.exists()) {
+                    podcastsSnapshot.forEach(child => {
+                        const podcast = child.val();
+                        if (podcast.type === 'podcast' || podcast.type === 'radio') {
+                            podcast.id = child.key;
+                            allPodcasts.push(podcast);
+                        }
+                    });
+                }
+                
+                renderPodcastsTable();
+                
+            } catch (error) {
+                console.error("Error loading podcasts:", error);
+                showAlert("Failed to load podcasts", "error");
+            }
+        }
+
+        function renderPodcastsTable(filteredPodcasts = null) {
+            const podcasts = filteredPodcasts || allPodcasts;
+            const table = document.getElementById('podcastsTable');
+            
+            if (podcasts.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px;">
+                            <p>No podcasts found</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let tableHtml = '';
+            podcasts.forEach(podcast => {
+                const date = new Date(podcast.createdAt || Date.now());
+                const status = podcast.status || 'published';
+                const statusColor = status === 'published' ? 'success' : 
+                                   status === 'draft' ? 'warning' : 'secondary';
+                
+                tableHtml += `
+                    <tr>
+                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            ${podcast.title || 'Untitled'}
+                        </td>
+                        <td>${podcast.author || podcast.host || 'Unknown'}</td>
+                        <td>${podcast.episodeCount || 1}</td>
+                        <td>${formatNumber(podcast.plays || 0)}</td>
+                        <td>${podcast.duration || 'N/A'}</td>
+                        <td>
+                            <span style="padding: 4px 8px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(var(--${statusColor}), 0.1); color: var(--${statusColor});">
+                                ${status.charAt(0).toUpperCase() + status.slice(1)}
+                            </span>
+                        </td>
+                        <td>${formatDate(date, true)}</td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="table-btn view" onclick="viewContent('${podcast.id}', 'podcast')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="table-btn edit" onclick="editContent('${podcast.id}', 'podcast')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="table-btn delete" onclick="deleteContent('${podcast.id}', 'podcast')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            table.innerHTML = tableHtml;
+        }
+
+        function searchPodcasts() {
+            const searchTerm = document.getElementById('podcastSearch').value.toLowerCase();
+            const filteredPodcasts = allPodcasts.filter(podcast => 
+                (podcast.title && podcast.title.toLowerCase().includes(searchTerm)) ||
+                (podcast.author && podcast.author.toLowerCase().includes(searchTerm)) ||
+                (podcast.description && podcast.description.toLowerCase().includes(searchTerm))
+            );
+            renderPodcastsTable(filteredPodcasts);
+        }
+
+        function filterPodcasts() {
+            const filter = document.getElementById('podcastFilter').value;
+            const category = document.getElementById('podcastCategory').value;
+            
+            let filteredPodcasts = allPodcasts;
+            
+            if (filter !== 'all') {
+                filteredPodcasts = filteredPodcasts.filter(podcast => {
+                    if (filter === 'published') return podcast.status === 'published';
+                    if (filter === 'draft') return podcast.status === 'draft';
+                    if (filter === 'series') return podcast.series === true;
+                    if (filter === 'episode') return podcast.series !== true;
+                    return true;
+                });
+            }
+            
+            if (category !== 'all') {
+                filteredPodcasts = filteredPodcasts.filter(podcast => 
+                    podcast.category === category
+                );
+            }
+            
+            renderPodcastsTable(filteredPodcasts);
+        }
+
+        // ===== CONTENT MANAGEMENT =====
+        function setContentType(type) {
+            currentContentType = type;
+            
+            // Update button styles
+            document.getElementById('contentTypeStory').classList.remove('primary');
+            document.getElementById('contentTypePodcast').classList.remove('primary');
+            document.getElementById('contentTypeAudio').classList.remove('primary');
+            
+            document.getElementById('contentTypeStory').classList.add('secondary');
+            document.getElementById('contentTypePodcast').classList.add('secondary');
+            document.getElementById('contentTypeAudio').classList.add('secondary');
+            
+            document.getElementById(`contentType${type.charAt(0).toUpperCase() + type.slice(1)}`).classList.remove('secondary');
+            document.getElementById(`contentType${type.charAt(0).toUpperCase() + type.slice(1)}`).classList.add('primary');
+            
+            // Update form fields
+            document.getElementById('contentTypeSelect').value = type;
+            
+            // Update placeholder examples
+            if (type === 'podcast') {
+                document.getElementById('contentAudioUrl').placeholder = "https://example.com/podcast-episode.mp3";
+                document.getElementById('contentDuration').placeholder = "45:30";
+            } else if (type === 'audio') {
+                document.getElementById('contentAudioUrl').placeholder = "https://example.com/audio-story.mp3";
+                document.getElementById('contentDuration').placeholder = "25:15";
+            } else {
+                document.getElementById('contentAudioUrl').placeholder = "https://example.com/story-audio.mp3";
+                document.getElementById('contentDuration').placeholder = "15:45";
+            }
+        }
+
+        async function saveContent(event) {
+            event.preventDefault();
+            
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="loading"></span> Saving...';
+            submitBtn.disabled = true;
+            
+            try {
+                const contentData = {
+                    title: document.getElementById('contentTitle').value,
+                    author: document.getElementById('contentAuthor').value,
+                    description: document.getElementById('contentDescription').value,
+                    content: document.getElementById('contentContent').value || '',
+                    type: document.getElementById('contentTypeSelect').value,
+                    category: document.getElementById('contentCategory').value,
+                    duration: document.getElementById('contentDuration').value,
+                    audioUrl: document.getElementById('contentAudioUrl').value,
+                    thumbnailUrl: document.getElementById('contentThumbnail').value || '',
+                    tags: tags,
+                    status: document.getElementById('contentStatus').value,
+                    featured: document.getElementById('contentFeatured').value === 'true',
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                    likes: 0,
+                    plays: 0,
+                    saves: 0
+                };
+                
+                // Save to Firebase
+                const newContentRef = db.ref('stories').push();
+                await newContentRef.set(contentData);
+                
+                showAlert("Content saved successfully!", "success");
+                clearForm();
+                
+                // Refresh the stories/podcasts list
+                if (contentData.type === 'podcast' || contentData.type === 'radio') {
+                    loadPodcasts();
+                } else {
+                    loadStories();
+                }
+                
+            } catch (error) {
+                console.error("Error saving content:", error);
+                showAlert("Failed to save content: " + error.message, "error");
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        function addTag() {
+            const tagInput = document.getElementById('tagInput');
+            const tag = tagInput.value.trim();
+            
+            if (tag && !tags.includes(tag)) {
+                tags.push(tag);
+                renderTags();
+                tagInput.value = '';
+            }
+        }
+
+        function removeTag(index) {
+            tags.splice(index, 1);
+            renderTags();
+        }
+
+        function renderTags() {
+            const container = document.getElementById('tagsContainer');
+            container.innerHTML = tags.map((tag, index) => `
+                <div class="tag">
+                    <span>${tag}</span>
+                    <button class="tag-remove" onclick="removeTag(${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function clearForm() {
+            document.getElementById('contentForm').reset();
+            tags = [];
+            renderTags();
+            setContentType('story');
+        }
+
+        async function viewContent(contentId, type) {
+            try {
+                const snapshot = await db.ref('stories/' + contentId).once('value');
+                if (snapshot.exists()) {
+                    const content = snapshot.val();
+                    document.getElementById('viewTitle').textContent = content.title;
+                    
+                    let html = `
+                        <div style="margin-bottom: 20px;">
+                            <strong>Type:</strong> ${content.type || 'story'}<br>
+                            <strong>Author:</strong> ${content.author || 'Unknown'}<br>
+                            <strong>Category:</strong> ${content.category || 'Uncategorized'}<br>
+                            <strong>Duration:</strong> ${content.duration || 'N/A'}<br>
+                            <strong>Status:</strong> ${content.status || 'published'}<br>
+                            <strong>Featured:</strong> ${content.featured ? 'Yes' : 'No'}<br>
+                            <strong>Created:</strong> ${formatDate(new Date(content.createdAt || Date.now()))}<br>
+                            <strong>Plays:</strong> ${content.plays || 0}<br>
+                            <strong>Likes:</strong> ${content.likes || 0}
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <strong>Description:</strong>
+                            <p>${content.description || 'No description'}</p>
+                        </div>
+                    `;
+                    
+                    if (content.content) {
+                        html += `
+                            <div style="margin-bottom: 20px;">
+                                <strong>Full Content:</strong>
+                                <p>${content.content}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    if (content.tags && content.tags.length > 0) {
+                        html += `
+                            <div style="margin-bottom: 20px;">
+                                <strong>Tags:</strong>
+                                <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
+                                    ${content.tags.map(tag => `<span style="background: rgba(106,13,255,0.2); padding: 4px 8px; border-radius: 12px; font-size: 12px;">${tag}</span>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    if (content.audioUrl) {
+                        html += `
+                            <div style="margin-bottom: 20px;">
+                                <strong>Audio URL:</strong><br>
+                                <a href="${content.audioUrl}" target="_blank" style="color: var(--primary-purple); word-break: break-all;">${content.audioUrl}</a>
+                            </div>
+                        `;
+                    }
+                    
+                    if (content.thumbnailUrl) {
+                        html += `
+                            <div style="margin-bottom: 20px;">
+                                <strong>Thumbnail:</strong><br>
+                                <img src="${content.thumbnailUrl}" style="max-width: 200px; border-radius: 12px; margin-top: 10px;">
+                            </div>
+                        `;
+                    }
+                    
+                    document.getElementById('viewContent').innerHTML = html;
+                    openModal('viewModal');
+                }
+            } catch (error) {
+                console.error("Error viewing content:", error);
+                showAlert("Failed to load content", "error");
+            }
+        }
+
+        async function editContent(contentId, type) {
+            try {
+                const snapshot = await db.ref('stories/' + contentId).once('value');
+                if (snapshot.exists()) {
+                    const content = snapshot.val();
+                    
+                    document.getElementById('editId').value = contentId;
+                    document.getElementById('editTitle').value = content.title || '';
+                    document.getElementById('editDescription').value = content.description || '';
+                    
+                    openModal('editModal');
+                }
+            } catch (error) {
+                console.error("Error editing content:", error);
+                showAlert("Failed to load content for editing", "error");
+            }
+        }
+
+        async function updateContent(event) {
+            event.preventDefault();
+            
+            const contentId = document.getElementById('editId').value;
+            const updates = {
+                title: document.getElementById('editTitle').value,
+                description: document.getElementById('editDescription').value,
+                updatedAt: Date.now()
+            };
+            
+            try {
+                await db.ref('stories/' + contentId).update(updates);
+                showAlert("Content updated successfully!", "success");
+                closeModal('editModal');
+                
+                // Refresh the appropriate list
+                if (currentTab === 'stories') {
+                    loadStories();
+                } else if (currentTab === 'podcasts') {
+                    loadPodcasts();
+                }
+                
+            } catch (error) {
+                console.error("Error updating content:", error);
+                showAlert("Failed to update content", "error");
+            }
+        }
+
+        async function deleteContent(contentId, type) {
+            itemsToDelete = { type: 'content', id: contentId, contentType: type };
+            document.querySelector('#deleteModal .modal-title').textContent = `Delete ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+            openModal('deleteModal');
+        }
+
+        // ===== SUBMISSIONS MANAGEMENT =====
+        async function loadSubmissions() {
+            try {
+                const submissionsSnapshot = await db.ref('story_submissions').once('value');
+                allSubmissions = [];
+                
+                if (submissionsSnapshot.exists()) {
+                    submissionsSnapshot.forEach(child => {
+                        const submission = child.val();
+                        submission.id = child.key;
+                        allSubmissions.push(submission);
+                    });
+                }
+                
+                renderSubmissionsList();
+                
+            } catch (error) {
+                console.error("Error loading submissions:", error);
+                showAlert("Failed to load submissions", "error");
+            }
+        }
+
+        function renderSubmissionsList(filteredSubmissions = null) {
+            const submissions = filteredSubmissions || allSubmissions;
+            const container = document.getElementById('submissionsList');
+            
+            if (submissions.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <p>No submissions found</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            submissions.forEach(submission => {
+                const date = new Date(submission.createdAt || Date.now());
+                const status = submission.status || 'pending';
+                const statusColor = status === 'approved' ? 'success' : 
+                                  status === 'rejected' ? 'error' : 'warning';
+                
+                html += `
+                    <div style="background: rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                            <div>
+                                <h3 style="margin-bottom: 5px;">${submission.title || 'Untitled'}</h3>
+                                <p style="color: var(--text-secondary); font-size: 14px;">
+                                    Submitted by ${submission.authorName || 'Anonymous'} • ${formatDate(date)}
+                                </p>
+                            </div>
+                            <span style="padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(var(--${statusColor}), 0.1); color: var(--${statusColor});">
+                                ${status.charAt(0).toUpperCase() + status.slice(1)}
+                            </span>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <p>${submission.content ? submission.content.substring(0, 200) + '...' : 'No content'}</p>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px;">
+                            <button class="table-btn view" onclick="viewSubmission('${submission.id}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            ${status === 'pending' ? `
+                                <button class="table-btn edit" onclick="approveSubmission('${submission.id}')">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                                <button class="table-btn delete" onclick="rejectSubmission('${submission.id}')">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                            ` : ''}
+                            <button class="table-btn delete" onclick="deleteSubmission('${submission.id}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function searchSubmissions() {
+            const searchTerm = document.getElementById('submissionSearch').value.toLowerCase();
+            const filteredSubmissions = allSubmissions.filter(submission => 
+                (submission.title && submission.title.toLowerCase().includes(searchTerm)) ||
+                (submission.authorName && submission.authorName.toLowerCase().includes(searchTerm)) ||
+                (submission.content && submission.content.toLowerCase().includes(searchTerm))
+            );
+            renderSubmissionsList(filteredSubmissions);
+        }
+
+        function filterSubmissions() {
+            const filter = document.getElementById('submissionFilter').value;
+            let filteredSubmissions = allSubmissions;
+            
+            if (filter !== 'all') {
+                filteredSubmissions = allSubmissions.filter(submission => 
+                    submission.status === filter
+                );
+            }
+            
+            renderSubmissionsList(filteredSubmissions);
+        }
+
+        async function viewSubmission(submissionId) {
+            const submission = allSubmissions.find(s => s.id === submissionId);
+            if (submission) {
+                document.getElementById('viewTitle').textContent = submission.title || 'Submission Details';
+                document.getElementById('viewContent').innerHTML = `
+                    <div style="margin-bottom: 20px;">
+                        <strong>Author:</strong> ${submission.authorName || 'Anonymous'}<br>
+                        <strong>Email:</strong> ${submission.authorEmail || 'N/A'}<br>
+                        <strong>Submitted:</strong> ${formatDate(new Date(submission.createdAt || Date.now()))}<br>
+                        <strong>Status:</strong> ${submission.status || 'pending'}<br>
+                        <strong>Agreed to Terms:</strong> ${submission.agreedTerms ? 'Yes' : 'No'}
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <strong>Content:</strong>
+                        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-top: 10px; max-height: 400px; overflow-y: auto;">
+                            ${submission.content || 'No content provided'}
+                        </div>
+                    </div>
+                `;
+                openModal('viewModal');
+            }
+        }
+
+        async function approveSubmission(submissionId) {
+            try {
+                await db.ref('story_submissions/' + submissionId).update({
+                    status: 'approved',
+                    reviewedAt: Date.now(),
+                    reviewedBy: currentUser.email
+                });
+                
+                showAlert("Submission approved successfully!", "success");
+                loadSubmissions();
+                
+            } catch (error) {
+                console.error("Error approving submission:", error);
+                showAlert("Failed to approve submission", "error");
+            }
+        }
+
+        async function rejectSubmission(submissionId) {
+            try {
+                await db.ref('story_submissions/' + submissionId).update({
+                    status: 'rejected',
+                    reviewedAt: Date.now(),
+                    reviewedBy: currentUser.email
+                });
+                
+                showAlert("Submission rejected", "success");
+                loadSubmissions();
+                
+            } catch (error) {
+                console.error("Error rejecting submission:", error);
+                showAlert("Failed to reject submission", "error");
+            }
+        }
+
+        async function deleteSubmission(submissionId) {
+            itemsToDelete = { type: 'submission', id: submissionId };
+            document.querySelector('#deleteModal .modal-title').textContent = 'Delete Submission';
+            openModal('deleteModal');
+        }
+
+        // ===== CATEGORY MANAGEMENT =====
+        async function loadCategories() {
+            try {
+                const categoriesSnapshot = await db.ref('categories').once('value');
+                categories = [];
+                
+                if (categoriesSnapshot.exists()) {
+                    categoriesSnapshot.forEach(child => {
+                        const category = child.val();
+                        category.id = child.key;
+                        categories.push(category);
+                    });
+                }
+                
+                renderCategoriesTable();
+                populateCategorySelects();
+                
+            } catch (error) {
+                console.error("Error loading categories:", error);
+                showAlert("Failed to load categories", "error");
+            }
+        }
+
+        function renderCategoriesTable() {
+            const type = document.getElementById('categoryType').value;
+            let filteredCategories = categories;
+            
+            if (type !== 'all') {
+                filteredCategories = categories.filter(cat => cat.type === type);
+            }
+            
+            const table = document.getElementById('categoriesTable');
+            
+            if (filteredCategories.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px;">
+                            <p>No categories found</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let tableHtml = '';
+            filteredCategories.forEach(category => {
+                const date = new Date(category.createdAt || Date.now());
+                const typeLabel = category.type.charAt(0).toUpperCase() + category.type.slice(1);
+                
+                tableHtml += `
+                    <tr>
+                        <td>${category.name}</td>
+                        <td>${typeLabel}</td>
+                        <td>${category.count || 0}</td>
+                        <td>${formatDate(date, true)}</td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="table-btn delete" onclick="deleteCategory('${category.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            table.innerHTML = tableHtml;
+        }
+
+        function populateCategorySelects() {
+            const categorySelects = [
+                document.getElementById('contentCategory'),
+                document.getElementById('storyCategory'),
+                document.getElementById('podcastCategory')
+            ];
+            
+            categorySelects.forEach(select => {
+                if (select) {
+                    // Clear existing options except the first one
+                    while (select.options.length > 1) {
+                        select.remove(1);
+                    }
+                    
+                    // Add category options
+                    categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category.name;
+                        option.textContent = category.name;
+                        select.appendChild(option);
+                    });
+                }
+            });
+        }
+
+        function showAddCategoryModal() {
+            document.getElementById('categoryName').value = '';
+            document.getElementById('categoryDescription').value = '';
+            openModal('categoryModal');
+        }
+
+        async function saveCategory(event) {
+            event.preventDefault();
+            
+            const categoryData = {
+                name: document.getElementById('categoryName').value,
+                type: document.getElementById('categoryTypeModal').value,
+                description: document.getElementById('categoryDescription').value || '',
+                createdAt: Date.now(),
+                count: 0
+            };
+            
+            try {
+                // Check if category already exists
+                const existing = categories.find(cat => 
+                    cat.name.toLowerCase() === categoryData.name.toLowerCase() && 
+                    cat.type === categoryData.type
+                );
+                
+                if (existing) {
+                    showAlert("Category already exists", "error");
+                    return;
+                }
+                
+                await db.ref('categories').push().set(categoryData);
+                showAlert("Category added successfully!", "success");
+                closeModal('categoryModal');
+                loadCategories();
+                
+            } catch (error) {
+                console.error("Error saving category:", error);
+                showAlert("Failed to save category", "error");
+            }
+        }
+
+        async function deleteCategory(categoryId) {
+            itemsToDelete = { type: 'category', id: categoryId };
+            document.querySelector('#deleteModal .modal-title').textContent = 'Delete Category';
+            openModal('deleteModal');
+        }
+
+        // ===== DELETE CONFIRMATION =====
+        async function confirmDelete() {
+            if (!itemsToDelete) return;
+            
+            try {
+                const { type, id, contentType } = itemsToDelete;
+                
+                switch(type) {
+                    case 'user':
+                        await db.ref('users/' + id).remove();
+                        await db.ref('user_saves/' + id).remove();
+                        showAlert("User deleted successfully", "success");
+                        loadUsers();
+                        break;
+                        
+                    case 'content':
+                        await db.ref('stories/' + id).remove();
+                        await db.ref('user_saves').once('value').then(snapshot => {
+                            const updates = {};
+                            snapshot.forEach(child => {
+                                if (child.val()[id]) {
+                                    updates[child.key + '/' + id] = null;
+                                }
+                            });
+                            if (Object.keys(updates).length > 0) {
+                                db.ref('user_saves').update(updates);
+                            }
+                        });
+                        showAlert("Content deleted successfully", "success");
+                        
+                        if (contentType === 'podcast') {
+                            loadPodcasts();
+                        } else {
+                            loadStories();
+                        }
+                        break;
+                        
+                    case 'submission':
+                        await db.ref('story_submissions/' + id).remove();
+                        showAlert("Submission deleted successfully", "success");
+                        loadSubmissions();
+                        break;
+                        
+                    case 'category':
+                        await db.ref('categories/' + id).remove();
+                        showAlert("Category deleted successfully", "success");
+                        loadCategories();
+                        break;
+                }
+                
+                closeModal('deleteModal');
+                itemsToDelete = null;
+                
+            } catch (error) {
+                console.error("Error deleting item:", error);
+                showAlert("Failed to delete item", "error");
+            }
+        }
+
+        // ===== UTILITY FUNCTIONS =====
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+
+        function formatDate(date, short = false) {
+            if (short) {
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            alertContainer.appendChild(alert);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            itemsToDelete = null;
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                window.location.href = 'dashboard.html';
+            }).catch(error => {
+                console.error("Logout error:", error);
+                showAlert("Failed to logout", "error");
+            });
+        }
+
+        // Initialize when ready
+        setTimeout(() => {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }, 2000);
+    </script>
+</body>
+</html>

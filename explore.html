@@ -57,7 +57,7 @@
             overflow-x: hidden;
             position: relative;
             touch-action: pan-y;
-            padding: env(safe-area-inset-top) 0 env(safe-area-bottom) 0;
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
             overscroll-behavior: none;
         }
 
@@ -1254,6 +1254,101 @@
             transition: width 0.1s linear;
         }
 
+        /* ===== WARNING MODAL ===== */
+        .warning-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            padding: 20px;
+        }
+
+        .warning-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .warning-content {
+            background: linear-gradient(135deg, rgba(5, 0, 22, 0.98), rgba(26, 4, 58, 0.98));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            transform: scale(0.9) translateY(50px);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+        }
+
+        .warning-modal.active .warning-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .warning-icon {
+            font-size: 64px;
+            color: var(--warning);
+            margin-bottom: 20px;
+        }
+
+        .warning-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .warning-message {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .warning-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .warning-btn {
+            flex: 1;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .warning-btn.leave {
+            background: linear-gradient(135deg, var(--red-accent), #ff6b6b);
+            color: white;
+        }
+
+        .warning-btn.stay {
+            background: linear-gradient(135deg, var(--success), #00b894);
+            color: white;
+        }
+
+        .warning-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
         /* ===== BOTTOM NAVIGATION ===== */
         .bottom-nav {
             position: fixed;
@@ -1291,6 +1386,8 @@
             border-radius: 16px;
             min-width: 60px;
             font-weight: 600;
+            position: relative;
+            z-index: 1001;
         }
 
         .nav-item.active {
@@ -1325,6 +1422,7 @@
             margin-top: -30px;
             position: relative;
             overflow: hidden;
+            z-index: 1001;
         }
 
         .submit-story-btn::after {
@@ -1716,6 +1814,21 @@
         </div>
     </div>
 
+    <!-- Warning Modal -->
+    <div class="warning-modal" id="warningModal">
+        <div class="warning-content">
+            <div class="warning-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="warning-title">Audio Playing</h3>
+            <p class="warning-message">You have audio playing. If you leave this page, the audio will stop. Are you sure you want to leave?</p>
+            <div class="warning-actions">
+                <button class="warning-btn leave" onclick="leavePage()">Leave Page</button>
+                <button class="warning-btn stay" onclick="stayOnPage()">Stay Here</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Animated Background -->
     <div class="bg-blur bg-blur-1"></div>
     <div class="bg-blur bg-blur-2"></div>
@@ -1940,6 +2053,9 @@
 
             // Setup event listeners
             setupEventListeners();
+            
+            // Make sure all navigation links work properly
+            fixNavigationLinks();
         });
 
         function setupEventListeners() {
@@ -1969,6 +2085,10 @@
                 if (e.target === this) closeAudioPlayer();
             });
 
+            document.getElementById('warningModal').addEventListener('click', function(e) {
+                if (e.target === this) stayOnPage();
+            });
+
             // Keyboard shortcuts
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
@@ -1986,6 +2106,60 @@
                     }
                 }
             });
+        }
+
+        // FIX: Make navigation links work properly
+        function fixNavigationLinks() {
+            // Remove any existing click listeners that might be interfering
+            document.querySelectorAll('.bottom-nav a').forEach(link => {
+                // Store the original href
+                const originalHref = link.getAttribute('href');
+                
+                // Remove all click listeners and re-add a clean one
+                link.replaceWith(link.cloneNode(true));
+                
+                // Get the fresh link
+                const freshLink = document.querySelector(`.bottom-nav a[href="${originalHref}"]`);
+                
+                // Add clean click handler that works with audio warning
+                if (freshLink) {
+                    freshLink.addEventListener('click', function(e) {
+                        // If audio is playing, show warning
+                        if (currentAudio && !currentAudio.paused) {
+                            e.preventDefault();
+                            showWarningModal(this.href);
+                        }
+                        // Otherwise, let the link work normally
+                        // No need to prevent default or do anything else
+                    });
+                }
+            });
+            
+            // Make sure the + button works
+            const plusBtn = document.querySelector('.submit-story-btn');
+            if (plusBtn) {
+                plusBtn.addEventListener('click', function(e) {
+                    // If audio is playing, show warning
+                    if (currentAudio && !currentAudio.paused) {
+                        e.preventDefault();
+                        showWarningModal('dashboard.html');
+                    }
+                    // Otherwise, redirect to dashboard
+                });
+            }
+            
+            // Make sure profile button works
+            const profileBtn = document.getElementById('profileBtn');
+            if (profileBtn) {
+                profileBtn.addEventListener('click', function(e) {
+                    // If audio is playing, show warning
+                    if (currentAudio && !currentAudio.paused) {
+                        e.preventDefault();
+                        showWarningModal('feed.html');
+                    }
+                    // Otherwise, redirect to feed
+                });
+            }
         }
 
         // ===== CONTENT LOADING =====
@@ -2406,7 +2580,8 @@
                 currentAudio = new Audio(story.audioLink);
             } else {
                 // Fallback to demo audio if no audioLink
-                currentAudio = new Audio(`https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(parseInt(storyId.replace('story', '')) % 8) + 1 || 1}.mp3`);
+                const randomNum = Math.floor(Math.random() * 8) + 1;
+                currentAudio = new Audio(`https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${randomNum}.mp3`);
             }
             
             currentPlayingStory = story;
@@ -2736,6 +2911,28 @@
             if (!currentPlayingStory) return;
             const saveBtn = document.querySelector(`.explore-card[data-id="${currentPlayingStory.id}"] .card-save`);
             toggleSave(currentPlayingStory.id, saveBtn, new Event('click'));
+        }
+
+        // ===== WARNING MODAL =====
+        function showWarningModal(targetUrl) {
+            if (!currentAudio || currentAudio.paused) return;
+            
+            document.getElementById('warningModal').classList.add('active');
+            document.getElementById('warningModal').dataset.targetUrl = targetUrl;
+        }
+
+        function stayOnPage() {
+            document.getElementById('warningModal').classList.remove('active');
+        }
+
+        function leavePage() {
+            if (currentAudio) {
+                currentAudio.pause();
+                clearInterval(audioUpdateInterval);
+            }
+            
+            const targetUrl = document.getElementById('warningModal').dataset.targetUrl;
+            window.location.href = targetUrl;
         }
 
         // ===== UTILITY FUNCTIONS =====

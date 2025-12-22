@@ -8,3 +8,5 @@ const firebaseConfig = {
   measurementId: "G-Q50WK6G76P",
   databaseURL: "https://kheemz-fb9b6-default-rtdb.firebaseio.com"
 };
+
+firebase.initializeApp(firebaseConfig);

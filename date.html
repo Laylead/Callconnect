@@ -1033,6 +1033,9 @@
                     <button class="btn-wallet" id="depositBtn">
                         <i class="fas fa-plus"></i> Deposit
                     </button>
+                    <button class="btn-wallet" id="signOutBtn">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </button>
                 </div>
             </div>
         </div>
@@ -1056,6 +1059,9 @@
                 <div class="wallet-actions">
                     <button class="btn-wallet" id="withdrawBtn">
                         <i class="fas fa-minus"></i> Withdraw
+                    </button>
+                    <button class="btn-wallet" id="signOutBtnFemale">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
                     </button>
                 </div>
             </div>
@@ -1189,6 +1195,10 @@
     <!-- Toast Notification -->
     <div class="toast" id="toast"></div>
 
+    <!-- External Configuration Files -->
+    <script src="firebase-config.js"></script>
+    <script src="agora.js"></script>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -1197,53 +1207,36 @@
 
     <!-- Main Application Script -->
     <script>
-        // ===== FIREBASE CONFIGURATION =====
-        const firebaseConfig = {
-            apiKey: "AIzaSyC6nWtQO2jRk8Q8Yf9gB8nL7dXqY1Zz8vA",
-            authDomain: "connecthub-chat.firebaseapp.com",
-            projectId: "connecthub-chat",
-            storageBucket: "connecthub-chat.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abcdef1234567890"
-        };
-
-        // ===== AGORA CONFIGURATION =====
-        const agoraConfig = {
-            appId: "YOUR_AGORA_APP_ID",
-            token: null // Will be generated from your server
-        };
-
-        // ===== FIREBASE INITIALIZATION =====
-        let firebaseApp;
-        let auth;
-        let db;
-        let storage;
-
-        try {
-            firebaseApp = firebase.initializeApp(firebaseConfig);
-            auth = firebase.auth();
-            db = firebase.firestore();
-            storage = firebase.storage();
-            console.log("Firebase initialized successfully");
-        } catch (error) {
-            console.error("Firebase initialization error:", error);
-            showToast("Firebase initialization failed", "error");
-        }
-
         // ===== APPLICATION STATE =====
-        class ConnectHubApp {
-            constructor() {
-                this.currentUser = null;
-                this.currentChat = null;
-                this.isSignUp = false;
-                this.selectedGender = null;
-                this.chatUnsubscribe = null;
-                this.modelsUnsubscribe = null;
-                
-                this.init();
-            }
+        let app = {
+            currentUser: null,
+            currentChat: null,
+            isSignUp: false,
+            selectedGender: null,
+            chatUnsubscribe: null,
+            modelsUnsubscribe: null,
+            auth: null,
+            db: null,
+            storage: null,
+            agoraConfig: null,
 
-            init() {
+            init: function() {
+                // Initialize Firebase from external config
+                try {
+                    const firebaseApp = firebase.initializeApp(firebaseConfig);
+                    this.auth = firebase.auth();
+                    this.db = firebase.firestore();
+                    this.storage = firebase.storage();
+                    console.log("Firebase initialized successfully");
+                } catch (error) {
+                    console.error("Firebase initialization error:", error);
+                    this.showToast("Firebase initialization failed", "error");
+                    return;
+                }
+
+                // Get Agora config from external file
+                this.agoraConfig = window.agoraConfig;
+
                 // Initialize DOM elements
                 this.initElements();
                 
@@ -1252,9 +1245,9 @@
                 
                 // Check auth state
                 this.checkAuthState();
-            }
+            },
 
-            initElements() {
+            initElements: function() {
                 // Auth elements
                 this.authScreen = document.getElementById('authScreen');
                 this.authForm = document.getElementById('authForm');
@@ -1271,9 +1264,9 @@
                 
                 // Toast
                 this.toast = document.getElementById('toast');
-            }
+            },
 
-            initEventListeners() {
+            initEventListeners: function() {
                 // Gender selection
                 this.genderOptions.forEach(option => {
                     option.addEventListener('click', () => this.selectGender(option));
@@ -1290,6 +1283,10 @@
                     e.preventDefault();
                     this.handleAuth();
                 });
+
+                // Sign out buttons
+                document.getElementById('signOutBtn')?.addEventListener('click', () => this.signOut());
+                document.getElementById('signOutBtnFemale')?.addEventListener('click', () => this.signOut());
 
                 // Modal close buttons
                 document.getElementById('closeDepositModal')?.addEventListener('click', () => this.closeModal('depositModal'));
@@ -1312,25 +1309,89 @@
                         this.closeAllModals();
                     }
                 });
-            }
 
-            checkAuthState() {
-                auth.onAuthStateChanged(async (user) => {
+                // Initialize dashboard events when they become available
+                this.initDashboardEvents();
+            },
+
+            initDashboardEvents: function() {
+                // Deposit button
+                document.getElementById('depositBtn')?.addEventListener('click', () => {
+                    this.openModal('depositModal');
+                });
+
+                // Confirm deposit
+                document.getElementById('confirmDeposit')?.addEventListener('click', () => {
+                    this.confirmDeposit();
+                });
+
+                // Withdraw button
+                document.getElementById('withdrawBtn')?.addEventListener('click', () => {
+                    document.getElementById('availableBalance').textContent = this.currentUser?.data?.earnings || 0;
+                    this.openModal('withdrawModal');
+                });
+
+                // Confirm withdrawal
+                document.getElementById('confirmWithdraw')?.addEventListener('click', () => {
+                    this.confirmWithdrawal();
+                });
+
+                // Media request button
+                document.getElementById('sendMediaRequestBtn')?.addEventListener('click', () => {
+                    this.openModal('mediaRequestModal');
+                });
+
+                // Send media request
+                document.getElementById('sendMediaRequest')?.addEventListener('click', () => {
+                    this.sendMediaRequest();
+                });
+
+                // Back to dashboard
+                document.getElementById('backToDashboard')?.addEventListener('click', () => {
+                    this.leaveChat();
+                });
+
+                // Send message button
+                document.getElementById('sendMessageBtn')?.addEventListener('click', () => {
+                    this.sendMessage();
+                });
+
+                // Message input enter key
+                document.getElementById('messageInput')?.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.sendMessage();
+                    }
+                });
+
+                // Upload media
+                document.getElementById('uploadMedia')?.addEventListener('click', () => {
+                    this.uploadMedia();
+                });
+            },
+
+            checkAuthState: function() {
+                this.auth.onAuthStateChanged(async (user) => {
                     if (user) {
                         // User is signed in
                         this.currentUser = user;
-                        const userDoc = await db.collection('users').doc(user.uid).get();
-                        
-                        if (userDoc.exists) {
-                            const userData = userDoc.data();
-                            this.currentUser.data = userData;
+                        try {
+                            const userDoc = await this.db.collection('users').doc(user.uid).get();
                             
-                            // Update UI based on user gender
-                            this.updateUserInterface(userData);
-                        } else {
-                            // User document doesn't exist, sign them out
-                            await auth.signOut();
-                            this.showToast("User data not found. Please sign up again.", "error");
+                            if (userDoc.exists) {
+                                const userData = userDoc.data();
+                                this.currentUser.data = userData;
+                                
+                                // Update UI based on user gender
+                                this.updateUserInterface(userData);
+                            } else {
+                                // User document doesn't exist, sign them out
+                                await this.auth.signOut();
+                                this.showToast("User data not found. Please sign up again.", "error");
+                            }
+                        } catch (error) {
+                            console.error("Error fetching user data:", error);
+                            await this.auth.signOut();
+                            this.showToast("Error loading user data", "error");
                         }
                     } else {
                         // User is signed out
@@ -1341,16 +1402,16 @@
                     // Hide loading overlay
                     this.loadingOverlay.classList.add('hidden');
                 });
-            }
+            },
 
-            selectGender(option) {
+            selectGender: function(option) {
                 this.genderOptions.forEach(o => o.classList.remove('selected'));
                 option.classList.add('selected');
                 this.selectedGender = option.dataset.gender;
                 this.genderInput.value = this.selectedGender;
-            }
+            },
 
-            toggleAuthMode() {
+            toggleAuthMode: function() {
                 this.isSignUp = !this.isSignUp;
                 const icon = this.isSignUp ? 'fa-user-plus' : 'fa-sign-in-alt';
                 const text = this.isSignUp ? 'Sign Up' : 'Sign In';
@@ -1361,9 +1422,9 @@
                     <span>${text}</span>
                 `;
                 this.toggleAuth.textContent = switchText;
-            }
+            },
 
-            async handleAuth() {
+            handleAuth: async function() {
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 const gender = this.selectedGender;
@@ -1380,10 +1441,10 @@
                 try {
                     if (this.isSignUp) {
                         // Sign Up
-                        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                        const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
                         
                         // Create user document
-                        await db.collection('users').doc(userCredential.user.uid).set({
+                        await this.db.collection('users').doc(userCredential.user.uid).set({
                             email: email,
                             gender: gender,
                             name: email.split('@')[0],
@@ -1398,7 +1459,7 @@
                         this.showToast('Account created successfully!', 'success');
                     } else {
                         // Sign In
-                        await auth.signInWithEmailAndPassword(email, password);
+                        await this.auth.signInWithEmailAndPassword(email, password);
                         this.showToast('Signed in successfully!', 'success');
                     }
                 } catch (error) {
@@ -1417,9 +1478,9 @@
                     this.authButton.disabled = false;
                     this.authButton.innerHTML = originalContent;
                 }
-            }
+            },
 
-            updateUserInterface(userData) {
+            updateUserInterface: function(userData) {
                 // Hide all screens first
                 this.authScreen.classList.add('hidden');
                 this.maleDashboard.classList.add('hidden');
@@ -1436,31 +1497,25 @@
                 } else if (userData.gender === 'female') {
                     this.showFemaleDashboard(userData);
                 }
-            }
+            },
 
-            showMaleDashboard(userData) {
+            showMaleDashboard: function(userData) {
                 this.maleDashboard.classList.remove('hidden');
                 document.getElementById('walletBalance').textContent = userData.balance || 0;
                 
                 // Load models
                 this.loadModels();
-                
-                // Setup dashboard events
-                this.setupMaleDashboardEvents();
-            }
+            },
 
-            showFemaleDashboard(userData) {
+            showFemaleDashboard: function(userData) {
                 this.femaleDashboard.classList.remove('hidden');
                 document.getElementById('earningsBalance').textContent = userData.earnings || 0;
                 
                 // Load active chats
                 this.loadActiveChats();
-                
-                // Setup dashboard events
-                this.setupFemaleDashboardEvents();
-            }
+            },
 
-            showAuthScreen() {
+            showAuthScreen: function() {
                 this.authScreen.classList.remove('hidden');
                 this.maleDashboard.classList.add('hidden');
                 this.femaleDashboard.classList.add('hidden');
@@ -1471,9 +1526,9 @@
                 this.genderOptions.forEach(o => o.classList.remove('selected'));
                 this.selectedGender = null;
                 this.genderInput.value = '';
-            }
+            },
 
-            async loadModels() {
+            loadModels: async function() {
                 const modelsGrid = document.getElementById('modelsGrid');
                 modelsGrid.innerHTML = '<div class="text-center" style="padding:40px;color:var(--text-secondary)">Loading models...</div>';
 
@@ -1484,7 +1539,7 @@
                     }
 
                     // Listen for online female users
-                    this.modelsUnsubscribe = db.collection('users')
+                    this.modelsUnsubscribe = this.db.collection('users')
                         .where('gender', '==', 'female')
                         .where('online', '==', true)
                         .onSnapshot((snapshot) => {
@@ -1495,13 +1550,15 @@
                                 return;
                             }
                             
-                            snapshot.forEach((doc, index) => {
+                            let index = 0;
+                            snapshot.forEach((doc) => {
                                 const model = doc.data();
                                 model.id = doc.id;
                                 
                                 const modelCard = this.createModelCard(model);
                                 modelCard.style.animationDelay = `${index * 100}ms`;
                                 modelsGrid.appendChild(modelCard);
+                                index++;
                             });
                         }, (error) => {
                             console.error('Error loading models:', error);
@@ -1512,9 +1569,9 @@
                     console.error('Error loading models:', error);
                     modelsGrid.innerHTML = '<div class="text-center" style="padding:40px;color:var(--accent-red)">Error loading models</div>';
                 }
-            }
+            },
 
-            createModelCard(model) {
+            createModelCard: function(model) {
                 const card = document.createElement('div');
                 card.className = 'model-card';
                 card.innerHTML = `
@@ -1542,12 +1599,14 @@
                 });
 
                 return card;
-            }
+            },
 
-            async startChat(model) {
-                if (!this.currentUser || this.currentUser.data.balance < 10) {
+            startChat: function(model) {
+                if (!this.currentUser || (this.currentUser.data.gender === 'male' && this.currentUser.data.balance < 10)) {
                     this.showToast('Insufficient balance. Minimum ₦10 required.', 'error');
-                    this.openModal('depositModal');
+                    if (this.currentUser.data.gender === 'male') {
+                        this.openModal('depositModal');
+                    }
                     return;
                 }
 
@@ -1558,9 +1617,9 @@
                 };
 
                 this.showChatInterface();
-            }
+            },
 
-            showChatInterface() {
+            showChatInterface: function() {
                 // Hide dashboards
                 this.maleDashboard.classList.add('hidden');
                 this.femaleDashboard.classList.add('hidden');
@@ -1574,249 +1633,9 @@
                 
                 // Load chat messages
                 this.loadChatMessages();
-                
-                // Setup chat events
-                this.setupChatEvents();
-            }
+            },
 
-            setupMaleDashboardEvents() {
-                // Deposit button
-                document.getElementById('depositBtn').addEventListener('click', () => {
-                    this.openModal('depositModal');
-                });
-
-                // Confirm deposit
-                document.getElementById('confirmDeposit').addEventListener('click', async () => {
-                    const amount = parseInt(document.getElementById('depositAmount').value);
-                    
-                    if (amount < 100) {
-                        this.showToast('Minimum deposit is ₦100', 'error');
-                        return;
-                    }
-                    
-                    this.showToast('Processing deposit...', 'info');
-                    
-                    // Simulate deposit processing
-                    setTimeout(async () => {
-                        try {
-                            await db.collection('users').doc(this.currentUser.uid).update({
-                                balance: firebase.firestore.FieldValue.increment(amount),
-                                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                            
-                            // Update local balance
-                            this.currentUser.data.balance += amount;
-                            document.getElementById('walletBalance').textContent = this.currentUser.data.balance;
-                            
-                            this.closeModal('depositModal');
-                            this.showToast(`Successfully deposited ₦${amount}!`, 'success');
-                        } catch (error) {
-                            console.error('Error depositing:', error);
-                            this.showToast('Deposit failed', 'error');
-                        }
-                    }, 1500);
-                });
-            }
-
-            setupFemaleDashboardEvents() {
-                // Withdraw button
-                document.getElementById('withdrawBtn').addEventListener('click', () => {
-                    document.getElementById('availableBalance').textContent = this.currentUser.data.earnings || 0;
-                    this.openModal('withdrawModal');
-                });
-
-                // Confirm withdrawal
-                document.getElementById('confirmWithdraw').addEventListener('click', async () => {
-                    const amount = parseInt(document.getElementById('withdrawAmount').value);
-                    const bankAccount = document.getElementById('bankAccount').value;
-                    
-                    if (!amount || amount <= 0) {
-                        this.showToast('Please enter a valid amount', 'error');
-                        return;
-                    }
-                    
-                    if (amount > this.currentUser.data.earnings) {
-                        this.showToast('Insufficient earnings', 'error');
-                        return;
-                    }
-                    
-                    if (!bankAccount || bankAccount.length < 10) {
-                        this.showToast('Please enter a valid bank account', 'error');
-                        return;
-                    }
-                    
-                    try {
-                        // Create withdrawal request
-                        await db.collection('withdrawals').add({
-                            userId: this.currentUser.uid,
-                            amount: amount,
-                            bankAccount: bankAccount,
-                            status: 'pending',
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        
-                        // Update earnings
-                        await db.collection('users').doc(this.currentUser.uid).update({
-                            earnings: firebase.firestore.FieldValue.increment(-amount),
-                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        
-                        // Update local earnings
-                        this.currentUser.data.earnings -= amount;
-                        document.getElementById('earningsBalance').textContent = this.currentUser.data.earnings;
-                        
-                        this.closeModal('withdrawModal');
-                        this.showToast(`Withdrawal request for ₦${amount} submitted!`, 'success');
-                    } catch (error) {
-                        console.error('Error withdrawing:', error);
-                        this.showToast('Withdrawal failed', 'error');
-                    }
-                });
-            }
-
-            setupChatEvents() {
-                // Back button
-                document.getElementById('backToDashboard').addEventListener('click', () => {
-                    this.leaveChat();
-                });
-
-                // Send message button
-                document.getElementById('sendMessageBtn').addEventListener('click', () => {
-                    this.sendMessage();
-                });
-
-                // Message input enter key
-                document.getElementById('messageInput').addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        this.sendMessage();
-                    }
-                });
-
-                // Media request button
-                document.getElementById('sendMediaRequestBtn').addEventListener('click', () => {
-                    this.openModal('mediaRequestModal');
-                });
-
-                // Send media request
-                document.getElementById('sendMediaRequest').addEventListener('click', () => {
-                    this.sendMediaRequest();
-                });
-            }
-
-            async sendMessage() {
-                const messageInput = document.getElementById('messageInput');
-                const message = messageInput.value.trim();
-                
-                if (!message || !this.currentChat || !this.currentUser) return;
-
-                if (this.currentUser.data.gender === 'male' && this.currentUser.data.balance < 10) {
-                    this.showToast('Insufficient balance. Please deposit funds.', 'error');
-                    return;
-                }
-
-                const chatId = this.getChatId(this.currentUser.uid, this.currentChat.modelId);
-                
-                try {
-                    // Add message to Firestore
-                    await db.collection('chats').doc(chatId).collection('messages').add({
-                        text: message,
-                        senderId: this.currentUser.uid,
-                        senderName: this.currentUser.data.name,
-                        type: 'text',
-                        price: 10,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    // Update balances
-                    if (this.currentUser.data.gender === 'male') {
-                        // Deduct from male user
-                        await db.collection('users').doc(this.currentUser.uid).update({
-                            balance: firebase.firestore.FieldValue.increment(-10)
-                        });
-                        
-                        // Add to female user earnings
-                        await db.collection('users').doc(this.currentChat.modelId).update({
-                            earnings: firebase.firestore.FieldValue.increment(10)
-                        });
-                        
-                        // Update local balance
-                        this.currentUser.data.balance -= 10;
-                        document.getElementById('walletBalance').textContent = this.currentUser.data.balance;
-                    }
-                    
-                    // Clear input
-                    messageInput.value = '';
-                    messageInput.focus();
-                    
-                } catch (error) {
-                    console.error('Error sending message:', error);
-                    this.showToast('Failed to send message', 'error');
-                }
-            }
-
-            async sendMediaRequest() {
-                const mediaType = document.getElementById('mediaType').value;
-                const description = document.getElementById('mediaDescription').value;
-                const price = parseInt(document.getElementById('mediaPrice').value);
-                
-                if (!description.trim()) {
-                    this.showToast('Please describe what you want', 'error');
-                    return;
-                }
-                
-                if (price < 100) {
-                    this.showToast('Minimum offer is ₦100', 'error');
-                    return;
-                }
-                
-                if (price > this.currentUser.data.balance) {
-                    this.showToast('Insufficient balance', 'error');
-                    return;
-                }
-
-                const chatId = this.getChatId(this.currentUser.uid, this.currentChat.modelId);
-                const requestId = Date.now().toString();
-                
-                try {
-                    // Add media request as a message
-                    await db.collection('chats').doc(chatId).collection('messages').add({
-                        type: 'media_request',
-                        senderId: this.currentUser.uid,
-                        senderName: this.currentUser.data.name,
-                        mediaType: mediaType,
-                        description: description,
-                        price: price,
-                        requestId: requestId,
-                        status: 'pending',
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    // Store request in separate collection
-                    await db.collection('media_requests').doc(requestId).set({
-                        chatId: chatId,
-                        modelId: this.currentChat.modelId,
-                        clientId: this.currentUser.uid,
-                        mediaType: mediaType,
-                        description: description,
-                        price: price,
-                        status: 'pending',
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    this.closeModal('mediaRequestModal');
-                    this.showToast('Media request sent!', 'success');
-                    
-                    // Reset form
-                    document.getElementById('mediaDescription').value = '';
-                    document.getElementById('mediaPrice').value = '500';
-                    
-                } catch (error) {
-                    console.error('Error sending media request:', error);
-                    this.showToast('Failed to send request', 'error');
-                }
-            }
-
-            async loadChatMessages() {
+            loadChatMessages: function() {
                 const chatMessages = document.getElementById('chatMessages');
                 chatMessages.innerHTML = '<div class="text-center" style="padding:40px;color:var(--text-secondary)">Loading messages...</div>';
 
@@ -1831,7 +1650,7 @@
                     }
 
                     // Listen for messages
-                    this.chatUnsubscribe = db.collection('chats').doc(chatId)
+                    this.chatUnsubscribe = this.db.collection('chats').doc(chatId)
                         .collection('messages')
                         .orderBy('timestamp', 'asc')
                         .onSnapshot((snapshot) => {
@@ -1860,9 +1679,9 @@
                     console.error('Error loading chat messages:', error);
                     chatMessages.innerHTML = '<div class="text-center" style="padding:40px;color:var(--accent-red)">Error loading messages</div>';
                 }
-            }
+            },
 
-            addMessageToUI(message) {
+            addMessageToUI: function(message) {
                 const chatMessages = document.getElementById('chatMessages');
                 const isSent = message.senderId === this.currentUser.uid;
                 
@@ -1893,26 +1712,242 @@
                         </div>
                         <div class="message-time">${this.formatTime(message.timestamp)}</div>
                     `;
+                } else if (message.type === 'voice') {
+                    content = `
+                        <div class="message-sender">${message.senderName}</div>
+                        <div class="voice-note">
+                            <i class="fas fa-microphone"></i>
+                            <span>Voice message</span>
+                            <span style="margin-left:auto;">${message.duration || '0:10'}</span>
+                        </div>
+                        <div class="message-time">${this.formatTime(message.timestamp)}</div>
+                    `;
                 }
                 
                 messageDiv.innerHTML = content;
                 chatMessages.appendChild(messageDiv);
-            }
+            },
 
-            async loadActiveChats() {
-                // Implementation for female users to see their active chats
+            sendMessage: async function() {
+                const messageInput = document.getElementById('messageInput');
+                const message = messageInput.value.trim();
+                
+                if (!message || !this.currentChat || !this.currentUser) return;
+
+                if (this.currentUser.data.gender === 'male' && this.currentUser.data.balance < 10) {
+                    this.showToast('Insufficient balance. Please deposit funds.', 'error');
+                    return;
+                }
+
+                const chatId = this.getChatId(this.currentUser.uid, this.currentChat.modelId);
+                
+                try {
+                    // Add message to Firestore
+                    await this.db.collection('chats').doc(chatId).collection('messages').add({
+                        text: message,
+                        senderId: this.currentUser.uid,
+                        senderName: this.currentUser.data.name,
+                        type: 'text',
+                        price: 10,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    // Update balances
+                    if (this.currentUser.data.gender === 'male') {
+                        // Deduct from male user
+                        await this.db.collection('users').doc(this.currentUser.uid).update({
+                            balance: firebase.firestore.FieldValue.increment(-10),
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        // Add to female user earnings
+                        await this.db.collection('users').doc(this.currentChat.modelId).update({
+                            earnings: firebase.firestore.FieldValue.increment(10),
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        // Update local balance
+                        this.currentUser.data.balance -= 10;
+                        document.getElementById('walletBalance').textContent = this.currentUser.data.balance;
+                    }
+                    
+                    // Clear input
+                    messageInput.value = '';
+                    messageInput.focus();
+                    
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    this.showToast('Failed to send message', 'error');
+                }
+            },
+
+            confirmDeposit: async function() {
+                const amount = parseInt(document.getElementById('depositAmount').value);
+                
+                if (amount < 100) {
+                    this.showToast('Minimum deposit is ₦100', 'error');
+                    return;
+                }
+                
+                this.showToast('Processing deposit...', 'info');
+                
+                // Simulate deposit processing
+                setTimeout(async () => {
+                    try {
+                        await this.db.collection('users').doc(this.currentUser.uid).update({
+                            balance: firebase.firestore.FieldValue.increment(amount),
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        // Update local balance
+                        this.currentUser.data.balance += amount;
+                        document.getElementById('walletBalance').textContent = this.currentUser.data.balance;
+                        
+                        this.closeModal('depositModal');
+                        this.showToast(`Successfully deposited ₦${amount}!`, 'success');
+                    } catch (error) {
+                        console.error('Error depositing:', error);
+                        this.showToast('Deposit failed', 'error');
+                    }
+                }, 1500);
+            },
+
+            confirmWithdrawal: async function() {
+                const amount = parseInt(document.getElementById('withdrawAmount').value);
+                const bankAccount = document.getElementById('bankAccount').value;
+                
+                if (!amount || amount <= 0) {
+                    this.showToast('Please enter a valid amount', 'error');
+                    return;
+                }
+                
+                if (amount > this.currentUser.data.earnings) {
+                    this.showToast('Insufficient earnings', 'error');
+                    return;
+                }
+                
+                if (!bankAccount || bankAccount.length < 10) {
+                    this.showToast('Please enter a valid bank account', 'error');
+                    return;
+                }
+                
+                try {
+                    // Create withdrawal request
+                    await this.db.collection('withdrawals').add({
+                        userId: this.currentUser.uid,
+                        amount: amount,
+                        bankAccount: bankAccount,
+                        status: 'pending',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Update earnings
+                    await this.db.collection('users').doc(this.currentUser.uid).update({
+                        earnings: firebase.firestore.FieldValue.increment(-amount),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Update local earnings
+                    this.currentUser.data.earnings -= amount;
+                    document.getElementById('earningsBalance').textContent = this.currentUser.data.earnings;
+                    
+                    this.closeModal('withdrawModal');
+                    this.showToast(`Withdrawal request for ₦${amount} submitted!`, 'success');
+                } catch (error) {
+                    console.error('Error withdrawing:', error);
+                    this.showToast('Withdrawal failed', 'error');
+                }
+            },
+
+            sendMediaRequest: async function() {
+                const mediaType = document.getElementById('mediaType').value;
+                const description = document.getElementById('mediaDescription').value;
+                const price = parseInt(document.getElementById('mediaPrice').value);
+                
+                if (!description.trim()) {
+                    this.showToast('Please describe what you want', 'error');
+                    return;
+                }
+                
+                if (price < 100) {
+                    this.showToast('Minimum offer is ₦100', 'error');
+                    return;
+                }
+                
+                if (price > this.currentUser.data.balance) {
+                    this.showToast('Insufficient balance', 'error');
+                    return;
+                }
+
+                const chatId = this.getChatId(this.currentUser.uid, this.currentChat.modelId);
+                const requestId = Date.now().toString();
+                
+                try {
+                    // Add media request as a message
+                    await this.db.collection('chats').doc(chatId).collection('messages').add({
+                        type: 'media_request',
+                        senderId: this.currentUser.uid,
+                        senderName: this.currentUser.data.name,
+                        mediaType: mediaType,
+                        description: description,
+                        price: price,
+                        requestId: requestId,
+                        status: 'pending',
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    // Store request in separate collection
+                    await this.db.collection('media_requests').doc(requestId).set({
+                        chatId: chatId,
+                        modelId: this.currentChat.modelId,
+                        clientId: this.currentUser.uid,
+                        mediaType: mediaType,
+                        description: description,
+                        price: price,
+                        status: 'pending',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    this.closeModal('mediaRequestModal');
+                    this.showToast('Media request sent!', 'success');
+                    
+                    // Reset form
+                    document.getElementById('mediaDescription').value = '';
+                    document.getElementById('mediaPrice').value = '500';
+                    
+                } catch (error) {
+                    console.error('Error sending media request:', error);
+                    this.showToast('Failed to send request', 'error');
+                }
+            },
+
+            handleMediaRequest: function(requestId) {
+                // Show media upload modal
+                this.openModal('mediaUploadModal');
+                // In a real app, you would load the request details here
+                document.getElementById('earnAmount').textContent = '500'; // Example amount
+            },
+
+            uploadMedia: function() {
+                // In a real app, you would upload the file to Firebase Storage
+                // and update the media request status
+                this.showToast('Media upload feature coming soon', 'info');
+                this.closeModal('mediaUploadModal');
+            },
+
+            loadActiveChats: function() {
                 const activeChatsGrid = document.getElementById('activeChatsGrid');
                 activeChatsGrid.innerHTML = '<div class="text-center" style="padding:40px;color:var(--text-secondary)">Loading active chats...</div>';
                 
-                // For now, show a message
+                // For now, show instructions
                 activeChatsGrid.innerHTML = `
                     <div class="text-center" style="padding:40px;">
                         <h3 style="margin-bottom:10px;">Your Earnings Dashboard</h3>
                         <p style="color:var(--text-secondary);margin-bottom:20px;">You earn ₦10 for every message you send to male users</p>
-                        <p style="color:var(--text-secondary);margin-bottom:20px;">When a client requests custom media, you'll receive a notification</p>
-                        <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:20px;">
+                        <p style="color:var(--text-secondary);margin-bottom:20px;">When a client requests custom media, you'll receive a notification in chat</p>
+                        <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;padding:20px;margin-top:20px;">
                             <h4 style="margin-bottom:10px;">How it works:</h4>
-                            <ul style="text-align:left;color:var(--text-secondary);">
+                            <ul style="text-align:left;color:var(--text-secondary);padding-left:20px;">
                                 <li>Male users pay ₦10 per message</li>
                                 <li>You can send voice notes for free</li>
                                 <li>Accept media requests to earn more</li>
@@ -1921,14 +1956,14 @@
                         </div>
                     </div>
                 `;
-            }
+            },
 
-            getChatId(userId1, userId2) {
+            getChatId: function(userId1, userId2) {
                 // Create consistent chat ID regardless of order
                 return [userId1, userId2].sort().join('_');
-            }
+            },
 
-            formatTime(timestamp) {
+            formatTime: function(timestamp) {
                 if (!timestamp) return 'Just now';
                 
                 const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -1943,23 +1978,23 @@
                 if (diffHours < 24) return `${diffHours}h ago`;
                 
                 return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            }
+            },
 
-            openModal(modalId) {
+            openModal: function(modalId) {
                 document.getElementById(modalId).classList.add('active');
-            }
+            },
 
-            closeModal(modalId) {
+            closeModal: function(modalId) {
                 document.getElementById(modalId).classList.remove('active');
-            }
+            },
 
-            closeAllModals() {
+            closeAllModals: function() {
                 document.querySelectorAll('.modal-overlay').forEach(modal => {
                     modal.classList.remove('active');
                 });
-            }
+            },
 
-            showToast(message, type = 'info') {
+            showToast: function(message, type = 'info') {
                 this.toast.textContent = message;
                 this.toast.className = 'toast';
                 this.toast.classList.add(type);
@@ -1968,9 +2003,9 @@
                 setTimeout(() => {
                     this.toast.classList.remove('show');
                 }, 3000);
-            }
+            },
 
-            leaveChat() {
+            leaveChat: function() {
                 // Clean up listeners
                 if (this.chatUnsubscribe) {
                     this.chatUnsubscribe();
@@ -1986,29 +2021,36 @@
                 } else {
                     this.femaleDashboard.classList.remove('hidden');
                 }
-            }
+            },
 
-            async handleMediaRequest(requestId) {
-                // This would be called from the message UI
-                // For now, just show a message
-                this.showToast('Media request handling coming soon', 'info');
-            }
-
-            async signOut() {
+            signOut: async function() {
                 try {
                     // Set user offline
                     if (this.currentUser) {
-                        await db.collection('users').doc(this.currentUser.uid).update({
+                        await this.db.collection('users').doc(this.currentUser.uid).update({
                             online: false,
                             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
                     }
                     
-                    // Sign out from Firebase
-                    await auth.signOut();
+                    // Clean up listeners
+                    if (this.chatUnsubscribe) {
+                        this.chatUnsubscribe();
+                        this.chatUnsubscribe = null;
+                    }
                     
-                    // Clean up
-                    this.leaveChat();
+                    if (this.modelsUnsubscribe) {
+                        this.modelsUnsubscribe();
+                        this.modelsUnsubscribe = null;
+                    }
+                    
+                    // Sign out from Firebase
+                    await this.auth.signOut();
+                    
+                    // Reset state
+                    this.currentUser = null;
+                    this.currentChat = null;
+                    
                     this.showToast('Signed out successfully', 'success');
                     
                 } catch (error) {
@@ -2016,50 +2058,14 @@
                     this.showToast('Error signing out', 'error');
                 }
             }
-        }
+        };
 
-        // ===== INITIALIZE APPLICATION =====
-        let app;
-
+        // Initialize the app when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
-            app = new ConnectHubApp();
+            app.init();
             
             // Make app globally available for button onclick handlers
             window.app = app;
-            
-            // Add sign out button to header
-            const addSignOutButton = () => {
-                const headers = document.querySelectorAll('.dashboard-header');
-                headers.forEach(header => {
-                    if (!header.querySelector('.btn-signout')) {
-                        const signOutBtn = document.createElement('button');
-                        signOutBtn.className = 'btn-wallet btn-signout';
-                        signOutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sign Out';
-                        signOutBtn.style.marginLeft = '10px';
-                        signOutBtn.addEventListener('click', () => app.signOut());
-                        
-                        const walletCard = header.querySelector('.wallet-card');
-                        if (walletCard) {
-                            walletCard.querySelector('.wallet-actions').appendChild(signOutBtn);
-                        }
-                    }
-                });
-            };
-            
-            // Observe DOM changes to add sign out button
-            const observer = new MutationObserver(() => {
-                addSignOutButton();
-            });
-            
-            observer.observe(document.body, { childList: true, subtree: true });
-        });
-
-        // Make sure user is redirected properly if they try to access pages directly
-        window.addEventListener('beforeunload', () => {
-            // Clean up listeners
-            if (app) {
-                app.leaveChat();
-            }
         });
     </script>
 </body>

@@ -41,8 +41,23 @@
             overflow-x: hidden;
         }
 
+        /* ===== GLITTER BACKGROUND ===== */
+        .glitter-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(157, 23, 77, 0.1) 0%, transparent 50%);
+        }
+
         /* ===== LOADER ===== */
-        .loader-overlay {
+        .loading-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -53,12 +68,16 @@
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            transition: opacity 0.5s ease;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .loader-overlay.hidden {
+        .loading-overlay.hidden {
             opacity: 0;
-            pointer-events: none;
+            visibility: hidden;
+        }
+
+        .intimate-loader {
+            text-align: center;
         }
 
         .heart-loader {
@@ -67,6 +86,7 @@
             background: linear-gradient(135deg, var(--soft-pink), var(--rich-rose));
             position: relative;
             transform: rotate(45deg);
+            margin: 0 auto 30px;
             animation: heartbeat 1.5s ease-in-out infinite;
             box-shadow: 0 10px 30px rgba(236, 72, 153, 0.4);
         }
@@ -98,6 +118,21 @@
             75% { transform: rotate(45deg) scale(1.05); }
         }
 
+        .loader-text {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--soft-pink), var(--rich-rose));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
+
+        .loader-subtext {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 10px;
+        }
+
         /* ===== DASHBOARD ===== */
         .dashboard {
             display: none;
@@ -112,7 +147,7 @@
         }
 
         .dashboard-header {
-            background: rgba(15, 23, 42, 0.9);
+            background: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
@@ -122,6 +157,7 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: var(--shadow-lg);
+            border-left: 4px solid var(--soft-pink);
         }
 
         .user-info h1 {
@@ -145,6 +181,29 @@
             min-width: 320px;
             color: white;
             box-shadow: 0 15px 35px rgba(236, 72, 153, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wallet-card:before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .wallet-content {
+            position: relative;
+            z-index: 1;
         }
 
         .wallet-label {
@@ -183,6 +242,7 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+            backdrop-filter: blur(10px);
         }
 
         .btn-wallet:hover {
@@ -204,16 +264,15 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             overflow: hidden;
-            transition: all 0.4s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
-            animation: cardAppear 0.6s ease;
+            position: relative;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: cardAppear 0.6s ease forwards;
         }
 
         @keyframes cardAppear {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -233,7 +292,7 @@
             position: relative;
         }
 
-        .model-status {
+        .model-badge {
             position: absolute;
             top: 15px;
             right: 15px;
@@ -246,10 +305,16 @@
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
-        .status-online {
+        .badge-online {
             color: var(--accent-teal);
+        }
+
+        .badge-earnings {
+            background: linear-gradient(135deg, rgba(45, 212, 191, 0.2), rgba(45, 212, 191, 0.1));
+            border: 1px solid var(--accent-teal);
         }
 
         .model-info {
@@ -260,6 +325,9 @@
             font-size: 22px;
             font-weight: 700;
             margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .model-price {
@@ -296,36 +364,12 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
+            letter-spacing: 0.5px;
         }
 
         .btn-chat:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(236, 72, 153, 0.3);
-        }
-
-        /* ===== TOAST ===== */
-        .toast {
-            position: fixed;
-            top: 25px;
-            right: 25px;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 18px 28px;
-            color: white;
-            font-weight: 500;
-            z-index: 1001;
-            opacity: 0;
-            transform: translateX(100px);
-            transition: all 0.3s ease;
-            max-width: 350px;
-            pointer-events: none;
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateX(0);
         }
 
         /* ===== CHAT INTERFACE ===== */
@@ -337,7 +381,7 @@
         }
 
         .chat-header {
-            background: rgba(15, 23, 42, 0.9);
+            background: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
@@ -369,6 +413,9 @@
             font-size: 22px;
             font-weight: 700;
             margin-bottom: 5px;
+            background: linear-gradient(135deg, var(--soft-pink), var(--text-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .partner-status {
@@ -464,6 +511,7 @@
             font-weight: 600;
             margin-bottom: 5px;
             opacity: 0.8;
+            letter-spacing: 0.5px;
         }
 
         .message-content {
@@ -475,6 +523,61 @@
             font-size: 11px;
             opacity: 0.6;
             text-align: right;
+            letter-spacing: 0.5px;
+        }
+
+        .voice-note {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-top: 8px;
+        }
+
+        .voice-note i {
+            color: var(--soft-pink);
+            font-size: 20px;
+        }
+
+        .media-request {
+            background: rgba(236, 72, 153, 0.1);
+            border: 1px solid var(--soft-pink);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 12px;
+        }
+
+        .media-request h4 {
+            color: var(--soft-pink);
+            margin-bottom: 10px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .media-request p {
+            font-size: 14px;
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+
+        .btn-request {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--soft-pink), var(--rich-rose));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-request:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(236, 72, 153, 0.3);
         }
 
         /* ===== CHAT INPUT ===== */
@@ -526,6 +629,130 @@
             background: var(--soft-pink);
             transform: scale(1.1);
             box-shadow: 0 5px 15px rgba(236, 72, 153, 0.3);
+        }
+
+        /* ===== MODALS ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 35px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            border-top: 3px solid var(--soft-pink);
+            animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .modal-title {
+            font-size: 26px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--soft-pink), var(--rich-rose));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 28px;
+            cursor: pointer;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 18px 28px;
+            color: white;
+            font-weight: 500;
+            z-index: 1001;
+            opacity: 0;
+            transform: translateX(100px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 350px;
+            pointer-events: none;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--accent-teal);
+        }
+
+        .toast.error {
+            border-left: 4px solid #ef4444;
+        }
+
+        .toast.warning {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .toast.info {
+            border-left: 4px solid var(--soft-pink);
         }
 
         /* ===== RESPONSIVE ===== */
@@ -583,6 +810,10 @@
                 height: 50px;
                 font-size: 18px;
             }
+            
+            .modal-content {
+                padding: 25px 20px;
+            }
         }
 
         /* ===== UTILITY CLASSES ===== */
@@ -596,6 +827,14 @@
 
         .text-center {
             text-align: center;
+        }
+
+        .mb-20 {
+            margin-bottom: 20px;
+        }
+
+        .mt-20 {
+            margin-top: 20px;
         }
 
         /* ===== SCROLLBAR ===== */
@@ -612,12 +851,23 @@
             background: linear-gradient(135deg, var(--soft-pink), var(--rich-rose));
             border-radius: 4px;
         }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--rich-rose), var(--deep-crimson));
+        }
     </style>
 </head>
 <body>
-    <!-- Loader -->
-    <div class="loader-overlay" id="loaderOverlay">
-        <div class="heart-loader"></div>
+    <!-- Glitter Background -->
+    <div class="glitter-bg"></div>
+
+    <!-- Loading Animation -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="intimate-loader">
+            <div class="heart-loader"></div>
+            <div class="loader-text">IntimateConnect</div>
+            <div class="loader-subtext">Loading your exclusive experience...</div>
+        </div>
     </div>
 
     <!-- Dashboard (Male) -->
@@ -711,8 +961,101 @@
         
         <div class="chat-input-area">
             <input type="text" class="chat-input" id="messageInput" placeholder="Type your message..." autocomplete="off">
+            <button class="action-btn" id="mediaRequestBtn" title="Request Custom Media">
+                <i class="fas fa-image"></i>
+            </button>
+            <button class="action-btn" id="sendVoiceNoteBtn" title="Send Voice Note" style="display: none;">
+                <i class="fas fa-microphone"></i>
+            </button>
             <button class="action-btn" id="sendMessageBtn">
                 <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay hidden" id="depositModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Deposit Funds</h3>
+                <button class="modal-close" id="closeDepositModal">×</button>
+            </div>
+            <div class="form-group">
+                <input type="number" class="form-input" id="depositAmount" placeholder="Amount (₦)" min="100" value="1000">
+            </div>
+            <div class="form-group">
+                <select class="form-input" id="paymentMethod">
+                    <option value="card">💳 Credit/Debit Card</option>
+                    <option value="bank">🏦 Bank Transfer</option>
+                    <option value="crypto">🔗 Cryptocurrency</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" id="confirmDeposit">
+                <i class="fas fa-lock"></i> Secure Deposit
+            </button>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="withdrawModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Withdraw Earnings</h3>
+                <button class="modal-close" id="closeWithdrawModal">×</button>
+            </div>
+            <div class="form-group">
+                <div class="form-label">Available Balance: ₦<span id="availableBalance">0</span></div>
+                <input type="number" class="form-input" id="withdrawAmount" placeholder="Enter amount">
+            </div>
+            <div class="form-group">
+                <input type="text" class="form-input" id="bankAccount" placeholder="Bank Account Number">
+            </div>
+            <div class="form-group">
+                <input type="text" class="form-input" id="bankName" placeholder="Bank Name">
+            </div>
+            <button class="btn btn-primary" id="confirmWithdraw">
+                Request Withdrawal
+            </button>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="mediaRequestModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Custom Media Request</h3>
+                <button class="modal-close" id="closeMediaRequestModal">×</button>
+            </div>
+            <div class="form-group">
+                <select class="form-input" id="mediaType">
+                    <option value="image">📸 Photo</option>
+                    <option value="video">🎥 Video</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <textarea class="form-input" id="mediaDescription" rows="3" placeholder="Describe what you'd like..."></textarea>
+            </div>
+            <div class="form-group">
+                <input type="number" class="form-input" id="mediaPrice" placeholder="Offer Amount (₦)" min="100" value="500">
+            </div>
+            <button class="btn btn-primary" id="sendMediaRequest">
+                <i class="fas fa-gift"></i> Send Request
+            </button>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="mediaUploadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Upload Media</h3>
+                <button class="modal-close" id="closeMediaUploadModal">×</button>
+            </div>
+            <div id="mediaRequestDetails" class="mb-20">
+                <!-- Request details will be loaded here -->
+            </div>
+            <div class="form-group">
+                <input type="file" class="form-input" id="mediaFile" accept="image/*,video/*">
+            </div>
+            <button class="btn btn-primary" id="uploadMedia">
+                <i class="fas fa-upload"></i> Upload & Earn ₦<span id="earnAmount">0</span>
             </button>
         </div>
     </div>
@@ -720,311 +1063,309 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
-    <!-- Firebase SDK -->
+    <!-- External Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
-    <!-- External Configurations -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <script src="firebase-config.js"></script>
+    <script src="agora.js"></script>
 
-    <!-- Main Dashboard Script -->
+    <!-- Dashboard Application Script -->
     <script>
+        // Firebase Initialization
+        let firebaseApp;
+        let auth;
+        let db;
+        let storage;
+
+        try {
+            firebaseApp = firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.database();
+            storage = firebase.storage();
+            console.log("Firebase initialized successfully for dashboard");
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+            showToast("Firebase initialization failed", "error");
+        }
+
         // ===== DASHBOARD APPLICATION =====
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Dashboard initialized');
-            
-            // Initialize Firebase
-            let firebaseApp, auth, db;
-            
-            try {
-                if (typeof firebaseConfig === 'undefined') {
-                    console.error('Firebase configuration not found');
-                    showToast('Configuration error. Please check firebase-config.js', 'error');
-                    return;
-                }
+        class IntimateDashboard {
+            constructor() {
+                this.currentUser = null;
+                this.currentChat = null;
+                this.chatUnsubscribe = null;
+                this.modelsUnsubscribe = null;
+                this.activeChatsUnsubscribe = null;
                 
-                firebaseApp = firebase.initializeApp(firebaseConfig);
-                auth = firebase.auth();
-                db = firebase.firestore();
-                console.log('Firebase initialized successfully');
-                
-            } catch (error) {
-                console.error('Firebase initialization error:', error);
-                showToast('Firebase initialization failed', 'error');
-                return;
+                this.init();
             }
 
-            // ===== DOM ELEMENTS =====
-            const loaderOverlay = document.getElementById('loaderOverlay');
-            const maleDashboard = document.getElementById('maleDashboard');
-            const femaleDashboard = document.getElementById('femaleDashboard');
-            const chatInterface = document.getElementById('chatInterface');
-            const toast = document.getElementById('toast');
-
-            // ===== STATE VARIABLES =====
-            let currentUser = null;
-            let currentChat = null;
-
-            // ===== INITIALIZE DASHBOARD =====
-            initDashboard();
-
-            function initDashboard() {
-                console.log('Initializing dashboard...');
+            init() {
+                // Initialize DOM elements
+                this.initElements();
                 
-                // Check auth state
-                checkAuthState();
+                // Initialize event listeners
+                this.initEventListeners();
                 
-                // Setup event listeners
-                setupEventListeners();
+                // Check authentication state
+                this.checkAuthState();
             }
 
-            function checkAuthState() {
-                auth.onAuthStateChanged(async (user) => {
-                    if (user) {
-                        // User is signed in
-                        currentUser = user;
-                        console.log('User logged in:', user.uid);
-                        
-                        try {
-                            // Get user data from Firestore
-                            const userDoc = await db.collection('users').doc(user.uid).get();
-                            
-                            if (userDoc.exists) {
-                                const userData = userDoc.data();
-                                currentUser.data = userData;
-                                
-                                // Update user's online status
-                                await db.collection('users').doc(user.uid).update({
-                                    online: true,
-                                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-                                });
-                                
-                                // Show appropriate dashboard
-                                showDashboard(userData);
-                                
-                            } else {
-                                // If no user document exists, redirect to login
-                                console.error('User document not found');
-                                showToast('User data not found. Please login again.', 'error');
-                                setTimeout(() => {
-                                    window.location.href = 'index.html';
-                                }, 2000);
-                            }
-                            
-                        } catch (error) {
-                            console.error('Error loading user data:', error);
-                            showToast('Error loading user data', 'error');
+            initElements() {
+                // Core screens
+                this.loadingOverlay = document.getElementById('loadingOverlay');
+                this.maleDashboard = document.getElementById('maleDashboard');
+                this.femaleDashboard = document.getElementById('femaleDashboard');
+                this.chatInterface = document.getElementById('chatInterface');
+                
+                // Toast
+                this.toast = document.getElementById('toast');
+            }
+
+            initEventListeners() {
+                // Sign out buttons
+                document.getElementById('signOutBtn')?.addEventListener('click', () => this.signOut());
+                document.getElementById('signOutBtnFemale')?.addEventListener('click', () => this.signOut());
+
+                // Modal close buttons
+                document.getElementById('closeDepositModal')?.addEventListener('click', () => this.closeModal('depositModal'));
+                document.getElementById('closeWithdrawModal')?.addEventListener('click', () => this.closeModal('withdrawModal'));
+                document.getElementById('closeMediaRequestModal')?.addEventListener('click', () => this.closeModal('mediaRequestModal'));
+                document.getElementById('closeMediaUploadModal')?.addEventListener('click', () => this.closeModal('mediaUploadModal'));
+
+                // Modal background click
+                document.querySelectorAll('.modal-overlay').forEach(modal => {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            this.closeModal(modal.id);
                         }
-                        
-                    } else {
-                        // User is not signed in, redirect to login
-                        console.log('User not logged in, redirecting...');
-                        showToast('Please login to continue', 'info');
-                        setTimeout(() => {
-                            window.location.href = 'index.html';
-                        }, 1500);
+                    });
+                });
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.closeAllModals();
                     }
-                    
-                    // Hide loader
-                    loaderOverlay.classList.add('hidden');
                 });
             }
 
-            function showDashboard(userData) {
-                console.log('Showing dashboard for:', userData);
+            checkAuthState() {
+                auth.onAuthStateChanged(async (user) => {
+                    console.log("Dashboard auth state changed, user:", user);
+                    
+                    if (user) {
+                        // User is signed in
+                        this.currentUser = user;
+                        console.log("User signed in:", user.email);
+                        
+                        try {
+                            // Get user data from Realtime Database
+                            const userSnapshot = await db.ref('users/' + user.uid).once('value');
+                            console.log("User snapshot:", userSnapshot.val());
+                            
+                            if (userSnapshot.exists()) {
+                                const userData = userSnapshot.val();
+                                this.currentUser.data = userData;
+                                console.log("User data loaded:", userData);
+                                
+                                // Update user's online status
+                                try {
+                                    await db.ref('users/' + user.uid).update({
+                                        online: true,
+                                        lastSeen: Date.now()
+                                    });
+                                } catch (updateError) {
+                                    console.error("Error updating online status:", updateError);
+                                }
+                                
+                                // Hide loader
+                                this.loadingOverlay.classList.add('hidden');
+                                
+                                // Show appropriate dashboard
+                                this.showDashboard(userData);
+                            } else {
+                                console.log("User data not found in database");
+                                this.showToast('Account data not found. Please sign up again.', 'error');
+                                this.signOut();
+                            }
+                        } catch (error) {
+                            console.error('Error loading user data:', error);
+                            this.showToast('Error loading user data. Please try again.', 'error');
+                            this.signOut();
+                        }
+                    } else {
+                        // User is signed out, redirect to login page
+                        console.log("User signed out, redirecting to login");
+                        window.location.href = "login.html";
+                    }
+                });
+            }
+
+            showDashboard(userData) {
+                console.log("Showing dashboard for user:", userData);
                 
                 // Hide all screens
-                maleDashboard.classList.add('hidden');
-                femaleDashboard.classList.add('hidden');
-                chatInterface.classList.add('hidden');
+                this.maleDashboard.classList.add('hidden');
+                this.femaleDashboard.classList.add('hidden');
+                this.chatInterface.classList.add('hidden');
                 
                 // Show appropriate dashboard based on gender
                 if (userData.gender === 'male') {
-                    showMaleDashboard(userData);
+                    console.log("Showing male dashboard");
+                    this.showMaleDashboard(userData);
                 } else if (userData.gender === 'female') {
-                    showFemaleDashboard(userData);
+                    console.log("Showing female dashboard");
+                    this.showFemaleDashboard(userData);
                 } else {
-                    // Default to male dashboard
-                    showMaleDashboard(userData);
+                    console.error("Invalid gender in user data:", userData.gender);
+                    this.showToast('Invalid user data. Please contact support.', 'error');
+                    this.signOut();
                 }
             }
 
-            function showMaleDashboard(userData) {
+            showMaleDashboard(userData) {
                 // Update user info
                 document.getElementById('maleUserName').textContent = userData.name;
                 document.getElementById('maleWalletBalance').textContent = userData.balance || 0;
                 
                 // Show dashboard
-                maleDashboard.classList.remove('hidden');
+                this.maleDashboard.classList.remove('hidden');
                 
                 // Load models
-                loadMaleModels();
+                this.loadMaleModels();
+                
+                // Setup event listeners
+                this.setupMaleDashboardEvents();
             }
 
-            function showFemaleDashboard(userData) {
+            showFemaleDashboard(userData) {
                 // Update user info
                 document.getElementById('femaleUserName').textContent = userData.name;
                 document.getElementById('femaleEarnings').textContent = userData.earnings || 0;
                 
                 // Show dashboard
-                femaleDashboard.classList.remove('hidden');
+                this.femaleDashboard.classList.remove('hidden');
                 
-                // Load content
-                loadFemaleContent();
+                // Load active chats
+                this.loadFemaleActiveChats();
+                
+                // Setup event listeners
+                this.setupFemaleDashboardEvents();
             }
 
-            async function loadMaleModels() {
+            async loadMaleModels() {
                 const modelsGrid = document.getElementById('maleModelsGrid');
                 modelsGrid.innerHTML = '<div class="text-center" style="padding:40px;color:var(--text-secondary)">Loading companions...</div>';
 
                 try {
-                    // Get female users from Firestore
-                    const querySnapshot = await db.collection('users')
-                        .where('gender', '==', 'female')
-                        .where('online', '==', true)
-                        .limit(12)
-                        .get();
-                    
-                    console.log('Found', querySnapshot.size, 'female users');
-                    
-                    if (querySnapshot.empty) {
-                        // Create some sample female users
-                        await createSampleFemaleUsers();
-                        // Try loading again
-                        const newSnapshot = await db.collection('users')
-                            .where('gender', '==', 'female')
-                            .limit(12)
-                            .get();
-                        displayModels(newSnapshot);
-                    } else {
-                        displayModels(querySnapshot);
+                    // Clean up previous listener
+                    if (this.modelsUnsubscribe) {
+                        this.modelsUnsubscribe();
                     }
+
+                    // Use demo data first for testing
+                    this.loadDemoModels();
                     
+                    // Then try to load from Firebase
+                    try {
+                        this.modelsUnsubscribe = db.ref('users').orderByChild('gender').equalTo('female').on('value', (snapshot) => {
+                            if (snapshot.exists()) {
+                                modelsGrid.innerHTML = '';
+                                
+                                const models = [];
+                                snapshot.forEach((childSnapshot) => {
+                                    const model = childSnapshot.val();
+                                    model.id = childSnapshot.key;
+                                    if (model.online) {
+                                        models.push(model);
+                                    }
+                                });
+                                
+                                if (models.length === 0) {
+                                    this.loadDemoModels();
+                                    return;
+                                }
+                                
+                                let index = 0;
+                                models.forEach((model) => {
+                                    const modelCard = this.createModelCard(model);
+                                    modelCard.style.animationDelay = `${index * 100}ms`;
+                                    modelsGrid.appendChild(modelCard);
+                                    index++;
+                                });
+                            }
+                        }, (error) => {
+                            console.error('Error loading models from Firebase:', error);
+                            // Keep demo models if Firebase fails
+                        });
+                    } catch (firebaseError) {
+                        console.error('Firebase query error:', firebaseError);
+                    }
+
                 } catch (error) {
                     console.error('Error loading models:', error);
-                    modelsGrid.innerHTML = '<div class="text-center" style="padding:40px;color:var(--text-secondary)">Error loading companions</div>';
-                }
-
-                function displayModels(snapshot) {
-                    modelsGrid.innerHTML = '';
-                    
-                    let index = 0;
-                    snapshot.forEach((doc) => {
-                        const model = doc.data();
-                        model.id = doc.id;
-                        
-                        const modelCard = createModelCard(model);
-                        modelsGrid.appendChild(modelCard);
-                        index++;
-                    });
-                    
-                    // If still empty, show message
-                    if (modelsGrid.children.length === 0) {
-                        modelsGrid.innerHTML = `
-                            <div class="text-center" style="padding:40px;">
-                                <div style="font-size:48px;color:var(--soft-pink);margin-bottom:20px;">💋</div>
-                                <h3 style="margin-bottom:10px;color:var(--text-primary)">No companions available</h3>
-                                <p style="color:var(--text-secondary)">Check back later for available companions</p>
-                            </div>
-                        `;
-                    }
+                    this.loadDemoModels();
                 }
             }
 
-            async function createSampleFemaleUsers() {
-                console.log('Creating sample female users...');
+            loadDemoModels() {
+                const modelsGrid = document.getElementById('maleModelsGrid');
+                modelsGrid.innerHTML = '';
                 
-                const sampleUsers = [
+                // Demo models for testing
+                const demoModels = [
                     {
+                        id: 'demo1',
                         name: 'Sophia',
-                        email: 'sophia@example.com',
-                        gender: 'female',
                         photoURL: 'https://i.pravatar.cc/300?img=1',
-                        balance: 0,
-                        earnings: 1500,
-                        online: true,
                         rating: 4.8,
-                        chats: 24
+                        chats: 124,
+                        online: true
                     },
                     {
-                        name: 'Isabella',
-                        email: 'isabella@example.com',
-                        gender: 'female',
-                        photoURL: 'https://i.pravatar.cc/300?img=5',
-                        balance: 0,
-                        earnings: 2300,
-                        online: true,
-                        rating: 4.9,
-                        chats: 42
-                    },
-                    {
+                        id: 'demo2',
                         name: 'Emma',
-                        email: 'emma@example.com',
-                        gender: 'female',
-                        photoURL: 'https://i.pravatar.cc/300?img=8',
-                        balance: 0,
-                        earnings: 1800,
-                        online: true,
-                        rating: 4.7,
-                        chats: 31
-                    },
-                    {
-                        name: 'Olivia',
-                        email: 'olivia@example.com',
-                        gender: 'female',
-                        photoURL: 'https://i.pravatar.cc/300?img=12',
-                        balance: 0,
-                        earnings: 1200,
-                        online: true,
-                        rating: 4.6,
-                        chats: 18
-                    },
-                    {
-                        name: 'Ava',
-                        email: 'ava@example.com',
-                        gender: 'female',
-                        photoURL: 'https://i.pravatar.cc/300?img=15',
-                        balance: 0,
-                        earnings: 2000,
-                        online: true,
+                        photoURL: 'https://i.pravatar.cc/300?img=2',
                         rating: 4.9,
-                        chats: 56
+                        chats: 89,
+                        online: true
                     },
                     {
-                        name: 'Mia',
-                        email: 'mia@example.com',
-                        gender: 'female',
-                        photoURL: 'https://i.pravatar.cc/300?img=18',
-                        balance: 0,
-                        earnings: 1700,
-                        online: true,
+                        id: 'demo3',
+                        name: 'Olivia',
+                        photoURL: 'https://i.pravatar.cc/300?img=3',
                         rating: 4.7,
-                        chats: 33
+                        chats: 156,
+                        online: true
+                    },
+                    {
+                        id: 'demo4',
+                        name: 'Ava',
+                        photoURL: 'https://i.pravatar.cc/300?img=4',
+                        rating: 4.6,
+                        chats: 67,
+                        online: true
                     }
                 ];
                 
-                // Create sample users
-                for (const userData of sampleUsers) {
-                    // Create a unique ID for each sample user
-                    const userId = 'sample_' + Math.random().toString(36).substr(2, 9);
-                    
-                    await db.collection('users').doc(userId).set({
-                        ...userData,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    }, { merge: true });
-                }
-                
-                console.log('Sample female users created');
+                let index = 0;
+                demoModels.forEach((model) => {
+                    const modelCard = this.createModelCard(model);
+                    modelCard.style.animationDelay = `${index * 100}ms`;
+                    modelsGrid.appendChild(modelCard);
+                    index++;
+                });
             }
 
-            function createModelCard(model) {
+            createModelCard(model) {
                 const card = document.createElement('div');
                 card.className = 'model-card';
                 card.innerHTML = `
                     <div class="model-image" style="background-image: url('${model.photoURL || 'https://i.pravatar.cc/300'}')">
-                        <div class="model-status status-online">
+                        <div class="model-badge badge-online">
                             <i class="fas fa-circle"></i> Online
                         </div>
                     </div>
@@ -1046,275 +1387,775 @@
 
                 card.querySelector('.btn-chat').addEventListener('click', (e) => {
                     e.stopPropagation();
-                    startChatWithModel(model);
+                    this.startChatWithModel(model);
                 });
 
                 return card;
             }
 
-            function startChatWithModel(model) {
-                if (!currentUser || !currentUser.data) {
-                    showToast('Please login to start chatting', 'error');
+            async startChatWithModel(model) {
+                if (!this.currentUser || !this.currentUser.data) {
+                    this.showToast('Please login to start chatting', 'error');
                     return;
                 }
 
                 // Check balance for male users
-                if (currentUser.data.gender === 'male' && currentUser.data.balance < 10) {
-                    showToast('Insufficient balance. Minimum ₦10 required.', 'error');
+                if (this.currentUser.data.gender === 'male' && this.currentUser.data.balance < 10) {
+                    this.showToast('Insufficient balance. Minimum ₦10 required.', 'error');
+                    this.openModal('depositModal');
                     return;
                 }
 
-                currentChat = {
+                this.currentChat = {
                     modelId: model.id,
                     modelName: model.name,
-                    modelPhoto: model.photoURL || 'https://i.pravatar.cc/300'
+                    modelPhoto: model.photoURL || 'https://i.pravatar.cc/300',
+                    modelGender: 'female'
                 };
 
-                showChatInterface();
+                this.showChatInterface();
             }
 
-            function showChatInterface() {
+            showChatInterface() {
                 // Hide dashboards
-                maleDashboard.classList.add('hidden');
-                femaleDashboard.classList.add('hidden');
+                this.maleDashboard.classList.add('hidden');
+                this.femaleDashboard.classList.add('hidden');
                 
                 // Update chat header
-                document.getElementById('partnerName').textContent = currentChat.modelName;
-                document.getElementById('partnerAvatar').style.backgroundImage = `url('${currentChat.modelPhoto}')`;
+                document.getElementById('partnerName').textContent = this.currentChat.modelName;
+                document.getElementById('partnerAvatar').style.backgroundImage = `url('${this.currentChat.modelPhoto}')`;
+                
+                // Show/hide voice note button based on gender
+                const voiceBtn = document.getElementById('sendVoiceNoteBtn');
+                if (this.currentUser.data.gender === 'female') {
+                    voiceBtn.style.display = 'flex';
+                } else {
+                    voiceBtn.style.display = 'none';
+                }
                 
                 // Show chat interface
-                chatInterface.classList.remove('hidden');
+                this.chatInterface.classList.remove('hidden');
+                
+                // Load chat messages
+                this.loadChatMessages();
                 
                 // Setup chat events
-                setupChatEvents();
-                
-                // Show welcome message
-                const chatMessages = document.getElementById('chatMessages');
-                chatMessages.innerHTML = `
-                    <div class="text-center" style="padding:40px;">
-                        <div style="font-size:48px;color:var(--soft-pink);margin-bottom:20px;">💬</div>
-                        <h3 style="margin-bottom:10px;color:var(--text-primary)">Start a conversation</h3>
-                        <p style="color:var(--text-secondary)">Send your first message to begin chatting</p>
-                        <div style="background:rgba(236,72,153,0.1);border:1px solid var(--soft-pink);border-radius:12px;padding:15px;margin-top:20px;">
-                            <p style="color:var(--text-secondary);font-size:13px;">
-                                <i class="fas fa-info-circle"></i> Each message costs ₦10
-                            </p>
-                        </div>
-                    </div>
-                `;
+                this.setupChatEvents();
             }
 
-            function loadFemaleContent() {
-                const chatsGrid = document.getElementById('femaleActiveChats');
-                
-                chatsGrid.innerHTML = `
-                    <div class="text-center" style="padding:30px;">
-                        <div style="font-size:48px;color:var(--soft-pink);margin-bottom:20px;">💎</div>
-                        <h3 style="margin-bottom:15px;color:var(--text-primary)">Your Earnings Dashboard</h3>
-                        <p style="color:var(--text-secondary);margin-bottom:25px;">
-                            You're ready to start earning! Here's how it works:
-                        </p>
-                        
-                        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:25px;margin-bottom:25px;">
-                            <h4 style="color:var(--soft-pink);margin-bottom:15px;">
-                                <i class="fas fa-comment"></i> Message Earnings
-                            </h4>
-                            <p style="color:var(--text-secondary);margin-bottom:10px;">
-                                • Earn <strong style="color:var(--accent-teal)">₦10</strong> for every message you send
-                            </p>
-                            <p style="color:var(--text-secondary);margin-bottom:10px;">
-                                • Messages are automatically paid by male users
-                            </p>
-                        </div>
-                        
-                        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:25px;margin-bottom:25px;">
-                            <h4 style="color:var(--soft-pink);margin-bottom:15px;">
-                                <i class="fas fa-microphone"></i> Voice Notes
-                            </h4>
-                            <p style="color:var(--text-secondary);margin-bottom:10px;">
-                                • Send voice notes for free
-                            </p>
-                            <p style="color:var(--text-secondary);margin-bottom:10px;">
-                                • Each voice note earns you <strong style="color:var(--accent-teal)">₦10</strong>
-                            </p>
-                        </div>
-                        
-                        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:25px;">
-                            <h4 style="color:var(--soft-pink);margin-bottom:15px;">
-                                <i class="fas fa-chart-line"></i> Recent Activity
-                            </h4>
-                            <div style="text-align:left;">
-                                <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.1);">
-                                    <span>Today's Earnings</span>
-                                    <span style="color:var(--accent-teal);font-weight:600;">₦0</span>
-                                </div>
-                                <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.1);">
-                                    <span>This Week</span>
-                                    <span style="color:var(--accent-teal);font-weight:600;">₦0</span>
-                                </div>
-                                <div style="display:flex;justify-content:space-between;padding:10px 0;">
-                                    <span>Total Chats</span>
-                                    <span style="color:var(--soft-pink);font-weight:600;">0</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            function setupEventListeners() {
-                // Sign out buttons
-                document.getElementById('signOutBtn')?.addEventListener('click', signOut);
-                document.getElementById('signOutBtnFemale')?.addEventListener('click', signOut);
-
+            setupMaleDashboardEvents() {
                 // Deposit button
-                document.getElementById('depositBtn')?.addEventListener('click', () => {
-                    showToast('Deposit feature will be available soon', 'info');
+                document.getElementById('depositBtn').addEventListener('click', () => {
+                    this.openModal('depositModal');
                 });
 
-                // Withdraw button
-                document.getElementById('withdrawBtn')?.addEventListener('click', () => {
-                    showToast('Withdraw feature will be available soon', 'info');
+                // Confirm deposit
+                document.getElementById('confirmDeposit').addEventListener('click', async () => {
+                    const amount = parseInt(document.getElementById('depositAmount').value);
+                    
+                    if (!amount || amount < 100) {
+                        this.showToast('Minimum deposit is ₦100', 'error');
+                        return;
+                    }
+                    
+                    this.showToast('Processing deposit...', 'info');
+                    
+                    try {
+                        // Add transaction record
+                        const transactionRef = db.ref('transactions').push();
+                        await transactionRef.set({
+                            userId: this.currentUser.uid,
+                            type: 'deposit',
+                            amount: amount,
+                            status: 'completed',
+                            timestamp: Date.now()
+                        });
+                        
+                        // Update user balance
+                        await db.ref('users/' + this.currentUser.uid).update({
+                            balance: (this.currentUser.data.balance || 0) + amount,
+                            updatedAt: Date.now()
+                        });
+                        
+                        // Update local balance
+                        this.currentUser.data.balance += amount;
+                        document.getElementById('maleWalletBalance').textContent = this.currentUser.data.balance;
+                        
+                        this.closeModal('depositModal');
+                        this.showToast(`Successfully deposited ₦${amount}!`, 'success');
+                    } catch (error) {
+                        console.error('Error processing deposit:', error);
+                        this.showToast('Deposit failed. Please try again.', 'error');
+                    }
                 });
 
                 // Back to dashboard from chat
                 document.getElementById('backToDashboard')?.addEventListener('click', () => {
-                    leaveChat();
+                    this.leaveChat();
                 });
             }
 
-            function setupChatEvents() {
-                // Send message button
-                document.getElementById('sendMessageBtn')?.addEventListener('click', sendMessage);
+            setupFemaleDashboardEvents() {
+                // Withdraw button
+                document.getElementById('withdrawBtn').addEventListener('click', () => {
+                    document.getElementById('availableBalance').textContent = this.currentUser.data.earnings || 0;
+                    this.openModal('withdrawModal');
+                });
 
-                // Message input enter key
-                document.getElementById('messageInput')?.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        sendMessage();
+                // Confirm withdrawal
+                document.getElementById('confirmWithdraw').addEventListener('click', async () => {
+                    const amount = parseInt(document.getElementById('withdrawAmount').value);
+                    const bankAccount = document.getElementById('bankAccount').value;
+                    const bankName = document.getElementById('bankName').value;
+                    
+                    if (!amount || amount <= 0) {
+                        this.showToast('Please enter a valid amount', 'error');
+                        return;
+                    }
+                    
+                    if (amount > this.currentUser.data.earnings) {
+                        this.showToast('Insufficient earnings', 'error');
+                        return;
+                    }
+                    
+                    if (!bankAccount || bankAccount.length < 10) {
+                        this.showToast('Please enter a valid bank account', 'error');
+                        return;
+                    }
+                    
+                    if (!bankName) {
+                        this.showToast('Please enter bank name', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        // Create withdrawal request
+                        const withdrawalRef = db.ref('withdrawals').push();
+                        await withdrawalRef.set({
+                            userId: this.currentUser.uid,
+                            amount: amount,
+                            bankAccount: bankAccount,
+                            bankName: bankName,
+                            status: 'pending',
+                            createdAt: Date.now()
+                        });
+                        
+                        // Update earnings (deduct immediately)
+                        await db.ref('users/' + this.currentUser.uid).update({
+                            earnings: (this.currentUser.data.earnings || 0) - amount,
+                            updatedAt: Date.now()
+                        });
+                        
+                        // Update local earnings
+                        this.currentUser.data.earnings -= amount;
+                        document.getElementById('femaleEarnings').textContent = this.currentUser.data.earnings;
+                        
+                        this.closeModal('withdrawModal');
+                        this.showToast(`Withdrawal request for ₦${amount} submitted!`, 'success');
+                        
+                        // Clear form
+                        document.getElementById('withdrawAmount').value = '';
+                        document.getElementById('bankAccount').value = '';
+                        document.getElementById('bankName').value = '';
+                        
+                    } catch (error) {
+                        console.error('Error processing withdrawal:', error);
+                        this.showToast('Withdrawal failed. Please try again.', 'error');
                     }
                 });
             }
 
-            async function sendMessage() {
+            async loadFemaleActiveChats() {
+                const chatsGrid = document.getElementById('femaleActiveChats');
+                chatsGrid.innerHTML = '<div class="text-center" style="padding:40px;color:var(--text-secondary)">Loading your dashboard...</div>';
+
+                try {
+                    // For now, show a dashboard for female users
+                    chatsGrid.innerHTML = `
+                        <div class="text-center" style="padding:30px;">
+                            <div style="font-size:48px;color:var(--soft-pink);margin-bottom:20px;">💎</div>
+                            <h3 style="margin-bottom:15px;color:var(--text-primary)">Your Earnings Dashboard</h3>
+                            <p style="color:var(--text-secondary);margin-bottom:25px;max-width:500px;margin-left:auto;margin-right:auto;">
+                                Welcome to your exclusive earnings platform. Here's how you earn:
+                            </p>
+                            
+                            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:25px;margin-bottom:25px;">
+                                <h4 style="color:var(--soft-pink);margin-bottom:15px;display:flex;align-items:center;gap:10px;">
+                                    <i class="fas fa-comment"></i> Message Earnings
+                                </h4>
+                                <p style="color:var(--text-secondary);margin-bottom:10px;">
+                                    • Earn <strong style="color:var(--accent-teal)">₦10</strong> for every message you send to male users
+                                </p>
+                                <p style="color:var(--text-secondary);margin-bottom:10px;">
+                                    • Messages are automatically paid by the male user
+                                </p>
+                            </div>
+                            
+                            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:25px;margin-bottom:25px;">
+                                <h4 style="color:var(--soft-pink);margin-bottom:15px;display:flex;align-items:center;gap:10px;">
+                                    <i class="fas fa-image"></i> Media Requests
+                                </h4>
+                                <p style="color:var(--text-secondary);margin-bottom:10px;">
+                                    • Male users can request custom photos/videos
+                                </p>
+                                <p style="color:var(--text-secondary);margin-bottom:10px;">
+                                    • Set your own prices (minimum ₦100)
+                                </p>
+                                <p style="color:var(--text-secondary);margin-bottom:10px;">
+                                    • Get paid instantly when you upload
+                                </p>
+                            </div>
+                            
+                            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:25px;">
+                                <h4 style="color:var(--soft-pink);margin-bottom:15px;display:flex;align-items:center;gap:10px;">
+                                    <i class="fas fa-microphone"></i> Voice Notes
+                                </h4>
+                                <p style="color:var(--text-secondary);margin-bottom:10px;">
+                                    • Send voice notes for free
+                                </p>
+                                <p style="color:var(--text-secondary);margin-bottom:10px;">
+                                    • Each voice note earns you <strong style="color:var(--accent-teal)">₦10</strong>
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                    
+                } catch (error) {
+                    console.error('Error loading chats:', error);
+                    chatsGrid.innerHTML = '<div class="text-center" style="padding:40px;color:var(--text-secondary)">Error loading dashboard</div>';
+                }
+            }
+
+            setupChatEvents() {
+                // Send message button
+                document.getElementById('sendMessageBtn').addEventListener('click', () => {
+                    this.sendMessage();
+                });
+
+                // Message input enter key
+                document.getElementById('messageInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.sendMessage();
+                    }
+                });
+
+                // Media request button
+                document.getElementById('mediaRequestBtn').addEventListener('click', () => {
+                    if (this.currentUser.data.gender !== 'male') {
+                        this.showToast('Only male users can request custom media', 'error');
+                        return;
+                    }
+                    this.openModal('mediaRequestModal');
+                });
+
+                // Send media request
+                document.getElementById('sendMediaRequest').addEventListener('click', () => {
+                    this.sendMediaRequest();
+                });
+
+                // Back to dashboard
+                document.getElementById('backToDashboard').addEventListener('click', () => {
+                    this.leaveChat();
+                });
+
+                // Voice note button (for female users)
+                document.getElementById('sendVoiceNoteBtn').addEventListener('click', () => {
+                    this.sendVoiceNote();
+                });
+            }
+
+            async sendMessage() {
                 const messageInput = document.getElementById('messageInput');
                 const message = messageInput.value.trim();
                 
-                if (!message || !currentChat || !currentUser) return;
+                if (!message || !this.currentChat || !this.currentUser) return;
 
                 // Check balance for male users
-                if (currentUser.data.gender === 'male' && currentUser.data.balance < 10) {
-                    showToast('Insufficient balance. Please deposit funds.', 'error');
+                if (this.currentUser.data.gender === 'male' && this.currentUser.data.balance < 10) {
+                    this.showToast('Insufficient balance. Please deposit funds.', 'error');
                     return;
                 }
 
-                // Show sending animation
-                const chatMessages = document.getElementById('chatMessages');
-                const sendingDiv = document.createElement('div');
-                sendingDiv.className = 'message message-sent';
-                sendingDiv.innerHTML = `
-                    <div class="message-sender">${currentUser.data.name}</div>
-                    <div class="message-content">${message}</div>
-                    <div class="message-time">Sending...</div>
-                `;
-                chatMessages.appendChild(sendingDiv);
+                const chatId = this.generateChatId(this.currentUser.uid, this.currentChat.modelId);
                 
-                // Clear input
-                messageInput.value = '';
-                
-                // Scroll to bottom
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                try {
+                    // Add message to Realtime Database
+                    const messageRef = db.ref('chats/' + chatId + '/messages').push();
+                    await messageRef.set({
+                        text: message,
+                        senderId: this.currentUser.uid,
+                        senderName: this.currentUser.data.name,
+                        type: 'text',
+                        price: 10,
+                        timestamp: Date.now()
+                    });
 
-                // Simulate sending delay
-                setTimeout(() => {
-                    // Update the message to show sent
-                    sendingDiv.innerHTML = `
-                        <div class="message-sender">${currentUser.data.name}</div>
-                        <div class="message-content">${message}</div>
-                        <div class="message-time">Just now</div>
-                    `;
-                    
-                    // Show success message
-                    showToast('Message sent successfully!', 'success');
-                    
-                    // Update balance for male users
-                    if (currentUser.data.gender === 'male') {
-                        const newBalance = (currentUser.data.balance || 0) - 10;
-                        document.getElementById('maleWalletBalance').textContent = newBalance;
-                        currentUser.data.balance = newBalance;
+                    // Update balances
+                    if (this.currentUser.data.gender === 'male') {
+                        // Deduct from male user
+                        await db.ref('users/' + this.currentUser.uid).update({
+                            balance: (this.currentUser.data.balance || 0) - 10
+                        });
+                        
+                        // Add to female user earnings (in demo mode, just show success)
+                        this.showToast('Message sent - ₦10 deducted', 'success');
+                        
+                        // Update local balance
+                        this.currentUser.data.balance -= 10;
+                        if (this.currentUser.data.gender === 'male') {
+                            document.getElementById('maleWalletBalance').textContent = this.currentUser.data.balance;
+                        }
+                    } else {
+                        // Female user sending message
+                        this.showToast('Message sent - ₦10 earned', 'success');
                     }
                     
-                }, 1000);
-            }
-
-            function leaveChat() {
-                currentChat = null;
-                chatInterface.classList.add('hidden');
-                
-                // Show appropriate dashboard
-                if (currentUser.data.gender === 'male') {
-                    maleDashboard.classList.remove('hidden');
-                } else {
-                    femaleDashboard.classList.remove('hidden');
+                    // Clear input
+                    messageInput.value = '';
+                    messageInput.focus();
+                    
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    this.showToast('Failed to send message', 'error');
                 }
             }
 
-            async function signOut() {
+            async sendMediaRequest() {
+                const mediaType = document.getElementById('mediaType').value;
+                const description = document.getElementById('mediaDescription').value;
+                const price = parseInt(document.getElementById('mediaPrice').value);
+                
+                if (!description.trim()) {
+                    this.showToast('Please describe what you want', 'error');
+                    return;
+                }
+                
+                if (price < 100) {
+                    this.showToast('Minimum offer is ₦100', 'error');
+                    return;
+                }
+                
+                if (price > this.currentUser.data.balance) {
+                    this.showToast('Insufficient balance', 'error');
+                    return;
+                }
+
+                const chatId = this.generateChatId(this.currentUser.uid, this.currentChat.modelId);
+                const requestId = Date.now().toString();
+                
+                try {
+                    // Add media request as a message
+                    const messageRef = db.ref('chats/' + chatId + '/messages').push();
+                    await messageRef.set({
+                        type: 'media_request',
+                        senderId: this.currentUser.uid,
+                        senderName: this.currentUser.data.name,
+                        mediaType: mediaType,
+                        description: description,
+                        price: price,
+                        requestId: requestId,
+                        status: 'pending',
+                        timestamp: Date.now()
+                    });
+
+                    // Store request in separate collection
+                    await db.ref('media_requests/' + requestId).set({
+                        chatId: chatId,
+                        modelId: this.currentChat.modelId,
+                        clientId: this.currentUser.uid,
+                        mediaType: mediaType,
+                        description: description,
+                        price: price,
+                        status: 'pending',
+                        createdAt: Date.now()
+                    });
+
+                    this.closeModal('mediaRequestModal');
+                    this.showToast('Media request sent!', 'success');
+                    
+                    // Reset form
+                    document.getElementById('mediaDescription').value = '';
+                    document.getElementById('mediaPrice').value = '500';
+                    
+                } catch (error) {
+                    console.error('Error sending media request:', error);
+                    this.showToast('Failed to send request', 'error');
+                }
+            }
+
+            async sendVoiceNote() {
+                // This would integrate with Agora for voice recording
+                // For now, just send a placeholder message
+                if (this.currentUser.data.gender !== 'female') {
+                    this.showToast('Only female users can send voice notes', 'error');
+                    return;
+                }
+
+                const chatId = this.generateChatId(this.currentUser.uid, this.currentChat.modelId);
+                
+                try {
+                    // Add voice note message
+                    const messageRef = db.ref('chats/' + chatId + '/messages').push();
+                    await messageRef.set({
+                        type: 'voice',
+                        senderId: this.currentUser.uid,
+                        senderName: this.currentUser.data.name,
+                        duration: '0:15',
+                        price: 10,
+                        timestamp: Date.now()
+                    });
+
+                    // Add to female user earnings
+                    await db.ref('users/' + this.currentUser.uid).update({
+                        earnings: (this.currentUser.data.earnings || 0) + 10
+                    });
+                    
+                    // Update local earnings
+                    this.currentUser.data.earnings += 10;
+                    if (this.currentUser.data.gender === 'female') {
+                        document.getElementById('femaleEarnings').textContent = this.currentUser.data.earnings;
+                    }
+                    
+                    this.showToast('Voice note sent - ₦10 earned', 'success');
+                    
+                } catch (error) {
+                    console.error('Error sending voice note:', error);
+                    this.showToast('Failed to send voice note', 'error');
+                }
+            }
+
+            async loadChatMessages() {
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.innerHTML = '<div class="text-center" style="padding:40px;color:var(--text-secondary)">Loading messages...</div>';
+
+                if (!this.currentChat || !this.currentUser) return;
+
+                const chatId = this.generateChatId(this.currentUser.uid, this.currentChat.modelId);
+
+                try {
+                    // Clean up previous listener
+                    if (this.chatUnsubscribe) {
+                        this.chatUnsubscribe();
+                    }
+
+                    // For demo, show welcome messages
+                    this.displayDemoMessages();
+                    
+                    // Try to listen for real messages
+                    try {
+                        this.chatUnsubscribe = db.ref('chats/' + chatId + '/messages').orderByChild('timestamp').on('value', (snapshot) => {
+                            if (snapshot.exists()) {
+                                chatMessages.innerHTML = '';
+                                
+                                const messages = [];
+                                snapshot.forEach((childSnapshot) => {
+                                    const message = childSnapshot.val();
+                                    message.id = childSnapshot.key;
+                                    messages.push(message);
+                                });
+                                
+                                // Sort by timestamp
+                                messages.sort((a, b) => a.timestamp - b.timestamp);
+                                
+                                messages.forEach((message) => {
+                                    this.displayMessage(message);
+                                });
+                                
+                                // Scroll to bottom
+                                setTimeout(() => {
+                                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                                }, 100);
+                            }
+                        });
+                    } catch (firebaseError) {
+                        console.error('Firebase chat error:', firebaseError);
+                    }
+
+                } catch (error) {
+                    console.error('Error loading chat messages:', error);
+                    this.displayDemoMessages();
+                }
+            }
+
+            displayDemoMessages() {
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.innerHTML = '';
+                
+                // Demo messages
+                const demoMessages = [
+                    {
+                        senderId: 'demo',
+                        senderName: this.currentChat.modelName,
+                        text: 'Hello! Thanks for connecting with me. How are you today?',
+                        type: 'text',
+                        timestamp: Date.now() - 300000
+                    },
+                    {
+                        senderId: this.currentUser.uid,
+                        senderName: this.currentUser.data.name,
+                        text: 'Hi! I\'m doing great, thanks for asking. You look amazing!',
+                        type: 'text',
+                        timestamp: Date.now() - 240000
+                    },
+                    {
+                        senderId: 'demo',
+                        senderName: this.currentChat.modelName,
+                        text: 'Aww thank you! That\'s so sweet of you to say 😊',
+                        type: 'text',
+                        timestamp: Date.now() - 180000
+                    }
+                ];
+                
+                demoMessages.forEach((message) => {
+                    this.displayMessage(message);
+                });
+                
+                // Scroll to bottom
+                setTimeout(() => {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 100);
+            }
+
+            displayMessage(message) {
+                const chatMessages = document.getElementById('chatMessages');
+                const isSent = message.senderId === this.currentUser.uid;
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${isSent ? 'message-sent' : 'message-received'}`;
+                
+                let content = '';
+                
+                if (message.type === 'text') {
+                    content = `
+                        <div class="message-sender">${message.senderName}</div>
+                        <div class="message-content">${message.text}</div>
+                        <div class="message-time">${this.formatTime(message.timestamp)}</div>
+                    `;
+                } else if (message.type === 'voice') {
+                    content = `
+                        <div class="message-sender">${message.senderName}</div>
+                        <div class="voice-note">
+                            <i class="fas fa-microphone"></i>
+                            <span>Voice message (${message.duration || '0:15'})</span>
+                            <div style="margin-left:auto;font-size:12px;color:var(--accent-teal);">
+                                <i class="fas fa-gem"></i> ₦10
+                            </div>
+                        </div>
+                        <div class="message-time">${this.formatTime(message.timestamp)}</div>
+                    `;
+                } else if (message.type === 'media_request') {
+                    content = `
+                        <div class="message-sender">${message.senderName}</div>
+                        <div class="media-request">
+                            <h4><i class="fas fa-image"></i> Custom ${message.mediaType} Request</h4>
+                            <p><strong>Description:</strong> ${message.description}</p>
+                            <p><strong>Offer:</strong> ₦${message.price}</p>
+                            ${this.currentUser.data.gender === 'female' ? 
+                                `<button class="btn-request" onclick="intimateDashboard.acceptMediaRequest('${message.requestId}', ${message.price})">
+                                    <i class="fas fa-check"></i> Accept & Upload
+                                </button>` : 
+                                `<div style="font-size:12px;color:var(--soft-pink);margin-top:10px;">
+                                    <i class="fas fa-clock"></i> Waiting for response...
+                                </div>`
+                            }
+                        </div>
+                        <div class="message-time">${this.formatTime(message.timestamp)}</div>
+                    `;
+                }
+                
+                messageDiv.innerHTML = content;
+                chatMessages.appendChild(messageDiv);
+            }
+
+            async acceptMediaRequest(requestId, price) {
+                // Show media upload modal
+                document.getElementById('earnAmount').textContent = price;
+                
+                // Store request info
+                const requestDetails = document.getElementById('mediaRequestDetails');
+                requestDetails.innerHTML = `
+                    <div style="background:rgba(236,72,153,0.1);border:1px solid var(--soft-pink);border-radius:12px;padding:20px;">
+                        <h4 style="color:var(--soft-pink);margin-bottom:10px;">Media Request</h4>
+                        <p style="color:var(--text-secondary);margin-bottom:5px;"><strong>Earnings:</strong> ₦${price}</p>
+                        <p style="color:var(--text-secondary);margin-bottom:5px;"><strong>Request ID:</strong> ${requestId.substring(0, 8)}...</p>
+                    </div>
+                `;
+                
+                this.openModal('mediaUploadModal');
+                
+                // Store request ID for upload
+                document.getElementById('uploadMedia').dataset.requestId = requestId;
+                document.getElementById('uploadMedia').dataset.price = price;
+            }
+
+            generateChatId(userId1, userId2) {
+                // Create consistent chat ID regardless of order
+                return [userId1, userId2].sort().join('_');
+            }
+
+            formatTime(timestamp) {
+                if (!timestamp) return 'Just now';
+                
+                const date = new Date(timestamp);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                
+                if (diffMins < 1) return 'Just now';
+                if (diffMins < 60) return `${diffMins}m ago`;
+                
+                const diffHours = Math.floor(diffMins / 60);
+                if (diffHours < 24) return `${diffHours}h ago`;
+                
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+
+            openModal(modalId) {
+                document.getElementById(modalId).classList.remove('hidden');
+                document.getElementById(modalId).classList.add('active');
+            }
+
+            closeModal(modalId) {
+                document.getElementById(modalId).classList.remove('active');
+                document.getElementById(modalId).classList.add('hidden');
+            }
+
+            closeAllModals() {
+                document.querySelectorAll('.modal-overlay').forEach(modal => {
+                    modal.classList.remove('active');
+                    modal.classList.add('hidden');
+                });
+            }
+
+            showToast(message, type = 'info') {
+                this.toast.textContent = message;
+                this.toast.className = 'toast';
+                this.toast.classList.add(type);
+                this.toast.classList.add('show');
+                
+                setTimeout(() => {
+                    this.toast.classList.remove('show');
+                }, 3000);
+            }
+
+            leaveChat() {
+                // Clean up listeners
+                if (this.chatUnsubscribe) {
+                    this.chatUnsubscribe();
+                    this.chatUnsubscribe = null;
+                }
+                
+                this.currentChat = null;
+                this.chatInterface.classList.add('hidden');
+                
+                // Show appropriate dashboard
+                if (this.currentUser.data.gender === 'male') {
+                    this.maleDashboard.classList.remove('hidden');
+                } else {
+                    this.femaleDashboard.classList.remove('hidden');
+                }
+            }
+
+            async signOut() {
                 try {
                     // Set user offline
-                    if (currentUser) {
-                        await db.collection('users').doc(currentUser.uid).update({
-                            online: false,
-                            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-                        });
+                    if (this.currentUser) {
+                        try {
+                            await db.ref('users/' + this.currentUser.uid).update({
+                                online: false,
+                                lastSeen: Date.now()
+                            });
+                        } catch (updateError) {
+                            console.error('Error updating offline status:', updateError);
+                        }
+                    }
+                    
+                    // Clean up listeners
+                    if (this.modelsUnsubscribe) {
+                        this.modelsUnsubscribe();
+                        this.modelsUnsubscribe = null;
+                    }
+                    
+                    if (this.chatUnsubscribe) {
+                        this.chatUnsubscribe();
+                        this.chatUnsubscribe = null;
+                    }
+                    
+                    if (this.activeChatsUnsubscribe) {
+                        this.activeChatsUnsubscribe();
+                        this.activeChatsUnsubscribe = null;
                     }
                     
                     // Sign out from Firebase
                     await auth.signOut();
                     
-                    // Redirect to login
-                    showToast('Signed out successfully', 'success');
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 1500);
+                    // Redirect to login page
+                    window.location.href = "login.html";
                     
                 } catch (error) {
                     console.error('Error signing out:', error);
-                    showToast('Error signing out', 'error');
+                    this.showToast('Error signing out', 'error');
                 }
             }
+        }
 
-            function showToast(message, type = 'info') {
-                toast.textContent = message;
-                toast.className = 'toast';
-                
-                // Set color based on type
-                if (type === 'success') {
-                    toast.style.borderLeft = '4px solid var(--accent-teal)';
-                } else if (type === 'error') {
-                    toast.style.borderLeft = '4px solid #ef4444';
-                } else if (type === 'warning') {
-                    toast.style.borderLeft = '4px solid #f59e0b';
-                } else {
-                    toast.style.borderLeft = '4px solid var(--soft-pink)';
-                }
-                
-                toast.classList.add('show');
-                
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                }, 3000);
-            }
+        // ===== INITIALIZE DASHBOARD APPLICATION =====
+        let intimateDashboard;
 
-            // Make functions available globally for debugging
-            window.dashboard = {
-                auth: auth,
-                db: db,
-                currentUser: currentUser,
-                showToast: showToast,
-                signOut: signOut
-            };
+        document.addEventListener('DOMContentLoaded', () => {
+            intimateDashboard = new IntimateDashboard();
             
-            console.log('Dashboard initialized successfully');
+            // Make app globally available
+            window.intimateDashboard = intimateDashboard;
+            
+            // Handle media upload
+            document.getElementById('uploadMedia')?.addEventListener('click', async function() {
+                const requestId = this.dataset.requestId;
+                const price = parseInt(this.dataset.price);
+                const fileInput = document.getElementById('mediaFile');
+                
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    intimateDashboard.showToast('Please select a file to upload', 'error');
+                    return;
+                }
+                
+                const file = fileInput.files[0];
+                intimateDashboard.showToast('Uploading media...', 'info');
+                
+                try {
+                    // Upload to Firebase Storage
+                    const storageRef = storage.ref('media/' + requestId + '/' + file.name);
+                    await storageRef.put(file);
+                    const downloadURL = await storageRef.getDownloadURL();
+                    
+                    // Update media request status
+                    await db.ref('media_requests/' + requestId).update({
+                        status: 'completed',
+                        mediaUrl: downloadURL,
+                        completedAt: Date.now()
+                    });
+                    
+                    // Update user earnings
+                    await db.ref('users/' + intimateDashboard.currentUser.uid).update({
+                        earnings: (intimateDashboard.currentUser.data.earnings || 0) + price,
+                        updatedAt: Date.now()
+                    });
+                    
+                    // Update local earnings
+                    intimateDashboard.currentUser.data.earnings += price;
+                    document.getElementById('femaleEarnings').textContent = intimateDashboard.currentUser.data.earnings;
+                    
+                    intimateDashboard.closeModal('mediaUploadModal');
+                    intimateDashboard.showToast(`Media uploaded successfully! Earned ₦${price}`, 'success');
+                    
+                    // Clear file input
+                    fileInput.value = '';
+                    
+                } catch (error) {
+                    console.error('Error uploading media:', error);
+                    intimateDashboard.showToast('Upload failed', 'error');
+                }
+            });
         });
     </script>
 </body>

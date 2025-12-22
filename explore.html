@@ -57,7 +57,7 @@
             overflow-x: hidden;
             position: relative;
             touch-action: pan-y;
-            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+            padding: env(safe-area-inset-top) 0 env(safe-area-bottom) 0;
             overscroll-behavior: none;
         }
 
@@ -1386,8 +1386,6 @@
             border-radius: 16px;
             min-width: 60px;
             font-weight: 600;
-            position: relative;
-            z-index: 1001;
         }
 
         .nav-item.active {
@@ -1422,7 +1420,6 @@
             margin-top: -30px;
             position: relative;
             overflow: hidden;
-            z-index: 1001;
         }
 
         .submit-story-btn::after {
@@ -2053,9 +2050,6 @@
 
             // Setup event listeners
             setupEventListeners();
-            
-            // Make sure all navigation links work properly
-            fixNavigationLinks();
         });
 
         function setupEventListeners() {
@@ -2106,60 +2100,6 @@
                     }
                 }
             });
-        }
-
-        // FIX: Make navigation links work properly
-        function fixNavigationLinks() {
-            // Remove any existing click listeners that might be interfering
-            document.querySelectorAll('.bottom-nav a').forEach(link => {
-                // Store the original href
-                const originalHref = link.getAttribute('href');
-                
-                // Remove all click listeners and re-add a clean one
-                link.replaceWith(link.cloneNode(true));
-                
-                // Get the fresh link
-                const freshLink = document.querySelector(`.bottom-nav a[href="${originalHref}"]`);
-                
-                // Add clean click handler that works with audio warning
-                if (freshLink) {
-                    freshLink.addEventListener('click', function(e) {
-                        // If audio is playing, show warning
-                        if (currentAudio && !currentAudio.paused) {
-                            e.preventDefault();
-                            showWarningModal(this.href);
-                        }
-                        // Otherwise, let the link work normally
-                        // No need to prevent default or do anything else
-                    });
-                }
-            });
-            
-            // Make sure the + button works
-            const plusBtn = document.querySelector('.submit-story-btn');
-            if (plusBtn) {
-                plusBtn.addEventListener('click', function(e) {
-                    // If audio is playing, show warning
-                    if (currentAudio && !currentAudio.paused) {
-                        e.preventDefault();
-                        showWarningModal('dashboard.html');
-                    }
-                    // Otherwise, redirect to dashboard
-                });
-            }
-            
-            // Make sure profile button works
-            const profileBtn = document.getElementById('profileBtn');
-            if (profileBtn) {
-                profileBtn.addEventListener('click', function(e) {
-                    // If audio is playing, show warning
-                    if (currentAudio && !currentAudio.paused) {
-                        e.preventDefault();
-                        showWarningModal('feed.html');
-                    }
-                    // Otherwise, redirect to feed
-                });
-            }
         }
 
         // ===== CONTENT LOADING =====
@@ -2580,8 +2520,7 @@
                 currentAudio = new Audio(story.audioLink);
             } else {
                 // Fallback to demo audio if no audioLink
-                const randomNum = Math.floor(Math.random() * 8) + 1;
-                currentAudio = new Audio(`https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${randomNum}.mp3`);
+                currentAudio = new Audio(`https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(parseInt(storyId.replace('story', '')) % 8) + 1 || 1}.mp3`);
             }
             
             currentPlayingStory = story;
@@ -3014,6 +2953,38 @@
         function filterContent() {
             applyFilters();
         }
+
+        // ===== FIXED BOTTOM NAVIGATION =====
+        // Remove the problematic warning modal event listener for bottom nav
+        // Add proper click handlers for bottom navigation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up bottom navigation click handlers
+            const navLinks = document.querySelectorAll('.bottom-nav .nav-item');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // If audio is playing, show warning
+                    if (currentAudio && !currentAudio.paused) {
+                        e.preventDefault();
+                        const href = this.getAttribute('href');
+                        showWarningModal(href);
+                    }
+                    // Otherwise, let the default link behavior happen
+                });
+            });
+
+            // Set up submit button click handler
+            const submitBtn = document.querySelector('.submit-story-btn');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', function(e) {
+                    // If audio is playing, show warning
+                    if (currentAudio && !currentAudio.paused) {
+                        e.preventDefault();
+                        showWarningModal('dashboard.html');
+                    }
+                    // Otherwise, let the default onclick handler run
+                });
+            }
+        });
     </script>
 </body>
 </html>

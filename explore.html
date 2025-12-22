@@ -1845,8 +1845,8 @@
                     <i class="fas fa-bell"></i>
                     <span class="notification-badge"></span>
                 </button>
-                <button class="header-btn" id="profileBtn" onclick="window.location.href='profile.html'">
-                    <i class="fas fa-user"></i>
+                <button class="header-btn" id="profileBtn" onclick="window.location.href='feed.html'">
+                    <span id="profileInitials">U</span>
                 </button>
             </div>
         </header>
@@ -1968,7 +1968,7 @@
                     <i class="fas fa-compass"></i>
                     <span>Explore</span>
                 </a>
-                <button class="submit-story-btn" onclick="window.location.href='create-story.html'">
+                <button class="submit-story-btn" onclick="window.location.href='dashboard.html'">
                     <i class="fas fa-plus"></i>
                 </button>
                 <a href="donate.html" class="nav-item">
@@ -2028,7 +2028,6 @@
         let currentPage = 0;
         const STORIES_PER_PAGE = 10;
         const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-        let isLoading = false;
 
         // Initialize on DOM load
         document.addEventListener('DOMContentLoaded', function() {
@@ -2099,18 +2098,6 @@
                     if (currentAudio) {
                         togglePlayPause();
                     }
-                }
-            });
-
-            // Navigation links warning for audio playing
-            document.querySelectorAll('a').forEach(link => {
-                if (link.href && !link.href.includes('#') && !link.onclick) {
-                    link.addEventListener('click', function(e) {
-                        if (currentAudio && !currentAudio.paused) {
-                            e.preventDefault();
-                            showWarningModal(this.href);
-                        }
-                    });
                 }
             });
         }
@@ -2507,19 +2494,8 @@
 
         // ===== PAGINATION =====
         function loadMoreContent() {
-            if (isLoading) return;
-            
-            isLoading = true;
-            const loadMoreBtn = document.getElementById('loadMoreBtn');
-            loadMoreBtn.classList.add('loading');
-            
-            setTimeout(() => {
-                currentPage++;
-                renderStories();
-                
-                loadMoreBtn.classList.remove('loading');
-                isLoading = false;
-            }, 500);
+            currentPage++;
+            renderStories();
         }
 
         // ===== AUDIO PLAYER =====
@@ -2799,7 +2775,7 @@
             const currentUser = auth.currentUser;
             if (!currentUser) {
                 showToast("Please login to save stories", "error");
-                window.location.href = 'login.html';
+                window.location.href = 'feed.html';
                 return;
             }
             
@@ -2947,12 +2923,20 @@
 
         function updateUserProfile(user) {
             const profileBtn = document.getElementById('profileBtn');
+            const profileInitials = document.getElementById('profileInitials');
             
             if (user) {
+                let initials = 'U';
+                if (user.displayName) {
+                    initials = user.displayName.charAt(0).toUpperCase();
+                } else if (user.email) {
+                    initials = user.email.charAt(0).toUpperCase();
+                }
+                
                 if (user.photoURL) {
                     profileBtn.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
                 } else {
-                    profileBtn.innerHTML = '<i class="fas fa-user"></i>';
+                    profileInitials.textContent = initials;
                 }
             }
         }
@@ -2969,6 +2953,18 @@
         function filterContent() {
             applyFilters();
         }
+
+        // Add navigation warning for audio playing
+        document.querySelectorAll('a').forEach(link => {
+            if (link.href && !link.href.includes('javascript:')) {
+                link.addEventListener('click', function(e) {
+                    if (currentAudio && !currentAudio.paused) {
+                        e.preventDefault();
+                        showWarningModal(this.href);
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>

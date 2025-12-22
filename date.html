@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Camsilo | Premium Adult Social Platform</title>
+    <title>Camsilo | Dashboard</title>
     
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -11,8 +11,12 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     
+    <!-- Agora SDK -->
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.18.2.js"></script>
+    
     <!-- External Configurations -->
-    <script src="firebase-config.js" defer></script>
+    <script src="firebase-config.js"></script>
+    <script src="agora-config.js"></script>
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -21,29 +25,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* Reset & Base */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
-
-        /* Pages */
-        .page {
-            display: none;
-            width: 100%;
-            min-height: 100vh;
-        }
-
-        .page.active {
-            display: block;
+            background: #0f172a;
+            color: white;
         }
 
         /* Animated Background */
@@ -60,7 +57,7 @@
         .floating-circle {
             position: absolute;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(124, 58, 237, 0.1);
             animation: float 20s infinite linear;
         }
 
@@ -89,18 +86,204 @@
         }
 
         @keyframes float {
-            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; }
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-1000px) rotate(720deg);
+                opacity: 0;
+            }
         }
 
-        /* Common Components */
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0f172a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .loading-logo {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(124, 58, 237, 0.2);
+            border-radius: 50%;
+            border-top-color: #7c3aed;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Main Container */
+        .container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #7c3aed;
+        }
+
+        .user-info h3 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .user-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Wallet Card */
+        .wallet-card {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .wallet-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .wallet-header i {
+            color: #f59e0b;
+            font-size: 1.2rem;
+        }
+
+        .balance {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .wallet-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .wallet-actions .btn {
+            flex: 1;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+
+        /* Navigation */
+        .nav-menu {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .nav-item i {
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: rgba(124, 58, 237, 0.2);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+        }
+
         .btn {
             padding: 12px 24px;
             border: none;
             border-radius: 10px;
             font-family: 'Poppins', sans-serif;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 14px;
             cursor: pointer;
             transition: all 0.3s ease;
             display: inline-flex;
@@ -124,353 +307,44 @@
             color: white;
         }
 
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
         .btn-outline {
             background: transparent;
             border: 2px solid #7c3aed;
             color: #7c3aed;
         }
 
-        .input-group {
-            margin-bottom: 20px;
-            position: relative;
-        }
-
-        .input-group i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #7c3aed;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 14px 16px 14px 45px;
-            border: 2px solid #e5e7eb;
-            border-radius: 10px;
-            font-size: 16px;
-            font-family: 'Poppins', sans-serif;
-            transition: all 0.3s ease;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #7c3aed;
-            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
-        }
-
-        /* Notification */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 20px;
-            border-radius: 10px;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            z-index: 10000;
-            animation: slideIn 0.3s ease;
-            max-width: 300px;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        .notification.success {
-            background: linear-gradient(135deg, #10b981, #059669);
-        }
-
-        .notification.error {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-        }
-
-        /* ===== AUTH PAGE ===== */
-        #auth-page {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .auth-container {
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .auth-box {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-        }
-
-        .logo-container {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .logo {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin-bottom: 10px;
-        }
-
-        .tagline {
-            color: #6b7280;
-            font-size: 0.9rem;
-        }
-
-        .auth-form {
-            display: none;
-        }
-
-        .auth-form.active {
-            display: block;
-        }
-
-        .auth-form h2 {
-            margin-bottom: 20px;
-            color: #111827;
-            text-align: center;
-        }
-
-        .gender-selection {
-            margin: 20px 0;
-        }
-
-        .gender-selection h3 {
-            margin-bottom: 10px;
-            color: #374151;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .gender-options {
-            display: flex;
-            gap: 10px;
-        }
-
-        .gender-option {
+        /* Main Content */
+        .main-content {
             flex: 1;
-        }
-
-        .gender-option input {
-            display: none;
-        }
-
-        .gender-icon {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 15px;
-            border: 2px solid #e5e7eb;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: white;
-        }
-
-        .gender-icon i {
-            font-size: 1.5rem;
-            margin-bottom: 8px;
-            color: #7c3aed;
-        }
-
-        .gender-icon span {
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        .gender-option input:checked + .gender-icon {
-            border-color: #7c3aed;
-            background: rgba(124, 58, 237, 0.1);
-        }
-
-        .auth-footer {
-            text-align: center;
-            margin-top: 20px;
-            color: #6b7280;
-            font-size: 0.9rem;
-        }
-
-        .auth-footer a {
-            color: #7c3aed;
-            text-decoration: none;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        /* ===== DASHBOARD PAGE ===== */
-        #dashboard-page {
-            min-height: 100vh;
-            background: #f9fafb;
-            display: none;
-        }
-
-        /* Top Navigation Bar */
-        .top-nav {
-            background: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .nav-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 70px;
-        }
-
-        .nav-logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #7c3aed, #ec4899);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .nav-menu {
-            display: flex;
-            gap: 5px;
-        }
-
-        .nav-item {
-            padding: 10px 20px;
-            background: none;
-            border: none;
-            color: #6b7280;
-            font-weight: 500;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .nav-item:hover,
-        .nav-item.active {
-            background: rgba(124, 58, 237, 0.1);
-            color: #7c3aed;
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #7c3aed;
-        }
-
-        .user-name {
-            font-weight: 600;
-            color: #111827;
-        }
-
-        /* Dashboard Content */
-        .dashboard-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-        }
-
-        .page-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #111827;
-        }
-
-        .wallet-card {
-            background: linear-gradient(135deg, #7c3aed, #5b21b6);
-            color: white;
-            padding: 20px;
-            border-radius: 15px;
-            min-width: 250px;
-        }
-
-        .wallet-info h3 {
-            font-size: 0.9rem;
-            margin-bottom: 8px;
-            opacity: 0.9;
-        }
-
-        .balance {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 15px;
-        }
-
-        .wallet-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .wallet-actions .btn {
-            flex: 1;
-            padding: 8px 12px;
-            font-size: 0.85rem;
+            padding: 30px;
+            overflow-y: auto;
+            background: #0f172a;
         }
 
         /* Models Grid */
         .models-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
         }
 
         .model-card {
-            background: white;
+            background: rgba(30, 41, 59, 0.8);
             border-radius: 15px;
             overflow: hidden;
             transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .model-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border-color: #7c3aed;
         }
 
         .model-header {
@@ -496,9 +370,9 @@
             right: 15px;
             background: #10b981;
             color: white;
-            padding: 5px 12px;
+            padding: 5px 15px;
             border-radius: 20px;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             font-weight: 600;
         }
 
@@ -507,9 +381,8 @@
         }
 
         .model-name {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             font-weight: 600;
-            color: #111827;
             margin-bottom: 5px;
         }
 
@@ -529,7 +402,7 @@
             justify-content: space-between;
             margin-top: 15px;
             padding-top: 15px;
-            border-top: 1px solid #e5e7eb;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .stat {
@@ -538,139 +411,76 @@
 
         .stat-value {
             font-weight: 700;
-            color: #111827;
             font-size: 0.9rem;
         }
 
         .stat-label {
-            font-size: 0.75rem;
-            color: #6b7280;
-        }
-
-        /* ===== CHAT PAGE ===== */
-        #chat-page {
-            min-height: 100vh;
-            background: #f9fafb;
-            display: none;
-        }
-
-        .chat-header {
-            background: white;
-            padding: 15px 20px;
-            border-bottom: 1px solid #e5e7eb;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .back-button {
-            background: none;
-            border: none;
-            color: #7c3aed;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .back-button:hover {
-            background: rgba(124, 58, 237, 0.1);
-        }
-
-        .chat-partner-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-        }
-
-        .chat-partner-avatar {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #7c3aed;
-        }
-
-        .chat-partner-details h3 {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 2px;
-        }
-
-        .chat-partner-status {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            color: #6b7280;
             font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
         }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #10b981;
-            border-radius: 50%;
-        }
-
+        /* Chat Page */
         .chat-container {
             display: flex;
-            height: calc(100vh - 75px);
+            height: calc(100vh - 60px);
         }
 
         .chat-sidebar {
-            width: 300px;
-            background: white;
-            border-right: 1px solid #e5e7eb;
+            width: 350px;
+            background: rgba(30, 41, 59, 0.8);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
             overflow-y: auto;
-            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-list {
+            flex: 1;
+            padding: 20px;
         }
 
         .chat-item {
             display: flex;
             align-items: center;
-            padding: 12px;
+            padding: 15px;
             border-radius: 10px;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: white;
-            border: 1px solid transparent;
+            background: rgba(255, 255, 255, 0.05);
         }
 
         .chat-item:hover {
-            background: rgba(124, 58, 237, 0.05);
-            border-color: #a78bfa;
+            background: rgba(124, 58, 237, 0.1);
+            transform: translateX(5px);
         }
 
         .chat-item.active {
-            background: rgba(124, 58, 237, 0.1);
-            border-color: #7c3aed;
+            background: rgba(124, 58, 237, 0.2);
+            border: 1px solid #7c3aed;
         }
 
-        .chat-item-avatar {
-            width: 40px;
-            height: 40px;
+        .chat-avatar {
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             object-fit: cover;
-            margin-right: 12px;
+            margin-right: 15px;
             border: 2px solid #7c3aed;
         }
 
-        .chat-item-info {
+        .chat-info {
             flex: 1;
         }
 
-        .chat-item-name {
+        .chat-name {
             font-weight: 600;
-            margin-bottom: 2px;
-            font-size: 0.9rem;
+            margin-bottom: 3px;
         }
 
-        .chat-item-last-message {
-            color: #6b7280;
-            font-size: 0.8rem;
+        .chat-last-message {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -682,18 +492,74 @@
             flex-direction: column;
         }
 
+        .chat-header {
+            background: rgba(30, 41, 59, 0.8);
+            padding: 20px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-partner-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .partner-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #7c3aed;
+        }
+
+        .partner-details h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .partner-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #10b981;
+            border-radius: 50%;
+        }
+
         .messages-container {
             flex: 1;
-            padding: 20px;
+            padding: 30px;
             overflow-y: auto;
-            background: linear-gradient(180deg, #f9fafb, #f3f4f6);
+            background: rgba(15, 23, 42, 0.5);
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 15px;
         }
 
         .message {
             max-width: 70%;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .message.sent {
@@ -705,83 +571,80 @@
         }
 
         .message-bubble {
-            padding: 12px 15px;
+            padding: 15px;
             border-radius: 15px;
             position: relative;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
         }
 
         .message.sent .message-bubble {
             background: linear-gradient(135deg, #7c3aed, #5b21b6);
             color: white;
-            border-bottom-right-radius: 5px;
         }
 
         .message.received .message-bubble {
-            background: white;
-            color: #111827;
-            border-bottom-left-radius: 5px;
-            border: 1px solid #e5e7eb;
+            background: rgba(30, 41, 59, 0.8);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .message-text {
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             line-height: 1.4;
         }
 
         .message-time {
-            font-size: 0.7rem;
-            opacity: 0.8;
+            font-size: 0.75rem;
+            opacity: 0.7;
             text-align: right;
         }
 
         .message-input-container {
-            background: white;
-            padding: 15px 20px;
-            border-top: 1px solid #e5e7eb;
+            background: rgba(30, 41, 59, 0.8);
+            padding: 20px 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
-            gap: 12px;
+            gap: 15px;
             align-items: center;
         }
 
         .message-input {
             flex: 1;
-            padding: 12px 16px;
-            border: 2px solid #e5e7eb;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 10px;
+            color: white;
             font-family: 'Poppins', sans-serif;
             font-size: 14px;
-            transition: all 0.3s ease;
         }
 
         .message-input:focus {
             outline: none;
             border-color: #7c3aed;
-            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
         }
 
         .send-button {
-            padding: 12px 20px;
+            padding: 15px 25px;
             background: linear-gradient(135deg, #7c3aed, #5b21b6);
             color: white;
             border: none;
             border-radius: 10px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        /* Modal */
+        /* Modals */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.8);
             display: none;
             align-items: center;
             justify-content: center;
@@ -793,13 +656,14 @@
         }
 
         .modal {
-            background: white;
+            background: rgba(30, 41, 59, 0.95);
             border-radius: 15px;
             padding: 30px;
-            max-width: 400px;
+            max-width: 500px;
             width: 90%;
-            max-height: 80vh;
+            max-height: 90vh;
             overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .modal-header {
@@ -812,29 +676,75 @@
         .modal-close {
             background: none;
             border: none;
+            color: white;
             font-size: 24px;
             cursor: pointer;
-            color: #6b7280;
-            padding: 5px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
         }
 
         /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 250px;
+            }
+            
+            .models-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+            
+            .chat-sidebar {
+                width: 300px;
+            }
+        }
+
         @media (max-width: 768px) {
-            .auth-box {
-                padding: 30px 20px;
-            }
-            
-            .gender-options {
+            .container {
                 flex-direction: column;
             }
             
-            .dashboard-header {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .wallet-card {
+            .sidebar {
                 width: 100%;
+                height: auto;
+                position: sticky;
+                top: 0;
             }
             
             .models-grid {
@@ -849,10 +759,6 @@
                 width: 100%;
                 height: 200px;
             }
-            
-            .message {
-                max-width: 85%;
-            }
         }
     </style>
 </head>
@@ -864,233 +770,151 @@
         <div class="floating-circle"></div>
     </div>
 
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-logo">Camsilo</div>
+        <div class="loading-spinner"></div>
+        <p style="margin-top: 20px; color: rgba(255, 255, 255, 0.7);">Loading...</p>
+    </div>
+
     <!-- Notification Container -->
     <div id="notification-container"></div>
 
-    <!-- Auth Page -->
-    <div id="auth-page" class="page active">
-        <div class="auth-container">
-            <div class="auth-box">
-                <div class="logo-container">
-                    <h1 class="logo">Camsilo</h1>
-                    <p class="tagline">Premium Adult Social Platform</p>
-                </div>
-
-                <!-- Login Form -->
-                <form id="login-form" class="auth-form active">
-                    <h2>Welcome Back</h2>
-                    <div class="input-group">
-                        <i class="fas fa-envelope"></i>
-                        <input type="email" id="login-email" placeholder="Email" required>
-                    </div>
-                    <div class="input-group">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" id="login-password" placeholder="Password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">
-                        <i class="fas fa-sign-in-alt"></i> Sign In
-                    </button>
-                    <div class="auth-footer">
-                        <p>New here? <a id="show-signup">Create Account</a></p>
-                    </div>
-                </form>
-
-                <!-- Signup Form -->
-                <form id="signup-form" class="auth-form">
-                    <h2>Join Camsilo</h2>
-                    <div class="input-group">
-                        <i class="fas fa-user"></i>
-                        <input type="text" id="signup-name" placeholder="Full Name" required>
-                    </div>
-                    <div class="input-group">
-                        <i class="fas fa-envelope"></i>
-                        <input type="email" id="signup-email" placeholder="Email" required>
-                    </div>
-                    <div class="input-group">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" id="signup-password" placeholder="Password" required>
-                    </div>
-                    
-                    <div class="gender-selection">
-                        <h3>Select Gender</h3>
-                        <div class="gender-options">
-                            <label class="gender-option">
-                                <input type="radio" name="gender" value="male" required>
-                                <div class="gender-icon">
-                                    <i class="fas fa-mars"></i>
-                                    <span>Male</span>
-                                </div>
-                            </label>
-                            <label class="gender-option">
-                                <input type="radio" name="gender" value="female" required>
-                                <div class="gender-icon">
-                                    <i class="fas fa-venus"></i>
-                                    <span>Female</span>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">
-                        <i class="fas fa-user-plus"></i> Create Account
-                    </button>
-                    <div class="auth-footer">
-                        <p>Already have an account? <a id="show-login">Sign In</a></p>
-                    </div>
-                </form>
+    <!-- Main Container -->
+    <div class="container" style="display: none;">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">Camsilo</div>
             </div>
-        </div>
-    </div>
 
-    <!-- Dashboard Page -->
-    <div id="dashboard-page" class="page">
-        <!-- Top Navigation -->
-        <div class="top-nav">
-            <div class="nav-container">
-                <div class="nav-content">
-                    <div class="nav-logo">Camsilo</div>
-                    <div class="nav-menu">
-                        <button class="nav-item active" data-page="models">
-                            <i class="fas fa-users"></i> Models
-                        </button>
-                        <button class="nav-item" data-page="chats">
-                            <i class="fas fa-comments"></i> Chats
-                        </button>
-                        <button class="nav-item" data-page="history">
-                            <i class="fas fa-history"></i> History
-                        </button>
-                        <button class="nav-item" data-page="settings">
-                            <i class="fas fa-cog"></i> Settings
-                        </button>
-                    </div>
-                    <div class="nav-right">
-                        <div class="user-info">
-                            <img id="user-avatar" src="https://ui-avatars.com/api/?name=User&background=7c3aed&color=fff" 
-                                 alt="Profile" class="user-avatar">
-                            <span id="username" class="user-name">User</span>
-                        </div>
-                        <button id="logout-btn" class="btn btn-outline">
-                            <i class="fas fa-sign-out-alt"></i> Logout
-                        </button>
-                    </div>
+            <div class="user-profile">
+                <img id="user-avatar" src="" alt="Profile" class="user-avatar">
+                <div class="user-info">
+                    <h3 id="user-name">Loading...</h3>
+                    <div id="user-role" class="user-badge">Loading...</div>
                 </div>
+            </div>
+
+            <div class="wallet-card">
+                <div class="wallet-header">
+                    <i class="fas fa-wallet"></i>
+                    <h3>Wallet Balance</h3>
+                </div>
+                <div id="wallet-balance" class="balance">₦0.00</div>
+                <div class="wallet-actions">
+                    <button id="deposit-btn" class="btn btn-secondary">
+                        <i class="fas fa-plus-circle"></i> Deposit
+                    </button>
+                    <button id="withdraw-btn" class="btn btn-outline" style="display: none;">
+                        <i class="fas fa-money-check-alt"></i> Withdraw
+                    </button>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <div class="nav-item active" data-page="home">
+                    <i class="fas fa-users"></i> Models
+                </div>
+                <div class="nav-item" data-page="chats">
+                    <i class="fas fa-comments"></i> My Chats
+                </div>
+                <div class="nav-item" data-page="history">
+                    <i class="fas fa-history"></i> History
+                </div>
+                <div class="nav-item" data-page="settings">
+                    <i class="fas fa-cog"></i> Settings
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="logout-btn" class="btn btn-danger" style="width: 100%;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
             </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="dashboard-content">
-            <div class="dashboard-header">
-                <h1 class="page-title" id="page-title">Premium Models</h1>
-                <div class="wallet-card">
-                    <div class="wallet-info">
-                        <h3>Wallet Balance</h3>
-                        <div id="wallet-balance" class="balance">₦0.00</div>
-                        <div class="wallet-actions">
-                            <button id="deposit-btn" class="btn btn-secondary">
-                                <i class="fas fa-plus-circle"></i> Deposit
-                            </button>
-                            <button id="withdraw-btn" class="btn btn-outline" style="display: none;">
-                                <i class="fas fa-money-check-alt"></i> Withdraw
-                            </button>
-                        </div>
-                    </div>
+        <!-- Main Content Area -->
+        <div class="main-content" id="main-content">
+            <!-- Home Page (Models) -->
+            <div id="home-page" class="page-content active">
+                <div style="margin-bottom: 30px;">
+                    <h1 style="font-size: 2rem; margin-bottom: 10px;">Premium Models</h1>
+                    <p style="color: rgba(255, 255, 255, 0.7);">Choose a model to start chatting</p>
                 </div>
-            </div>
-
-            <!-- Models Content -->
-            <div id="models-content" class="content-section active">
                 <div id="models-grid" class="models-grid">
                     <!-- Models will be loaded here -->
                 </div>
             </div>
 
-            <!-- Chats Content -->
-            <div id="chats-content" class="content-section">
-                <div class="chat-sidebar">
-                    <div class="chat-list" id="sidebar-chats-list">
-                        <!-- Chats will be loaded here -->
+            <!-- Chats Page -->
+            <div id="chats-page" class="page-content">
+                <div class="chat-container">
+                    <div class="chat-sidebar">
+                        <div class="chat-list" id="chats-list">
+                            <!-- Chats will be loaded here -->
+                        </div>
+                    </div>
+                    <div class="chat-main">
+                        <div class="chat-header">
+                            <div class="chat-partner-info">
+                                <img id="chat-partner-avatar" src="https://via.placeholder.com/50" 
+                                     alt="Model" class="partner-avatar">
+                                <div class="partner-details">
+                                    <h3 id="chat-partner-name">Select a chat</h3>
+                                    <div class="partner-status">
+                                        <span class="status-dot"></span>
+                                        <span id="chat-partner-status">Offline</span>
+                                        <span>• ₦10/msg</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chat-actions">
+                                <button id="request-media-btn" class="btn btn-outline">
+                                    <i class="fas fa-camera"></i> Request Media
+                                </button>
+                            </div>
+                        </div>
+                        <div class="messages-container" id="messages-container">
+                            <!-- Messages will be loaded here -->
+                            <div style="text-align: center; margin-top: 100px;">
+                                <i class="fas fa-comments" style="font-size: 3rem; color: rgba(255, 255, 255, 0.3); margin-bottom: 20px;"></i>
+                                <h3 style="margin-bottom: 10px;">Welcome to Camsilo Chat</h3>
+                                <p style="color: rgba(255, 255, 255, 0.6);">Select a model to start chatting</p>
+                            </div>
+                        </div>
+                        <div class="message-input-container">
+                            <input type="text" id="message-input" class="message-input" 
+                                   placeholder="Type your message..." disabled>
+                            <button id="send-button" class="send-button" disabled>
+                                <i class="fas fa-paper-plane"></i> Send
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- History Content -->
-            <div id="history-content" class="content-section">
-                <div class="card">
-                    <h3>Transaction History</h3>
+            <!-- History Page -->
+            <div id="history-page" class="page-content">
+                <div style="background: rgba(30, 41, 59, 0.8); border-radius: 15px; padding: 30px;">
+                    <h2 style="margin-bottom: 20px;">Transaction History</h2>
                     <div id="history-list">
                         <!-- History will be loaded here -->
                     </div>
                 </div>
             </div>
 
-            <!-- Settings Content -->
-            <div id="settings-content" class="content-section">
-                <div class="card">
-                    <h3>Account Settings</h3>
-                    <form id="settings-form">
-                        <div class="input-group">
-                            <i class="fas fa-user"></i>
-                            <input type="text" id="settings-name" placeholder="Full Name">
-                        </div>
-                        <div class="input-group">
-                            <i class="fas fa-image"></i>
-                            <input type="text" id="settings-photo" placeholder="Profile Photo URL">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Chat Page -->
-    <div id="chat-page" class="page">
-        <div class="chat-header">
-            <button class="back-button" id="back-to-dashboard">
-                <i class="fas fa-arrow-left"></i>
-            </button>
-            <div class="chat-partner-info">
-                <img id="chat-partner-avatar" src="https://via.placeholder.com/45" 
-                     alt="Model" class="chat-partner-avatar">
-                <div class="chat-partner-details">
-                    <h3 id="chat-partner-name">Select a chat</h3>
-                    <div class="chat-partner-status">
-                        <span class="status-dot"></span>
-                        <span id="chat-partner-status">Offline</span>
-                        <span>• ₦10/msg</span>
+            <!-- Settings Page -->
+            <div id="settings-page" class="page-content">
+                <div style="background: rgba(30, 41, 59, 0.8); border-radius: 15px; padding: 30px;">
+                    <h2 style="margin-bottom: 20px;">Account Settings</h2>
+                    <div class="input-group">
+                        <input type="text" id="settings-name" placeholder="Full Name">
                     </div>
-                </div>
-            </div>
-            <div class="chat-actions">
-                <button id="request-media-btn" class="btn btn-outline">
-                    <i class="fas fa-camera"></i>
-                </button>
-            </div>
-        </div>
-
-        <div class="chat-container">
-            <div class="chat-sidebar">
-                <div class="chat-list" id="chat-sidebar-list">
-                    <!-- Active chats will be listed here -->
-                </div>
-            </div>
-
-            <div class="chat-main">
-                <div class="messages-container" id="messages-container">
-                    <div class="welcome-message">
-                        <div class="card" style="text-align: center; max-width: 400px; margin: 0 auto;">
-                            <h3>Welcome to Camsilo Chat</h3>
-                            <p style="margin: 15px 0;">Select a model to start chatting. Each message costs ₦10.</p>
-                        </div>
+                    <div class="input-group">
+                        <input type="text" id="settings-photo" placeholder="Profile Photo URL">
                     </div>
-                </div>
-
-                <div class="message-input-container">
-                    <input type="text" id="message-input" class="message-input" 
-                           placeholder="Type your message..." disabled>
-                    <button id="send-button" class="send-button" disabled>
-                        <i class="fas fa-paper-plane"></i> Send
-                    </button>
+                    <button id="save-settings" class="btn btn-primary">Save Changes</button>
                 </div>
             </div>
         </div>
@@ -1104,16 +928,100 @@
                 <button class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
-                <p style="margin-bottom: 20px;">You will be redirected to our secure payment gateway.</p>
+                <p style="margin-bottom: 20px; color: rgba(255, 255, 255, 0.8);">
+                    You will be redirected to our secure payment gateway.
+                </p>
                 <div class="input-group">
-                    <i class="fas fa-money-bill-wave"></i>
                     <input type="number" id="deposit-amount" placeholder="Enter amount" min="100" required>
                 </div>
-                <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 20px;">
+                <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 20px;">
                     Minimum deposit: ₦100
                 </p>
                 <button id="redirect-deposit" class="btn btn-primary" style="width: 100%;">
                     <i class="fas fa-external-link-alt"></i> Proceed to Payment
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div id="withdraw-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Withdraw Funds</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <input type="number" id="withdraw-amount" placeholder="Amount to withdraw" min="1000" required>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="bank-name" placeholder="Bank Name" required>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="account-number" placeholder="Account Number" required>
+                </div>
+                <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 20px;">
+                    Minimum withdrawal: ₦1,000. Processing time: 24-48 hours.
+                </p>
+                <button id="confirm-withdraw" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-paper-plane"></i> Request Withdrawal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request Media Modal -->
+    <div id="request-media-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Request Custom Media</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                    <div class="btn btn-outline" data-type="image" style="flex: 1; text-align: center; padding: 15px;">
+                        <i class="fas fa-image" style="font-size: 1.5rem; margin-bottom: 5px;"></i>
+                        <div>Image</div>
+                    </div>
+                    <div class="btn btn-outline" data-type="video" style="flex: 1; text-align: center; padding: 15px;">
+                        <i class="fas fa-video" style="font-size: 1.5rem; margin-bottom: 5px;"></i>
+                        <div>Video</div>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <textarea id="media-request-description" placeholder="Describe what you'd like..." rows="3"></textarea>
+                </div>
+                
+                <div class="input-group">
+                    <input type="number" id="media-amount" placeholder="Amount (₦)" min="100" required>
+                </div>
+                
+                <button id="submit-media-request" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-paper-plane"></i> Send Request
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Media Modal -->
+    <div id="upload-media-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Upload Media</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; padding: 40px; border: 2px dashed rgba(255, 255, 255, 0.2); border-radius: 10px; margin-bottom: 20px;">
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 3rem; color: #7c3aed; margin-bottom: 15px;"></i>
+                    <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: 15px;">Drop files here or click to upload</p>
+                    <input type="file" id="media-file" accept="image/*,video/*" style="display: none;">
+                    <button id="browse-media" class="btn btn-outline">Browse Files</button>
+                </div>
+                <div id="media-preview" style="margin-bottom: 20px;"></div>
+                <button id="upload-media-btn" class="btn btn-primary" style="width: 100%;" disabled>
+                    <i class="fas fa-upload"></i> Upload & Send
                 </button>
             </div>
         </div>
@@ -1124,216 +1032,127 @@
         // ========== GLOBAL VARIABLES ==========
         let currentUser = null;
         let userData = null;
+        let walletBalance = 0;
+        let currentChatId = null;
+        let currentModelId = null;
+        let currentMediaType = 'image';
         
         // ========== INITIALIZATION ==========
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Page loaded');
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Firebase
+            firebase.initializeApp(firebaseConfig);
             
-            // Wait for Firebase config
-            if (typeof firebaseConfig !== 'undefined') {
-                console.log('Initializing Firebase...');
-                firebase.initializeApp(firebaseConfig);
-                initAuth();
-            } else {
-                console.error('Firebase config not loaded');
-                showNotification('Error: Firebase configuration missing', 'error');
-            }
+            // Check authentication
+            firebase.auth().onAuthStateChanged(async (user) => {
+                const loadingScreen = document.getElementById('loading-screen');
+                const container = document.querySelector('.container');
+                
+                if (user) {
+                    currentUser = user;
+                    await loadUserData();
+                    setupRealtimeListeners();
+                    
+                    loadingScreen.style.display = 'none';
+                    container.style.display = 'flex';
+                    
+                    // Load initial content
+                    loadModels();
+                } else {
+                    // Redirect to login page if not authenticated
+                    window.location.href = 'index.html';
+                }
+            });
             
             // Setup event listeners
             setupEventListeners();
         });
         
-        // ========== AUTHENTICATION ==========
-        function initAuth() {
-            firebase.auth().onAuthStateChanged(function(user) {
-                console.log('Auth state changed:', user ? 'User logged in' : 'No user');
-                
-                if (user) {
-                    // User is logged in
-                    currentUser = user;
-                    showDashboard();
-                    loadUserData();
-                } else {
-                    // No user, show login page
-                    showLoginPage();
-                }
-            });
-        }
-        
-        function showDashboard() {
-            console.log('Showing dashboard');
-            document.getElementById('auth-page').classList.remove('active');
-            document.getElementById('dashboard-page').classList.add('active');
-            document.getElementById('chat-page').classList.remove('active');
-        }
-        
-        function showLoginPage() {
-            console.log('Showing login page');
-            document.getElementById('auth-page').classList.add('active');
-            document.getElementById('dashboard-page').classList.remove('active');
-            document.getElementById('chat-page').classList.remove('active');
-        }
-        
-        // ========== USER DATA ==========
+        // ========== USER DATA MANAGEMENT ==========
         async function loadUserData() {
-            if (!currentUser) return;
-            
             try {
                 const userDoc = await firebase.firestore().collection('users').doc(currentUser.uid).get();
                 
                 if (userDoc.exists) {
                     userData = userDoc.data();
+                    walletBalance = userData.walletBalance || 0;
                     
                     // Update UI
-                    document.getElementById('username').textContent = userData.name;
-                    document.getElementById('user-avatar').src = userData.profileImage;
+                    updateUserProfile();
+                    updateWalletDisplay();
                     
-                    // Show/hide withdraw button
+                    // Show/hide withdraw button based on gender
                     const withdrawBtn = document.getElementById('withdraw-btn');
                     if (withdrawBtn) {
                         withdrawBtn.style.display = userData.gender === 'female' ? 'block' : 'none';
                     }
                     
-                    // Load models
-                    loadModels();
+                    // Show/hide media request button based on gender
+                    const requestMediaBtn = document.getElementById('request-media-btn');
+                    if (requestMediaBtn) {
+                        requestMediaBtn.style.display = userData.gender === 'male' ? 'block' : 'none';
+                    }
                 }
             } catch (error) {
                 console.error('Error loading user data:', error);
+                showNotification('Error loading user data', 'error');
             }
         }
         
-        // ========== EVENT LISTENERS ==========
-        function setupEventListeners() {
-            // Auth form toggles
-            document.getElementById('show-signup').addEventListener('click', function(e) {
-                e.preventDefault();
-                document.getElementById('login-form').classList.remove('active');
-                document.getElementById('signup-form').classList.add('active');
-            });
+        function updateUserProfile() {
+            if (!userData) return;
             
-            document.getElementById('show-login').addEventListener('click', function(e) {
-                e.preventDefault();
-                document.getElementById('signup-form').classList.remove('active');
-                document.getElementById('login-form').classList.add('active');
-            });
+            const userAvatar = document.getElementById('user-avatar');
+            const userName = document.getElementById('user-name');
+            const userRole = document.getElementById('user-role');
             
-            // Login form
-            document.getElementById('login-form').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const email = document.getElementById('login-email').value;
-                const password = document.getElementById('login-password').value;
-                
-                try {
-                    await firebase.auth().signInWithEmailAndPassword(email, password);
-                    showNotification('Welcome back!', 'success');
-                } catch (error) {
-                    showNotification(error.message, 'error');
-                }
-            });
+            if (userAvatar) userAvatar.src = userData.profileImage;
+            if (userName) userName.textContent = userData.name;
+            if (userRole) {
+                userRole.textContent = userData.gender === 'male' ? 'Client' : 'Model';
+                userRole.style.background = userData.gender === 'male' 
+                    ? 'linear-gradient(135deg, #7c3aed, #5b21b6)'
+                    : 'linear-gradient(135deg, #ec4899, #db2777)';
+            }
+        }
+        
+        function updateWalletDisplay() {
+            const walletBalanceEl = document.getElementById('wallet-balance');
+            if (walletBalanceEl) {
+                walletBalanceEl.textContent = `₦${walletBalance.toLocaleString()}`;
+            }
+        }
+        
+        // ========== REAL-TIME LISTENERS ==========
+        function setupRealtimeListeners() {
+            if (!currentUser) return;
             
-            // Signup form
-            document.getElementById('signup-form').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const name = document.getElementById('signup-name').value;
-                const email = document.getElementById('signup-email').value;
-                const password = document.getElementById('signup-password').value;
-                const gender = document.querySelector('input[name="gender"]:checked')?.value;
-                
-                if (!gender) {
-                    showNotification('Please select your gender', 'error');
-                    return;
-                }
-                
-                try {
-                    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
-                    const user = userCredential.user;
-                    
-                    // Create user document
-                    await firebase.firestore().collection('users').doc(user.uid).set({
-                        name: name,
-                        email: email,
-                        gender: gender,
-                        walletBalance: 0,
-                        profileImage: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${gender === 'male' ? '7c3aed' : 'ec4899'}&color=fff`,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        isModel: gender === 'female',
-                        online: true
-                    });
-                    
-                    showNotification('Account created successfully!', 'success');
-                } catch (error) {
-                    showNotification(error.message, 'error');
-                }
-            });
-            
-            // Logout
-            document.getElementById('logout-btn').addEventListener('click', async function() {
-                try {
-                    await firebase.auth().signOut();
-                    showNotification('Logged out successfully', 'success');
-                } catch (error) {
-                    showNotification('Error logging out', 'error');
-                }
-            });
-            
-            // Navigation
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const page = this.dataset.page;
-                    
-                    // Update active nav button
-                    navItems.forEach(nav => nav.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // Show corresponding content
-                    document.querySelectorAll('.content-section').forEach(section => {
-                        section.classList.remove('active');
-                        if (section.id === `${page}-content`) {
-                            section.classList.add('active');
-                        }
-                    });
-                    
-                    // Update page title
-                    const titles = {
-                        'models': 'Premium Models',
-                        'chats': 'My Chats',
-                        'history': 'Transaction History',
-                        'settings': 'Account Settings'
-                    };
-                    document.getElementById('page-title').textContent = titles[page] || 'Camsilo';
+            // Listen for user data updates
+            firebase.firestore().collection('users').doc(currentUser.uid)
+                .onSnapshot((doc) => {
+                    if (doc.exists) {
+                        userData = doc.data();
+                        walletBalance = userData.walletBalance || 0;
+                        updateUserProfile();
+                        updateWalletDisplay();
+                    }
                 });
-            });
             
-            // Deposit
-            document.getElementById('deposit-btn').addEventListener('click', function() {
-                showModal('deposit-modal');
-            });
-            
-            // Back to dashboard from chat
-            document.getElementById('back-to-dashboard').addEventListener('click', function() {
-                showDashboard();
-            });
-            
-            // Deposit redirect
-            document.getElementById('redirect-deposit').addEventListener('click', function() {
-                const amount = document.getElementById('deposit-amount').value;
-                if (!amount || amount < 100) {
-                    showNotification('Minimum deposit is ₦100', 'error');
-                    return;
-                }
-                
-                // Redirect to payment gateway
-                window.open(`https://www.fundcamsilo.com/7272727727?amount=${amount}`, '_blank');
-                hideAllModals();
-            });
-            
-            // Modal close
-            document.querySelectorAll('.modal-close').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    hideAllModals();
+            // Listen for models updates
+            firebase.firestore().collection('users')
+                .where('gender', '==', 'female')
+                .where('isModel', '==', true)
+                .onSnapshot((snapshot) => {
+                    updateModelsGrid(snapshot);
                 });
-            });
+            
+            // Listen for chat updates
+            if (userData.gender === 'male') {
+                firebase.firestore().collection('chats')
+                    .where('participants', 'array-contains', currentUser.uid)
+                    .onSnapshot((snapshot) => {
+                        updateChatsList(snapshot);
+                    });
+            }
         }
         
         // ========== MODELS MANAGEMENT ==========
@@ -1342,8 +1161,6 @@
                 const modelsSnapshot = await firebase.firestore().collection('users')
                     .where('gender', '==', 'female')
                     .where('isModel', '==', true)
-                    .where('online', '==', true)
-                    .limit(20)
                     .get();
                 
                 updateModelsGrid(modelsSnapshot);
@@ -1359,7 +1176,13 @@
             modelsGrid.innerHTML = '';
             
             if (snapshot.empty) {
-                modelsGrid.innerHTML = '<div class="card" style="text-align: center; padding: 40px;">No models online at the moment.</div>';
+                modelsGrid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 50px;">
+                        <i class="fas fa-users" style="font-size: 3rem; color: rgba(255, 255, 255, 0.3); margin-bottom: 20px;"></i>
+                        <h3 style="margin-bottom: 10px;">No models available</h3>
+                        <p style="color: rgba(255, 255, 255, 0.6);">Check back later</p>
+                    </div>
+                `;
                 return;
             }
             
@@ -1377,25 +1200,25 @@
                     <img src="${model.profileImage || 'https://via.placeholder.com/300'}" 
                          alt="${model.name}" 
                          class="model-img">
-                    <span class="online-badge">Online</span>
+                    ${model.online ? '<span class="online-badge">Online</span>' : ''}
                 </div>
                 <div class="model-info">
                     <h3 class="model-name">${model.name}</h3>
                     <div class="model-rating">
-                        ★★★★☆
+                        ${getStarRating(model.rating || 4.5)}
                     </div>
                     <p class="model-price">₦10 per message</p>
                     <div class="model-stats">
                         <div class="stat">
-                            <div class="stat-value">4.5</div>
+                            <div class="stat-value">${model.rating || 4.5}</div>
                             <div class="stat-label">Rating</div>
                         </div>
                         <div class="stat">
-                            <div class="stat-value">85%</div>
+                            <div class="stat-value">${model.responseRate || 85}%</div>
                             <div class="stat-label">Response</div>
                         </div>
                         <div class="stat">
-                            <div class="stat-value">24</div>
+                            <div class="stat-value">${(model.chats || 0).toLocaleString()}</div>
                             <div class="stat-label">Chats</div>
                         </div>
                     </div>
@@ -1407,7 +1230,706 @@
             document.getElementById('models-grid').appendChild(card);
         }
         
+        function getStarRating(rating) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= Math.floor(rating)) {
+                    stars += '<i class="fas fa-star"></i>';
+                } else if (i === Math.ceil(rating) && !Number.isInteger(rating)) {
+                    stars += '<i class="fas fa-star-half-alt"></i>';
+                } else {
+                    stars += '<i class="far fa-star"></i>';
+                }
+            }
+            return stars;
+        }
+        
+        // ========== CHAT MANAGEMENT ==========
+        window.startChat = async function(modelId) {
+            // Check wallet balance for males
+            if (userData.gender === 'male' && walletBalance < 10) {
+                showNotification('Insufficient balance. Please deposit first.', 'error');
+                showModal('deposit-modal');
+                return;
+            }
+            
+            currentModelId = modelId;
+            
+            // Load model info
+            try {
+                const modelDoc = await firebase.firestore().collection('users').doc(modelId).get();
+                if (modelDoc.exists) {
+                    const model = modelDoc.data();
+                    
+                    // Update chat header
+                    document.getElementById('chat-partner-avatar').src = model.profileImage || 'https://via.placeholder.com/50';
+                    document.getElementById('chat-partner-name').textContent = model.name;
+                    document.getElementById('chat-partner-status').textContent = model.online ? 'Online' : 'Offline';
+                    
+                    // Enable chat
+                    document.getElementById('message-input').disabled = false;
+                    document.getElementById('send-button').disabled = false;
+                    
+                    // Generate chat ID
+                    currentChatId = [currentUser.uid, modelId].sort().join('_');
+                    
+                    // Create or get chat document
+                    const chatRef = firebase.firestore().collection('chats').doc(currentChatId);
+                    const chatDoc = await chatRef.get();
+                    
+                    if (!chatDoc.exists) {
+                        await chatRef.set({
+                            participants: [currentUser.uid, modelId],
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastMessage: null,
+                            lastMessageTime: null
+                        });
+                    }
+                    
+                    // Load chat history
+                    loadChatHistory();
+                    
+                    // Switch to chat page
+                    showPage('chats');
+                    
+                    // Listen for new messages
+                    listenForMessages();
+                }
+            } catch (error) {
+                console.error('Error starting chat:', error);
+                showNotification('Error starting chat', 'error');
+            }
+        };
+        
+        async function loadChatHistory() {
+            if (!currentChatId) return;
+            
+            const messagesContainer = document.getElementById('messages-container');
+            messagesContainer.innerHTML = '';
+            
+            try {
+                const messagesSnapshot = await firebase.firestore()
+                    .collection('chats').doc(currentChatId)
+                    .collection('messages')
+                    .orderBy('timestamp', 'asc')
+                    .get();
+                
+                if (messagesSnapshot.empty) {
+                    return;
+                }
+                
+                messagesSnapshot.forEach(doc => {
+                    displayMessage(doc.data());
+                });
+                
+                // Scroll to bottom
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+            }
+        }
+        
+        function listenForMessages() {
+            if (!currentChatId) return;
+            
+            firebase.firestore()
+                .collection('chats').doc(currentChatId)
+                .collection('messages')
+                .orderBy('timestamp', 'desc')
+                .limit(1)
+                .onSnapshot((snapshot) => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            displayMessage(change.doc.data());
+                            // Scroll to bottom
+                            const messagesContainer = document.getElementById('messages-container');
+                            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        }
+                    });
+                });
+        }
+        
+        async function sendMessage() {
+            const messageInput = document.getElementById('message-input');
+            const text = messageInput.value.trim();
+            if (!text || !currentChatId) return;
+            
+            // Check wallet balance for males
+            if (userData.gender === 'male' && walletBalance < 10) {
+                showNotification('Insufficient balance. Please deposit first.', 'error');
+                showModal('deposit-modal');
+                return;
+            }
+            
+            try {
+                // Create message
+                const message = {
+                    senderId: currentUser.uid,
+                    text: text,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    type: 'text',
+                    read: false
+                };
+                
+                // Add message to Firestore
+                await firebase.firestore()
+                    .collection('chats').doc(currentChatId)
+                    .collection('messages')
+                    .add(message);
+                
+                // Update chat last message
+                await firebase.firestore()
+                    .collection('chats').doc(currentChatId)
+                    .update({
+                        lastMessage: text,
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                
+                // Deduct balance for male users
+                if (userData.gender === 'male') {
+                    // Deduct ₦10 from male user
+                    await firebase.firestore()
+                        .collection('users')
+                        .doc(currentUser.uid)
+                        .update({
+                            walletBalance: firebase.firestore.FieldValue.increment(-10)
+                        });
+                    
+                    // Add ₦10 to model
+                    await firebase.firestore()
+                        .collection('users')
+                        .doc(currentModelId)
+                        .update({
+                            walletBalance: firebase.firestore.FieldValue.increment(10)
+                        });
+                    
+                    // Update local balance
+                    walletBalance -= 10;
+                    updateWalletDisplay();
+                    
+                    // Record transaction
+                    await firebase.firestore()
+                        .collection('transactions')
+                        .add({
+                            userId: currentUser.uid,
+                            type: 'chat_message',
+                            amount: 10,
+                            recipientId: currentModelId,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                            status: 'completed'
+                        });
+                }
+                
+                // Clear input
+                messageInput.value = '';
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showNotification('Error sending message', 'error');
+            }
+        }
+        
+        function displayMessage(message) {
+            const messagesContainer = document.getElementById('messages-container');
+            const isSender = message.senderId === currentUser.uid;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isSender ? 'sent' : 'received'}`;
+            
+            if (message.type === 'text') {
+                messageDiv.innerHTML = `
+                    <div class="message-bubble">
+                        <div class="message-text">${message.text}</div>
+                        <div class="message-time">
+                            ${formatTime(message.timestamp?.toDate())}
+                        </div>
+                    </div>
+                `;
+            } else if (message.type === 'voice') {
+                messageDiv.innerHTML = `
+                    <div class="message-bubble">
+                        <div style="display: flex; align-items: center; gap: 15px; padding: 10px;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: #7c3aed; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-play" style="color: white;"></i>
+                            </div>
+                            <div style="flex: 1; height: 30px; background: linear-gradient(90deg, #7c3aed, #a78bfa); border-radius: 15px;"></div>
+                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">${message.duration || 0}s</div>
+                        </div>
+                        <div class="message-time">
+                            ${formatTime(message.timestamp?.toDate())}
+                        </div>
+                    </div>
+                `;
+            } else if (message.type === 'media_request') {
+                messageDiv.innerHTML = `
+                    <div class="message-bubble" style="background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245, 158, 11, 0.3);">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <i class="fas fa-${message.mediaType === 'image' ? 'image' : 'video'}" style="color: #f59e0b;"></i>
+                            <h4 style="color: #f59e0b;">Media Request</h4>
+                        </div>
+                        ${message.description ? `<p style="margin-bottom: 10px; color: rgba(255, 255, 255, 0.8);">${message.description}</p>` : ''}
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-weight: 600; color: #f59e0b;">₦${message.amount.toLocaleString()}</div>
+                            ${!isSender && userData.gender === 'female' ? `
+                                <button class="btn btn-secondary btn-sm" onclick="acceptMediaRequest('${message.requestId}')" style="padding: 8px 15px; font-size: 0.85rem;">
+                                    Accept & Upload
+                                </button>
+                            ` : ''}
+                        </div>
+                        <div class="message-time">
+                            ${formatTime(message.timestamp?.toDate())}
+                        </div>
+                    </div>
+                `;
+            } else if (message.type === 'media') {
+                const isImage = message.mediaUrl.match(/\.(jpg|jpeg|png|gif)$/i);
+                messageDiv.innerHTML = `
+                    <div class="message-bubble">
+                        ${isImage ? 
+                            `<img src="${message.mediaUrl}" style="max-width: 300px; border-radius: 10px; margin-bottom: 10px;">` :
+                            `<video src="${message.mediaUrl}" controls style="max-width: 300px; border-radius: 10px; margin-bottom: 10px;"></video>`
+                        }
+                        <div class="message-time">
+                            ${formatTime(message.timestamp?.toDate())}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+        }
+        
+        // ========== CHATS LIST ==========
+        async function updateChatsList(snapshot) {
+            const chatsList = document.getElementById('chats-list');
+            if (!chatsList) return;
+            
+            chatsList.innerHTML = '';
+            
+            if (snapshot.empty) {
+                chatsList.innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: rgba(255, 255, 255, 0.6);">
+                        <i class="fas fa-comments" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                        <p>No chats yet</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            for (const doc of chatsSnapshot.docs) {
+                const chat = doc.data();
+                const otherUserId = chat.participants.find(id => id !== currentUser.uid);
+                
+                if (otherUserId) {
+                    const userDoc = await firebase.firestore().collection('users').doc(otherUserId).get();
+                    if (userDoc.exists) {
+                        const user = userDoc.data();
+                        createChatItem(doc.id, user, chat.lastMessage);
+                    }
+                }
+            }
+        }
+        
+        function createChatItem(chatId, user, lastMessage) {
+            const chatItem = document.createElement('div');
+            chatItem.className = 'chat-item';
+            chatItem.dataset.chatId = chatId;
+            chatItem.dataset.userId = user.uid;
+            
+            chatItem.innerHTML = `
+                <img src="${user.profileImage || 'https://via.placeholder.com/50'}" 
+                     alt="${user.name}" 
+                     class="chat-avatar">
+                <div class="chat-info">
+                    <div class="chat-name">${user.name}</div>
+                    <div class="chat-last-message">${lastMessage || 'Start chatting...'}</div>
+                </div>
+            `;
+            
+            chatItem.addEventListener('click', () => {
+                currentModelId = user.uid;
+                window.startChat(user.uid);
+            });
+            
+            document.getElementById('chats-list').appendChild(chatItem);
+        }
+        
+        // ========== MEDIA REQUEST ==========
+        async function submitMediaRequest() {
+            if (!currentChatId) {
+                showNotification('No active chat', 'error');
+                return;
+            }
+            
+            const description = document.getElementById('media-request-description').value;
+            const amount = parseInt(document.getElementById('media-amount').value);
+            
+            if (!amount || amount < 100) {
+                showNotification('Minimum amount is ₦100', 'error');
+                return;
+            }
+            
+            if (userData.gender === 'male' && amount > walletBalance) {
+                showNotification('Insufficient balance', 'error');
+                return;
+            }
+            
+            try {
+                // Create request ID
+                const requestId = 'req_' + Date.now();
+                
+                // Add media request message
+                await firebase.firestore()
+                    .collection('chats').doc(currentChatId)
+                    .collection('messages')
+                    .add({
+                        senderId: currentUser.uid,
+                        type: 'media_request',
+                        mediaType: currentMediaType,
+                        description: description,
+                        amount: amount,
+                        requestId: requestId,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        read: false
+                    });
+                
+                // Update chat last message
+                await firebase.firestore()
+                    .collection('chats').doc(currentChatId)
+                    .update({
+                        lastMessage: `Media request: ₦${amount}`,
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                
+                // Deduct amount from male user
+                if (userData.gender === 'male') {
+                    await firebase.firestore()
+                        .collection('users')
+                        .doc(currentUser.uid)
+                        .update({
+                            walletBalance: firebase.firestore.FieldValue.increment(-amount)
+                        });
+                    
+                    // Update local balance
+                    walletBalance -= amount;
+                    updateWalletDisplay();
+                }
+                
+                // Close modal
+                hideAllModals();
+                
+                showNotification('Media request sent successfully', 'success');
+                
+            } catch (error) {
+                console.error('Error submitting media request:', error);
+                showNotification('Error submitting request', 'error');
+            }
+        }
+        
+        window.acceptMediaRequest = function(requestId) {
+            showModal('upload-media-modal');
+            document.getElementById('upload-media-modal').dataset.requestId = requestId;
+        };
+        
+        // ========== EVENT LISTENERS SETUP ==========
+        function setupEventListeners() {
+            // Navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const page = item.dataset.page;
+                    
+                    // Update active nav item
+                    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                    item.classList.add('active');
+                    
+                    // Show corresponding page
+                    document.querySelectorAll('.page-content').forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === `${page}-page`) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+            
+            // Logout
+            document.getElementById('logout-btn').addEventListener('click', async () => {
+                try {
+                    await firebase.auth().signOut();
+                    window.location.href = 'index.html';
+                } catch (error) {
+                    console.error('Error logging out:', error);
+                }
+            });
+            
+            // Deposit
+            document.getElementById('deposit-btn').addEventListener('click', () => {
+                showModal('deposit-modal');
+            });
+            
+            // Withdraw
+            document.getElementById('withdraw-btn')?.addEventListener('click', () => {
+                showModal('withdraw-modal');
+            });
+            
+            // Request Media
+            document.getElementById('request-media-btn')?.addEventListener('click', () => {
+                showModal('request-media-modal');
+            });
+            
+            // Send Message
+            document.getElementById('send-button').addEventListener('click', sendMessage);
+            
+            // Message input enter key
+            document.getElementById('message-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // Media type selection
+            document.querySelectorAll('[data-type]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentMediaType = btn.dataset.type;
+                    document.querySelectorAll('[data-type]').forEach(b => {
+                        b.style.background = b === btn ? 'rgba(124, 58, 237, 0.2)' : '';
+                        b.style.borderColor = b === btn ? '#7c3aed' : '';
+                    });
+                });
+            });
+            
+            // Submit Media Request
+            document.getElementById('submit-media-request').addEventListener('click', submitMediaRequest);
+            
+            // Browse Media
+            document.getElementById('browse-media').addEventListener('click', () => {
+                document.getElementById('media-file').click();
+            });
+            
+            // Media file selection
+            document.getElementById('media-file').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const preview = document.getElementById('media-preview');
+                    const uploadBtn = document.getElementById('upload-media-btn');
+                    
+                    if (file.type.startsWith('image/')) {
+                        preview.innerHTML = `<img src="${URL.createObjectURL(file)}" style="max-width: 100%; border-radius: 10px;">`;
+                    } else if (file.type.startsWith('video/')) {
+                        preview.innerHTML = `<video src="${URL.createObjectURL(file)}" controls style="max-width: 100%; border-radius: 10px;"></video>`;
+                    }
+                    
+                    uploadBtn.disabled = false;
+                }
+            });
+            
+            // Upload Media
+            document.getElementById('upload-media-btn').addEventListener('click', async () => {
+                const fileInput = document.getElementById('media-file');
+                if (!fileInput.files.length) return;
+                
+                const file = fileInput.files[0];
+                const requestId = document.getElementById('upload-media-modal').dataset.requestId;
+                
+                try {
+                    // Upload to Firebase Storage
+                    const storageRef = firebase.storage().ref();
+                    const fileRef = storageRef.child(`media/${Date.now()}_${file.name}`);
+                    await fileRef.put(file);
+                    const downloadURL = await fileRef.getDownloadURL();
+                    
+                    // Add media message
+                    await firebase.firestore()
+                        .collection('chats').doc(currentChatId)
+                        .collection('messages')
+                        .add({
+                            senderId: currentUser.uid,
+                            type: 'media',
+                            mediaUrl: downloadURL,
+                            mediaType: file.type.startsWith('image/') ? 'image' : 'video',
+                            requestId: requestId,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                            read: false
+                        });
+                    
+                    // Update chat last message
+                    await firebase.firestore()
+                        .collection('chats').doc(currentChatId)
+                        .update({
+                            lastMessage: 'Media sent',
+                            lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    
+                    // Credit amount to female user
+                    if (requestId) {
+                        // Find the original request to get the amount
+                        const messagesSnapshot = await firebase.firestore()
+                            .collection('chats').doc(currentChatId)
+                            .collection('messages')
+                            .where('requestId', '==', requestId)
+                            .get();
+                        
+                        if (!messagesSnapshot.empty) {
+                            const requestMessage = messagesSnapshot.docs[0].data();
+                            const amount = requestMessage.amount;
+                            
+                            if (amount) {
+                                await firebase.firestore()
+                                    .collection('users')
+                                    .doc(currentUser.uid)
+                                    .update({
+                                        walletBalance: firebase.firestore.FieldValue.increment(amount)
+                                    });
+                                
+                                // Update local balance
+                                walletBalance += amount;
+                                updateWalletDisplay();
+                                
+                                // Record transaction
+                                await firebase.firestore()
+                                    .collection('transactions')
+                                    .add({
+                                        userId: currentUser.uid,
+                                        type: 'media_fulfillment',
+                                        amount: amount,
+                                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                        status: 'completed'
+                                    });
+                            }
+                        }
+                    }
+                    
+                    // Close modal and reset
+                    hideAllModals();
+                    fileInput.value = '';
+                    document.getElementById('media-preview').innerHTML = '';
+                    document.getElementById('upload-media-btn').disabled = true;
+                    
+                    showNotification('Media uploaded successfully', 'success');
+                    
+                } catch (error) {
+                    console.error('Error uploading media:', error);
+                    showNotification('Error uploading media', 'error');
+                }
+            });
+            
+            // Redirect Deposit
+            document.getElementById('redirect-deposit').addEventListener('click', () => {
+                const amount = document.getElementById('deposit-amount').value;
+                if (!amount || amount < 100) {
+                    showNotification('Minimum deposit is ₦100', 'error');
+                    return;
+                }
+                
+                // Redirect to payment gateway
+                window.open(`https://www.fundcamsilo.com/7272727727?amount=${amount}`, '_blank');
+                hideAllModals();
+            });
+            
+            // Confirm Withdraw
+            document.getElementById('confirm-withdraw')?.addEventListener('click', async () => {
+                const amount = parseInt(document.getElementById('withdraw-amount').value);
+                const bankName = document.getElementById('bank-name').value;
+                const accountNumber = document.getElementById('account-number').value;
+                
+                if (amount < 1000) {
+                    showNotification('Minimum withdrawal is ₦1,000', 'error');
+                    return;
+                }
+                
+                if (amount > walletBalance) {
+                    showNotification('Insufficient balance', 'error');
+                    return;
+                }
+                
+                if (!bankName || !accountNumber) {
+                    showNotification('Please fill all required fields', 'error');
+                    return;
+                }
+                
+                try {
+                    // Update wallet balance
+                    await firebase.firestore()
+                        .collection('users')
+                        .doc(currentUser.uid)
+                        .update({
+                            walletBalance: firebase.firestore.FieldValue.increment(-amount)
+                        });
+                    
+                    // Record withdrawal request
+                    await firebase.firestore()
+                        .collection('transactions')
+                        .add({
+                            userId: currentUser.uid,
+                            type: 'withdrawal',
+                            amount: amount,
+                            bankName: bankName,
+                            accountNumber: accountNumber,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                            status: 'pending'
+                        });
+                    
+                    // Update local balance
+                    walletBalance -= amount;
+                    updateWalletDisplay();
+                    
+                    // Close modal
+                    hideAllModals();
+                    
+                    showNotification(`Withdrawal request of ₦${amount.toLocaleString()} submitted`, 'success');
+                    
+                } catch (error) {
+                    console.error('Error processing withdrawal:', error);
+                    showNotification('Error processing withdrawal', 'error');
+                }
+            });
+            
+            // Save Settings
+            document.getElementById('save-settings')?.addEventListener('click', async () => {
+                const name = document.getElementById('settings-name').value;
+                const photo = document.getElementById('settings-photo').value;
+                
+                try {
+                    const updateData = {};
+                    if (name) updateData.name = name;
+                    if (photo) updateData.profileImage = photo;
+                    
+                    await firebase.firestore()
+                        .collection('users')
+                        .doc(currentUser.uid)
+                        .update(updateData);
+                    
+                    showNotification('Settings saved successfully', 'success');
+                } catch (error) {
+                    console.error('Error saving settings:', error);
+                    showNotification('Error saving settings', 'error');
+                }
+            });
+            
+            // Modal close buttons
+            document.querySelectorAll('.modal-close').forEach(btn => {
+                btn.addEventListener('click', hideAllModals);
+            });
+            
+            // Close modals when clicking outside
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        hideAllModals();
+                    }
+                });
+            });
+        }
+        
         // ========== UTILITY FUNCTIONS ==========
+        function showPage(page) {
+            document.querySelectorAll('.page-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${page}-page`).classList.add('active');
+        }
+        
         function showModal(modalId) {
             hideAllModals();
             document.getElementById(modalId).classList.add('active');
@@ -1420,48 +1942,25 @@
         }
         
         function showNotification(message, type) {
+            const container = document.getElementById('notification-container');
             const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
+            notification.className = `notification notification-${type}`;
             notification.innerHTML = `
                 <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
                 <span>${message}</span>
             `;
             
-            document.getElementById('notification-container').appendChild(notification);
+            container.appendChild(notification);
             
             setTimeout(() => {
                 notification.remove();
             }, 3000);
         }
         
-        // ========== GLOBAL FUNCTIONS ==========
-        window.startChat = async function(modelId) {
-            console.log('Starting chat with model:', modelId);
-            
-            // Hide dashboard, show chat
-            document.getElementById('dashboard-page').classList.remove('active');
-            document.getElementById('chat-page').classList.add('active');
-            
-            // Load model info
-            try {
-                const modelDoc = await firebase.firestore().collection('users').doc(modelId).get();
-                if (modelDoc.exists) {
-                    const model = modelDoc.data();
-                    
-                    // Update chat header
-                    document.getElementById('chat-partner-avatar').src = model.profileImage || 'https://via.placeholder.com/45';
-                    document.getElementById('chat-partner-name').textContent = model.name;
-                    document.getElementById('chat-partner-status').textContent = model.online ? 'Online' : 'Offline';
-                    
-                    // Enable chat
-                    document.getElementById('message-input').disabled = false;
-                    document.getElementById('send-button').disabled = false;
-                }
-            } catch (error) {
-                console.error('Error starting chat:', error);
-                showNotification('Error starting chat', 'error');
-            }
-        };
+        function formatTime(date) {
+            if (!date) return '';
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
     </script>
 </body>
 </html>

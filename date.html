@@ -76,17 +76,12 @@
             pointer-events: none;
         }
 
-        .intimate-loader {
-            text-align: center;
-        }
-
         .heart-loader {
             width: 80px;
             height: 80px;
             background: linear-gradient(135deg, var(--soft-pink), var(--rich-rose));
             position: relative;
             transform: rotate(45deg);
-            margin: 0 auto 30px;
             animation: heartbeat 1.5s ease-in-out infinite;
             box-shadow: 0 10px 30px rgba(236, 72, 153, 0.4);
         }
@@ -116,21 +111,6 @@
             25% { transform: rotate(45deg) scale(1.1); }
             50% { transform: rotate(45deg) scale(1); }
             75% { transform: rotate(45deg) scale(1.05); }
-        }
-
-        .loader-text {
-            font-size: 20px;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--soft-pink), var(--rich-rose));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 1px;
-        }
-
-        .loader-subtext {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-top: 10px;
         }
 
         /* ===== AUTH SCREEN ===== */
@@ -935,22 +915,18 @@
 
         .toast.success {
             border-left: 4px solid var(--accent-teal);
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.95));
         }
 
         .toast.error {
             border-left: 4px solid #ef4444;
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.95));
         }
 
         .toast.warning {
             border-left: 4px solid #f59e0b;
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.95));
         }
 
         .toast.info {
             border-left: 4px solid var(--soft-pink);
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.95));
         }
 
         /* ===== RESPONSIVE ===== */
@@ -1071,17 +1047,13 @@
     <!-- Glitter Background -->
     <div class="glitter-bg"></div>
 
-    <!-- Loader -->
+    <!-- Loader (No Text - Only Heart) -->
     <div class="loader-overlay" id="loaderOverlay">
-        <div class="intimate-loader">
-            <div class="heart-loader"></div>
-            <div class="loader-text">IntimateConnect</div>
-            <div class="loader-subtext">Loading your exclusive experience...</div>
-        </div>
+        <div class="heart-loader"></div>
     </div>
 
     <!-- Auth Screen -->
-    <div class="auth-screen" id="authScreen">
+    <div class="auth-screen hidden" id="authScreen">
         <div class="auth-card">
             <div class="logo">
                 <h1>IntimateConnect</h1>
@@ -1099,7 +1071,7 @@
                     <input type="password" class="form-input" id="password" placeholder="••••••••" required>
                 </div>
                 
-                <div id="genderSelection" class="form-group hidden">
+                <div id="genderSelection" class="form-group">
                     <label class="form-label">Select Your Gender</label>
                     <div class="gender-options">
                         <div class="gender-option" data-gender="male">
@@ -1320,6 +1292,12 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+
     <!-- External Configurations -->
     <script src="firebase-config.js"></script>
     <script src="agora.js"></script>
@@ -1337,35 +1315,21 @@
                 this.modelsUnsubscribe = null;
                 this.activeChatsUnsubscribe = null;
                 
-                // Check if Firebase is loaded
-                if (typeof firebase === 'undefined') {
-                    this.showToast('Firebase not loaded. Please check firebase-config.js', 'error');
-                    return;
-                }
-                
-                // Initialize Firebase with config from external file
-                try {
-                    this.firebaseApp = firebase.initializeApp(firebaseConfig);
-                    this.auth = firebase.auth();
-                    this.db = firebase.firestore();
-                    this.storage = firebase.storage();
-                    console.log('Firebase initialized successfully');
-                } catch (error) {
-                    console.error('Firebase initialization error:', error);
-                    this.showToast('Firebase configuration error', 'error');
-                }
-                
-                this.init();
+                // Initialize the app when DOM is ready
+                this.initApp();
             }
 
-            init() {
+            initApp() {
                 // Initialize DOM elements
                 this.initElements();
+                
+                // Initialize Firebase
+                this.initFirebase();
                 
                 // Initialize event listeners
                 this.initEventListeners();
                 
-                // Check authentication state
+                // Check auth state
                 this.checkAuthState();
             }
 
@@ -1389,9 +1353,27 @@
                 
                 // Toast
                 this.toast = document.getElementById('toast');
-                
-                // Show loader initially
-                this.loaderOverlay.classList.remove('hidden');
+            }
+
+            initFirebase() {
+                // Check if Firebase config is loaded
+                if (!window.firebaseConfig) {
+                    console.error('Firebase configuration not found in firebase-config.js');
+                    this.showToast('Configuration error. Please check firebase-config.js', 'error');
+                    return;
+                }
+
+                try {
+                    // Initialize Firebase
+                    this.firebaseApp = firebase.initializeApp(firebaseConfig);
+                    this.auth = firebase.auth();
+                    this.db = firebase.firestore();
+                    this.storage = firebase.storage();
+                    console.log('Firebase initialized successfully');
+                } catch (error) {
+                    console.error('Firebase initialization error:', error);
+                    this.showToast('Firebase initialization failed', 'error');
+                }
             }
 
             initEventListeners() {
@@ -1440,16 +1422,74 @@
                         this.closeAllModals();
                     }
                 });
+
+                // Deposit button
+                document.getElementById('depositBtn')?.addEventListener('click', () => {
+                    this.openModal('depositModal');
+                });
+
+                // Confirm deposit
+                document.getElementById('confirmDeposit')?.addEventListener('click', () => {
+                    this.handleDeposit();
+                });
+
+                // Withdraw button
+                document.getElementById('withdrawBtn')?.addEventListener('click', () => {
+                    this.openModal('withdrawModal');
+                });
+
+                // Confirm withdrawal
+                document.getElementById('confirmWithdraw')?.addEventListener('click', () => {
+                    this.handleWithdrawal();
+                });
+
+                // Media request button
+                document.getElementById('mediaRequestBtn')?.addEventListener('click', () => {
+                    this.openModal('mediaRequestModal');
+                });
+
+                // Send media request
+                document.getElementById('sendMediaRequest')?.addEventListener('click', () => {
+                    this.sendMediaRequest();
+                });
+
+                // Back to dashboard
+                document.getElementById('backToDashboard')?.addEventListener('click', () => {
+                    this.leaveChat();
+                });
+
+                // Send message button
+                document.getElementById('sendMessageBtn')?.addEventListener('click', () => {
+                    this.sendMessage();
+                });
+
+                // Message input enter key
+                document.getElementById('messageInput')?.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.sendMessage();
+                    }
+                });
+
+                // Voice note button
+                document.getElementById('sendVoiceNoteBtn')?.addEventListener('click', () => {
+                    this.sendVoiceNote();
+                });
             }
 
             checkAuthState() {
+                if (!this.auth) {
+                    console.error('Firebase auth not initialized');
+                    this.showAuthScreen();
+                    return;
+                }
+
                 this.auth.onAuthStateChanged(async (user) => {
                     if (user) {
                         // User is signed in
                         this.currentUser = user;
                         
-                        // Get user data from Firestore
                         try {
+                            // Get user data from Firestore
                             const userDoc = await this.db.collection('users').doc(user.uid).get();
                             
                             if (userDoc.exists) {
@@ -1462,9 +1502,8 @@
                                     lastSeen: firebase.firestore.FieldValue.serverTimestamp()
                                 });
                                 
-                                // Hide loader and auth screen
+                                // Hide loader
                                 this.loaderOverlay.classList.add('hidden');
-                                this.authScreen.classList.add('hidden');
                                 
                                 // Show appropriate dashboard
                                 this.showDashboard(userData);
@@ -1577,6 +1616,7 @@
 
             showDashboard(userData) {
                 // Hide all screens
+                this.authScreen.classList.add('hidden');
                 this.maleDashboard.classList.add('hidden');
                 this.femaleDashboard.classList.add('hidden');
                 this.chatInterface.classList.add('hidden');
@@ -1599,9 +1639,6 @@
                 
                 // Load models
                 this.loadMaleModels();
-                
-                // Setup event listeners
-                this.setupMaleDashboardEvents();
             }
 
             showFemaleDashboard(userData) {
@@ -1614,13 +1651,11 @@
                 
                 // Load active chats
                 this.loadFemaleActiveChats();
-                
-                // Setup event listeners
-                this.setupFemaleDashboardEvents();
             }
 
             showAuthScreen() {
                 // Hide all other screens
+                this.loaderOverlay.classList.add('hidden');
                 this.maleDashboard.classList.add('hidden');
                 this.femaleDashboard.classList.add('hidden');
                 this.chatInterface.classList.add('hidden');
@@ -1633,7 +1668,7 @@
                 this.genderOptions.forEach(o => o.classList.remove('selected'));
                 this.selectedGender = null;
                 this.genderInput.value = '';
-                this.genderSelection.classList.add('hidden');
+                this.genderSelection.classList.remove('hidden');
                 this.isSignUp = false;
                 this.authButtonText.textContent = 'Sign In';
                 this.authSwitchText.textContent = 'Don\'t have an account?';
@@ -1652,38 +1687,35 @@
                         this.modelsUnsubscribe();
                     }
 
-                    // Listen for female users
-                    this.modelsUnsubscribe = this.db.collection('users')
+                    // Get female users
+                    const snapshot = await this.db.collection('users')
                         .where('gender', '==', 'female')
-                        .where('online', '==', true)
-                        .onSnapshot((snapshot) => {
-                            modelsGrid.innerHTML = '';
-                            
-                            if (snapshot.empty) {
-                                modelsGrid.innerHTML = `
-                                    <div class="text-center" style="padding:40px;">
-                                        <div style="font-size:48px;color:var(--soft-pink);margin-bottom:20px;">💋</div>
-                                        <h3 style="margin-bottom:10px;color:var(--text-primary)">No companions available</h3>
-                                        <p style="color:var(--text-secondary)">Check back later for available companions</p>
-                                    </div>
-                                `;
-                                return;
-                            }
-                            
-                            let index = 0;
-                            snapshot.forEach((doc) => {
-                                const model = doc.data();
-                                model.id = doc.id;
-                                
-                                const modelCard = this.createModelCard(model);
-                                modelCard.style.animationDelay = `${index * 100}ms`;
-                                modelsGrid.appendChild(modelCard);
-                                index++;
-                            });
-                        }, (error) => {
-                            console.error('Error loading models:', error);
-                            modelsGrid.innerHTML = '<div class="text-center" style="padding:40px;color:var(--text-secondary)">Error loading companions</div>';
-                        });
+                        .limit(20)
+                        .get();
+
+                    modelsGrid.innerHTML = '';
+                    
+                    if (snapshot.empty) {
+                        modelsGrid.innerHTML = `
+                            <div class="text-center" style="padding:40px;">
+                                <div style="font-size:48px;color:var(--soft-pink);margin-bottom:20px;">💋</div>
+                                <h3 style="margin-bottom:10px;color:var(--text-primary)">No companions available</h3>
+                                <p style="color:var(--text-secondary)">Check back later for available companions</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    let index = 0;
+                    snapshot.forEach((doc) => {
+                        const model = doc.data();
+                        model.id = doc.id;
+                        
+                        const modelCard = this.createModelCard(model);
+                        modelCard.style.animationDelay = `${index * 100}ms`;
+                        modelsGrid.appendChild(modelCard);
+                        index++;
+                    });
 
                 } catch (error) {
                     console.error('Error loading models:', error);
@@ -1769,132 +1801,6 @@
                 
                 // Load chat messages
                 this.loadChatMessages();
-                
-                // Setup chat events
-                this.setupChatEvents();
-            }
-
-            setupMaleDashboardEvents() {
-                // Deposit button
-                document.getElementById('depositBtn').addEventListener('click', () => {
-                    this.openModal('depositModal');
-                });
-
-                // Confirm deposit
-                document.getElementById('confirmDeposit').addEventListener('click', async () => {
-                    const amount = parseInt(document.getElementById('depositAmount').value);
-                    
-                    if (!amount || amount < 100) {
-                        this.showToast('Minimum deposit is ₦100', 'error');
-                        return;
-                    }
-                    
-                    this.showToast('Processing deposit...', 'info');
-                    
-                    try {
-                        // In a real app, this would integrate with a payment gateway
-                        // For demo, we'll just update the balance
-                        
-                        // Add transaction record
-                        await this.db.collection('transactions').add({
-                            userId: this.currentUser.uid,
-                            type: 'deposit',
-                            amount: amount,
-                            status: 'completed',
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        
-                        // Update user balance
-                        await this.db.collection('users').doc(this.currentUser.uid).update({
-                            balance: firebase.firestore.FieldValue.increment(amount),
-                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        
-                        // Update local balance
-                        this.currentUser.data.balance += amount;
-                        document.getElementById('maleWalletBalance').textContent = this.currentUser.data.balance;
-                        
-                        this.closeModal('depositModal');
-                        this.showToast(`Successfully deposited ₦${amount}!`, 'success');
-                    } catch (error) {
-                        console.error('Error processing deposit:', error);
-                        this.showToast('Deposit failed. Please try again.', 'error');
-                    }
-                });
-
-                // Back to dashboard from chat
-                document.getElementById('backToDashboard')?.addEventListener('click', () => {
-                    this.leaveChat();
-                });
-            }
-
-            setupFemaleDashboardEvents() {
-                // Withdraw button
-                document.getElementById('withdrawBtn').addEventListener('click', () => {
-                    document.getElementById('availableBalance').textContent = this.currentUser.data.earnings || 0;
-                    this.openModal('withdrawModal');
-                });
-
-                // Confirm withdrawal
-                document.getElementById('confirmWithdraw').addEventListener('click', async () => {
-                    const amount = parseInt(document.getElementById('withdrawAmount').value);
-                    const bankAccount = document.getElementById('bankAccount').value;
-                    const bankName = document.getElementById('bankName').value;
-                    
-                    if (!amount || amount <= 0) {
-                        this.showToast('Please enter a valid amount', 'error');
-                        return;
-                    }
-                    
-                    if (amount > this.currentUser.data.earnings) {
-                        this.showToast('Insufficient earnings', 'error');
-                        return;
-                    }
-                    
-                    if (!bankAccount || bankAccount.length < 10) {
-                        this.showToast('Please enter a valid bank account', 'error');
-                        return;
-                    }
-                    
-                    if (!bankName) {
-                        this.showToast('Please enter bank name', 'error');
-                        return;
-                    }
-                    
-                    try {
-                        // Create withdrawal request
-                        await this.db.collection('withdrawals').add({
-                            userId: this.currentUser.uid,
-                            amount: amount,
-                            bankAccount: bankAccount,
-                            bankName: bankName,
-                            status: 'pending',
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        
-                        // Update earnings (deduct immediately)
-                        await this.db.collection('users').doc(this.currentUser.uid).update({
-                            earnings: firebase.firestore.FieldValue.increment(-amount),
-                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        
-                        // Update local earnings
-                        this.currentUser.data.earnings -= amount;
-                        document.getElementById('femaleEarnings').textContent = this.currentUser.data.earnings;
-                        
-                        this.closeModal('withdrawModal');
-                        this.showToast(`Withdrawal request for ₦${amount} submitted!`, 'success');
-                        
-                        // Clear form
-                        document.getElementById('withdrawAmount').value = '';
-                        document.getElementById('bankAccount').value = '';
-                        document.getElementById('bankName').value = '';
-                        
-                    } catch (error) {
-                        console.error('Error processing withdrawal:', error);
-                        this.showToast('Withdrawal failed. Please try again.', 'error');
-                    }
-                });
             }
 
             async loadFemaleActiveChats() {
@@ -1956,44 +1862,6 @@
                     console.error('Error loading chats:', error);
                     chatsGrid.innerHTML = '<div class="text-center" style="padding:40px;color:var(--text-secondary)">Error loading chats</div>';
                 }
-            }
-
-            setupChatEvents() {
-                // Send message button
-                document.getElementById('sendMessageBtn').addEventListener('click', () => {
-                    this.sendMessage();
-                });
-
-                // Message input enter key
-                document.getElementById('messageInput').addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        this.sendMessage();
-                    }
-                });
-
-                // Media request button
-                document.getElementById('mediaRequestBtn').addEventListener('click', () => {
-                    if (this.currentUser.data.gender !== 'male') {
-                        this.showToast('Only male users can request custom media', 'error');
-                        return;
-                    }
-                    this.openModal('mediaRequestModal');
-                });
-
-                // Send media request
-                document.getElementById('sendMediaRequest').addEventListener('click', () => {
-                    this.sendMediaRequest();
-                });
-
-                // Back to dashboard
-                document.getElementById('backToDashboard').addEventListener('click', () => {
-                    this.leaveChat();
-                });
-
-                // Voice note button (for female users)
-                document.getElementById('sendVoiceNoteBtn').addEventListener('click', () => {
-                    this.sendVoiceNote();
-                });
             }
 
             async sendMessage() {
@@ -2171,36 +2039,46 @@
                         this.chatUnsubscribe();
                     }
 
-                    // Listen for messages
+                    // Get existing messages
+                    const snapshot = await this.db.collection('chats').doc(chatId)
+                        .collection('messages')
+                        .orderBy('timestamp', 'asc')
+                        .get();
+
+                    chatMessages.innerHTML = '';
+                    
+                    if (snapshot.empty) {
+                        chatMessages.innerHTML = `
+                            <div class="text-center" style="padding:40px;">
+                                <div style="font-size:48px;color:var(--soft-pink);margin-bottom:20px;">💬</div>
+                                <h3 style="margin-bottom:10px;color:var(--text-primary)">Start a conversation</h3>
+                                <p style="color:var(--text-secondary)">Send your first message to begin chatting</p>
+                            </div>
+                        `;
+                    } else {
+                        snapshot.forEach((doc) => {
+                            const message = doc.data();
+                            this.displayMessage(message);
+                        });
+                    }
+                    
+                    // Scroll to bottom
+                    setTimeout(() => {
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }, 100);
+
+                    // Listen for new messages
                     this.chatUnsubscribe = this.db.collection('chats').doc(chatId)
                         .collection('messages')
                         .orderBy('timestamp', 'asc')
                         .onSnapshot((snapshot) => {
-                            chatMessages.innerHTML = '';
-                            
-                            if (snapshot.empty) {
-                                chatMessages.innerHTML = `
-                                    <div class="text-center" style="padding:40px;">
-                                        <div style="font-size:48px;color:var(--soft-pink);margin-bottom:20px;">💬</div>
-                                        <h3 style="margin-bottom:10px;color:var(--text-primary)">Start a conversation</h3>
-                                        <p style="color:var(--text-secondary)">Send your first message to begin chatting</p>
-                                    </div>
-                                `;
-                                return;
-                            }
-                            
-                            snapshot.forEach((doc) => {
-                                const message = doc.data();
-                                this.displayMessage(message);
+                            snapshot.docChanges().forEach((change) => {
+                                if (change.type === 'added') {
+                                    const message = change.doc.data();
+                                    this.displayMessage(message);
+                                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                                }
                             });
-                            
-                            // Scroll to bottom
-                            setTimeout(() => {
-                                chatMessages.scrollTop = chatMessages.scrollHeight;
-                            }, 100);
-                        }, (error) => {
-                            console.error('Error loading messages:', error);
-                            chatMessages.innerHTML = '<div class="text-center" style="padding:40px;color:var(--text-secondary)">Error loading messages</div>';
                         });
 
                 } catch (error) {
@@ -2244,7 +2122,7 @@
                             <p><strong>Description:</strong> ${message.description}</p>
                             <p><strong>Offer:</strong> ₦${message.price}</p>
                             ${this.currentUser.data.gender === 'female' ? 
-                                `<button class="btn-request" onclick="intimateApp.acceptMediaRequest('${message.requestId}', ${message.price})">
+                                `<button class="btn-request accept-media-request" data-request-id="${message.requestId}" data-price="${message.price}">
                                     <i class="fas fa-check"></i> Accept & Upload
                                 </button>` : 
                                 `<div style="font-size:12px;color:var(--soft-pink);margin-top:10px;">
@@ -2258,6 +2136,16 @@
                 
                 messageDiv.innerHTML = content;
                 chatMessages.appendChild(messageDiv);
+                
+                // Add event listener for accept media request button
+                const acceptBtn = messageDiv.querySelector('.accept-media-request');
+                if (acceptBtn) {
+                    acceptBtn.addEventListener('click', () => {
+                        const requestId = acceptBtn.dataset.requestId;
+                        const price = parseInt(acceptBtn.dataset.price);
+                        this.acceptMediaRequest(requestId, price);
+                    });
+                }
             }
 
             async acceptMediaRequest(requestId, price) {
@@ -2279,6 +2167,104 @@
                 // Store request ID for upload
                 document.getElementById('uploadMedia').dataset.requestId = requestId;
                 document.getElementById('uploadMedia').dataset.price = price;
+            }
+
+            async handleDeposit() {
+                const amount = parseInt(document.getElementById('depositAmount').value);
+                
+                if (!amount || amount < 100) {
+                    this.showToast('Minimum deposit is ₦100', 'error');
+                    return;
+                }
+                
+                this.showToast('Processing deposit...', 'info');
+                
+                try {
+                    // Add transaction record
+                    await this.db.collection('transactions').add({
+                        userId: this.currentUser.uid,
+                        type: 'deposit',
+                        amount: amount,
+                        status: 'completed',
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Update user balance
+                    await this.db.collection('users').doc(this.currentUser.uid).update({
+                        balance: firebase.firestore.FieldValue.increment(amount),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Update local balance
+                    this.currentUser.data.balance += amount;
+                    document.getElementById('maleWalletBalance').textContent = this.currentUser.data.balance;
+                    
+                    this.closeModal('depositModal');
+                    this.showToast(`Successfully deposited ₦${amount}!`, 'success');
+                } catch (error) {
+                    console.error('Error processing deposit:', error);
+                    this.showToast('Deposit failed. Please try again.', 'error');
+                }
+            }
+
+            async handleWithdrawal() {
+                const amount = parseInt(document.getElementById('withdrawAmount').value);
+                const bankAccount = document.getElementById('bankAccount').value;
+                const bankName = document.getElementById('bankName').value;
+                
+                if (!amount || amount <= 0) {
+                    this.showToast('Please enter a valid amount', 'error');
+                    return;
+                }
+                
+                if (amount > this.currentUser.data.earnings) {
+                    this.showToast('Insufficient earnings', 'error');
+                    return;
+                }
+                
+                if (!bankAccount || bankAccount.length < 10) {
+                    this.showToast('Please enter a valid bank account', 'error');
+                    return;
+                }
+                
+                if (!bankName) {
+                    this.showToast('Please enter bank name', 'error');
+                    return;
+                }
+                
+                try {
+                    // Create withdrawal request
+                    await this.db.collection('withdrawals').add({
+                        userId: this.currentUser.uid,
+                        amount: amount,
+                        bankAccount: bankAccount,
+                        bankName: bankName,
+                        status: 'pending',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Update earnings (deduct immediately)
+                    await this.db.collection('users').doc(this.currentUser.uid).update({
+                        earnings: firebase.firestore.FieldValue.increment(-amount),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Update local earnings
+                    this.currentUser.data.earnings -= amount;
+                    document.getElementById('femaleEarnings').textContent = this.currentUser.data.earnings;
+                    
+                    this.closeModal('withdrawModal');
+                    this.showToast(`Withdrawal request for ₦${amount} submitted!`, 'success');
+                    
+                    // Clear form
+                    document.getElementById('withdrawAmount').value = '';
+                    document.getElementById('bankAccount').value = '';
+                    document.getElementById('bankName').value = '';
+                    
+                } catch (error) {
+                    console.error('Error processing withdrawal:', error);
+                    this.showToast('Withdrawal failed. Please try again.', 'error');
+                }
             }
 
             generateChatId(userId1, userId2) {
@@ -2397,9 +2383,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             intimateApp = new IntimateConnect();
             
-            // Make app globally available
-            window.intimateApp = intimateApp;
-            
             // Handle media upload
             document.getElementById('uploadMedia')?.addEventListener('click', async function() {
                 const requestId = this.dataset.requestId;
@@ -2448,13 +2431,6 @@
                     intimateApp.showToast('Upload failed', 'error');
                 }
             });
-        });
-
-        // Prevent redirect issues
-        window.addEventListener('beforeunload', () => {
-            if (intimateApp) {
-                intimateApp.leaveChat();
-            }
         });
     </script>
 </body>

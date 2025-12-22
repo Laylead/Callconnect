@@ -57,7 +57,7 @@
         }
 
         /* ===== LOADER ===== */
-        .loader-overlay {
+        .loading-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -68,12 +68,16 @@
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            transition: opacity 0.5s ease;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .loader-overlay.hidden {
+        .loading-overlay.hidden {
             opacity: 0;
-            pointer-events: none;
+            visibility: hidden;
+        }
+
+        .intimate-loader {
+            text-align: center;
         }
 
         .heart-loader {
@@ -82,6 +86,7 @@
             background: linear-gradient(135deg, var(--soft-pink), var(--rich-rose));
             position: relative;
             transform: rotate(45deg);
+            margin: 0 auto 30px;
             animation: heartbeat 1.5s ease-in-out infinite;
             box-shadow: 0 10px 30px rgba(236, 72, 153, 0.4);
         }
@@ -111,6 +116,21 @@
             25% { transform: rotate(45deg) scale(1.1); }
             50% { transform: rotate(45deg) scale(1); }
             75% { transform: rotate(45deg) scale(1.05); }
+        }
+
+        .loader-text {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--soft-pink), var(--rich-rose));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
+
+        .loader-subtext {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 10px;
         }
 
         /* ===== AUTH SCREEN ===== */
@@ -915,18 +935,22 @@
 
         .toast.success {
             border-left: 4px solid var(--accent-teal);
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.95));
         }
 
         .toast.error {
             border-left: 4px solid #ef4444;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.95));
         }
 
         .toast.warning {
             border-left: 4px solid #f59e0b;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.95));
         }
 
         .toast.info {
             border-left: 4px solid var(--soft-pink);
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.95));
         }
 
         /* ===== RESPONSIVE ===== */
@@ -1047,13 +1071,17 @@
     <!-- Glitter Background -->
     <div class="glitter-bg"></div>
 
-    <!-- Loader (No Text - Only Heart) -->
-    <div class="loader-overlay" id="loaderOverlay">
-        <div class="heart-loader"></div>
+    <!-- Loading Animation -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="intimate-loader">
+            <div class="heart-loader"></div>
+            <div class="loader-text">IntimateConnect</div>
+            <div class="loader-subtext">Loading your exclusive experience...</div>
+        </div>
     </div>
 
     <!-- Auth Screen -->
-    <div class="auth-screen hidden" id="authScreen">
+    <div class="auth-screen" id="authScreen">
         <div class="auth-card">
             <div class="logo">
                 <h1>IntimateConnect</h1>
@@ -1071,7 +1099,7 @@
                     <input type="password" class="form-input" id="password" placeholder="••••••••" required>
                 </div>
                 
-                <div id="genderSelection" class="form-group">
+                <div id="genderSelection" class="form-group hidden">
                     <label class="form-label">Select Your Gender</label>
                     <div class="gender-options">
                         <div class="gender-option" data-gender="male">
@@ -1292,18 +1320,33 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
-    <!-- Firebase SDK -->
+    <!-- External Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-
-    <!-- External Configurations -->
     <script src="firebase-config.js"></script>
     <script src="agora.js"></script>
 
     <!-- Main Application Script -->
     <script>
+        // Firebase Initialization
+        let firebaseApp;
+        let auth;
+        let db;
+        let storage;
+
+        try {
+            firebaseApp = firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.database();
+            storage = firebase.storage();
+            console.log("Firebase initialized successfully");
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+            showToast("Firebase initialization failed", "error");
+        }
+
         // ===== MAIN APPLICATION =====
         class IntimateConnect {
             constructor() {
@@ -1315,27 +1358,23 @@
                 this.modelsUnsubscribe = null;
                 this.activeChatsUnsubscribe = null;
                 
-                // Initialize the app when DOM is ready
-                this.initApp();
+                this.init();
             }
 
-            initApp() {
+            init() {
                 // Initialize DOM elements
                 this.initElements();
-                
-                // Initialize Firebase
-                this.initFirebase();
                 
                 // Initialize event listeners
                 this.initEventListeners();
                 
-                // Check auth state
+                // Check authentication state
                 this.checkAuthState();
             }
 
             initElements() {
                 // Core screens
-                this.loaderOverlay = document.getElementById('loaderOverlay');
+                this.loadingOverlay = document.getElementById('loadingOverlay');
                 this.authScreen = document.getElementById('authScreen');
                 this.maleDashboard = document.getElementById('maleDashboard');
                 this.femaleDashboard = document.getElementById('femaleDashboard');
@@ -1353,27 +1392,6 @@
                 
                 // Toast
                 this.toast = document.getElementById('toast');
-            }
-
-            initFirebase() {
-                // Check if Firebase config is loaded
-                if (!window.firebaseConfig) {
-                    console.error('Firebase configuration not found in firebase-config.js');
-                    this.showToast('Configuration error. Please check firebase-config.js', 'error');
-                    return;
-                }
-
-                try {
-                    // Initialize Firebase
-                    this.firebaseApp = firebase.initializeApp(firebaseConfig);
-                    this.auth = firebase.auth();
-                    this.db = firebase.firestore();
-                    this.storage = firebase.storage();
-                    console.log('Firebase initialized successfully');
-                } catch (error) {
-                    console.error('Firebase initialization error:', error);
-                    this.showToast('Firebase initialization failed', 'error');
-                }
             }
 
             initEventListeners() {
@@ -1422,94 +1440,37 @@
                         this.closeAllModals();
                     }
                 });
-
-                // Deposit button
-                document.getElementById('depositBtn')?.addEventListener('click', () => {
-                    this.openModal('depositModal');
-                });
-
-                // Confirm deposit
-                document.getElementById('confirmDeposit')?.addEventListener('click', () => {
-                    this.handleDeposit();
-                });
-
-                // Withdraw button
-                document.getElementById('withdrawBtn')?.addEventListener('click', () => {
-                    this.openModal('withdrawModal');
-                });
-
-                // Confirm withdrawal
-                document.getElementById('confirmWithdraw')?.addEventListener('click', () => {
-                    this.handleWithdrawal();
-                });
-
-                // Media request button
-                document.getElementById('mediaRequestBtn')?.addEventListener('click', () => {
-                    this.openModal('mediaRequestModal');
-                });
-
-                // Send media request
-                document.getElementById('sendMediaRequest')?.addEventListener('click', () => {
-                    this.sendMediaRequest();
-                });
-
-                // Back to dashboard
-                document.getElementById('backToDashboard')?.addEventListener('click', () => {
-                    this.leaveChat();
-                });
-
-                // Send message button
-                document.getElementById('sendMessageBtn')?.addEventListener('click', () => {
-                    this.sendMessage();
-                });
-
-                // Message input enter key
-                document.getElementById('messageInput')?.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        this.sendMessage();
-                    }
-                });
-
-                // Voice note button
-                document.getElementById('sendVoiceNoteBtn')?.addEventListener('click', () => {
-                    this.sendVoiceNote();
-                });
             }
 
             checkAuthState() {
-                if (!this.auth) {
-                    console.error('Firebase auth not initialized');
-                    this.showAuthScreen();
-                    return;
-                }
-
-                this.auth.onAuthStateChanged(async (user) => {
+                auth.onAuthStateChanged(async (user) => {
                     if (user) {
                         // User is signed in
                         this.currentUser = user;
                         
+                        // Get user data from Realtime Database
                         try {
-                            // Get user data from Firestore
-                            const userDoc = await this.db.collection('users').doc(user.uid).get();
+                            const userSnapshot = await db.ref('users/' + user.uid).once('value');
                             
-                            if (userDoc.exists) {
-                                const userData = userDoc.data();
+                            if (userSnapshot.exists()) {
+                                const userData = userSnapshot.val();
                                 this.currentUser.data = userData;
                                 
                                 // Update user's online status
-                                await this.db.collection('users').doc(user.uid).update({
+                                await db.ref('users/' + user.uid).update({
                                     online: true,
-                                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                                    lastSeen: Date.now()
                                 });
                                 
-                                // Hide loader
-                                this.loaderOverlay.classList.add('hidden');
+                                // Hide loader and auth screen
+                                this.loadingOverlay.classList.add('hidden');
+                                this.authScreen.classList.add('hidden');
                                 
                                 // Show appropriate dashboard
                                 this.showDashboard(userData);
                             } else {
                                 // User document doesn't exist (shouldn't happen with proper signup)
-                                await this.auth.signOut();
+                                await auth.signOut();
                                 this.showToast('Account data not found', 'error');
                                 this.showAuthScreen();
                             }
@@ -1521,7 +1482,7 @@
                     } else {
                         // User is signed out
                         this.currentUser = null;
-                        this.loaderOverlay.classList.add('hidden');
+                        this.loadingOverlay.classList.add('hidden');
                         this.showAuthScreen();
                     }
                 });
@@ -1571,10 +1532,10 @@
                 try {
                     if (this.isSignUp) {
                         // Sign Up
-                        const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
+                        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                         
                         // Create user document with initial data
-                        await this.db.collection('users').doc(userCredential.user.uid).set({
+                        await db.ref('users/' + userCredential.user.uid).set({
                             email: email,
                             gender: this.selectedGender,
                             name: email.split('@')[0],
@@ -1584,14 +1545,14 @@
                             online: true,
                             rating: 5.0,
                             chats: 0,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                            createdAt: Date.now(),
+                            updatedAt: Date.now()
                         });
                         
                         this.showToast('Account created successfully!', 'success');
                     } else {
                         // Sign In
-                        await this.auth.signInWithEmailAndPassword(email, password);
+                        await auth.signInWithEmailAndPassword(email, password);
                         this.showToast('Welcome back!', 'success');
                     }
                 } catch (error) {
@@ -1616,7 +1577,6 @@
 
             showDashboard(userData) {
                 // Hide all screens
-                this.authScreen.classList.add('hidden');
                 this.maleDashboard.classList.add('hidden');
                 this.femaleDashboard.classList.add('hidden');
                 this.chatInterface.classList.add('hidden');
@@ -1639,6 +1599,9 @@
                 
                 // Load models
                 this.loadMaleModels();
+                
+                // Setup event listeners
+                this.setupMaleDashboardEvents();
             }
 
             showFemaleDashboard(userData) {
@@ -1651,11 +1614,13 @@
                 
                 // Load active chats
                 this.loadFemaleActiveChats();
+                
+                // Setup event listeners
+                this.setupFemaleDashboardEvents();
             }
 
             showAuthScreen() {
                 // Hide all other screens
-                this.loaderOverlay.classList.add('hidden');
                 this.maleDashboard.classList.add('hidden');
                 this.femaleDashboard.classList.add('hidden');
                 this.chatInterface.classList.add('hidden');
@@ -1668,7 +1633,7 @@
                 this.genderOptions.forEach(o => o.classList.remove('selected'));
                 this.selectedGender = null;
                 this.genderInput.value = '';
-                this.genderSelection.classList.remove('hidden');
+                this.genderSelection.classList.add('hidden');
                 this.isSignUp = false;
                 this.authButtonText.textContent = 'Sign In';
                 this.authSwitchText.textContent = 'Don\'t have an account?';
@@ -1687,34 +1652,51 @@
                         this.modelsUnsubscribe();
                     }
 
-                    // Get female users
-                    const snapshot = await this.db.collection('users')
-                        .where('gender', '==', 'female')
-                        .limit(20)
-                        .get();
-
-                    modelsGrid.innerHTML = '';
-                    
-                    if (snapshot.empty) {
-                        modelsGrid.innerHTML = `
-                            <div class="text-center" style="padding:40px;">
-                                <div style="font-size:48px;color:var(--soft-pink);margin-bottom:20px;">💋</div>
-                                <h3 style="margin-bottom:10px;color:var(--text-primary)">No companions available</h3>
-                                <p style="color:var(--text-secondary)">Check back later for available companions</p>
-                            </div>
-                        `;
-                        return;
-                    }
-                    
-                    let index = 0;
-                    snapshot.forEach((doc) => {
-                        const model = doc.data();
-                        model.id = doc.id;
+                    // Listen for female users
+                    this.modelsUnsubscribe = db.ref('users').orderByChild('gender').equalTo('female').on('value', (snapshot) => {
+                        modelsGrid.innerHTML = '';
                         
-                        const modelCard = this.createModelCard(model);
-                        modelCard.style.animationDelay = `${index * 100}ms`;
-                        modelsGrid.appendChild(modelCard);
-                        index++;
+                        if (!snapshot.exists()) {
+                            modelsGrid.innerHTML = `
+                                <div class="text-center" style="padding:40px;">
+                                    <div style="font-size:48px;color:var(--soft-pink);margin-bottom:20px;">💋</div>
+                                    <h3 style="margin-bottom:10px;color:var(--text-primary)">No companions available</h3>
+                                    <p style="color:var(--text-secondary)">Check back later for available companions</p>
+                                </div>
+                            `;
+                            return;
+                        }
+                        
+                        const models = [];
+                        snapshot.forEach((childSnapshot) => {
+                            const model = childSnapshot.val();
+                            model.id = childSnapshot.key;
+                            if (model.online) {
+                                models.push(model);
+                            }
+                        });
+                        
+                        if (models.length === 0) {
+                            modelsGrid.innerHTML = `
+                                <div class="text-center" style="padding:40px;">
+                                    <div style="font-size:48px;color:var(--soft-pink);margin-bottom:20px;">💋</div>
+                                    <h3 style="margin-bottom:10px;color:var(--text-primary)">No companions available</h3>
+                                    <p style="color:var(--text-secondary)">Check back later for available companions</p>
+                                </div>
+                            `;
+                            return;
+                        }
+                        
+                        let index = 0;
+                        models.forEach((model) => {
+                            const modelCard = this.createModelCard(model);
+                            modelCard.style.animationDelay = `${index * 100}ms`;
+                            modelsGrid.appendChild(modelCard);
+                            index++;
+                        });
+                    }, (error) => {
+                        console.error('Error loading models:', error);
+                        modelsGrid.innerHTML = '<div class="text-center" style="padding:40px;color:var(--text-secondary)">Error loading companions</div>';
                     });
 
                 } catch (error) {
@@ -1801,6 +1783,131 @@
                 
                 // Load chat messages
                 this.loadChatMessages();
+                
+                // Setup chat events
+                this.setupChatEvents();
+            }
+
+            setupMaleDashboardEvents() {
+                // Deposit button
+                document.getElementById('depositBtn').addEventListener('click', () => {
+                    this.openModal('depositModal');
+                });
+
+                // Confirm deposit
+                document.getElementById('confirmDeposit').addEventListener('click', async () => {
+                    const amount = parseInt(document.getElementById('depositAmount').value);
+                    
+                    if (!amount || amount < 100) {
+                        this.showToast('Minimum deposit is ₦100', 'error');
+                        return;
+                    }
+                    
+                    this.showToast('Processing deposit...', 'info');
+                    
+                    try {
+                        // Add transaction record
+                        const transactionRef = db.ref('transactions').push();
+                        await transactionRef.set({
+                            userId: this.currentUser.uid,
+                            type: 'deposit',
+                            amount: amount,
+                            status: 'completed',
+                            timestamp: Date.now()
+                        });
+                        
+                        // Update user balance
+                        await db.ref('users/' + this.currentUser.uid).update({
+                            balance: (this.currentUser.data.balance || 0) + amount,
+                            updatedAt: Date.now()
+                        });
+                        
+                        // Update local balance
+                        this.currentUser.data.balance += amount;
+                        document.getElementById('maleWalletBalance').textContent = this.currentUser.data.balance;
+                        
+                        this.closeModal('depositModal');
+                        this.showToast(`Successfully deposited ₦${amount}!`, 'success');
+                    } catch (error) {
+                        console.error('Error processing deposit:', error);
+                        this.showToast('Deposit failed. Please try again.', 'error');
+                    }
+                });
+
+                // Back to dashboard from chat
+                document.getElementById('backToDashboard')?.addEventListener('click', () => {
+                    this.leaveChat();
+                });
+            }
+
+            setupFemaleDashboardEvents() {
+                // Withdraw button
+                document.getElementById('withdrawBtn').addEventListener('click', () => {
+                    document.getElementById('availableBalance').textContent = this.currentUser.data.earnings || 0;
+                    this.openModal('withdrawModal');
+                });
+
+                // Confirm withdrawal
+                document.getElementById('confirmWithdraw').addEventListener('click', async () => {
+                    const amount = parseInt(document.getElementById('withdrawAmount').value);
+                    const bankAccount = document.getElementById('bankAccount').value;
+                    const bankName = document.getElementById('bankName').value;
+                    
+                    if (!amount || amount <= 0) {
+                        this.showToast('Please enter a valid amount', 'error');
+                        return;
+                    }
+                    
+                    if (amount > this.currentUser.data.earnings) {
+                        this.showToast('Insufficient earnings', 'error');
+                        return;
+                    }
+                    
+                    if (!bankAccount || bankAccount.length < 10) {
+                        this.showToast('Please enter a valid bank account', 'error');
+                        return;
+                    }
+                    
+                    if (!bankName) {
+                        this.showToast('Please enter bank name', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        // Create withdrawal request
+                        const withdrawalRef = db.ref('withdrawals').push();
+                        await withdrawalRef.set({
+                            userId: this.currentUser.uid,
+                            amount: amount,
+                            bankAccount: bankAccount,
+                            bankName: bankName,
+                            status: 'pending',
+                            createdAt: Date.now()
+                        });
+                        
+                        // Update earnings (deduct immediately)
+                        await db.ref('users/' + this.currentUser.uid).update({
+                            earnings: (this.currentUser.data.earnings || 0) - amount,
+                            updatedAt: Date.now()
+                        });
+                        
+                        // Update local earnings
+                        this.currentUser.data.earnings -= amount;
+                        document.getElementById('femaleEarnings').textContent = this.currentUser.data.earnings;
+                        
+                        this.closeModal('withdrawModal');
+                        this.showToast(`Withdrawal request for ₦${amount} submitted!`, 'success');
+                        
+                        // Clear form
+                        document.getElementById('withdrawAmount').value = '';
+                        document.getElementById('bankAccount').value = '';
+                        document.getElementById('bankName').value = '';
+                        
+                    } catch (error) {
+                        console.error('Error processing withdrawal:', error);
+                        this.showToast('Withdrawal failed. Please try again.', 'error');
+                    }
+                });
             }
 
             async loadFemaleActiveChats() {
@@ -1864,6 +1971,44 @@
                 }
             }
 
+            setupChatEvents() {
+                // Send message button
+                document.getElementById('sendMessageBtn').addEventListener('click', () => {
+                    this.sendMessage();
+                });
+
+                // Message input enter key
+                document.getElementById('messageInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.sendMessage();
+                    }
+                });
+
+                // Media request button
+                document.getElementById('mediaRequestBtn').addEventListener('click', () => {
+                    if (this.currentUser.data.gender !== 'male') {
+                        this.showToast('Only male users can request custom media', 'error');
+                        return;
+                    }
+                    this.openModal('mediaRequestModal');
+                });
+
+                // Send media request
+                document.getElementById('sendMediaRequest').addEventListener('click', () => {
+                    this.sendMediaRequest();
+                });
+
+                // Back to dashboard
+                document.getElementById('backToDashboard').addEventListener('click', () => {
+                    this.leaveChat();
+                });
+
+                // Voice note button (for female users)
+                document.getElementById('sendVoiceNoteBtn').addEventListener('click', () => {
+                    this.sendVoiceNote();
+                });
+            }
+
             async sendMessage() {
                 const messageInput = document.getElementById('messageInput');
                 const message = messageInput.value.trim();
@@ -1879,26 +2024,27 @@
                 const chatId = this.generateChatId(this.currentUser.uid, this.currentChat.modelId);
                 
                 try {
-                    // Add message to Firestore
-                    await this.db.collection('chats').doc(chatId).collection('messages').add({
+                    // Add message to Realtime Database
+                    const messageRef = db.ref('chats/' + chatId + '/messages').push();
+                    await messageRef.set({
                         text: message,
                         senderId: this.currentUser.uid,
                         senderName: this.currentUser.data.name,
                         type: 'text',
                         price: 10,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        timestamp: Date.now()
                     });
 
                     // Update balances
                     if (this.currentUser.data.gender === 'male') {
                         // Deduct from male user
-                        await this.db.collection('users').doc(this.currentUser.uid).update({
-                            balance: firebase.firestore.FieldValue.increment(-10)
+                        await db.ref('users/' + this.currentUser.uid).update({
+                            balance: (this.currentUser.data.balance || 0) - 10
                         });
                         
                         // Add to female user earnings
-                        await this.db.collection('users').doc(this.currentChat.modelId).update({
-                            earnings: firebase.firestore.FieldValue.increment(10)
+                        await db.ref('users/' + this.currentChat.modelId).update({
+                            earnings: (this.currentUser.data.earnings || 0) + 10
                         });
                         
                         // Update local balance
@@ -1948,7 +2094,8 @@
                 
                 try {
                     // Add media request as a message
-                    await this.db.collection('chats').doc(chatId).collection('messages').add({
+                    const messageRef = db.ref('chats/' + chatId + '/messages').push();
+                    await messageRef.set({
                         type: 'media_request',
                         senderId: this.currentUser.uid,
                         senderName: this.currentUser.data.name,
@@ -1957,11 +2104,11 @@
                         price: price,
                         requestId: requestId,
                         status: 'pending',
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        timestamp: Date.now()
                     });
 
                     // Store request in separate collection
-                    await this.db.collection('media_requests').doc(requestId).set({
+                    await db.ref('media_requests/' + requestId).set({
                         chatId: chatId,
                         modelId: this.currentChat.modelId,
                         clientId: this.currentUser.uid,
@@ -1969,7 +2116,7 @@
                         description: description,
                         price: price,
                         status: 'pending',
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        createdAt: Date.now()
                     });
 
                     this.closeModal('mediaRequestModal');
@@ -1997,18 +2144,19 @@
                 
                 try {
                     // Add voice note message
-                    await this.db.collection('chats').doc(chatId).collection('messages').add({
+                    const messageRef = db.ref('chats/' + chatId + '/messages').push();
+                    await messageRef.set({
                         type: 'voice',
                         senderId: this.currentUser.uid,
                         senderName: this.currentUser.data.name,
                         duration: '0:15',
                         price: 10,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        timestamp: Date.now()
                     });
 
                     // Add to female user earnings
-                    await this.db.collection('users').doc(this.currentUser.uid).update({
-                        earnings: firebase.firestore.FieldValue.increment(10)
+                    await db.ref('users/' + this.currentUser.uid).update({
+                        earnings: (this.currentUser.data.earnings || 0) + 10
                     });
                     
                     // Update local earnings
@@ -2039,47 +2187,43 @@
                         this.chatUnsubscribe();
                     }
 
-                    // Get existing messages
-                    const snapshot = await this.db.collection('chats').doc(chatId)
-                        .collection('messages')
-                        .orderBy('timestamp', 'asc')
-                        .get();
-
-                    chatMessages.innerHTML = '';
-                    
-                    if (snapshot.empty) {
-                        chatMessages.innerHTML = `
-                            <div class="text-center" style="padding:40px;">
-                                <div style="font-size:48px;color:var(--soft-pink);margin-bottom:20px;">💬</div>
-                                <h3 style="margin-bottom:10px;color:var(--text-primary)">Start a conversation</h3>
-                                <p style="color:var(--text-secondary)">Send your first message to begin chatting</p>
-                            </div>
-                        `;
-                    } else {
-                        snapshot.forEach((doc) => {
-                            const message = doc.data();
+                    // Listen for messages
+                    this.chatUnsubscribe = db.ref('chats/' + chatId + '/messages').orderByChild('timestamp').on('value', (snapshot) => {
+                        chatMessages.innerHTML = '';
+                        
+                        if (!snapshot.exists()) {
+                            chatMessages.innerHTML = `
+                                <div class="text-center" style="padding:40px;">
+                                    <div style="font-size:48px;color:var(--soft-pink);margin-bottom:20px;">💬</div>
+                                    <h3 style="margin-bottom:10px;color:var(--text-primary)">Start a conversation</h3>
+                                    <p style="color:var(--text-secondary)">Send your first message to begin chatting</p>
+                                </div>
+                            `;
+                            return;
+                        }
+                        
+                        const messages = [];
+                        snapshot.forEach((childSnapshot) => {
+                            const message = childSnapshot.val();
+                            message.id = childSnapshot.key;
+                            messages.push(message);
+                        });
+                        
+                        // Sort by timestamp
+                        messages.sort((a, b) => a.timestamp - b.timestamp);
+                        
+                        messages.forEach((message) => {
                             this.displayMessage(message);
                         });
-                    }
-                    
-                    // Scroll to bottom
-                    setTimeout(() => {
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
-                    }, 100);
-
-                    // Listen for new messages
-                    this.chatUnsubscribe = this.db.collection('chats').doc(chatId)
-                        .collection('messages')
-                        .orderBy('timestamp', 'asc')
-                        .onSnapshot((snapshot) => {
-                            snapshot.docChanges().forEach((change) => {
-                                if (change.type === 'added') {
-                                    const message = change.doc.data();
-                                    this.displayMessage(message);
-                                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                                }
-                            });
-                        });
+                        
+                        // Scroll to bottom
+                        setTimeout(() => {
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                        }, 100);
+                    }, (error) => {
+                        console.error('Error loading messages:', error);
+                        chatMessages.innerHTML = '<div class="text-center" style="padding:40px;color:var(--text-secondary)">Error loading messages</div>';
+                    });
 
                 } catch (error) {
                     console.error('Error loading chat messages:', error);
@@ -2122,7 +2266,7 @@
                             <p><strong>Description:</strong> ${message.description}</p>
                             <p><strong>Offer:</strong> ₦${message.price}</p>
                             ${this.currentUser.data.gender === 'female' ? 
-                                `<button class="btn-request accept-media-request" data-request-id="${message.requestId}" data-price="${message.price}">
+                                `<button class="btn-request" onclick="intimateApp.acceptMediaRequest('${message.requestId}', ${message.price})">
                                     <i class="fas fa-check"></i> Accept & Upload
                                 </button>` : 
                                 `<div style="font-size:12px;color:var(--soft-pink);margin-top:10px;">
@@ -2136,16 +2280,6 @@
                 
                 messageDiv.innerHTML = content;
                 chatMessages.appendChild(messageDiv);
-                
-                // Add event listener for accept media request button
-                const acceptBtn = messageDiv.querySelector('.accept-media-request');
-                if (acceptBtn) {
-                    acceptBtn.addEventListener('click', () => {
-                        const requestId = acceptBtn.dataset.requestId;
-                        const price = parseInt(acceptBtn.dataset.price);
-                        this.acceptMediaRequest(requestId, price);
-                    });
-                }
             }
 
             async acceptMediaRequest(requestId, price) {
@@ -2169,104 +2303,6 @@
                 document.getElementById('uploadMedia').dataset.price = price;
             }
 
-            async handleDeposit() {
-                const amount = parseInt(document.getElementById('depositAmount').value);
-                
-                if (!amount || amount < 100) {
-                    this.showToast('Minimum deposit is ₦100', 'error');
-                    return;
-                }
-                
-                this.showToast('Processing deposit...', 'info');
-                
-                try {
-                    // Add transaction record
-                    await this.db.collection('transactions').add({
-                        userId: this.currentUser.uid,
-                        type: 'deposit',
-                        amount: amount,
-                        status: 'completed',
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    
-                    // Update user balance
-                    await this.db.collection('users').doc(this.currentUser.uid).update({
-                        balance: firebase.firestore.FieldValue.increment(amount),
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    
-                    // Update local balance
-                    this.currentUser.data.balance += amount;
-                    document.getElementById('maleWalletBalance').textContent = this.currentUser.data.balance;
-                    
-                    this.closeModal('depositModal');
-                    this.showToast(`Successfully deposited ₦${amount}!`, 'success');
-                } catch (error) {
-                    console.error('Error processing deposit:', error);
-                    this.showToast('Deposit failed. Please try again.', 'error');
-                }
-            }
-
-            async handleWithdrawal() {
-                const amount = parseInt(document.getElementById('withdrawAmount').value);
-                const bankAccount = document.getElementById('bankAccount').value;
-                const bankName = document.getElementById('bankName').value;
-                
-                if (!amount || amount <= 0) {
-                    this.showToast('Please enter a valid amount', 'error');
-                    return;
-                }
-                
-                if (amount > this.currentUser.data.earnings) {
-                    this.showToast('Insufficient earnings', 'error');
-                    return;
-                }
-                
-                if (!bankAccount || bankAccount.length < 10) {
-                    this.showToast('Please enter a valid bank account', 'error');
-                    return;
-                }
-                
-                if (!bankName) {
-                    this.showToast('Please enter bank name', 'error');
-                    return;
-                }
-                
-                try {
-                    // Create withdrawal request
-                    await this.db.collection('withdrawals').add({
-                        userId: this.currentUser.uid,
-                        amount: amount,
-                        bankAccount: bankAccount,
-                        bankName: bankName,
-                        status: 'pending',
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    
-                    // Update earnings (deduct immediately)
-                    await this.db.collection('users').doc(this.currentUser.uid).update({
-                        earnings: firebase.firestore.FieldValue.increment(-amount),
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    
-                    // Update local earnings
-                    this.currentUser.data.earnings -= amount;
-                    document.getElementById('femaleEarnings').textContent = this.currentUser.data.earnings;
-                    
-                    this.closeModal('withdrawModal');
-                    this.showToast(`Withdrawal request for ₦${amount} submitted!`, 'success');
-                    
-                    // Clear form
-                    document.getElementById('withdrawAmount').value = '';
-                    document.getElementById('bankAccount').value = '';
-                    document.getElementById('bankName').value = '';
-                    
-                } catch (error) {
-                    console.error('Error processing withdrawal:', error);
-                    this.showToast('Withdrawal failed. Please try again.', 'error');
-                }
-            }
-
             generateChatId(userId1, userId2) {
                 // Create consistent chat ID regardless of order
                 return [userId1, userId2].sort().join('_');
@@ -2275,7 +2311,7 @@
             formatTime(timestamp) {
                 if (!timestamp) return 'Just now';
                 
-                const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+                const date = new Date(timestamp);
                 const now = new Date();
                 const diffMs = now - date;
                 const diffMins = Math.floor(diffMs / 60000);
@@ -2339,9 +2375,9 @@
                 try {
                     // Set user offline
                     if (this.currentUser) {
-                        await this.db.collection('users').doc(this.currentUser.uid).update({
+                        await db.ref('users/' + this.currentUser.uid).update({
                             online: false,
-                            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                            lastSeen: Date.now()
                         });
                     }
                     
@@ -2362,7 +2398,7 @@
                     }
                     
                     // Sign out from Firebase
-                    await this.auth.signOut();
+                    await auth.signOut();
                     
                     // Reset app state
                     this.currentUser = null;
@@ -2383,6 +2419,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             intimateApp = new IntimateConnect();
             
+            // Make app globally available
+            window.intimateApp = intimateApp;
+            
             // Handle media upload
             document.getElementById('uploadMedia')?.addEventListener('click', async function() {
                 const requestId = this.dataset.requestId;
@@ -2399,21 +2438,21 @@
                 
                 try {
                     // Upload to Firebase Storage
-                    const storageRef = firebase.storage().ref(`media/${requestId}/${file.name}`);
+                    const storageRef = storage.ref('media/' + requestId + '/' + file.name);
                     await storageRef.put(file);
                     const downloadURL = await storageRef.getDownloadURL();
                     
                     // Update media request status
-                    await intimateApp.db.collection('media_requests').doc(requestId).update({
+                    await db.ref('media_requests/' + requestId).update({
                         status: 'completed',
                         mediaUrl: downloadURL,
-                        completedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        completedAt: Date.now()
                     });
                     
                     // Update user earnings
-                    await intimateApp.db.collection('users').doc(intimateApp.currentUser.uid).update({
-                        earnings: firebase.firestore.FieldValue.increment(price),
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    await db.ref('users/' + intimateApp.currentUser.uid).update({
+                        earnings: (intimateApp.currentUser.data.earnings || 0) + price,
+                        updatedAt: Date.now()
                     });
                     
                     // Update local earnings
@@ -2431,6 +2470,13 @@
                     intimateApp.showToast('Upload failed', 'error');
                 }
             });
+        });
+
+        // Prevent redirect issues
+        window.addEventListener('beforeunload', () => {
+            if (intimateApp) {
+                intimateApp.leaveChat();
+            }
         });
     </script>
 </body>

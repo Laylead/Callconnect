@@ -1254,101 +1254,6 @@
             transition: width 0.1s linear;
         }
 
-        /* ===== WARNING MODAL ===== */
-        .warning-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 5000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            padding: 20px;
-        }
-
-        .warning-modal.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .warning-content {
-            background: linear-gradient(135deg, rgba(5, 0, 22, 0.98), rgba(26, 4, 58, 0.98));
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 24px;
-            padding: 30px;
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            transform: scale(0.9) translateY(50px);
-            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            backdrop-filter: blur(40px);
-            -webkit-backdrop-filter: blur(40px);
-            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
-        }
-
-        .warning-modal.active .warning-content {
-            transform: scale(1) translateY(0);
-        }
-
-        .warning-icon {
-            font-size: 64px;
-            color: var(--warning);
-            margin-bottom: 20px;
-        }
-
-        .warning-title {
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--text-primary);
-            margin-bottom: 15px;
-        }
-
-        .warning-message {
-            font-size: 16px;
-            color: var(--text-secondary);
-            margin-bottom: 30px;
-            line-height: 1.5;
-        }
-
-        .warning-actions {
-            display: flex;
-            gap: 15px;
-        }
-
-        .warning-btn {
-            flex: 1;
-            padding: 16px;
-            border-radius: 14px;
-            border: none;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .warning-btn.leave {
-            background: linear-gradient(135deg, var(--red-accent), #ff6b6b);
-            color: white;
-        }
-
-        .warning-btn.stay {
-            background: linear-gradient(135deg, var(--success), #00b894);
-            color: white;
-        }
-
-        .warning-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-        }
-
         /* ===== BOTTOM NAVIGATION ===== */
         .bottom-nav {
             position: fixed;
@@ -1811,21 +1716,6 @@
         </div>
     </div>
 
-    <!-- Warning Modal -->
-    <div class="warning-modal" id="warningModal">
-        <div class="warning-content">
-            <div class="warning-icon">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <h3 class="warning-title">Audio Playing</h3>
-            <p class="warning-message">You have audio playing. If you leave this page, the audio will stop. Are you sure you want to leave?</p>
-            <div class="warning-actions">
-                <button class="warning-btn leave" onclick="leavePage()">Leave Page</button>
-                <button class="warning-btn stay" onclick="stayOnPage()">Stay Here</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Animated Background -->
     <div class="bg-blur bg-blur-1"></div>
     <div class="bg-blur bg-blur-2"></div>
@@ -2077,10 +1967,6 @@
             // Close modals on outside click
             document.getElementById('audioPlayerPopup').addEventListener('click', function(e) {
                 if (e.target === this) closeAudioPlayer();
-            });
-
-            document.getElementById('warningModal').addEventListener('click', function(e) {
-                if (e.target === this) stayOnPage();
             });
 
             // Keyboard shortcuts
@@ -2852,28 +2738,6 @@
             toggleSave(currentPlayingStory.id, saveBtn, new Event('click'));
         }
 
-        // ===== WARNING MODAL =====
-        function showWarningModal(targetUrl) {
-            if (!currentAudio || currentAudio.paused) return;
-            
-            document.getElementById('warningModal').classList.add('active');
-            document.getElementById('warningModal').dataset.targetUrl = targetUrl;
-        }
-
-        function stayOnPage() {
-            document.getElementById('warningModal').classList.remove('active');
-        }
-
-        function leavePage() {
-            if (currentAudio) {
-                currentAudio.pause();
-                clearInterval(audioUpdateInterval);
-            }
-            
-            const targetUrl = document.getElementById('warningModal').dataset.targetUrl;
-            window.location.href = targetUrl;
-        }
-
         // ===== UTILITY FUNCTIONS =====
         function formatNumber(num) {
             if (num >= 1000000) {
@@ -2953,18 +2817,6 @@
         function filterContent() {
             applyFilters();
         }
-
-        // Add navigation warning for audio playing
-        document.querySelectorAll('a').forEach(link => {
-            if (link.href && !link.href.includes('javascript:')) {
-                link.addEventListener('click', function(e) {
-                    if (currentAudio && !currentAudio.paused) {
-                        e.preventDefault();
-                        showWarningModal(this.href);
-                    }
-                });
-            }
-        });
     </script>
 </body>
 </html>

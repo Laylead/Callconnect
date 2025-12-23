@@ -829,7 +829,7 @@
             background: rgba(0, 0, 0, 0.95);
             backdrop-filter: blur(30px);
             -webkit-backdrop-filter: blur(30px);
-            z-index: 4000;
+            z-index: 3000;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -1165,7 +1165,7 @@
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 20px;
             padding: 15px;
-            z-index: 2000;
+            z-index: 1999;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             transform: translateY(100px);
             opacity: 0;
@@ -1252,48 +1252,6 @@
             background: linear-gradient(90deg, var(--primary-purple), var(--neon-magenta));
             width: var(--progress, 0%);
             transition: width 0.1s linear;
-        }
-
-        /* ===== PLUS BUTTON POPUP ===== */
-        .plus-popup {
-            position: fixed;
-            bottom: 110px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background: rgba(5, 0, 22, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 16px;
-            padding: 16px 20px;
-            color: white;
-            font-weight: 600;
-            z-index: 2001;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-            font-size: 14px;
-            max-width: 90%;
-            text-align: center;
-            white-space: nowrap;
-            pointer-events: none;
-        }
-
-        .plus-popup:after {
-            content: '';
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 8px solid transparent;
-            border-top-color: rgba(5, 0, 22, 0.95);
-        }
-
-        .plus-popup.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(-50%) translateY(0);
         }
 
         /* ===== WARNING MODAL ===== */
@@ -1402,8 +1360,9 @@
             -webkit-backdrop-filter: blur(30px);
             border-top: 1px solid rgba(255, 255, 255, 0.05);
             padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
-            z-index: 1000;
+            z-index: 2000;
             height: 70px;
+            touch-action: manipulation;
         }
 
         .nav-items {
@@ -1413,6 +1372,7 @@
             max-width: 480px;
             margin: 0 auto;
             height: 100%;
+            position: relative;
         }
 
         .nav-item {
@@ -1428,6 +1388,10 @@
             border-radius: 16px;
             min-width: 60px;
             font-weight: 600;
+            position: relative;
+            z-index: 1;
+            min-height: 44px;
+            min-width: 44px;
         }
 
         .nav-item.active {
@@ -1462,6 +1426,9 @@
             margin-top: -30px;
             position: relative;
             overflow: hidden;
+            z-index: 2;
+            min-height: 44px;
+            min-width: 44px;
         }
 
         .submit-story-btn::after {
@@ -1853,11 +1820,6 @@
         </div>
     </div>
 
-    <!-- Plus Button Popup -->
-    <div class="plus-popup" id="plusPopup">
-        Go back to home feed to be able to send your story
-    </div>
-
     <!-- Warning Modal -->
     <div class="warning-modal" id="warningModal">
         <div class="warning-content">
@@ -1904,10 +1866,10 @@
             <div class="search-filter-container">
                 <div class="search-box">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" class="search-input" id="searchInput" placeholder="Search stories, podcasts, audio...">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search stories, podcasts, audio..." oninput="filterContent()">
                 </div>
                 
-                <button class="filter-toggle" id="filterToggle">
+                <button class="filter-toggle" id="filterToggle" onclick="toggleFilters()">
                     <i class="fas fa-filter"></i>
                     <span>Filter & Sort</span>
                 </button>
@@ -1918,19 +1880,19 @@
                         <div class="filter-group">
                             <div class="filter-title">Sort By</div>
                             <div class="filter-options">
-                                <div class="filter-option active" data-filter="sort" data-value="newest">
+                                <div class="filter-option active" onclick="selectFilterOption(this, 'sort')">
                                     <input type="radio" name="sort" id="sortNewest" checked>
                                     <label for="sortNewest">Newest First</label>
                                 </div>
-                                <div class="filter-option" data-filter="sort" data-value="popular">
+                                <div class="filter-option" onclick="selectFilterOption(this, 'sort')">
                                     <input type="radio" name="sort" id="sortPopular">
                                     <label for="sortPopular">Most Popular</label>
                                 </div>
-                                <div class="filter-option" data-filter="sort" data-value="trending">
+                                <div class="filter-option" onclick="selectFilterOption(this, 'sort')">
                                     <input type="radio" name="sort" id="sortTrending">
                                     <label for="sortTrending">Trending</label>
                                 </div>
-                                <div class="filter-option" data-filter="sort" data-value="liked">
+                                <div class="filter-option" onclick="selectFilterOption(this, 'sort')">
                                     <input type="radio" name="sort" id="sortLiked">
                                     <label for="sortLiked">Most Liked</label>
                                 </div>
@@ -1941,19 +1903,19 @@
                         <div class="filter-group">
                             <div class="filter-title">Categories</div>
                             <div class="filter-options">
-                                <div class="filter-option" data-filter="category" data-value="all">
+                                <div class="filter-option" onclick="selectFilterOption(this, 'category', true)">
                                     <input type="checkbox" id="categoryAll">
                                     <label for="categoryAll">All Categories</label>
                                 </div>
-                                <div class="filter-option" data-filter="category" data-value="podcast">
+                                <div class="filter-option" onclick="selectFilterOption(this, 'category', true)">
                                     <input type="checkbox" id="categoryPodcast">
                                     <label for="categoryPodcast">Podcasts</label>
                                 </div>
-                                <div class="filter-option" data-filter="category" data-value="audio">
+                                <div class="filter-option" onclick="selectFilterOption(this, 'category', true)">
                                     <input type="checkbox" id="categoryAudio">
                                     <label for="categoryAudio">Audio Stories</label>
                                 </div>
-                                <div class="filter-option" data-filter="category" data-value="radio">
+                                <div class="filter-option" onclick="selectFilterOption(this, 'category', true)">
                                     <input type="checkbox" id="categoryRadio">
                                     <label for="categoryRadio">Radio Shows</label>
                                 </div>
@@ -1971,8 +1933,8 @@
                         
                         <!-- Actions -->
                         <div class="filter-actions">
-                            <button class="filter-btn apply" id="applyFilters">Apply Filters</button>
-                            <button class="filter-btn reset" id="resetFilters">Reset All</button>
+                            <button class="filter-btn apply" onclick="applyFilters()">Apply Filters</button>
+                            <button class="filter-btn reset" onclick="resetFilters()">Reset All</button>
                         </div>
                     </div>
                 </div>
@@ -1985,7 +1947,7 @@
             
             <!-- Load More -->
             <div class="load-more-container">
-                <button class="load-more-btn" id="loadMoreBtn">
+                <button class="load-more-btn" id="loadMoreBtn" onclick="loadMoreContent()">
                     <i class="fas fa-spinner spinner"></i>
                     <span class="text">Load More Stories</span>
                 </button>
@@ -1998,7 +1960,7 @@
                 </div>
                 <h3>No stories found</h3>
                 <p>Try adjusting your search or filters to find what you're looking for.</p>
-                <button class="load-more-btn" id="resetFiltersBtn">
+                <button class="load-more-btn" onclick="resetFilters()">
                     Reset Filters
                 </button>
             </div>
@@ -2015,9 +1977,9 @@
                     <i class="fas fa-compass"></i>
                     <span>Explore</span>
                 </a>
-                <button class="submit-story-btn" id="submitStoryBtn">
+                <a href="dashboard.html" class="submit-story-btn" id="submitStoryBtn">
                     <i class="fas fa-plus"></i>
-                </button>
+                </a>
                 <a href="donate.html" class="nav-item">
                     <i class="fas fa-heart"></i>
                     <span>Donate</span>
@@ -2036,7 +1998,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <script src="firebase-config.js"></script>
-    <script src="agora.js"></script>
 
     <!-- Main Application Script -->
     <script>
@@ -2077,22 +2038,6 @@
         const STORIES_PER_PAGE = 10;
         const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-        // DOM Elements
-        const elements = {
-            loadingOverlay: document.getElementById('loadingOverlay'),
-            searchInput: document.getElementById('searchInput'),
-            filterToggle: document.getElementById('filterToggle'),
-            filterDropdown: document.getElementById('filterDropdown'),
-            gridContainer: document.getElementById('gridContainer'),
-            noResults: document.getElementById('noResults'),
-            loadMoreBtn: document.getElementById('loadMoreBtn'),
-            submitStoryBtn: document.getElementById('submitStoryBtn'),
-            plusPopup: document.getElementById('plusPopup'),
-            warningModal: document.getElementById('warningModal'),
-            audioPlayerPopup: document.getElementById('audioPlayerPopup'),
-            floatingPlayer: document.getElementById('floatingPlayer')
-        };
-
         // Initialize on DOM load
         document.addEventListener('DOMContentLoaded', function() {
             // Check if user is logged in
@@ -2119,7 +2064,7 @@
         function setupEventListeners() {
             // Search input with debounce
             let searchTimeout;
-            elements.searchInput.addEventListener('input', function(e) {
+            document.getElementById('searchInput').addEventListener('input', function(e) {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
                     currentFilters.searchQuery = e.target.value;
@@ -2138,56 +2083,34 @@
                 applyFilters();
             });
 
-            // Filter toggle
-            elements.filterToggle.addEventListener('click', toggleFilters);
-
-            // Filter options
-            document.querySelectorAll('.filter-option').forEach(option => {
-                option.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const type = this.dataset.filter;
-                    const value = this.dataset.value;
-                    const isCheckbox = this.querySelector('input[type="checkbox"]');
-                    
-                    if (isCheckbox) {
-                        selectFilterOption(this, type, true);
-                    } else {
-                        selectFilterOption(this, type, false);
-                    }
-                });
-            });
-
-            // Apply filters button
-            document.getElementById('applyFilters').addEventListener('click', applyFilters);
-            
-            // Reset filters button
-            document.getElementById('resetFilters').addEventListener('click', resetFilters);
-            document.getElementById('resetFiltersBtn').addEventListener('click', resetFilters);
-
-            // Load more button
-            elements.loadMoreBtn.addEventListener('click', loadMoreContent);
-
-            // Submit story button
-            elements.submitStoryBtn.addEventListener('click', showPlusPopup);
-
-            // Warning modal buttons
-            document.querySelector('.warning-btn.leave').addEventListener('click', leavePage);
-            document.querySelector('.warning-btn.stay').addEventListener('click', stayOnPage);
-
             // Close modals on outside click
-            elements.audioPlayerPopup.addEventListener('click', function(e) {
+            document.getElementById('audioPlayerPopup').addEventListener('click', function(e) {
                 if (e.target === this) closeAudioPlayer();
             });
 
-            elements.warningModal.addEventListener('click', function(e) {
+            document.getElementById('warningModal').addEventListener('click', function(e) {
                 if (e.target === this) stayOnPage();
+            });
+
+            // Bottom navigation handling
+            const navItems = document.querySelectorAll('.bottom-nav .nav-item, .submit-story-btn');
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    // If audio is playing, show warning
+                    if (currentAudio && !currentAudio.paused && this.getAttribute('href')) {
+                        e.preventDefault();
+                        const href = this.getAttribute('href');
+                        showWarningModal(href);
+                        return false;
+                    }
+                });
             });
 
             // Keyboard shortcuts
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     closeAudioPlayer();
-                    if (elements.filterDropdown.classList.contains('active')) {
+                    if (document.getElementById('filterDropdown').classList.contains('active')) {
                         toggleFilters();
                     }
                 }
@@ -2200,30 +2123,6 @@
                     }
                 }
             });
-
-            // Bottom navigation click handlers
-            const navItems = document.querySelectorAll('.bottom-nav .nav-item');
-            navItems.forEach(item => {
-                item.addEventListener('click', function(e) {
-                    // If audio is playing, show warning
-                    if (currentAudio && !currentAudio.paused) {
-                        e.preventDefault();
-                        const href = this.getAttribute('href');
-                        showWarningModal(href);
-                        return false;
-                    }
-                    // Otherwise, allow navigation
-                });
-            });
-        }
-
-        // ===== PLUS BUTTON POPUP =====
-        function showPlusPopup() {
-            elements.plusPopup.classList.add('show');
-            
-            setTimeout(() => {
-                elements.plusPopup.classList.remove('show');
-            }, 3000);
         }
 
         // ===== CONTENT LOADING =====
@@ -2244,7 +2143,7 @@
                     const stories = [];
                     snapshot.forEach(childSnapshot => {
                         const story = childSnapshot.val();
-                        story.id = childSnapshot.key;
+                        story.id = childSnapshot.key; // Add the story ID
                         
                         // Ensure required fields have default values
                         story.title = story.title || 'Untitled Story';
@@ -2282,9 +2181,13 @@
         }
 
         function showNoResults() {
-            elements.gridContainer.innerHTML = '';
-            elements.noResults.classList.remove('hide');
-            elements.loadMoreBtn.classList.add('hide');
+            const container = document.getElementById('gridContainer');
+            const noResults = document.getElementById('noResults');
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
+            
+            container.innerHTML = '';
+            noResults.classList.remove('hide');
+            loadMoreBtn.classList.add('hide');
             allStories = [];
             displayedStories = [];
         }
@@ -2319,6 +2222,10 @@
 
         // ===== STORY RENDERING =====
         function renderStories() {
+            const container = document.getElementById('gridContainer');
+            const noResults = document.getElementById('noResults');
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
+            
             // Filter stories
             let filteredStories = filterStories(allStories);
             
@@ -2328,17 +2235,17 @@
             displayedStories = filteredStories.slice(startIndex, endIndex);
             
             if (displayedStories.length === 0) {
-                elements.gridContainer.innerHTML = '';
-                elements.noResults.classList.remove('hide');
-                elements.loadMoreBtn.classList.add('hide');
+                container.innerHTML = '';
+                noResults.classList.remove('hide');
+                loadMoreBtn.classList.add('hide');
                 return;
             }
             
-            elements.noResults.classList.add('hide');
+            noResults.classList.add('hide');
             
             // Clear container if it's the first page
             if (currentPage === 0) {
-                elements.gridContainer.innerHTML = '';
+                container.innerHTML = '';
             }
             
             // Create cards
@@ -2349,7 +2256,7 @@
                 }
                 
                 const card = createStoryCard(story, index);
-                elements.gridContainer.appendChild(card);
+                container.appendChild(card);
                 
                 // Add animation delay
                 card.style.animationDelay = `${index * 0.05}s`;
@@ -2357,8 +2264,8 @@
             
             // Update load more button
             const hasMore = displayedStories.length < filteredStories.length;
-            elements.loadMoreBtn.classList.toggle('hide', !hasMore);
-            elements.loadMoreBtn.disabled = !hasMore;
+            loadMoreBtn.classList.toggle('hide', !hasMore);
+            loadMoreBtn.disabled = !hasMore;
         }
 
         function createStoryCard(story, index) {
@@ -2402,7 +2309,7 @@
                 <div class="card-content">
                     <div class="card-header">
                         <h3 class="card-title">${story.title}</h3>
-                        <button class="card-save ${saveClass}">
+                        <button class="card-save ${saveClass}" onclick="toggleSave('${story.id}', this, event)">
                             <i class="${saveIcon}"></i>
                         </button>
                     </div>
@@ -2425,7 +2332,7 @@
                             <span>${story.duration}</span>
                         </div>
                     </div>
-                    <button class="card-play">
+                    <button class="card-play" onclick="playStory('${story.id}', this, event)">
                         <i class="fas fa-play"></i>
                         <span>Play Now</span>
                     </button>
@@ -2443,24 +2350,6 @@
                 ];
                 imageDiv.style.background = gradients[index % gradients.length];
             }
-            
-            // Add event listeners
-            const saveBtn = card.querySelector('.card-save');
-            const playBtn = card.querySelector('.card-play');
-            
-            saveBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                toggleSave(story.id, this);
-            });
-            
-            playBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                playStory(story.id, this);
-            });
-            
-            card.addEventListener('click', function() {
-                playStory(story.id, playBtn);
-            });
             
             return card;
         }
@@ -2526,8 +2415,11 @@
         }
 
         function toggleFilters() {
-            elements.filterDropdown.classList.toggle('active');
-            elements.filterToggle.classList.toggle('active');
+            const dropdown = document.getElementById('filterDropdown');
+            const toggle = document.getElementById('filterToggle');
+            
+            dropdown.classList.toggle('active');
+            toggle.classList.toggle('active');
         }
 
         function selectFilterOption(element, type, isCheckbox = false) {
@@ -2538,26 +2430,24 @@
                 
                 // Update categories array
                 if (type === 'category') {
-                    const category = element.dataset.value;
+                    const category = checkbox.id.replace('category', '').toLowerCase();
                     if (checkbox.checked) {
                         if (category === 'all') {
                             // Select all categories
-                            document.querySelectorAll('.filter-option[data-filter="category"]').forEach(opt => {
-                                const cb = opt.querySelector('input[type="checkbox"]');
+                            document.querySelectorAll('.filter-option input[type="checkbox"]').forEach(cb => {
                                 cb.checked = true;
-                                opt.classList.add('active');
+                                cb.parentElement.classList.add('active');
                             });
-                            currentFilters.categories = ['podcast', 'audio', 'radio', 'all'];
+                            currentFilters.categories = ['podcast', 'audio', 'radio'];
                         } else if (!currentFilters.categories.includes(category)) {
                             currentFilters.categories.push(category);
                         }
                     } else {
                         if (category === 'all') {
                             // Deselect all categories
-                            document.querySelectorAll('.filter-option[data-filter="category"]').forEach(opt => {
-                                const cb = opt.querySelector('input[type="checkbox"]');
+                            document.querySelectorAll('.filter-option input[type="checkbox"]').forEach(cb => {
                                 cb.checked = false;
-                                opt.classList.remove('active');
+                                cb.parentElement.classList.remove('active');
                             });
                             currentFilters.categories = [];
                         } else {
@@ -2567,10 +2457,9 @@
                 }
             } else {
                 // Radio button behavior
-                document.querySelectorAll(`.filter-option[data-filter="${type}"]`).forEach(opt => {
-                    const radio = opt.querySelector('input[type="radio"]');
-                    radio.checked = false;
-                    opt.classList.remove('active');
+                document.querySelectorAll(`.filter-option input[name="${type}"]`).forEach(input => {
+                    input.checked = false;
+                    input.parentElement.classList.remove('active');
                 });
                 
                 const radio = element.querySelector('input[type="radio"]');
@@ -2579,7 +2468,7 @@
                 
                 // Update sort
                 if (type === 'sort') {
-                    currentSort = element.dataset.value;
+                    currentSort = radio.id.replace('sort', '').toLowerCase();
                 }
             }
         }
@@ -2596,21 +2485,14 @@
 
         function resetFilters() {
             // Reset UI
-            elements.searchInput.value = '';
+            document.getElementById('searchInput').value = '';
             document.querySelectorAll('.filter-option input[type="checkbox"]').forEach(cb => {
                 cb.checked = false;
                 cb.parentElement.classList.remove('active');
             });
-            
-            // Reset first radio to checked
             document.querySelectorAll('.filter-option input[type="radio"]').forEach((radio, index) => {
-                if (index === 0) {
-                    radio.checked = true;
-                    radio.parentElement.classList.add('active');
-                } else {
-                    radio.checked = false;
-                    radio.parentElement.classList.remove('active');
-                }
+                radio.checked = index === 0;
+                radio.parentElement.classList.toggle('active', index === 0);
             });
             
             // Reset date inputs
@@ -2640,7 +2522,9 @@
         }
 
         // ===== AUDIO PLAYER =====
-        function playStory(storyId, button) {
+        function playStory(storyId, button, event) {
+            if (event) event.stopPropagation();
+            
             const story = allStories.find(s => s.id === storyId);
             if (!story) return;
             
@@ -2741,7 +2625,7 @@
         function openAudioPlayer(story) {
             document.getElementById('audioPlayerTitle').textContent = story.title;
             document.getElementById('audioPlayerAuthor').textContent = story.author;
-            elements.audioPlayerPopup.classList.add('active');
+            document.getElementById('audioPlayerPopup').classList.add('active');
             isAudioPlayerOpen = true;
             
             // Update save button
@@ -2752,7 +2636,7 @@
         }
 
         function closeAudioPlayer() {
-            elements.audioPlayerPopup.classList.remove('active');
+            document.getElementById('audioPlayerPopup').classList.remove('active');
             isAudioPlayerOpen = false;
             
             // If audio is playing, minimize to floating player
@@ -2865,13 +2749,15 @@
         function showFloatingPlayer() {
             if (!currentAudio || !currentPlayingStory) return;
             
+            const floatingPlayer = document.getElementById('floatingPlayer');
             document.getElementById('floatingTitle').textContent = currentPlayingStory.title;
-            elements.floatingPlayer.classList.add('active');
+            floatingPlayer.classList.add('active');
             isFloatingPlayerActive = true;
         }
 
         function closeFloatingPlayer() {
-            elements.floatingPlayer.classList.remove('active');
+            const floatingPlayer = document.getElementById('floatingPlayer');
+            floatingPlayer.classList.remove('active');
             isFloatingPlayerActive = false;
             
             // Stop audio
@@ -2906,7 +2792,9 @@
             }
         }
 
-        async function toggleSave(storyId, button) {
+        async function toggleSave(storyId, button, event) {
+            if (event) event.stopPropagation();
+            
             const currentUser = auth.currentUser;
             if (!currentUser) {
                 showToast("Please login to save stories", "error");
@@ -2984,25 +2872,19 @@
         function saveCurrentStory() {
             if (!currentPlayingStory) return;
             const saveBtn = document.querySelector(`.explore-card[data-id="${currentPlayingStory.id}"] .card-save`);
-            if (saveBtn) {
-                toggleSave(currentPlayingStory.id, saveBtn);
-            }
+            toggleSave(currentPlayingStory.id, saveBtn, new Event('click'));
         }
 
         // ===== WARNING MODAL =====
-        let pendingNavigationUrl = null;
-
         function showWarningModal(targetUrl) {
-            if (!currentAudio || currentAudio.paused) return true;
+            if (!currentAudio || currentAudio.paused) return;
             
-            pendingNavigationUrl = targetUrl;
-            elements.warningModal.classList.add('active');
-            return false;
+            document.getElementById('warningModal').classList.add('active');
+            document.getElementById('warningModal').dataset.targetUrl = targetUrl;
         }
 
         function stayOnPage() {
-            elements.warningModal.classList.remove('active');
-            pendingNavigationUrl = null;
+            document.getElementById('warningModal').classList.remove('active');
         }
 
         function leavePage() {
@@ -3011,10 +2893,8 @@
                 clearInterval(audioUpdateInterval);
             }
             
-            elements.warningModal.classList.remove('active');
-            if (pendingNavigationUrl) {
-                window.location.href = pendingNavigationUrl;
-            }
+            const targetUrl = document.getElementById('warningModal').dataset.targetUrl;
+            window.location.href = targetUrl;
         }
 
         // ===== UTILITY FUNCTIONS =====
@@ -3028,11 +2908,12 @@
         }
 
         function showLoading(show) {
+            const loadingOverlay = document.getElementById('loadingOverlay');
             if (show) {
-                elements.loadingOverlay.classList.remove('hidden');
+                loadingOverlay.classList.remove('hidden');
             } else {
                 setTimeout(() => {
-                    elements.loadingOverlay.classList.add('hidden');
+                    loadingOverlay.classList.add('hidden');
                 }, 500);
             }
         }
@@ -3090,6 +2971,10 @@
             } catch (error) {
                 console.error("Error updating play count:", error);
             }
+        }
+
+        function filterContent() {
+            applyFilters();
         }
     </script>
 </body>

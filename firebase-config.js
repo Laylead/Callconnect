@@ -9,3 +9,4 @@ const firebaseConfig = {
   databaseURL: "https://kheemz-fb9b6-default-rtdb.firebaseio.com"
 };
 
+window.firebaseConfig = firebaseConfig;

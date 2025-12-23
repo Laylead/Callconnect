@@ -2,13 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Camsilo | Premium Chat Platform</title>
-    
-    <!-- PWA Support -->
-    <meta name="theme-color" content="#7c3aed">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camsilo | Premium Chat Dashboard</title>
     
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -27,7 +22,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         /* CSS Variables */
@@ -48,142 +43,54 @@
             --gray-200: #e5e7eb;
             --gray-300: #d1d5db;
             --gray-700: #374151;
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
             --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.15);
             --shadow-xl: 0 25px 50px rgba(124, 58, 237, 0.15);
-            --transition-fast: all 0.2s ease;
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            --border-radius: 16px;
-            --border-radius-lg: 24px;
-            --sidebar-width: 280px;
-            --header-height: 70px;
+            --border-radius: 12px;
+            --border-radius-lg: 20px;
         }
 
-        /* Dark Theme */
-        .dark-theme {
-            --dark-color: #f9fafb;
-            --darker-color: #ffffff;
-            --light-color: #111827;
-            --gray-100: #1f2937;
-            --gray-200: #374151;
-            --gray-300: #4b5563;
-            --gray-700: #d1d5db;
-        }
-
-        /* Reset & Base */
+        /* Reset & Base Styles */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
         }
 
         html, body {
             height: 100%;
-            overflow: hidden;
             font-family: 'Poppins', sans-serif;
         }
 
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: var(--dark-color);
-            transition: var(--transition);
+            overflow-x: hidden;
         }
 
-        /* Animated Background */
-        .animated-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-            pointer-events: none;
-        }
-
-        .floating-shapes {
-            position: absolute;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%);
-            animation: float 20s infinite linear;
-            filter: blur(20px);
-        }
-
-        .floating-shapes:nth-child(1) {
-            width: 400px;
-            height: 400px;
-            top: -100px;
-            left: -100px;
-            animation-delay: 0s;
-            animation-duration: 25s;
-        }
-
-        .floating-shapes:nth-child(2) {
-            width: 300px;
-            height: 300px;
-            bottom: -100px;
-            right: -50px;
-            animation-delay: -5s;
-            animation-duration: 20s;
-        }
-
-        .floating-shapes:nth-child(3) {
-            width: 200px;
-            height: 200px;
-            top: 50%;
-            right: 10%;
-            animation-delay: -10s;
-            animation-duration: 15s;
-        }
-
-        @keyframes float {
-            0%, 100% {
-                transform: translate(0, 0) rotate(0deg);
-            }
-            33% {
-                transform: translate(30px, -50px) rotate(120deg);
-            }
-            66% {
-                transform: translate(-20px, 20px) rotate(240deg);
-            }
-        }
-
-        /* Glass Morphism */
-        .glass {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-
-        .dark-theme .glass {
-            background: rgba(17, 24, 39, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* App Container */
+        /* Main App Container */
         .app-container {
             display: flex;
-            height: 100vh;
+            min-height: 100vh;
             position: relative;
-            overflow: hidden;
         }
 
         /* Sidebar */
         .sidebar {
-            width: var(--sidebar-width);
-            height: 100%;
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            padding: 20px;
             position: fixed;
             left: 0;
             top: 0;
-            z-index: 100;
+            bottom: 0;
+            z-index: 1000;
             transform: translateX(-100%);
             transition: var(--transition);
             box-shadow: var(--shadow-xl);
@@ -204,15 +111,15 @@
 
         .logo {
             font-size: 1.8rem;
-            font-weight: 900;
+            font-weight: 800;
             background: var(--primary-gradient);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            letter-spacing: -0.5px;
         }
 
         .close-sidebar {
+            display: none;
             background: none;
             border: none;
             font-size: 1.5rem;
@@ -220,42 +127,21 @@
             cursor: pointer;
             padding: 5px;
             border-radius: 50%;
-            transition: var(--transition-fast);
         }
 
         .close-sidebar:hover {
             background: var(--gray-100);
-            transform: rotate(90deg);
         }
 
-        /* User Profile Card */
-        .user-profile-card {
-            padding: 20px;
-            border-radius: var(--border-radius);
-            margin-bottom: 30px;
-            position: relative;
-            overflow: hidden;
-            transition: var(--transition);
-        }
-
-        .user-profile-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: var(--primary-gradient);
-        }
-
-        .user-profile-content {
+        /* User Profile */
+        .user-profile {
             display: flex;
             align-items: center;
             gap: 15px;
-        }
-
-        .user-avatar-container {
-            position: relative;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(236, 72, 153, 0.1));
+            border-radius: var(--border-radius);
         }
 
         .user-avatar {
@@ -264,75 +150,22 @@
             border-radius: 50%;
             object-fit: cover;
             border: 3px solid var(--primary-color);
-            transition: var(--transition);
-            cursor: pointer;
         }
 
-        .user-avatar:hover {
-            transform: scale(1.05);
-            border-color: var(--accent-color);
-        }
-
-        .online-status {
-            position: absolute;
-            bottom: 5px;
-            right: 5px;
-            width: 12px;
-            height: 12px;
-            background: var(--success-color);
-            border-radius: 50%;
-            border: 2px solid white;
-        }
-
-        .user-info {
-            flex: 1;
-        }
-
-        .user-name {
+        .user-info h3 {
             font-size: 1.1rem;
             font-weight: 600;
             margin-bottom: 5px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
-        .user-role-badge {
+        .user-role {
             display: inline-block;
             padding: 4px 12px;
             background: var(--primary-gradient);
             color: white;
             border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .user-stats {
-            display: flex;
-            gap: 15px;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid var(--gray-200);
-        }
-
-        .stat {
-            text-align: center;
-            flex: 1;
-        }
-
-        .stat-value {
-            font-weight: 700;
-            color: var(--primary-color);
-            font-size: 1.1rem;
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-            color: var(--gray-700);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-size: 0.8rem;
+            font-weight: 500;
         }
 
         /* Navigation */
@@ -340,94 +173,58 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
 
         .nav-item {
             display: flex;
             align-items: center;
             gap: 15px;
-            padding: 16px 20px;
+            padding: 15px;
             color: var(--gray-700);
             text-decoration: none;
             border-radius: var(--border-radius);
             transition: var(--transition);
             cursor: pointer;
-            position: relative;
-            overflow: hidden;
+            border: none;
+            background: none;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            text-align: left;
         }
 
         .nav-item i {
             font-size: 1.2rem;
             width: 24px;
-            text-align: center;
-            transition: var(--transition);
         }
 
-        .nav-item::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 4px;
-            background: var(--primary-gradient);
-            transform: translateX(-100%);
-            transition: var(--transition);
-        }
-
-        .nav-item:hover,
-        .nav-item.active {
+        .nav-item:hover {
             background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(236, 72, 153, 0.05));
             color: var(--primary-color);
+            transform: translateX(5px);
         }
 
-        .nav-item.active::before {
-            transform: translateX(0);
-        }
-
-        .nav-item.active i {
-            transform: scale(1.1);
-        }
-
-        .notification-badge {
-            margin-left: auto;
-            background: var(--accent-color);
+        .nav-item.active {
+            background: var(--primary-gradient);
             color: white;
-            border-radius: 10px;
-            padding: 4px 8px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            min-width: 20px;
-            text-align: center;
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(124, 58, 237, 0.3);
         }
 
-        /* Action Buttons */
-        .action-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+        .logout-btn {
             margin-top: auto;
-        }
-
-        .action-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 14px;
+            background: linear-gradient(135deg, var(--danger-color), #dc2626);
+            color: white;
+            border: none;
+            padding: 15px;
             border-radius: var(--border-radius);
             font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
-            border: none;
-            font-family: 'Poppins', sans-serif;
-            font-size: 0.9rem;
-        }
-
-        .logout-btn {
-            background: linear-gradient(135deg, var(--danger-color), #dc2626);
-            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
         .logout-btn:hover {
@@ -435,26 +232,33 @@
             box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
         }
 
-        .theme-toggle {
-            background: var(--gray-100);
-            color: var(--dark-color);
-        }
-
-        .theme-toggle:hover {
-            background: var(--gray-200);
-            transform: translateY(-2px);
-        }
-
         /* Main Content */
         .main-content {
             flex: 1;
             padding: 20px;
-            overflow-y: auto;
-            position: relative;
             margin-left: 0;
+            min-height: 100vh;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
             transition: var(--transition);
         }
 
+        @media (min-width: 992px) {
+            .sidebar {
+                position: relative;
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 280px;
+            }
+            
+            .close-sidebar {
+                display: none;
+            }
+        }
+
+        /* Header */
         .content-header {
             display: flex;
             justify-content: space-between;
@@ -462,24 +266,12 @@
             margin-bottom: 30px;
             padding-bottom: 20px;
             border-bottom: 1px solid var(--gray-200);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            padding-top: 10px;
         }
 
         .page-title {
-            font-size: 2rem;
-            font-weight: 800;
+            font-size: 1.8rem;
+            font-weight: 700;
             color: var(--darker-color);
-            letter-spacing: -0.5px;
-        }
-
-        .title-gradient {
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
         }
 
         .header-actions {
@@ -488,33 +280,10 @@
             gap: 15px;
         }
 
-        .open-sidebar {
-            background: var(--primary-gradient);
-            color: white;
-            border: none;
-            width: 45px;
-            height: 45px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .open-sidebar:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
-        }
-
         .balance-display {
-            display: flex;
-            align-items: center;
-            gap: 10px;
             padding: 10px 20px;
             background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(236, 72, 153, 0.1));
-            border-radius: 12px;
+            border-radius: var(--border-radius);
             font-weight: 600;
         }
 
@@ -523,60 +292,63 @@
             font-weight: 700;
         }
 
+        .open-sidebar {
+            display: none;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
         /* Page Content */
-        .page-content {
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.5s ease forwards;
+        .page {
+            display: none;
+            animation: fadeIn 0.3s ease;
         }
 
-        @keyframes fadeInUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .page.active {
+            display: block;
         }
 
-        /* Models Grid */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Models Page */
         .models-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 25px;
         }
 
+        @media (max-width: 768px) {
+            .models-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .model-card {
+            background: white;
             border-radius: var(--border-radius-lg);
             overflow: hidden;
             transition: var(--transition);
-            position: relative;
-            cursor: pointer;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
         }
 
         .model-card:hover {
-            transform: translateY(-10px) scale(1.02);
+            transform: translateY(-10px);
             box-shadow: var(--shadow-xl);
-        }
-
-        .model-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%);
-            opacity: 0;
-            transition: var(--transition);
-            z-index: 1;
-        }
-
-        .model-card:hover::before {
-            opacity: 1;
         }
 
         .model-header {
             position: relative;
-            height: 250px;
+            height: 200px;
             overflow: hidden;
         }
 
@@ -584,89 +356,149 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.8s ease;
+            transition: transform 0.5s ease;
         }
 
         .model-card:hover .model-img {
             transform: scale(1.1);
         }
 
-        .model-badge {
+        .online-badge {
             position: absolute;
             top: 15px;
             right: 15px;
-            z-index: 2;
+            background: var(--success-color);
+            color: white;
             padding: 8px 16px;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 600;
             box-shadow: var(--shadow);
         }
 
-        .online-badge {
-            background: var(--success-color);
-            color: white;
-        }
-
         .model-info {
-            position: relative;
             padding: 20px;
-            z-index: 2;
         }
 
         .model-name {
             font-size: 1.3rem;
-            font-weight: 700;
+            font-weight: 600;
             color: var(--darker-color);
             margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .model-price {
-            color: var(--primary-color);
-            font-weight: 700;
-            font-size: 1.2rem;
         }
 
         .model-stats {
             display: flex;
-            gap: 20px;
+            justify-content: space-between;
             margin: 15px 0;
+            padding: 15px 0;
+            border-top: 1px solid var(--gray-200);
+            border-bottom: 1px solid var(--gray-200);
         }
 
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            color: var(--gray-700);
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            color: var(--darker-color);
+            font-size: 1.1rem;
+        }
+
+        .stat-label {
             font-size: 0.9rem;
+            color: var(--gray-700);
         }
 
-        .stat-item i {
-            color: var(--warning-color);
-        }
-
-        .action-buttons-grid {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .btn {
-            padding: 12px 20px;
-            border-radius: 12px;
+        .chat-btn {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
             font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
-            border: none;
-            font-family: 'Poppins', sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            flex: 1;
+            gap: 10px;
+        }
+
+        .chat-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
+        }
+
+        /* Wallet Page */
+        .wallet-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .wallet-card {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 40px;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-xl);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .wallet-balance {
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 20px 0;
+        }
+
+        .wallet-form {
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group input,
+        .input-group select,
+        .input-group textarea {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            transition: var(--transition);
+        }
+
+        .input-group input:focus,
+        .input-group select:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
         }
 
         .btn-primary {
@@ -679,35 +511,34 @@
             box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
         }
 
-        .btn-secondary {
-            background: var(--gray-100);
-            color: var(--dark-color);
-        }
-
-        .btn-secondary:hover {
-            background: var(--gray-200);
-            transform: translateY(-2px);
-        }
-
         /* Chat Page */
         .chat-page {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1000;
-            display: none;
+            height: 100vh;
+            display: flex;
             flex-direction: column;
-            background: var(--light-color);
         }
 
         .chat-header {
-            padding: 15px 20px;
+            background: white;
+            padding: 20px;
+            border-bottom: 1px solid var(--gray-200);
             display: flex;
             align-items: center;
             gap: 15px;
-            box-shadow: var(--shadow-sm);
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+        }
+
+        .back-btn:hover {
+            background: var(--gray-100);
         }
 
         .chat-partner-info {
@@ -735,33 +566,153 @@
             flex: 1;
             padding: 20px;
             overflow-y: auto;
-            background: var(--gray-100);
+            background: linear-gradient(180deg, var(--gray-100), white);
             display: flex;
             flex-direction: column;
             gap: 15px;
         }
 
-        /* Wallet Page */
-        .wallet-card {
-            border-radius: var(--border-radius-lg);
-            overflow: hidden;
-            box-shadow: var(--shadow-xl);
-            margin-bottom: 30px;
+        .message {
+            max-width: 70%;
         }
 
-        .wallet-header {
-            padding: 30px;
+        .message.sent {
+            align-self: flex-end;
+        }
+
+        .message.received {
+            align-self: flex-start;
+        }
+
+        .message-bubble {
+            padding: 15px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .message.sent .message-bubble {
             background: var(--primary-gradient);
             color: white;
         }
 
-        .balance-display-large {
-            font-size: 3rem;
-            font-weight: 800;
+        .message.received .message-bubble {
+            background: white;
+            color: var(--darker-color);
+            border: 1px solid var(--gray-200);
+        }
+
+        .message-input-container {
+            background: white;
+            padding: 20px;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .send-btn {
+            padding: 15px 25px;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
+        }
+
+        /* History Page */
+        .history-list {
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .history-item {
+            padding: 20px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-info h4 {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .transaction-amount {
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .transaction-amount.positive {
+            color: var(--success-color);
+        }
+
+        .transaction-amount.negative {
+            color: var(--danger-color);
+        }
+
+        /* Settings Page */
+        .settings-form {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .profile-preview {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .profile-preview img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        /* Media Request */
+        .media-request {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 2px solid var(--warning-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
             margin: 10px 0;
         }
 
-        /* Modals */
+        /* Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -774,29 +725,27 @@
             justify-content: center;
             z-index: 2000;
             padding: 20px;
-            animation: fadeIn 0.3s ease;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        .modal-overlay.active {
+            display: flex;
         }
 
         .modal {
-            background: var(--light-color);
+            background: white;
             border-radius: var(--border-radius-lg);
             padding: 30px;
             max-width: 500px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
-            animation: slideUp 0.3s ease;
+            animation: modalSlideIn 0.3s ease;
         }
 
-        @keyframes slideUp {
+        @keyframes modalSlideIn {
             from {
                 opacity: 0;
-                transform: translateY(50px);
+                transform: translateY(-50px);
             }
             to {
                 opacity: 1;
@@ -804,242 +753,170 @@
             }
         }
 
-        /* Loading States */
-        .skeleton {
-            background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-300) 50%, var(--gray-200) 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-        }
-
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        /* Responsive Design */
-        @media (min-width: 768px) {
-            .sidebar {
-                position: relative;
-                transform: translateX(0);
-            }
-            
-            .main-content {
-                margin-left: var(--sidebar-width);
-            }
-            
-            .open-sidebar {
-                display: none;
-            }
-            
-            .close-sidebar {
-                display: none;
-            }
-        }
-
-        @media (max-width: 767px) {
-            .models-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .sidebar {
-                width: 100%;
-            }
-            
-            .page-title {
-                font-size: 1.5rem;
-            }
-            
-            .header-actions {
-                gap: 10px;
-            }
-            
-            .balance-display {
-                padding: 8px 15px;
-                font-size: 0.9rem;
-            }
-        }
-
-        /* Enhanced Animations */
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .shake {
-            animation: shake 0.5s ease;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--gray-100);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--primary-dark);
-        }
-
-        /* Toast Notifications */
-        .toast-container {
+        /* Notification */
+        .notification {
             position: fixed;
             top: 20px;
             right: 20px;
-            z-index: 9999;
-        }
-
-        .toast {
-            padding: 16px 20px;
-            border-radius: 12px;
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
             color: white;
-            margin-bottom: 10px;
             display: flex;
             align-items: center;
             gap: 10px;
             transform: translateX(100%);
-            opacity: 0;
-            transition: transform 0.3s ease, opacity 0.3s ease;
+            transition: var(--transition);
+            z-index: 10000;
             box-shadow: var(--shadow);
         }
 
-        .toast.show {
+        .notification.show {
             transform: translateX(0);
-            opacity: 1;
         }
 
-        .toast.success {
+        .notification.success {
             background: var(--success-color);
         }
 
-        .toast.error {
+        .notification.error {
             background: var(--danger-color);
         }
 
-        .toast.warning {
+        .notification.warning {
             background: var(--warning-color);
         }
 
-        .toast.info {
-            background: var(--info-color);
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 50px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(124, 58, 237, 0.2);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 991px) {
+            .open-sidebar {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .close-sidebar {
+                display: block;
+            }
+
+            .content-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .message {
+                max-width: 85%;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .main-content {
+                padding: 15px;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .wallet-card {
+                padding: 30px 20px;
+            }
+
+            .wallet-balance {
+                font-size: 2.5rem;
+            }
+
+            .model-card {
+                margin-bottom: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Animated Background -->
-    <div class="animated-bg">
-        <div class="floating-shapes"></div>
-        <div class="floating-shapes"></div>
-        <div class="floating-shapes"></div>
-    </div>
-
-    <!-- Toast Container -->
-    <div class="toast-container" id="toast-container"></div>
-
     <!-- App Container -->
     <div class="app-container">
         <!-- Sidebar -->
-        <aside class="sidebar glass">
+        <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="logo">CAMSILO</div>
+                <div class="logo">Camsilo</div>
                 <button class="close-sidebar" id="close-sidebar">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
 
             <!-- User Profile -->
-            <div class="user-profile-card glass">
-                <div class="user-profile-content">
-                    <div class="user-avatar-container">
-                        <img id="user-avatar" src="https://ui-avatars.com/api/?name=User&background=7c3aed&color=fff&size=128&bold=true&font-size=0.5" 
-                             alt="Profile" class="user-avatar">
-                        <span class="online-status"></span>
-                    </div>
-                    <div class="user-info">
-                        <div class="user-name">
-                            <span id="username">Loading...</span>
-                            <span id="user-role" class="user-role-badge">Loading</span>
-                        </div>
-                        <div class="user-stats">
-                            <div class="stat">
-                                <div class="stat-value" id="user-balance">₦0</div>
-                                <div class="stat-label">Balance</div>
-                            </div>
-                            <div class="stat">
-                                <div class="stat-value" id="user-chats">0</div>
-                                <div class="stat-label">Chats</div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="user-profile">
+                <img id="user-avatar" src="https://ui-avatars.com/api/?name=User&background=7c3aed&color=fff" 
+                     alt="Profile" class="user-avatar">
+                <div class="user-info">
+                    <h3 id="username">Loading...</h3>
+                    <span id="user-role" class="user-role">Loading...</span>
                 </div>
             </div>
 
-            <!-- Navigation -->
+            <!-- Navigation Menu -->
             <nav class="nav-menu">
-                <div class="nav-item active" data-page="models">
+                <button class="nav-item active" data-page="models">
                     <i class="fas fa-users"></i>
-                    <span>Premium Models</span>
-                    <span class="notification-badge" id="models-count">0</span>
-                </div>
-                <div class="nav-item" data-page="chats">
+                    <span>Models</span>
+                </button>
+                <button class="nav-item" data-page="chats">
                     <i class="fas fa-comments"></i>
                     <span>My Chats</span>
-                    <span class="notification-badge" id="chats-count">0</span>
-                </div>
-                <div class="nav-item" data-page="wallet">
+                </button>
+                <button class="nav-item" data-page="wallet">
                     <i class="fas fa-wallet"></i>
                     <span>Wallet</span>
-                </div>
-                <div class="nav-item" data-page="history">
+                </button>
+                <button class="nav-item" data-page="history">
                     <i class="fas fa-history"></i>
                     <span>History</span>
-                </div>
-                <div class="nav-item" data-page="settings">
+                </button>
+                <button class="nav-item" data-page="settings">
                     <i class="fas fa-cog"></i>
                     <span>Settings</span>
-                </div>
+                </button>
             </nav>
 
-            <!-- Action Buttons -->
-            <div class="action-buttons">
-                <button class="action-btn theme-toggle" id="theme-toggle">
-                    <i class="fas fa-moon"></i>
-                    <span>Dark Mode</span>
-                </button>
-                <button class="action-btn logout-btn" id="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </button>
-            </div>
-        </aside>
+            <!-- Logout Button -->
+            <button class="logout-btn" id="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </button>
+        </div>
 
         <!-- Main Content -->
-        <main class="main-content glass">
-            <header class="content-header">
-                <h1 class="page-title">
-                    <span class="title-gradient" id="page-title">Premium Models</span>
-                </h1>
+        <div class="main-content">
+            <div class="content-header">
+                <h1 class="page-title" id="page-title">Premium Models</h1>
                 <div class="header-actions">
                     <div class="balance-display">
-                        <i class="fas fa-wallet"></i>
                         <span>Balance: </span>
                         <span class="balance-amount" id="header-balance">₦0.00</span>
                     </div>
@@ -1047,34 +924,65 @@
                         <i class="fas fa-bars"></i>
                     </button>
                 </div>
-            </header>
+            </div>
 
             <!-- Page Content -->
-            <div class="page-content">
+            <div id="page-content">
                 <!-- Models Page -->
                 <div class="page models-page active">
-                    <div id="models-container" class="models-grid">
-                        <!-- Models will be dynamically loaded -->
+                    <div id="models-container">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Chats Page -->
                 <div class="page chats-page">
                     <div id="chats-container">
-                        <!-- Chats will be dynamically loaded -->
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Wallet Page -->
                 <div class="page wallet-page">
-                    <div class="wallet-card glass">
-                        <div class="wallet-header">
-                            <h3>Your Wallet</h3>
-                            <div class="balance-display-large" id="wallet-balance">₦0.00</div>
-                            <p>Available Balance</p>
+                    <div class="wallet-container">
+                        <div class="wallet-card">
+                            <h3>Wallet Balance</h3>
+                            <div id="wallet-balance" class="wallet-balance">₦0.00</div>
                         </div>
-                        <div class="wallet-actions" style="padding: 30px;">
-                            <!-- Deposit/Withdraw forms will be shown based on user role -->
+                        
+                        <div class="wallet-form">
+                            <!-- Deposit Form for Males -->
+                            <form id="deposit-form" style="display: none;">
+                                <div class="input-group">
+                                    <input type="number" id="deposit-amount" placeholder="Amount (₦)" min="100" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-external-link-alt"></i> Deposit Now
+                                </button>
+                            </form>
+
+                            <!-- Withdraw Form for Females -->
+                            <form id="withdraw-form" style="display: none;">
+                                <div class="input-group">
+                                    <input type="number" id="withdraw-amount" placeholder="Amount (₦)" min="1000" required>
+                                </div>
+                                <div class="input-group">
+                                    <input type="text" id="bank-name" placeholder="Bank Name" required>
+                                </div>
+                                <div class="input-group">
+                                    <input type="text" id="account-number" placeholder="Account Number" required>
+                                </div>
+                                <div class="input-group">
+                                    <input type="text" id="account-name" placeholder="Account Name" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane"></i> Request Withdrawal
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -1082,464 +990,1042 @@
                 <!-- History Page -->
                 <div class="page history-page">
                     <div id="history-container">
-                        <!-- History will be loaded here -->
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Settings Page -->
                 <div class="page settings-page">
-                    <div class="settings-card glass" style="padding: 30px; border-radius: var(--border-radius);">
-                        <h3 style="margin-bottom: 20px;">Profile Settings</h3>
-                        <!-- Settings form will be loaded here -->
+                    <div class="settings-form">
+                        <div class="profile-preview">
+                            <img id="settings-avatar-preview" src="https://ui-avatars.com/api/?name=User&background=7c3aed&color=fff" alt="Profile Preview">
+                            <h3 id="settings-name-preview">Loading...</h3>
+                        </div>
+                        
+                        <div class="wallet-form">
+                            <div class="input-group">
+                                <input type="text" id="settings-name" placeholder="Full Name">
+                            </div>
+                            <div class="input-group">
+                                <input type="text" id="settings-photo" placeholder="Profile Photo URL">
+                            </div>
+                            <button id="save-settings" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
 
-    <!-- Chat Page (Hidden) -->
-    <div class="chat-page" id="chat-page">
-        <!-- Chat UI will be dynamically generated -->
+    <!-- Chat Page (Hidden by default) -->
+    <div class="chat-page" id="chat-page" style="display: none;">
+        <div class="chat-header">
+            <button class="back-btn" id="back-to-dashboard">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="chat-partner-info">
+                <img id="chat-partner-avatar" src="https://via.placeholder.com/50" 
+                     alt="Model" class="chat-partner-avatar">
+                <div>
+                    <div id="chat-partner-name" class="chat-partner-name">Select a chat</div>
+                    <div class="chat-price">₦10 per message</div>
+                </div>
+            </div>
+            <button id="request-media-btn" class="btn btn-primary">
+                <i class="fas fa-camera"></i> Request Media
+            </button>
+        </div>
+
+        <div class="chat-container">
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="messages-container">
+                <!-- Messages will be loaded here -->
+                <div class="welcome-message">
+                    <div style="text-align: center; padding: 40px;">
+                        <h3>Welcome to Camsilo Chat</h3>
+                        <p>Select a model to start chatting</p>
+                        <p style="color: var(--primary-color); margin-top: 10px;">
+                            <i class="fas fa-info-circle"></i> Each message costs ₦10
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Message Input -->
+        <div class="message-input-container">
+            <input type="text" id="message-input" class="message-input" 
+                   placeholder="Type your message..." disabled>
+            <button id="send-btn" class="send-btn" disabled>
+                <i class="fas fa-paper-plane"></i> Send
+            </button>
+        </div>
     </div>
 
     <!-- Modals -->
-    <div class="modal-overlay" id="profile-modal">
-        <div class="modal glass">
-            <!-- Profile modal content -->
+    <div id="media-request-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Request Custom Media</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <select id="media-type">
+                        <option value="image">Image</option>
+                        <option value="video">Video</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <textarea id="media-description" placeholder="Describe what you'd like..." rows="3"></textarea>
+                </div>
+                <div class="input-group">
+                    <input type="number" id="media-amount" placeholder="Amount (₦)" min="100" required>
+                </div>
+                <button id="submit-media-request" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Send Request
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div class="modal-overlay" id="loading-overlay" style="display: flex;">
-        <div class="loading-content" style="text-align: center;">
-            <div class="spinner" style="width: 60px; height: 60px; border: 4px solid rgba(124, 58, 237, 0.2); border-top-color: var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
-            <h3 style="color: white; font-weight: 600;">Loading Camsilo...</h3>
+    <!-- Media Upload Modal -->
+    <div id="media-upload-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Upload Media</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <input type="file" id="media-file" accept="image/*,video/*">
+                </div>
+                <div id="media-preview"></div>
+                <button id="upload-media-btn" class="btn btn-primary">
+                    <i class="fas fa-upload"></i> Upload
+                </button>
+            </div>
         </div>
     </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
 
     <script>
-        // ========== MODERNIZED IMPLEMENTATION ==========
-        class CamsiloApp {
-            constructor() {
-                this.currentUser = null;
-                this.userData = null;
-                this.walletBalance = 0;
-                this.currentChatId = null;
-                this.currentModelId = null;
-                this.models = [];
-                this.chats = [];
-                this.theme = localStorage.getItem('theme') || 'light';
-                
-                this.init();
-            }
+        // ========== GLOBAL VARIABLES ==========
+        let currentUser = null;
+        let userData = null;
+        let walletBalance = 0;
+        let currentChatId = null;
+        let currentModelId = null;
+        let models = [];
+        let chats = [];
 
-            async init() {
-                // Initialize theme
-                this.setTheme(this.theme);
-                
-                // Check Firebase config
-                setTimeout(() => {
-                    if (typeof firebaseConfig !== 'undefined') {
-                        firebase.initializeApp(firebaseConfig);
-                        this.checkAuth();
-                    } else {
-                        this.showToast('Firebase configuration not loaded', 'error');
-                    }
-                }, 100);
+        // ========== INITIALIZATION ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+        });
 
-                // Setup event listeners
-                this.setupEventListeners();
-                
-                // Setup real-time listeners
-                this.setupRealtimeListeners();
-            }
-
-            // ========== THEME MANAGEMENT ==========
-            setTheme(theme) {
-                this.theme = theme;
-                localStorage.setItem('theme', theme);
-                
-                if (theme === 'dark') {
-                    document.body.classList.add('dark-theme');
-                    document.getElementById('theme-toggle').innerHTML = '<i class="fas fa-sun"></i><span>Light Mode</span>';
-                } else {
-                    document.body.classList.remove('dark-theme');
-                    document.getElementById('theme-toggle').innerHTML = '<i class="fas fa-moon"></i><span>Dark Mode</span>';
+        async function initializeApp() {
+            try {
+                // Check if Firebase config is loaded
+                if (typeof firebaseConfig === 'undefined') {
+                    showNotification('Firebase configuration not loaded', 'error');
+                    return;
                 }
-            }
 
-            toggleTheme() {
-                this.setTheme(this.theme === 'light' ? 'dark' : 'light');
-            }
-
-            // ========== AUTHENTICATION ==========
-            async checkAuth() {
+                // Initialize Firebase
+                firebase.initializeApp(firebaseConfig);
+                
+                // Check authentication state
                 firebase.auth().onAuthStateChanged(async (user) => {
                     if (user) {
-                        this.currentUser = user;
-                        await this.loadUserData();
-                        this.hideLoading();
+                        currentUser = user;
+                        await loadUserData();
+                        setupEventListeners();
+                        loadModels();
+                        setupRealtimeListeners();
                     } else {
+                        // Redirect to login page
                         window.location.href = 'index.html';
                     }
                 });
-            }
-
-            async loadUserData() {
-                try {
-                    const userDoc = await firebase.firestore()
-                        .collection('users')
-                        .doc(this.currentUser.uid)
-                        .get();
-
-                    if (userDoc.exists) {
-                        this.userData = userDoc.data();
-                        this.walletBalance = this.userData.walletBalance || 0;
-                        this.updateUI();
-                    }
-                } catch (error) {
-                    this.showToast('Error loading user data', 'error');
-                    console.error('Error:', error);
-                }
-            }
-
-            // ========== UI UPDATES ==========
-            updateUI() {
-                // Update user profile
-                document.getElementById('username').textContent = this.userData.name || 'User';
-                document.getElementById('user-role').textContent = this.userData.gender === 'male' ? 'CLIENT' : 'MODEL';
-                document.getElementById('user-avatar').src = this.userData.profileImage || 
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(this.userData.name || 'User')}&background=7c3aed&color=fff`;
-                
-                // Update balance displays
-                document.getElementById('user-balance').textContent = `₦${this.walletBalance.toLocaleString()}`;
-                document.getElementById('header-balance').textContent = `₦${this.walletBalance.toLocaleString()}`;
-                document.getElementById('wallet-balance').textContent = `₦${this.walletBalance.toLocaleString()}`;
-
-                // Load initial data
-                this.loadModels();
-                this.loadChats();
-            }
-
-            // ========== MODELS MANAGEMENT ==========
-            async loadModels() {
-                try {
-                    const snapshot = await firebase.firestore()
-                        .collection('users')
-                        .where('gender', '==', 'female')
-                        .where('isModel', '==', true)
-                        .where('online', '==', true)
-                        .get();
-
-                    this.models = snapshot.docs.map(doc => ({
-                        id: doc.id,
-                        ...doc.data()
-                    }));
-
-                    this.renderModels();
-                } catch (error) {
-                    this.showToast('Error loading models', 'error');
-                }
-            }
-
-            renderModels() {
-                const container = document.getElementById('models-container');
-                container.innerHTML = '';
-
-                if (this.models.length === 0) {
-                    container.innerHTML = `
-                        <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
-                            <i class="fas fa-users" style="font-size: 3rem; color: var(--gray-300); margin-bottom: 20px;"></i>
-                            <h3 style="color: var(--gray-700);">No models online</h3>
-                            <p style="color: var(--gray-700);">Check back later for available models</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                this.models.forEach(model => {
-                    const card = document.createElement('div');
-                    card.className = 'model-card glass';
-                    card.innerHTML = `
-                        <div class="model-header">
-                            <img src="${model.profileImage || 'https://via.placeholder.com/300'}" 
-                                 alt="${model.name}" 
-                                 class="model-img">
-                            <span class="model-badge online-badge">Online</span>
-                        </div>
-                        <div class="model-info">
-                            <div class="model-name">
-                                <span>${model.name}</span>
-                                <span class="model-price">₦10/msg</span>
-                            </div>
-                            <div class="model-stats">
-                                <div class="stat-item">
-                                    <i class="fas fa-star"></i>
-                                    <span>${model.rating || 4.5}</span>
-                                </div>
-                                <div class="stat-item">
-                                    <i class="fas fa-bolt"></i>
-                                    <span>${model.responseRate || 85}%</span>
-                                </div>
-                                <div class="stat-item">
-                                    <i class="fas fa-comment"></i>
-                                    <span>${model.chats || 0}</span>
-                                </div>
-                            </div>
-                            <div class="action-buttons-grid">
-                                <button class="btn btn-primary" onclick="app.startChat('${model.id}')">
-                                    <i class="fas fa-comment"></i> Chat Now
-                                </button>
-                                <button class="btn btn-secondary" onclick="app.viewProfile('${model.id}')">
-                                    <i class="fas fa-eye"></i> View
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    container.appendChild(card);
-                });
-            }
-
-            // ========== CHAT SYSTEM ==========
-            async startChat(modelId) {
-                if (this.userData.gender === 'male' && this.walletBalance < 10) {
-                    this.showToast('Insufficient balance. Minimum ₦10 required', 'error');
-                    this.showPage('wallet');
-                    return;
-                }
-
-                this.currentModelId = modelId;
-                const model = this.models.find(m => m.id === modelId);
-
-                if (!model) return;
-
-                // Generate chat ID
-                this.currentChatId = [this.currentUser.uid, modelId].sort().join('_');
-
-                try {
-                    // Create chat if doesn't exist
-                    const chatRef = firebase.firestore().collection('chats').doc(this.currentChatId);
-                    const chatDoc = await chatRef.get();
-
-                    if (!chatDoc.exists) {
-                        await chatRef.set({
-                            participants: [this.currentUser.uid, modelId],
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            lastMessage: null,
-                            lastMessageTime: null,
-                            modelName: model.name,
-                            clientName: this.userData.name
-                        });
-                    }
-
-                    // Show chat interface
-                    this.showChatInterface(model);
-                } catch (error) {
-                    this.showToast('Error starting chat', 'error');
-                }
-            }
-
-            showChatInterface(model) {
-                const chatPage = document.getElementById('chat-page');
-                chatPage.innerHTML = `
-                    <div class="chat-header glass">
-                        <button class="btn btn-secondary" onclick="app.hideChat()" style="width: auto; padding: 10px 15px;">
-                            <i class="fas fa-arrow-left"></i>
-                        </button>
-                        <div class="chat-partner-info">
-                            <img src="${model.profileImage}" 
-                                 alt="${model.name}" 
-                                 class="chat-partner-avatar">
-                            <div>
-                                <h3 style="font-weight: 600;">${model.name}</h3>
-                                <p style="color: var(--primary-color); font-size: 0.9rem;">
-                                    <i class="fas fa-info-circle"></i> ₦10 per message
-                                </p>
-                            </div>
-                        </div>
-                        <button class="btn btn-primary" onclick="app.requestMedia()" style="width: auto;">
-                            <i class="fas fa-camera"></i> Request
-                        </button>
-                    </div>
-                    <div class="chat-container">
-                        <div class="chat-messages" id="chat-messages">
-                            <!-- Messages will load here -->
-                        </div>
-                    </div>
-                    <div class="message-input-container glass" style="padding: 20px; display: flex; gap: 10px;">
-                        <input type="text" 
-                               id="chat-input" 
-                               placeholder="Type your message..." 
-                               style="flex: 1; padding: 15px; border-radius: 12px; border: 2px solid var(--gray-200); font-family: 'Poppins', sans-serif;">
-                        <button class="btn btn-primary" onclick="app.sendMessage()" style="width: auto;">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                `;
-                
-                chatPage.style.display = 'flex';
-                document.querySelector('.app-container').style.display = 'none';
-                
-                // Focus input
-                setTimeout(() => {
-                    document.getElementById('chat-input').focus();
-                }, 100);
-                
-                // Load messages
-                this.loadMessages();
-                this.setupChatListeners();
-            }
-
-            // ========== EVENT HANDLERS ==========
-            setupEventListeners() {
-                // Sidebar toggle
-                document.getElementById('open-sidebar').addEventListener('click', () => {
-                    document.querySelector('.sidebar').classList.add('active');
-                });
-
-                document.getElementById('close-sidebar').addEventListener('click', () => {
-                    document.querySelector('.sidebar').classList.remove('active');
-                });
-
-                // Navigation
-                document.querySelectorAll('.nav-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        const page = item.dataset.page;
-                        this.showPage(page);
-                    });
-                });
-
-                // Theme toggle
-                document.getElementById('theme-toggle').addEventListener('click', () => {
-                    this.toggleTheme();
-                });
-
-                // Logout
-                document.getElementById('logout-btn').addEventListener('click', async () => {
-                    try {
-                        await firebase.auth().signOut();
-                        this.showToast('Logged out successfully', 'success');
-                    } catch (error) {
-                        this.showToast('Error logging out', 'error');
-                    }
-                });
-            }
-
-            showPage(page) {
-                // Update navigation
-                document.querySelectorAll('.nav-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-                document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
-
-                // Update page title
-                const titles = {
-                    'models': 'Premium Models',
-                    'chats': 'My Chats',
-                    'wallet': 'Wallet',
-                    'history': 'History',
-                    'settings': 'Settings'
-                };
-                document.getElementById('page-title').textContent = titles[page];
-
-                // Show page content
-                document.querySelectorAll('.page').forEach(p => {
-                    p.classList.remove('active');
-                });
-                document.querySelector(`.${page}-page`).classList.add('active');
-
-                // Close sidebar on mobile
-                if (window.innerWidth <= 768) {
-                    document.querySelector('.sidebar').classList.remove('active');
-                }
-            }
-
-            // ========== NOTIFICATION SYSTEM ==========
-            showToast(message, type = 'info') {
-                const container = document.getElementById('toast-container');
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                toast.innerHTML = `
-                    <i class="fas fa-${this.getToastIcon(type)}"></i>
-                    <span>${message}</span>
-                `;
-                
-                container.appendChild(toast);
-                
-                setTimeout(() => toast.classList.add('show'), 10);
-                
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 300);
-                }, 3000);
-            }
-
-            getToastIcon(type) {
-                const icons = {
-                    'success': 'check-circle',
-                    'error': 'exclamation-circle',
-                    'warning': 'exclamation-triangle',
-                    'info': 'info-circle'
-                };
-                return icons[type] || 'info-circle';
-            }
-
-            // ========== UTILITIES ==========
-            hideLoading() {
-                document.getElementById('loading-overlay').style.display = 'none';
-            }
-
-            setupRealtimeListeners() {
-                if (!this.currentUser) return;
-
-                // Listen for balance updates
-                firebase.firestore()
-                    .collection('users')
-                    .doc(this.currentUser.uid)
-                    .onSnapshot((doc) => {
-                        if (doc.exists) {
-                            const data = doc.data();
-                            this.walletBalance = data.walletBalance || 0;
-                            this.updateUI();
-                        }
-                    });
-            }
-
-            // Additional methods would be implemented here...
-            loadChats() {
-                // Implementation for loading chats
-            }
-
-            loadMessages() {
-                // Implementation for loading messages
-            }
-
-            sendMessage() {
-                // Implementation for sending messages
-            }
-
-            hideChat() {
-                document.getElementById('chat-page').style.display = 'none';
-                document.querySelector('.app-container').style.display = 'flex';
-            }
-
-            requestMedia() {
-                // Implementation for media requests
-            }
-
-            viewProfile(modelId) {
-                // Implementation for viewing profiles
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showNotification('Error initializing application', 'error');
             }
         }
 
-        // Initialize the app
-        let app;
-        document.addEventListener('DOMContentLoaded', () => {
-            app = new CamsiloApp();
-        });
+        // ========== USER DATA ==========
+        async function loadUserData() {
+            try {
+                const userDoc = await firebase.firestore()
+                    .collection('users')
+                    .doc(currentUser.uid)
+                    .get();
+                
+                if (userDoc.exists) {
+                    userData = userDoc.data();
+                    walletBalance = userData.walletBalance || 0;
+                    
+                    // Update UI
+                    updateUserProfile();
+                    
+                    // Show/hide wallet forms based on gender
+                    if (userData.gender === 'male') {
+                        document.getElementById('deposit-form').style.display = 'block';
+                        document.getElementById('withdraw-form').style.display = 'none';
+                    } else {
+                        document.getElementById('deposit-form').style.display = 'none';
+                        document.getElementById('withdraw-form').style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                showNotification('Error loading user data', 'error');
+            }
+        }
 
-        // Make app available globally for button onclick handlers
-        window.app = app;
+        function updateUserProfile() {
+            document.getElementById('username').textContent = userData.name || 'User';
+            document.getElementById('user-role').textContent = userData.gender === 'male' ? 'Client' : 'Model';
+            document.getElementById('user-avatar').src = userData.profileImage || 
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=7c3aed&color=fff`;
+            
+            // Update header balance
+            document.getElementById('header-balance').textContent = `₦${walletBalance.toLocaleString()}`;
+            
+            // Update wallet page balance
+            document.getElementById('wallet-balance').textContent = `₦${walletBalance.toLocaleString()}`;
+            
+            // Update settings preview
+            document.getElementById('settings-name-preview').textContent = userData.name || 'User';
+            document.getElementById('settings-avatar-preview').src = userData.profileImage || 
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=7c3aed&color=fff`;
+            
+            // Fill settings form
+            document.getElementById('settings-name').value = userData.name || '';
+            document.getElementById('settings-photo').value = userData.profileImage || '';
+        }
+
+        // ========== EVENT LISTENERS ==========
+        function setupEventListeners() {
+            // Sidebar Toggle
+            document.getElementById('open-sidebar').addEventListener('click', () => {
+                document.getElementById('sidebar').classList.add('active');
+            });
+
+            document.getElementById('close-sidebar').addEventListener('click', () => {
+                document.getElementById('sidebar').classList.remove('active');
+            });
+
+            // Navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const page = item.dataset.page;
+                    showPage(page);
+                });
+            });
+
+            // Logout
+            document.getElementById('logout-btn').addEventListener('click', async () => {
+                try {
+                    await firebase.auth().signOut();
+                    showNotification('Logged out successfully', 'success');
+                } catch (error) {
+                    showNotification('Error logging out', 'error');
+                }
+            });
+
+            // Deposit Form
+            document.getElementById('deposit-form')?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const amount = document.getElementById('deposit-amount').value;
+                
+                if (amount < 100) {
+                    showNotification('Minimum deposit is ₦100', 'error');
+                    return;
+                }
+                
+                // Redirect to payment gateway (update with your actual payment URL)
+                window.open(`https://payment-gateway.com/deposit?amount=${amount}&userId=${currentUser.uid}`, '_blank');
+                showNotification('Redirecting to payment gateway', 'success');
+                
+                // Clear form
+                document.getElementById('deposit-form').reset();
+            });
+
+            // Withdraw Form
+            document.getElementById('withdraw-form')?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const amount = parseFloat(document.getElementById('withdraw-amount').value);
+                const bankName = document.getElementById('bank-name').value;
+                const accountNumber = document.getElementById('account-number').value;
+                const accountName = document.getElementById('account-name').value;
+                
+                if (amount < 1000) {
+                    showNotification('Minimum withdrawal is ₦1,000', 'error');
+                    return;
+                }
+                
+                if (amount > walletBalance) {
+                    showNotification('Insufficient balance', 'error');
+                    return;
+                }
+                
+                try {
+                    // Record withdrawal request
+                    await firebase.firestore().collection('withdrawals').add({
+                        userId: currentUser.uid,
+                        userName: userData.name,
+                        amount: amount,
+                        bankName: bankName,
+                        accountNumber: accountNumber,
+                        accountName: accountName,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        status: 'pending',
+                        processedBy: null,
+                        processedAt: null
+                    });
+                    
+                    showNotification('Withdrawal request submitted successfully', 'success');
+                    document.getElementById('withdraw-form').reset();
+                } catch (error) {
+                    console.error('Error processing withdrawal:', error);
+                    showNotification('Error processing withdrawal', 'error');
+                }
+            });
+
+            // Save Settings
+            document.getElementById('save-settings').addEventListener('click', async () => {
+                const name = document.getElementById('settings-name').value.trim();
+                const photo = document.getElementById('settings-photo').value.trim();
+                
+                if (!name) {
+                    showNotification('Please enter your name', 'error');
+                    return;
+                }
+                
+                try {
+                    await firebase.firestore().collection('users').doc(currentUser.uid).update({
+                        name: name,
+                        profileImage: photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=7c3aed&color=fff`
+                    });
+                    
+                    // Update local data
+                    userData.name = name;
+                    userData.profileImage = photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=7c3aed&color=fff`;
+                    
+                    // Update UI
+                    updateUserProfile();
+                    showNotification('Settings saved successfully', 'success');
+                } catch (error) {
+                    console.error('Error saving settings:', error);
+                    showNotification('Error saving settings', 'error');
+                }
+            });
+
+            // Back to dashboard from chat
+            document.getElementById('back-to-dashboard').addEventListener('click', () => {
+                document.getElementById('chat-page').style.display = 'none';
+                document.querySelector('.app-container').style.display = 'flex';
+                showPage('chats');
+            });
+
+            // Send Message
+            document.getElementById('send-btn').addEventListener('click', sendMessage);
+            
+            document.getElementById('message-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Media Request
+            document.getElementById('request-media-btn').addEventListener('click', () => {
+                if (!currentChatId) {
+                    showNotification('Please select a chat first', 'error');
+                    return;
+                }
+                document.getElementById('media-request-modal').classList.add('active');
+            });
+
+            // Submit Media Request
+            document.getElementById('submit-media-request').addEventListener('click', submitMediaRequest);
+
+            // Modal Close Buttons
+            document.querySelectorAll('.modal-close').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.modal-overlay').forEach(modal => {
+                        modal.classList.remove('active');
+                    });
+                });
+            });
+
+            // Close modals when clicking outside
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                    }
+                });
+            });
+        }
+
+        // ========== PAGE MANAGEMENT ==========
+        function showPage(page) {
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
+            
+            // Update page title
+            const titles = {
+                'models': 'Premium Models',
+                'chats': 'My Chats',
+                'wallet': 'Wallet',
+                'history': 'Transaction History',
+                'settings': 'Settings'
+            };
+            document.getElementById('page-title').textContent = titles[page];
+            
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(pageEl => {
+                pageEl.classList.remove('active');
+            });
+            
+            // Show selected page
+            document.querySelector(`.${page}-page`).classList.add('active');
+            
+            // Close sidebar on mobile
+            if (window.innerWidth <= 991) {
+                document.getElementById('sidebar').classList.remove('active');
+            }
+            
+            // Load page-specific data
+            switch(page) {
+                case 'models':
+                    loadModels();
+                    break;
+                case 'chats':
+                    loadChatsList();
+                    break;
+                case 'history':
+                    loadTransactionHistory();
+                    break;
+            }
+        }
+
+        // ========== MODELS MANAGEMENT ==========
+        async function loadModels() {
+            const container = document.getElementById('models-container');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            
+            try {
+                // Load female users (models) from Firebase
+                const modelsSnapshot = await firebase.firestore()
+                    .collection('users')
+                    .where('gender', '==', 'female')
+                    .where('isModel', '==', true)
+                    .get();
+                
+                container.innerHTML = '';
+                
+                if (modelsSnapshot.empty) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: var(--gray-700);">
+                            <i class="fas fa-users" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                            <h3>No models available</h3>
+                            <p>Check back later for available models</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                models = [];
+                modelsSnapshot.forEach(doc => {
+                    const model = {
+                        id: doc.id,
+                        ...doc.data()
+                    };
+                    models.push(model);
+                    createModelCard(model);
+                });
+            } catch (error) {
+                console.error('Error loading models:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--danger-color);">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                        <h3>Error loading models</h3>
+                        <p>Please try again later</p>
+                    </div>
+                `;
+            }
+        }
+
+        function createModelCard(model) {
+            const container = document.getElementById('models-container');
+            const card = document.createElement('div');
+            card.className = 'model-card';
+            card.innerHTML = `
+                <div class="model-header">
+                    <img src="${model.profileImage || 'https://via.placeholder.com/300x200?text=Model'}" 
+                         alt="${model.name}" 
+                         class="model-img">
+                    <span class="online-badge">${model.online ? 'Online' : 'Offline'}</span>
+                </div>
+                <div class="model-info">
+                    <h3 class="model-name">${model.name}</h3>
+                    <div class="model-stats">
+                        <div class="stat">
+                            <div class="stat-value">${model.rating || '4.5'}</div>
+                            <div class="stat-label">Rating</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${model.responseRate || '85%'}</div>
+                            <div class="stat-label">Response Rate</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${model.pricePerMessage || '₦10'}</div>
+                            <div class="stat-label">Per Message</div>
+                        </div>
+                    </div>
+                    <button class="chat-btn" onclick="startChat('${model.id}')">
+                        <i class="fas fa-comment"></i> Start Chat - ${model.pricePerMessage || '₦10'}/msg
+                    </button>
+                </div>
+            `;
+            container.appendChild(card);
+        }
+
+        // ========== CHAT FUNCTIONS ==========
+        window.startChat = async function(modelId) {
+            if (userData.gender === 'male' && walletBalance < 10) {
+                showNotification('Insufficient balance. Minimum ₦10 required to start chat', 'error');
+                showPage('wallet');
+                return;
+            }
+            
+            currentModelId = modelId;
+            const model = models.find(m => m.id === modelId);
+            
+            if (!model) {
+                showNotification('Model not found', 'error');
+                return;
+            }
+            
+            try {
+                // Update chat header
+                document.getElementById('chat-partner-name').textContent = model.name;
+                document.getElementById('chat-partner-avatar').src = model.profileImage || 'https://via.placeholder.com/50';
+                
+                // Generate chat ID
+                currentChatId = [currentUser.uid, modelId].sort().join('_');
+                
+                // Create or get chat document
+                const chatRef = firebase.firestore().collection('chats').doc(currentChatId);
+                const chatDoc = await chatRef.get();
+                
+                if (!chatDoc.exists) {
+                    await chatRef.set({
+                        participants: [currentUser.uid, modelId],
+                        clientName: userData.name,
+                        modelName: model.name,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastMessage: null,
+                        lastMessageTime: null,
+                        isActive: true
+                    });
+                }
+                
+                // Enable chat input
+                document.getElementById('message-input').disabled = false;
+                document.getElementById('send-btn').disabled = false;
+                
+                // Load chat history
+                await loadChatHistory();
+                
+                // Switch to chat page
+                document.querySelector('.app-container').style.display = 'none';
+                document.getElementById('chat-page').style.display = 'flex';
+                
+                // Focus on message input
+                setTimeout(() => {
+                    document.getElementById('message-input').focus();
+                }, 100);
+                
+                // Listen for new messages
+                setupChatListener();
+                
+            } catch (error) {
+                console.error('Error starting chat:', error);
+                showNotification('Error starting chat', 'error');
+            }
+        };
+
+        async function loadChatHistory() {
+            const container = document.getElementById('messages-container');
+            container.innerHTML = '';
+            
+            try {
+                const messagesSnapshot = await firebase.firestore()
+                    .collection('chats').doc(currentChatId)
+                    .collection('messages')
+                    .orderBy('timestamp', 'asc')
+                    .get();
+                
+                if (messagesSnapshot.empty) {
+                    return;
+                }
+                
+                messagesSnapshot.forEach(doc => {
+                    displayMessage(doc.data());
+                });
+                
+                // Scroll to bottom
+                container.scrollTop = container.scrollHeight;
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+            }
+        }
+
+        function setupChatListener() {
+            if (!currentChatId) return;
+            
+            firebase.firestore()
+                .collection('chats').doc(currentChatId)
+                .collection('messages')
+                .orderBy('timestamp', 'desc')
+                .limit(1)
+                .onSnapshot((snapshot) => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            displayMessage(change.doc.data());
+                            // Scroll to bottom
+                            const container = document.getElementById('messages-container');
+                            container.scrollTop = container.scrollHeight;
+                        }
+                    });
+                });
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+            
+            if (!text || !currentChatId) return;
+            
+            if (userData.gender === 'male' && walletBalance < 10) {
+                showNotification('Insufficient balance', 'error');
+                return;
+            }
+            
+            try {
+                const message = {
+                    senderId: currentUser.uid,
+                    text: text,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    type: 'text',
+                    read: false
+                };
+                
+                // Add message to Firestore
+                await firebase.firestore()
+                    .collection('chats').doc(currentChatId)
+                    .collection('messages')
+                    .add(message);
+                
+                // Update chat last message
+                await firebase.firestore()
+                    .collection('chats').doc(currentChatId)
+                    .update({
+                        lastMessage: text,
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                
+                // Handle payment for male users
+                if (userData.gender === 'male') {
+                    const model = models.find(m => m.id === currentModelId);
+                    const pricePerMessage = model?.pricePerMessage || 10;
+                    
+                    // Deduct from male user
+                    await firebase.firestore()
+                        .collection('users')
+                        .doc(currentUser.uid)
+                        .update({
+                            walletBalance: firebase.firestore.FieldValue.increment(-pricePerMessage)
+                        });
+                    
+                    // Add to model
+                    await firebase.firestore()
+                        .collection('users')
+                        .doc(currentModelId)
+                        .update({
+                            walletBalance: firebase.firestore.FieldValue.increment(pricePerMessage)
+                        });
+                    
+                    // Update local balance
+                    walletBalance -= pricePerMessage;
+                    updateBalanceDisplay();
+                }
+                
+                // Clear input
+                input.value = '';
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showNotification('Error sending message', 'error');
+            }
+        }
+
+        function displayMessage(message) {
+            const container = document.getElementById('messages-container');
+            const isSender = message.senderId === currentUser.uid;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isSender ? 'sent' : 'received'}`;
+            
+            const time = message.timestamp?.toDate ? 
+                message.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 
+                'Just now';
+            
+            if (message.type === 'text') {
+                messageDiv.innerHTML = `
+                    <div class="message-bubble">
+                        <div class="message-text">${message.text}</div>
+                        <div class="message-time">${time}</div>
+                    </div>
+                `;
+            } else if (message.type === 'media_request') {
+                messageDiv.innerHTML = `
+                    <div class="media-request">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <i class="fas fa-${message.mediaType === 'image' ? 'image' : 'video'}"></i>
+                            <strong>Media Request</strong>
+                        </div>
+                        <p>${message.description || 'No description provided'}</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                            <strong>₦${message.amount?.toLocaleString() || '0'}</strong>
+                            ${!isSender && userData.gender === 'female' ? 
+                                `<button onclick="acceptMediaRequest('${message.requestId}')" class="btn btn-primary" style="padding: 8px 15px; font-size: 0.9rem;">
+                                    Accept & Upload
+                                </button>` : 
+                                '<span style="color: var(--gray-700); font-size: 0.9rem;">Pending</span>'
+                            }
+                        </div>
+                    </div>
+                `;
+            }
+            
+            container.appendChild(messageDiv);
+        }
+
+        // ========== CHATS LIST ==========
+        async function loadChatsList() {
+            const container = document.getElementById('chats-container');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            
+            try {
+                const chatsSnapshot = await firebase.firestore()
+                    .collection('chats')
+                    .where('participants', 'array-contains', currentUser.uid)
+                    .orderBy('lastMessageTime', 'desc')
+                    .get();
+                
+                container.innerHTML = '';
+                
+                if (chatsSnapshot.empty) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: var(--gray-700);">
+                            <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                            <h3>No chats yet</h3>
+                            <p>Start a chat with a model to begin</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                chats = [];
+                chatsSnapshot.forEach(async (doc) => {
+                    const chat = {
+                        id: doc.id,
+                        ...doc.data()
+                    };
+                    chats.push(chat);
+                    
+                    // Get the other participant's info
+                    const otherUserId = chat.participants.find(id => id !== currentUser.uid);
+                    if (otherUserId) {
+                        const userDoc = await firebase.firestore().collection('users').doc(otherUserId).get();
+                        if (userDoc.exists) {
+                            const userData = userDoc.data();
+                            createChatItem(chat, userData);
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading chats:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--danger-color);">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                        <h3>Error loading chats</h3>
+                        <p>Please try again later</p>
+                    </div>
+                `;
+            }
+        }
+
+        function createChatItem(chat, userData) {
+            const container = document.getElementById('chats-container');
+            const chatItem = document.createElement('div');
+            chatItem.className = 'history-item';
+            chatItem.style.cursor = 'pointer';
+            chatItem.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <img src="${userData.profileImage || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userData.name) + '&background=7c3aed&color=fff'}" 
+                         alt="${userData.name}" 
+                         style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);">
+                    <div>
+                        <h4 style="margin: 0; font-weight: 600;">${userData.name}</h4>
+                        <p style="margin: 5px 0 0 0; color: var(--gray-700); font-size: 0.9rem;">
+                            ${chat.lastMessage ? chat.lastMessage.substring(0, 50) + (chat.lastMessage.length > 50 ? '...' : '') : 'No messages yet'}
+                        </p>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 0.8rem; color: var(--gray-700);">
+                        ${chat.lastMessageTime?.toDate ? chat.lastMessageTime.toDate().toLocaleDateString() : ''}
+                    </div>
+                </div>
+            `;
+            
+            chatItem.addEventListener('click', () => {
+                currentModelId = chat.participants.find(id => id !== currentUser.uid);
+                startChat(currentModelId);
+            });
+            
+            container.appendChild(chatItem);
+        }
+
+        // ========== TRANSACTION HISTORY ==========
+        async function loadTransactionHistory() {
+            const container = document.getElementById('history-container');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            
+            try {
+                // Load transactions for the user
+                const transactionsSnapshot = await firebase.firestore()
+                    .collection('transactions')
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('timestamp', 'desc')
+                    .limit(50)
+                    .get();
+                
+                container.innerHTML = '';
+                
+                if (transactionsSnapshot.empty) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: var(--gray-700);">
+                            <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                            <h3>No transaction history</h3>
+                            <p>Your transactions will appear here</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const historyList = document.createElement('div');
+                historyList.className = 'history-list';
+                
+                transactionsSnapshot.forEach(doc => {
+                    const transaction = doc.data();
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'history-item';
+                    
+                    const amountClass = transaction.type === 'deposit' || transaction.type === 'earning' ? 
+                        'transaction-amount positive' : 'transaction-amount negative';
+                    
+                    const typeLabel = transaction.type === 'deposit' ? 'Deposit' :
+                                     transaction.type === 'withdrawal' ? 'Withdrawal' :
+                                     transaction.type === 'payment' ? 'Chat Payment' :
+                                     transaction.type === 'earning' ? 'Earnings' : 'Transaction';
+                    
+                    historyItem.innerHTML = `
+                        <div class="transaction-info">
+                            <h4>${typeLabel}</h4>
+                            <p style="color: var(--gray-700); font-size: 0.9rem;">
+                                ${transaction.timestamp?.toDate ? 
+                                    transaction.timestamp.toDate().toLocaleString() : 
+                                    'Recent'}
+                            </p>
+                            ${transaction.description ? 
+                                `<p style="color: var(--gray-700); font-size: 0.9rem; margin-top: 5px;">${transaction.description}</p>` : 
+                                ''}
+                        </div>
+                        <div class="${amountClass}">
+                            ${transaction.type === 'deposit' || transaction.type === 'earning' ? '+' : '-'}₦${transaction.amount?.toLocaleString() || '0'}
+                        </div>
+                    `;
+                    
+                    historyList.appendChild(historyItem);
+                });
+                
+                container.appendChild(historyList);
+            } catch (error) {
+                console.error('Error loading transaction history:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--danger-color);">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                        <h3>Error loading history</h3>
+                        <p>Please try again later</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ========== MEDIA REQUEST ==========
+        async function submitMediaRequest() {
+            const type = document.getElementById('media-type').value;
+            const description = document.getElementById('media-description').value;
+            const amount = parseFloat(document.getElementById('media-amount').value);
+            
+            if (!description.trim()) {
+                showNotification('Please enter a description', 'error');
+                return;
+            }
+            
+            if (amount < 100) {
+                showNotification('Minimum amount is ₦100', 'error');
+                return;
+            }
+            
+            if (userData.gender === 'male' && amount > walletBalance) {
+                showNotification('Insufficient balance', 'error');
+                return;
+            }
+            
+            try {
+                const requestId = 'media_req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                
+                // Add media request message
+                await firebase.firestore()
+                    .collection('chats').doc(currentChatId)
+                    .collection('messages')
+                    .add({
+                        senderId: currentUser.uid,
+                        type: 'media_request',
+                        mediaType: type,
+                        description: description,
+                        amount: amount,
+                        requestId: requestId,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        read: false,
+                        status: 'pending'
+                    });
+                
+                // Deduct amount from male user
+                if (userData.gender === 'male') {
+                    await firebase.firestore()
+                        .collection('users')
+                        .doc(currentUser.uid)
+                        .update({
+                            walletBalance: firebase.firestore.FieldValue.increment(-amount)
+                        });
+                    
+                    walletBalance -= amount;
+                    updateBalanceDisplay();
+                }
+                
+                // Close modal
+                document.getElementById('media-request-modal').classList.remove('active');
+                showNotification('Media request sent successfully', 'success');
+                
+                // Clear form
+                document.getElementById('media-description').value = '';
+                document.getElementById('media-amount').value = '';
+                
+            } catch (error) {
+                console.error('Error submitting media request:', error);
+                showNotification('Error submitting request', 'error');
+            }
+        }
+
+        // ========== UTILITY FUNCTIONS ==========
+        function setupRealtimeListeners() {
+            // Listen for wallet balance updates
+            firebase.firestore().collection('users').doc(currentUser.uid)
+                .onSnapshot((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        walletBalance = data.walletBalance || 0;
+                        updateBalanceDisplay();
+                        
+                        // Update user data if changed
+                        if (JSON.stringify(userData) !== JSON.stringify(data)) {
+                            userData = data;
+                            updateUserProfile();
+                        }
+                    }
+                });
+            
+            // Listen for new models coming online
+            firebase.firestore().collection('users')
+                .where('gender', '==', 'female')
+                .where('isModel', '==', true)
+                .where('online', '==', true)
+                .onSnapshot((snapshot) => {
+                    // Only reload models if we're on the models page
+                    if (document.querySelector('.models-page.active')) {
+                        loadModels();
+                    }
+                });
+        }
+
+        function updateBalanceDisplay() {
+            document.getElementById('header-balance').textContent = `₦${walletBalance.toLocaleString()}`;
+            document.getElementById('wallet-balance').textContent = `₦${walletBalance.toLocaleString()}`;
+            document.getElementById('user-balance').textContent = `₦${walletBalance.toLocaleString()}`;
+        }
+
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                                 type === 'error' ? 'exclamation-circle' : 
+                                 type === 'warning' ? 'exclamation-triangle' : 
+                                 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            container.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => notification.classList.add('show'), 10);
+            
+            // Remove notification after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode === container) {
+                        container.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Make functions available globally for onclick handlers
+        window.acceptMediaRequest = function(requestId) {
+            // Implementation for accepting media requests
+            showNotification('Media request accepted. Please upload media.', 'success');
+        };
     </script>
 </body>
 </html>

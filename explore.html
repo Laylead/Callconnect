@@ -293,30 +293,46 @@
             margin: 0 auto;
         }
 
-        /* ===== SEARCH AND FILTER BAR ===== */
-        .search-filter-bar {
-            margin-bottom: 30px;
+        /* ===== PREMIUM FILTER SYSTEM ===== */
+        .premium-filters {
             position: sticky;
             top: 70px;
             z-index: 900;
+            margin-bottom: 30px;
             background: rgba(5, 0, 22, 0.8);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            padding: 15px 0;
-            border-radius: 16px;
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
         }
 
-        .search-container {
+        .search-section {
             position: relative;
             margin-bottom: 20px;
         }
 
+        .search-input-wrapper {
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 20px;
+            z-index: 1;
+        }
+
         .search-input {
             width: 100%;
-            padding: 16px 20px 16px 50px;
+            padding: 18px 20px 18px 60px;
             background: rgba(255, 255, 255, 0.07);
             border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
+            border-radius: 16px;
             color: var(--text-primary);
             font-size: 16px;
             font-weight: 500;
@@ -331,111 +347,352 @@
             background: rgba(255, 255, 255, 0.1);
         }
 
-        .search-icon {
-            position: absolute;
-            left: 20px;
-            top: 50%;
-            transform: translateY(-50%);
+        .search-input::placeholder {
             color: var(--text-secondary);
-            font-size: 18px;
         }
 
-        .filter-container {
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        /* Premium Filter Card */
+        .filter-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 18px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .filter-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+            border-color: var(--primary-purple);
+            box-shadow: 0 10px 30px rgba(106, 13, 255, 0.2);
+        }
+
+        .filter-card.active {
+            background: rgba(106, 13, 255, 0.15);
+            border-color: var(--primary-purple);
+            box-shadow: 0 10px 30px rgba(106, 13, 255, 0.3);
+        }
+
+        .filter-card.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-purple), var(--neon-magenta));
+            border-radius: 3px 3px 0 0;
+        }
+
+        .filter-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .filter-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .filter-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: rgba(106, 13, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: var(--primary-purple);
+        }
+
+        .filter-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .filter-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
+        .filter-chevron {
+            color: var(--text-secondary);
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .filter-card.active .filter-chevron {
+            transform: rotate(180deg);
+            color: var(--primary-purple);
+        }
+
+        /* Filter Dropdown */
+        .filter-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            right: 0;
+            background: rgba(5, 0, 22, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 15px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .filter-dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .dropdown-close {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .filter-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-option:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(106, 13, 255, 0.3);
+        }
+
+        .filter-option.active {
+            background: rgba(106, 13, 255, 0.2);
+            border-color: var(--primary-purple);
+        }
+
+        .option-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .option-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(106, 13, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--primary-purple);
+        }
+
+        .option-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .option-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .option-description {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .option-check {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: transparent;
+            transition: all 0.3s ease;
+        }
+
+        .filter-option.active .option-check {
+            background: var(--primary-purple);
+            color: white;
+        }
+
+        /* Quick Actions */
+        .filter-actions {
             display: flex;
             gap: 12px;
-            flex-wrap: wrap;
-            justify-content: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .filter-dropdown {
-            position: relative;
+        .filter-action-btn {
             flex: 1;
-            min-width: 160px;
-            max-width: 200px;
-        }
-
-        .filter-btn {
-            width: 100%;
-            padding: 14px 20px;
-            background: rgba(255, 255, 255, 0.07);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
-            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: none;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .filter-action-btn.primary {
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            color: white;
+        }
+
+        .filter-action-btn.secondary {
+            background: rgba(255, 255, 255, 0.07);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .filter-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .filter-action-btn.primary:hover {
+            box-shadow: 0 10px 30px rgba(106, 13, 255, 0.4);
+        }
+
+        /* Active Filters Bar */
+        .active-filters {
+            display: flex;
+            flex-wrap: wrap;
             gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .filter-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: var(--primary-purple);
-        }
-
-        .filter-btn.active {
-            background: rgba(106, 13, 255, 0.2);
-            border-color: var(--primary-purple);
+        .active-filter-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: rgba(106, 13, 255, 0.15);
+            border: 1px solid rgba(106, 13, 255, 0.3);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
             color: var(--primary-purple);
         }
 
-        .filter-dropdown-content {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: rgba(5, 0, 22, 0.95);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
-            padding: 10px;
-            margin-top: 8px;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1000;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .filter-dropdown-content.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        .filter-option {
-            padding: 12px 16px;
+        .remove-filter {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
             color: var(--text-secondary);
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            border-radius: 10px;
-            transition: all 0.2s ease;
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .filter-option:hover {
-            background: rgba(255, 255, 255, 0.05);
+        .remove-filter:hover {
+            background: rgba(255, 255, 255, 0.2);
             color: var(--text-primary);
         }
 
-        .filter-option.active {
-            background: rgba(106, 13, 255, 0.2);
-            color: var(--primary-purple);
+        .clear-all {
+            margin-left: auto;
+            padding: 8px 16px;
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            border-radius: 20px;
+            color: var(--red-accent);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .filter-option i {
-            font-size: 12px;
-            width: 16px;
-            text-align: center;
+        .clear-all:hover {
+            background: rgba(255, 71, 87, 0.2);
+            transform: translateY(-2px);
         }
 
         /* ===== GRID LAYOUT ===== */
@@ -1443,12 +1700,13 @@
                 padding: 70px 16px 90px;
             }
             
-            .search-filter-bar {
+            .premium-filters {
                 top: 66px;
+                padding: 16px;
             }
             
-            .filter-dropdown {
-                min-width: 140px;
+            .filter-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
             
             .story-title-large {
@@ -1542,9 +1800,8 @@
         }
 
         @media (max-width: 480px) {
-            .filter-dropdown {
-                min-width: 100%;
-                max-width: 100%;
+            .filter-grid {
+                grid-template-columns: 1fr;
             }
             
             .stories-grid {
@@ -1879,68 +2136,395 @@
 
         <!-- Explore Content -->
         <div class="explore-content">
-            <!-- Search and Filter Bar -->
-            <div class="search-filter-bar">
-                <div class="search-container">
-                    <i class="fas fa-search search-icon"></i>
-                    <input type="text" class="search-input" id="searchInput" placeholder="Search stories, podcasts, authors..." oninput="filterStories()">
+            <!-- Premium Filter System -->
+            <div class="premium-filters">
+                <!-- Search Section -->
+                <div class="search-section">
+                    <div class="search-input-wrapper">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="search-input" id="searchInput" placeholder="Search stories, podcasts, authors..." oninput="filterStories()">
+                    </div>
                 </div>
                 
-                <div class="filter-container">
-                    <div class="filter-dropdown">
-                        <button class="filter-btn" onclick="toggleDropdown('category')">
-                            <span>Category</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="filter-dropdown-content" id="categoryDropdown">
-                            <div class="filter-option active" onclick="selectFilter('category', 'all', 'All Categories')">All Categories</div>
-                            <div class="filter-option" onclick="selectFilter('category', 'podcast', 'Podcasts')"><i class="fas fa-podcast"></i> Podcasts</div>
-                            <div class="filter-option" onclick="selectFilter('category', 'audio', 'Audio Stories')"><i class="fas fa-headphones"></i> Audio Stories</div>
-                            <div class="filter-option" onclick="selectFilter('category', 'live', 'Live Radio')"><i class="fas fa-broadcast-tower"></i> Live Radio</div>
-                            <div class="filter-option" onclick="selectFilter('category', 'music', 'Music')"><i class="fas fa-music"></i> Music</div>
-                            <div class="filter-option" onclick="selectFilter('category', 'news', 'News')"><i class="fas fa-newspaper"></i> News</div>
-                            <div class="filter-option" onclick="selectFilter('category', 'education', 'Education')"><i class="fas fa-graduation-cap"></i> Education</div>
+                <!-- Filter Grid -->
+                <div class="filter-grid" id="filterGrid">
+                    <!-- Category Filter -->
+                    <div class="filter-card" data-filter="category" onclick="openFilterDropdown('category')">
+                        <div class="filter-header">
+                            <div class="filter-title">
+                                <div class="filter-icon">
+                                    <i class="fas fa-filter"></i>
+                                </div>
+                                <span>Category</span>
+                            </div>
+                            <i class="fas fa-chevron-down filter-chevron"></i>
                         </div>
+                        <div class="filter-value" id="categoryValue">All Categories</div>
+                        <div class="filter-subtitle">Filter by content type</div>
                     </div>
                     
-                    <div class="filter-dropdown">
-                        <button class="filter-btn" onclick="toggleDropdown('sort')">
-                            <span>Sort By</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="filter-dropdown-content" id="sortDropdown">
-                            <div class="filter-option active" onclick="selectFilter('sort', 'newest', 'Newest')"><i class="fas fa-clock"></i> Newest</div>
-                            <div class="filter-option" onclick="selectFilter('sort', 'popular', 'Most Popular')"><i class="fas fa-fire"></i> Most Popular</div>
-                            <div class="filter-option" onclick="selectFilter('sort', 'trending', 'Trending')"><i class="fas fa-chart-line"></i> Trending</div>
-                            <div class="filter-option" onclick="selectFilter('sort', 'liked', 'Most Liked')"><i class="fas fa-heart"></i> Most Liked</div>
-                            <div class="filter-option" onclick="selectFilter('sort', 'saved', 'Most Saved')"><i class="fas fa-bookmark"></i> Most Saved</div>
+                    <!-- Sort Filter -->
+                    <div class="filter-card" data-filter="sort" onclick="openFilterDropdown('sort')">
+                        <div class="filter-header">
+                            <div class="filter-title">
+                                <div class="filter-icon">
+                                    <i class="fas fa-sort-amount-down"></i>
+                                </div>
+                                <span>Sort By</span>
+                            </div>
+                            <i class="fas fa-chevron-down filter-chevron"></i>
                         </div>
+                        <div class="filter-value" id="sortValue">Newest First</div>
+                        <div class="filter-subtitle">Arrange by date or popularity</div>
                     </div>
                     
-                    <div class="filter-dropdown">
-                        <button class="filter-btn" onclick="toggleDropdown('date')">
-                            <span>Date Range</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="filter-dropdown-content" id="dateDropdown">
-                            <div class="filter-option active" onclick="selectFilter('date', 'all', 'All Time')">All Time</div>
-                            <div class="filter-option" onclick="selectFilter('date', 'today', 'Today')">Today</div>
-                            <div class="filter-option" onclick="selectFilter('date', 'week', 'This Week')">This Week</div>
-                            <div class="filter-option" onclick="selectFilter('date', 'month', 'This Month')">This Month</div>
-                            <div class="filter-option" onclick="selectFilter('date', 'year', 'This Year')">This Year</div>
+                    <!-- Date Filter -->
+                    <div class="filter-card" data-filter="date" onclick="openFilterDropdown('date')">
+                        <div class="filter-header">
+                            <div class="filter-title">
+                                <div class="filter-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <span>Date Range</span>
+                            </div>
+                            <i class="fas fa-chevron-down filter-chevron"></i>
                         </div>
+                        <div class="filter-value" id="dateValue">All Time</div>
+                        <div class="filter-subtitle">Filter by publication date</div>
                     </div>
                     
-                    <div class="filter-dropdown">
-                        <button class="filter-btn" onclick="toggleDropdown('duration')">
-                            <span>Duration</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="filter-dropdown-content" id="durationDropdown">
-                            <div class="filter-option active" onclick="selectFilter('duration', 'all', 'Any Duration')">Any Duration</div>
-                            <div class="filter-option" onclick="selectFilter('duration', 'short', 'Short (< 10 min)')">< 10 min</div>
-                            <div class="filter-option" onclick="selectFilter('duration', 'medium', 'Medium (10-30 min)')">10-30 min</div>
-                            <div class="filter-option" onclick="selectFilter('duration', 'long', 'Long (> 30 min)')">> 30 min</div>
+                    <!-- Duration Filter -->
+                    <div class="filter-card" data-filter="duration" onclick="openFilterDropdown('duration')">
+                        <div class="filter-header">
+                            <div class="filter-title">
+                                <div class="filter-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <span>Duration</span>
+                            </div>
+                            <i class="fas fa-chevron-down filter-chevron"></i>
+                        </div>
+                        <div class="filter-value" id="durationValue">Any Duration</div>
+                        <div class="filter-subtitle">Filter by story length</div>
+                    </div>
+                </div>
+                
+                <!-- Active Filters -->
+                <div class="active-filters" id="activeFilters" style="display: none;">
+                    <!-- Active filters will appear here -->
+                    <button class="clear-all" onclick="clearAllFilters()">
+                        <i class="fas fa-times"></i>
+                        Clear All
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Filter Dropdown Menus -->
+            <div class="filter-dropdown-menu" id="categoryDropdown">
+                <div class="dropdown-header">
+                    <h4 class="dropdown-title">Select Category</h4>
+                    <button class="dropdown-close" onclick="closeDropdown('category')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="filter-options">
+                    <div class="filter-option active" data-value="all" onclick="selectFilterOption('category', 'all', 'All Categories')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-globe"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">All Categories</div>
+                                <div class="option-description">Show all content types</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="filter-option" data-value="podcast" onclick="selectFilterOption('category', 'podcast', 'Podcasts')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-podcast"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">Podcasts</div>
+                                <div class="option-description">Professional audio shows</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="filter-option" data-value="audio" onclick="selectFilterOption('category', 'audio', 'Audio Stories')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-headphones"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">Audio Stories</div>
+                                <div class="option-description">Narrated stories and tales</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="filter-option" data-value="live" onclick="selectFilterOption('category', 'live', 'Live Radio')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-broadcast-tower"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">Live Radio</div>
+                                <div class="option-description">Live broadcasts and shows</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="filter-option" data-value="music" onclick="selectFilterOption('category', 'music', 'Music')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-music"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">Music</div>
+                                <div class="option-description">Music tracks and albums</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-dropdown-menu" id="sortDropdown">
+                <div class="dropdown-header">
+                    <h4 class="dropdown-title">Sort Stories</h4>
+                    <button class="dropdown-close" onclick="closeDropdown('sort')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="filter-options">
+                    <div class="filter-option active" data-value="newest" onclick="selectFilterOption('sort', 'newest', 'Newest First')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">Newest First</div>
+                                <div class="option-description">Most recent stories first</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="filter-option" data-value="popular" onclick="selectFilterOption('sort', 'popular', 'Most Popular')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-fire"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">Most Popular</div>
+                                <div class="option-description">Highest play count</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="filter-option" data-value="trending" onclick="selectFilterOption('sort', 'trending', 'Trending Now')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">Trending Now</div>
+                                <div class="option-description">Currently trending content</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="filter-option" data-value="liked" onclick="selectFilterOption('sort', 'liked', 'Most Liked')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">Most Liked</div>
+                                <div class="option-description">Highest number of likes</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="filter-option" data-value="saved" onclick="selectFilterOption('sort', 'saved', 'Most Saved')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-bookmark"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">Most Saved</div>
+                                <div class="option-description">Most bookmarked stories</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-dropdown-menu" id="dateDropdown">
+                <div class="dropdown-header">
+                    <h4 class="dropdown-title">Select Date Range</h4>
+                    <button class="dropdown-close" onclick="closeDropdown('date')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="filter-options">
+                    <div class="filter-option active" data-value="all" onclick="selectFilterOption('date', 'all', 'All Time')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-infinity"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">All Time</div>
+                                <div class="option-description">Show all stories</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="filter-option" data-value="today" onclick="selectFilterOption('date', 'today', 'Today')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-sun"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">Today</div>
+                                <div class="option-description">Stories from today</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="filter-option" data-value="week" onclick="selectFilterOption('date', 'week', 'This Week')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-calendar-week"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">This Week</div>
+                                <div class="option-description">Stories from this week</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="filter-option" data-value="month" onclick="selectFilterOption('date', 'month', 'This Month')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">This Month</div>
+                                <div class="option-description">Stories from this month</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="filter-option" data-value="year" onclick="selectFilterOption('date', 'year', 'This Year')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">This Year</div>
+                                <div class="option-description">Stories from this year</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-dropdown-menu" id="durationDropdown">
+                <div class="dropdown-header">
+                    <h4 class="dropdown-title">Select Duration</h4>
+                    <button class="dropdown-close" onclick="closeDropdown('duration')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="filter-options">
+                    <div class="filter-option active" data-value="all" onclick="selectFilterOption('duration', 'all', 'Any Duration')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-infinity"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">Any Duration</div>
+                                <div class="option-description">Show all durations</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="filter-option" data-value="short" onclick="selectFilterOption('duration', 'short', 'Short (< 10 min)')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-hourglass-start"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">Short (< 10 min)</div>
+                                <div class="option-description">Quick listens</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="filter-option" data-value="medium" onclick="selectFilterOption('duration', 'medium', 'Medium (10-30 min)')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">Medium (10-30 min)</div>
+                                <div class="option-description">Average length stories</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="filter-option" data-value="long" onclick="selectFilterOption('duration', 'long', 'Long (> 30 min)')">
+                        <div class="option-content">
+                            <div class="option-icon">
+                                <i class="fas fa-hourglass-end"></i>
+                            </div>
+                            <div class="option-text">
+                                <div class="option-label">Long (> 30 min)</div>
+                                <div class="option-description">Extended content</div>
+                            </div>
+                        </div>
+                        <div class="option-check">
+                            <i class="fas fa-check"></i>
                         </div>
                     </div>
                 </div>
@@ -2034,6 +2618,7 @@
         };
         let pendingNavigation = null;
         let isNavigating = false;
+        let activeDropdown = null;
 
         // Local Storage Keys
         const STORAGE_KEYS = {
@@ -2043,11 +2628,42 @@
             FILTERS: 'radio_explore_filters'
         };
 
+        // Filter Options Configuration
+        const FILTER_OPTIONS = {
+            category: [
+                { value: 'all', label: 'All Categories', icon: 'fas fa-globe', description: 'Show all content types' },
+                { value: 'podcast', label: 'Podcasts', icon: 'fas fa-podcast', description: 'Professional audio shows' },
+                { value: 'audio', label: 'Audio Stories', icon: 'fas fa-headphones', description: 'Narrated stories and tales' },
+                { value: 'live', label: 'Live Radio', icon: 'fas fa-broadcast-tower', description: 'Live broadcasts and shows' },
+                { value: 'music', label: 'Music', icon: 'fas fa-music', description: 'Music tracks and albums' }
+            ],
+            sort: [
+                { value: 'newest', label: 'Newest First', icon: 'fas fa-clock', description: 'Most recent stories first' },
+                { value: 'popular', label: 'Most Popular', icon: 'fas fa-fire', description: 'Highest play count' },
+                { value: 'trending', label: 'Trending Now', icon: 'fas fa-chart-line', description: 'Currently trending content' },
+                { value: 'liked', label: 'Most Liked', icon: 'fas fa-heart', description: 'Highest number of likes' },
+                { value: 'saved', label: 'Most Saved', icon: 'fas fa-bookmark', description: 'Most bookmarked stories' }
+            ],
+            date: [
+                { value: 'all', label: 'All Time', icon: 'fas fa-infinity', description: 'Show all stories' },
+                { value: 'today', label: 'Today', icon: 'fas fa-sun', description: 'Stories from today' },
+                { value: 'week', label: 'This Week', icon: 'fas fa-calendar-week', description: 'Stories from this week' },
+                { value: 'month', label: 'This Month', icon: 'fas fa-calendar', description: 'Stories from this month' },
+                { value: 'year', label: 'This Year', icon: 'fas fa-calendar-alt', description: 'Stories from this year' }
+            ],
+            duration: [
+                { value: 'all', label: 'Any Duration', icon: 'fas fa-infinity', description: 'Show all durations' },
+                { value: 'short', label: 'Short (< 10 min)', icon: 'fas fa-hourglass-start', description: 'Quick listens' },
+                { value: 'medium', label: 'Medium (10-30 min)', icon: 'fas fa-hourglass-half', description: 'Average length stories' },
+                { value: 'long', label: 'Long (> 30 min)', icon: 'fas fa-hourglass-end', description: 'Extended content' }
+            ]
+        };
+
         // Initialize app when DOM loads
         document.addEventListener('DOMContentLoaded', function() {
             // Close dropdowns when clicking outside
             document.addEventListener('click', function(e) {
-                if (!e.target.closest('.filter-dropdown')) {
+                if (!e.target.closest('.filter-card') && !e.target.closest('.filter-dropdown-menu')) {
                     closeAllDropdowns();
                 }
             });
@@ -2057,6 +2673,9 @@
 
             // Load filters from localStorage
             loadFiltersFromStorage();
+
+            // Update active filters display
+            updateActiveFiltersDisplay();
 
             // Load stories
             loadStories();
@@ -2073,12 +2692,244 @@
             // Close modals on ESC key
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
+                    closeAllDropdowns();
                     closeFullscreenPlayer();
                     closeAudioPlayer();
                     document.getElementById('warningModal').classList.remove('active');
                 }
             });
+
+            // Initialize filter cards
+            initFilterCards();
         });
+
+        // ===== PREMIUM FILTER SYSTEM =====
+        function initFilterCards() {
+            // Set initial values on filter cards
+            document.getElementById('categoryValue').textContent = getFilterLabel('category', currentFilters.category);
+            document.getElementById('sortValue').textContent = getFilterLabel('sort', currentFilters.sort);
+            document.getElementById('dateValue').textContent = getFilterLabel('date', currentFilters.date);
+            document.getElementById('durationValue').textContent = getFilterLabel('duration', currentFilters.duration);
+        }
+
+        function getFilterLabel(filterType, filterValue) {
+            const options = FILTER_OPTIONS[filterType];
+            const option = options.find(opt => opt.value === filterValue);
+            return option ? option.label : filterValue;
+        }
+
+        function openFilterDropdown(filterType) {
+            // Close any open dropdown
+            if (activeDropdown) {
+                closeDropdown(activeDropdown);
+            }
+            
+            // Open the clicked dropdown
+            const dropdown = document.getElementById(`${filterType}Dropdown`);
+            const card = document.querySelector(`[data-filter="${filterType}"]`);
+            
+            // Update active state
+            document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            
+            // Show dropdown
+            dropdown.classList.add('show');
+            activeDropdown = filterType;
+            
+            // Update dropdown options to reflect current selection
+            updateDropdownSelection(filterType);
+        }
+
+        function closeDropdown(filterType) {
+            const dropdown = document.getElementById(`${filterType}Dropdown`);
+            const card = document.querySelector(`[data-filter="${filterType}"]`);
+            
+            dropdown.classList.remove('show');
+            if (card) card.classList.remove('active');
+            
+            if (activeDropdown === filterType) {
+                activeDropdown = null;
+            }
+        }
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('.filter-dropdown-menu').forEach(dropdown => {
+                dropdown.classList.remove('show');
+            });
+            
+            document.querySelectorAll('.filter-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            activeDropdown = null;
+        }
+
+        function updateDropdownSelection(filterType) {
+            const dropdown = document.getElementById(`${filterType}Dropdown`);
+            const currentValue = currentFilters[filterType];
+            
+            // Remove active class from all options
+            dropdown.querySelectorAll('.filter-option').forEach(option => {
+                option.classList.remove('active');
+            });
+            
+            // Add active class to current selection
+            const activeOption = dropdown.querySelector(`[data-value="${currentValue}"]`);
+            if (activeOption) {
+                activeOption.classList.add('active');
+            }
+        }
+
+        function selectFilterOption(filterType, value, label) {
+            currentFilters[filterType] = value;
+            
+            // Update filter card value
+            document.getElementById(`${filterType}Value`).textContent = label;
+            
+            // Update active filters display
+            updateActiveFiltersDisplay();
+            
+            // Close dropdown
+            closeDropdown(filterType);
+            
+            // Save filters
+            saveFiltersToStorage();
+            
+            // Apply filters
+            applyFilters();
+        }
+
+        function updateActiveFiltersDisplay() {
+            const activeFiltersContainer = document.getElementById('activeFilters');
+            const activeFilters = [];
+            
+            // Check each filter if it's not default
+            if (currentFilters.category !== 'all') {
+                activeFilters.push({
+                    type: 'category',
+                    label: getFilterLabel('category', currentFilters.category),
+                    value: currentFilters.category
+                });
+            }
+            
+            if (currentFilters.sort !== 'newest') {
+                activeFilters.push({
+                    type: 'sort',
+                    label: getFilterLabel('sort', currentFilters.sort),
+                    value: currentFilters.sort
+                });
+            }
+            
+            if (currentFilters.date !== 'all') {
+                activeFilters.push({
+                    type: 'date',
+                    label: getFilterLabel('date', currentFilters.date),
+                    value: currentFilters.date
+                });
+            }
+            
+            if (currentFilters.duration !== 'all') {
+                activeFilters.push({
+                    type: 'duration',
+                    label: getFilterLabel('duration', currentFilters.duration),
+                    value: currentFilters.duration
+                });
+            }
+            
+            if (currentFilters.search) {
+                activeFilters.push({
+                    type: 'search',
+                    label: `Search: "${currentFilters.search}"`,
+                    value: currentFilters.search
+                });
+            }
+            
+            // Update UI
+            if (activeFilters.length > 0) {
+                let html = '';
+                activeFilters.forEach(filter => {
+                    html += `
+                        <div class="active-filter-tag">
+                            <span>${filter.label}</span>
+                            <button class="remove-filter" onclick="removeFilter('${filter.type}')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                activeFiltersContainer.innerHTML = html + `
+                    <button class="clear-all" onclick="clearAllFilters()">
+                        <i class="fas fa-times"></i>
+                        Clear All
+                    </button>
+                `;
+                activeFiltersContainer.style.display = 'flex';
+            } else {
+                activeFiltersContainer.style.display = 'none';
+            }
+        }
+
+        function removeFilter(filterType) {
+            // Reset to default value
+            switch(filterType) {
+                case 'category':
+                    currentFilters.category = 'all';
+                    document.getElementById('categoryValue').textContent = 'All Categories';
+                    break;
+                case 'sort':
+                    currentFilters.sort = 'newest';
+                    document.getElementById('sortValue').textContent = 'Newest First';
+                    break;
+                case 'date':
+                    currentFilters.date = 'all';
+                    document.getElementById('dateValue').textContent = 'All Time';
+                    break;
+                case 'duration':
+                    currentFilters.duration = 'all';
+                    document.getElementById('durationValue').textContent = 'Any Duration';
+                    break;
+                case 'search':
+                    currentFilters.search = '';
+                    document.getElementById('searchInput').value = '';
+                    break;
+            }
+            
+            // Update active filters display
+            updateActiveFiltersDisplay();
+            
+            // Save filters
+            saveFiltersToStorage();
+            
+            // Apply filters
+            applyFilters();
+        }
+
+        function clearAllFilters() {
+            // Reset all filters to default
+            currentFilters = {
+                category: 'all',
+                sort: 'newest',
+                date: 'all',
+                duration: 'all',
+                search: ''
+            };
+            
+            // Update UI
+            initFilterCards();
+            document.getElementById('searchInput').value = '';
+            
+            // Update active filters display
+            updateActiveFiltersDisplay();
+            
+            // Save filters
+            saveFiltersToStorage();
+            
+            // Apply filters
+            applyFilters();
+            
+            showToast("All filters cleared", "info");
+        }
 
         // ===== STORY MANAGEMENT =====
         async function loadStories() {
@@ -2088,7 +2939,7 @@
             const cachedData = getCachedStories();
             if (cachedData && cachedData.length > 0) {
                 currentStories = cachedData;
-                filteredStories = [...currentStories];
+                filteredStories = filterAndSortStories(currentStories);
                 renderStories();
                 showLoading(false);
                 
@@ -2188,8 +3039,9 @@
                         cacheStories(updatedStories);
                         currentStories = updatedStories;
                         
-                        // Update UI if needed
-                        if (currentFilters.search === '' && currentFilters.category === 'all') {
+                        // Update UI if no filters applied
+                        if (currentFilters.search === '' && currentFilters.category === 'all' && 
+                            currentFilters.date === 'all' && currentFilters.duration === 'all') {
                             filteredStories = filterAndSortStories(updatedStories);
                             renderStories();
                             showToast(`${newStories.length} new story${newStories.length > 1 ? 's' : ''} loaded`, "info");
@@ -2382,9 +3234,15 @@
             if (storiesToShow.length === 0) {
                 grid.innerHTML = `
                     <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
-                        <i class="fas fa-search" style="font-size: 48px; color: var(--text-secondary); margin-bottom: 20px;"></i>
-                        <h3 style="color: var(--text-primary); margin-bottom: 10px;">No stories found</h3>
-                        <p style="color: var(--text-secondary);">Try changing your search or filters</p>
+                        <div style="width: 80px; height: 80px; background: rgba(106, 13, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                            <i class="fas fa-search" style="font-size: 32px; color: var(--primary-purple);"></i>
+                        </div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 10px; font-size: 20px;">No stories found</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 20px;">Try changing your search or filters</p>
+                        <button class="filter-action-btn primary" onclick="clearAllFilters()">
+                            <i class="fas fa-times"></i>
+                            Clear All Filters
+                        </button>
                     </div>
                 `;
                 document.getElementById('loadMoreContainer').style.display = 'none';
@@ -2526,39 +3384,8 @@
         // ===== FILTERING AND SORTING =====
         function filterStories() {
             currentFilters.search = document.getElementById('searchInput').value.toLowerCase();
+            updateActiveFiltersDisplay();
             applyFilters();
-        }
-
-        function selectFilter(type, value, displayText) {
-            currentFilters[type] = value;
-            
-            // Update button text
-            const button = document.querySelector(`.filter-dropdown button[onclick*="${type}"]`);
-            if (button) {
-                button.querySelector('span').textContent = displayText;
-                button.classList.add('active');
-            }
-            
-            // Update dropdown options
-            const dropdown = document.getElementById(`${type}Dropdown`);
-            if (dropdown) {
-                dropdown.querySelectorAll('.filter-option').forEach(option => {
-                    option.classList.remove('active');
-                });
-                const selectedOption = dropdown.querySelector(`[onclick*="${value}"]`);
-                if (selectedOption) {
-                    selectedOption.classList.add('active');
-                }
-            }
-            
-            // Close dropdown
-            closeAllDropdowns();
-            
-            // Apply filters
-            applyFilters();
-            
-            // Save filters
-            saveFiltersToStorage();
         }
 
         function applyFilters() {
@@ -2634,24 +3461,6 @@
             });
             
             return filtered;
-        }
-
-        function toggleDropdown(type) {
-            const dropdown = document.getElementById(`${type}Dropdown`);
-            const isShowing = dropdown.classList.contains('show');
-            
-            closeAllDropdowns();
-            
-            if (!isShowing) {
-                dropdown.classList.add('show');
-                event.stopPropagation();
-            }
-        }
-
-        function closeAllDropdowns() {
-            document.querySelectorAll('.filter-dropdown-content').forEach(dropdown => {
-                dropdown.classList.remove('show');
-            });
         }
 
         // ===== AUDIO PLAYER =====
@@ -2956,7 +3765,7 @@
                 if (isSaved) {
                     await storyRef.transaction(current => (current || 0) + 1);
                 } else {
-                    await storyRef.transaction(current => Math.max(0, (current || 1) - 1));
+                    await storyRef.transaction(current => Math.max(0, (current || 1) - 1);
                 }
                 
                 // Update cache
@@ -3030,12 +3839,9 @@
                     // Update UI
                     Object.keys(currentFilters).forEach(key => {
                         if (key !== 'search') {
-                            const dropdown = document.getElementById(`${key}Dropdown`);
-                            if (dropdown) {
-                                const option = dropdown.querySelector(`[onclick*="${currentFilters[key]}"]`);
-                                if (option) {
-                                    option.click();
-                                }
+                            const valueElement = document.getElementById(`${key}Value`);
+                            if (valueElement) {
+                                valueElement.textContent = getFilterLabel(key, currentFilters[key]);
                             }
                         }
                     });

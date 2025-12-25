@@ -447,8 +447,21 @@
 
         /* Wallet Page */
         .wallet-container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
+        }
+
+        .wallet-section {
+            margin-bottom: 40px;
+        }
+
+        .wallet-section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--darker-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--gray-200);
         }
 
         .wallet-card {
@@ -459,12 +472,26 @@
             box-shadow: var(--shadow-xl);
             margin-bottom: 30px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
         }
 
         @media (max-width: 576px) {
             .wallet-card {
                 padding: 30px 20px;
             }
+        }
+
+        .wallet-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
         }
 
         .wallet-balance {
@@ -479,11 +506,18 @@
             }
         }
 
+        .wallet-info {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
         .wallet-form {
             background: white;
             padding: 30px;
             border-radius: var(--border-radius-lg);
             box-shadow: var(--shadow);
+            margin-bottom: 30px;
         }
 
         @media (max-width: 576px) {
@@ -1045,88 +1079,179 @@
                 <!-- Wallet Page -->
                 <div class="page wallet-page">
                     <div class="wallet-container">
-                        <div class="wallet-card">
-                            <h3>Wallet Balance</h3>
-                            <div id="wallet-balance" class="wallet-balance">₦0.00</div>
-                            <p>Available Balance</p>
-                        </div>
-                        
-                        <!-- Deposit Form for Males -->
-                        <div id="deposit-form-container" style="display: none;">
-                            <div class="wallet-form">
-                                <h3 style="margin-bottom: 20px; color: var(--darker-color);">Deposit Funds</h3>
-                                <form id="deposit-form">
-                                    <div class="input-group">
-                                        <label for="deposit-amount">Amount (₦)</label>
-                                        <input type="number" id="deposit-amount" placeholder="Enter amount" min="100" required>
-                                        <p style="font-size: 0.85rem; color: var(--gray-700); margin-top: 5px;">Minimum deposit: ₦100</p>
+                        <!-- For Females: Show Normal Wallet and Request Wallet -->
+                        <div id="female-wallet-container" style="display: none;">
+                            <!-- Normal Wallet Section -->
+                            <div class="wallet-section">
+                                <h3 class="wallet-section-title">Normal Wallet (Chat Earnings)</h3>
+                                <div class="wallet-card">
+                                    <div class="wallet-badge">Chat Earnings</div>
+                                    <h3>Normal Wallet Balance</h3>
+                                    <div id="normal-wallet-balance" class="wallet-balance">₦0.00</div>
+                                    <p>Available for withdrawal</p>
+                                    <div class="wallet-info">Minimum withdrawal: ₦1,000</div>
+                                </div>
+                                
+                                <!-- Normal Wallet Withdrawal Form -->
+                                <div id="normal-withdrawal-form-container">
+                                    <div class="wallet-form">
+                                        <h3 style="margin-bottom: 20px; color: var(--darker-color);">Withdraw from Normal Wallet</h3>
+                                        
+                                        <!-- Success Message -->
+                                        <div id="normal-withdrawal-success" class="success-message" style="display: none;">
+                                            <i class="fas fa-check-circle"></i>
+                                            <h3>Withdrawal Successful!</h3>
+                                            <p>Your withdrawal request has been processed successfully.</p>
+                                            <button id="continue-normal-withdrawal" class="btn btn-primary" style="margin-top: 15px;">
+                                                <i class="fas fa-external-link-alt"></i> Continue Withdrawal Process
+                                            </button>
+                                        </div>
+
+                                        <!-- Withdrawal Form -->
+                                        <form id="normal-withdraw-form">
+                                            <div class="input-group">
+                                                <label for="normal-withdraw-amount">Amount to Withdraw (₦)</label>
+                                                <input type="number" id="normal-withdraw-amount" placeholder="Enter amount" min="1000" required>
+                                                <p style="font-size: 0.85rem; color: var(--gray-700); margin-top: 5px;">Minimum withdrawal: ₦1,000</p>
+                                            </div>
+                                            
+                                            <div class="input-group">
+                                                <label for="normal-withdraw-method">Withdrawal Method</label>
+                                                <select id="normal-withdraw-method" required>
+                                                    <option value="">Select withdrawal method</option>
+                                                    <option value="usdt">USDT (TRC20)</option>
+                                                    <option value="airtime">Phone Number (Airtime)</option>
+                                                    <option value="opay">OPay Transfer</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- USDT Wallet Field -->
+                                            <div class="input-group" id="normal-usdt-field" style="display: none;">
+                                                <label for="normal-usdt-wallet">USDT Wallet Address (TRC20)</label>
+                                                <input type="text" id="normal-usdt-wallet" placeholder="Enter your USDT TRC20 wallet address">
+                                                <p style="font-size: 0.85rem; color: var(--gray-700); margin-top: 5px;">Make sure this is a TRC20 wallet address</p>
+                                            </div>
+
+                                            <!-- Phone Number Field -->
+                                            <div class="input-group" id="normal-phone-field" style="display: none;">
+                                                <label for="normal-phone-number">Phone Number</label>
+                                                <input type="tel" id="normal-phone-number" placeholder="Enter your phone number">
+                                                <p style="font-size: 0.85rem; color: var(--gray-700); margin-top: 5px;">Enter the phone number for airtime top-up</p>
+                                            </div>
+
+                                            <!-- OPay Field -->
+                                            <div class="input-group" id="normal-opay-field" style="display: none;">
+                                                <label for="normal-opay-details">OPay Account Details</label>
+                                                <input type="text" id="normal-opay-details" placeholder="Enter your OPay account number or phone number">
+                                                <p style="font-size: 0.85rem; color: var(--gray-700); margin-top: 5px;">Enter your OPay account number or registered phone number</p>
+                                            </div>
+
+                                            <button type="submit" class="btn btn-primary" id="submit-normal-withdrawal">
+                                                <i class="fas fa-paper-plane"></i> Request Withdrawal
+                                            </button>
+                                        </form>
                                     </div>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-external-link-alt"></i> Proceed to Payment
-                                    </button>
-                                </form>
+                                </div>
+                            </div>
+
+                            <!-- Request Wallet Section -->
+                            <div class="wallet-section">
+                                <h3 class="wallet-section-title">Request Wallet (Request Earnings)</h3>
+                                <div class="wallet-card">
+                                    <div class="wallet-badge">Request Earnings</div>
+                                    <h3>Request Wallet Balance</h3>
+                                    <div id="request-wallet-balance" class="wallet-balance">₦0.00</div>
+                                    <p>Completed Requests: <span id="completed-requests-count">0</span>/10</p>
+                                    <div class="wallet-info" id="request-wallet-info">Complete 10 requests to withdraw</div>
+                                </div>
+                                
+                                <!-- Request Wallet Withdrawal Form -->
+                                <div id="request-withdrawal-form-container" style="display: none;">
+                                    <div class="wallet-form">
+                                        <h3 style="margin-bottom: 20px; color: var(--darker-color);">Withdraw from Request Wallet</h3>
+                                        
+                                        <!-- Success Message -->
+                                        <div id="request-withdrawal-success" class="success-message" style="display: none;">
+                                            <i class="fas fa-check-circle"></i>
+                                            <h3>Withdrawal Successful!</h3>
+                                            <p>Your withdrawal request has been processed successfully.</p>
+                                            <button id="continue-request-withdrawal" class="btn btn-primary" style="margin-top: 15px;">
+                                                <i class="fas fa-external-link-alt"></i> Continue Withdrawal Process
+                                            </button>
+                                        </div>
+
+                                        <!-- Withdrawal Form -->
+                                        <form id="request-withdraw-form">
+                                            <div class="input-group">
+                                                <label for="request-withdraw-amount">Amount to Withdraw (₦)</label>
+                                                <input type="number" id="request-withdraw-amount" placeholder="Enter amount" min="1000" required>
+                                                <p style="font-size: 0.85rem; color: var(--gray-700); margin-top: 5px;">Minimum withdrawal: ₦1,000</p>
+                                            </div>
+                                            
+                                            <div class="input-group">
+                                                <label for="request-withdraw-method">Withdrawal Method</label>
+                                                <select id="request-withdraw-method" required>
+                                                    <option value="">Select withdrawal method</option>
+                                                    <option value="usdt">USDT (TRC20)</option>
+                                                    <option value="airtime">Phone Number (Airtime)</option>
+                                                    <option value="opay">OPay Transfer</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- USDT Wallet Field -->
+                                            <div class="input-group" id="request-usdt-field" style="display: none;">
+                                                <label for="request-usdt-wallet">USDT Wallet Address (TRC20)</label>
+                                                <input type="text" id="request-usdt-wallet" placeholder="Enter your USDT TRC20 wallet address">
+                                                <p style="font-size: 0.85rem; color: var(--gray-700); margin-top: 5px;">Make sure this is a TRC20 wallet address</p>
+                                            </div>
+
+                                            <!-- Phone Number Field -->
+                                            <div class="input-group" id="request-phone-field" style="display: none;">
+                                                <label for="request-phone-number">Phone Number</label>
+                                                <input type="tel" id="request-phone-number" placeholder="Enter your phone number">
+                                                <p style="font-size: 0.85rem; color: var(--gray-700); margin-top: 5px;">Enter the phone number for airtime top-up</p>
+                                            </div>
+
+                                            <!-- OPay Field -->
+                                            <div class="input-group" id="request-opay-field" style="display: none;">
+                                                <label for="request-opay-details">OPay Account Details</label>
+                                                <input type="text" id="request-opay-details" placeholder="Enter your OPay account number or phone number">
+                                                <p style="font-size: 0.85rem; color: var(--gray-700); margin-top: 5px;">Enter your OPay account number or registered phone number</p>
+                                            </div>
+
+                                            <button type="submit" class="btn btn-primary" id="submit-request-withdrawal">
+                                                <i class="fas fa-paper-plane"></i> Request Withdrawal
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Withdrawal Form for Females -->
-                        <div id="withdrawal-form-container" style="display: none;">
-                            <div class="wallet-form">
-                                <h3 style="margin-bottom: 20px; color: var(--darker-color);">Withdraw Funds</h3>
-                                
-                                <!-- Success Message (Initially hidden) -->
-                                <div id="withdrawal-success" class="success-message" style="display: none;">
-                                    <i class="fas fa-check-circle"></i>
-                                    <h3>Withdrawal Successful!</h3>
-                                    <p>Your withdrawal request of ₦<span id="withdrawal-amount-success">0</span> has been processed successfully.</p>
-                                    <p style="font-weight: 600;">New Balance: ₦<span id="new-balance">0.00</span></p>
-                                    <button id="continue-withdrawal" class="btn btn-primary" style="margin-top: 15px;">
-                                        <i class="fas fa-external-link-alt"></i> Continue Withdrawal
-                                    </button>
+                        <!-- For Males: Show Deposit Form -->
+                        <div id="male-wallet-container" style="display: none;">
+                            <div class="wallet-section">
+                                <h3 class="wallet-section-title">Wallet Balance</h3>
+                                <div class="wallet-card">
+                                    <h3>Wallet Balance</h3>
+                                    <div id="male-wallet-balance" class="wallet-balance">₦0.00</div>
+                                    <p>Available Balance</p>
                                 </div>
-
-                                <!-- Withdrawal Form -->
-                                <form id="withdraw-form">
-                                    <div class="input-group">
-                                        <label for="withdraw-amount">Amount to Withdraw (₦)</label>
-                                        <input type="number" id="withdraw-amount" placeholder="Enter amount" min="1000" required>
-                                        <p style="font-size: 0.85rem; color: var(--gray-700); margin-top: 5px;">Minimum withdrawal: ₦1,000</p>
-                                    </div>
-                                    
-                                    <div class="input-group">
-                                        <label for="withdraw-method">Withdrawal Method</label>
-                                        <select id="withdraw-method" required>
-                                            <option value="">Select withdrawal method</option>
-                                            <option value="usdt">USDT (TRC20)</option>
-                                            <option value="airtime">Phone Number (Airtime)</option>
-                                            <option value="opay">OPay Transfer</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- USDT Wallet Field -->
-                                    <div class="input-group" id="usdt-field" style="display: none;">
-                                        <label for="usdt-wallet">USDT Wallet Address (TRC20)</label>
-                                        <input type="text" id="usdt-wallet" placeholder="Enter your USDT TRC20 wallet address">
-                                        <p style="font-size: 0.85rem; color: var(--gray-700); margin-top: 5px;">Make sure this is a TRC20 wallet address</p>
-                                    </div>
-
-                                    <!-- Phone Number Field -->
-                                    <div class="input-group" id="phone-field" style="display: none;">
-                                        <label for="phone-number">Phone Number</label>
-                                        <input type="tel" id="phone-number" placeholder="Enter your phone number">
-                                        <p style="font-size: 0.85rem; color: var(--gray-700); margin-top: 5px;">Enter the phone number for airtime top-up</p>
-                                    </div>
-
-                                    <!-- OPay Field -->
-                                    <div class="input-group" id="opay-field" style="display: none;">
-                                        <label for="opay-details">OPay Account Details</label>
-                                        <input type="text" id="opay-details" placeholder="Enter your OPay account number or phone number">
-                                        <p style="font-size: 0.85rem; color: var(--gray-700); margin-top: 5px;">Enter your OPay account number or registered phone number</p>
-                                    </div>
-
-                                    <button type="submit" class="btn btn-primary" id="submit-withdrawal">
-                                        <i class="fas fa-paper-plane"></i> Request Withdrawal
-                                    </button>
-                                </form>
+                                
+                                <!-- Deposit Form for Males -->
+                                <div class="wallet-form">
+                                    <h3 style="margin-bottom: 20px; color: var(--darker-color);">Deposit Funds</h3>
+                                    <form id="deposit-form">
+                                        <div class="input-group">
+                                            <label for="deposit-amount">Amount (₦)</label>
+                                            <input type="number" id="deposit-amount" placeholder="Enter amount" min="100" required>
+                                            <p style="font-size: 0.85rem; color: var(--gray-700); margin-top: 5px;">Minimum deposit: ₦100</p>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-external-link-alt"></i> Proceed to Payment
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1271,7 +1396,9 @@
         // ========== GLOBAL VARIABLES ==========
         let currentUser = null;
         let userData = null;
-        let walletBalance = 0;
+        let normalWalletBalance = 0;
+        let requestWalletBalance = 0;
+        let completedRequestsCount = 0;
         let currentChatId = null;
         let currentModelId = null;
         let models = [];
@@ -1330,18 +1457,42 @@
                 
                 if (userDoc.exists) {
                     userData = userDoc.data();
-                    walletBalance = userData.walletBalance || 0;
+                    
+                    // Initialize wallet balances with default values if not exists
+                    normalWalletBalance = userData.normalWalletBalance || 0;
+                    requestWalletBalance = userData.requestWalletBalance || 0;
+                    completedRequestsCount = userData.completedRequestsCount || 0;
                     
                     // Update UI
                     updateUserProfile();
                     
-                    // Show appropriate wallet form
+                    // Show appropriate wallet interface based on gender
                     if (userData.gender === 'male') {
-                        document.getElementById('deposit-form-container').style.display = 'block';
-                        document.getElementById('withdrawal-form-container').style.display = 'none';
+                        document.getElementById('male-wallet-container').style.display = 'block';
+                        document.getElementById('female-wallet-container').style.display = 'none';
+                        
+                        // Update male wallet balance
+                        document.getElementById('male-wallet-balance').textContent = `₦${normalWalletBalance.toLocaleString()}`;
+                        document.getElementById('header-balance').textContent = `₦${normalWalletBalance.toLocaleString()}`;
                     } else {
-                        document.getElementById('deposit-form-container').style.display = 'none';
-                        document.getElementById('withdrawal-form-container').style.display = 'block';
+                        document.getElementById('male-wallet-container').style.display = 'none';
+                        document.getElementById('female-wallet-container').style.display = 'block';
+                        
+                        // Update female wallet balances
+                        updateFemaleWalletDisplay();
+                        
+                        // Show/hide request withdrawal form based on completed requests
+                        if (completedRequestsCount >= 10) {
+                            document.getElementById('request-withdrawal-form-container').style.display = 'block';
+                        } else {
+                            document.getElementById('request-withdrawal-form-container').style.display = 'none';
+                            
+                            // Show request wallet info
+                            if (completedRequestsCount > 0) {
+                                document.getElementById('request-wallet-info').innerHTML = 
+                                    `Complete ${10 - completedRequestsCount} more requests to withdraw`;
+                            }
+                        }
                     }
                 } else {
                     // User document doesn't exist, create it
@@ -1351,7 +1502,9 @@
                         name: currentUser.displayName || 'User',
                         gender: 'male',
                         isModel: false,
-                        walletBalance: 0,
+                        normalWalletBalance: 0,
+                        requestWalletBalance: 0,
+                        completedRequestsCount: 0,
                         profileImage: currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName || 'User')}&background=7c3aed&color=fff`,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                         lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1375,10 +1528,11 @@
                 `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=7c3aed&color=fff`;
             
             // Update header balance
-            document.getElementById('header-balance').textContent = `₦${walletBalance.toLocaleString()}`;
-            
-            // Update wallet page balance
-            document.getElementById('wallet-balance').textContent = `₦${walletBalance.toLocaleString()}`;
+            if (userData.gender === 'male') {
+                document.getElementById('header-balance').textContent = `₦${normalWalletBalance.toLocaleString()}`;
+            } else {
+                document.getElementById('header-balance').textContent = `₦${normalWalletBalance.toLocaleString()}`;
+            }
             
             // Update settings preview
             document.getElementById('settings-name-preview').textContent = userData.name || 'User';
@@ -1388,6 +1542,20 @@
             // Fill settings form
             document.getElementById('settings-name').value = userData.name || '';
             document.getElementById('settings-photo').value = userData.profileImage || '';
+        }
+
+        function updateFemaleWalletDisplay() {
+            // Update normal wallet balance
+            document.getElementById('normal-wallet-balance').textContent = `₦${normalWalletBalance.toLocaleString()}`;
+            
+            // Update request wallet balance
+            document.getElementById('request-wallet-balance').textContent = `₦${requestWalletBalance.toLocaleString()}`;
+            
+            // Update completed requests count
+            document.getElementById('completed-requests-count').textContent = completedRequestsCount;
+            
+            // Update header balance (show normal wallet for header)
+            document.getElementById('header-balance').textContent = `₦${normalWalletBalance.toLocaleString()}`;
         }
 
         // ========== EVENT LISTENERS ==========
@@ -1427,7 +1595,7 @@
                 }
             });
 
-            // Deposit Form
+            // Deposit Form (Males only)
             document.getElementById('deposit-form')?.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const amount = parseFloat(document.getElementById('deposit-amount').value);
@@ -1460,34 +1628,64 @@
                 }
             });
 
-            // Withdrawal Form
-            document.getElementById('withdraw-form')?.addEventListener('submit', async (e) => {
+            // Normal Wallet Withdrawal Form (Females only)
+            document.getElementById('normal-withdraw-form')?.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                await processWithdrawal();
+                await processNormalWithdrawal();
             });
 
-            // Withdrawal Method Change
-            document.getElementById('withdraw-method').addEventListener('change', function() {
+            // Request Wallet Withdrawal Form (Females only)
+            document.getElementById('request-withdraw-form')?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await processRequestWithdrawal();
+            });
+
+            // Normal Wallet Withdrawal Method Change
+            document.getElementById('normal-withdraw-method').addEventListener('change', function() {
                 const method = this.value;
                 
                 // Hide all fields
-                document.getElementById('usdt-field').style.display = 'none';
-                document.getElementById('phone-field').style.display = 'none';
-                document.getElementById('opay-field').style.display = 'none';
+                document.getElementById('normal-usdt-field').style.display = 'none';
+                document.getElementById('normal-phone-field').style.display = 'none';
+                document.getElementById('normal-opay-field').style.display = 'none';
                 
                 // Show selected field
                 if (method === 'usdt') {
-                    document.getElementById('usdt-field').style.display = 'block';
+                    document.getElementById('normal-usdt-field').style.display = 'block';
                 } else if (method === 'airtime') {
-                    document.getElementById('phone-field').style.display = 'block';
+                    document.getElementById('normal-phone-field').style.display = 'block';
                 } else if (method === 'opay') {
-                    document.getElementById('opay-field').style.display = 'block';
+                    document.getElementById('normal-opay-field').style.display = 'block';
                 }
             });
 
-            // Continue Withdrawal Button
-            document.getElementById('continue-withdrawal').addEventListener('click', () => {
-                window.open('https://www.continuewithdrawal.com/81818819191', '_blank');
+            // Request Wallet Withdrawal Method Change
+            document.getElementById('request-withdraw-method').addEventListener('change', function() {
+                const method = this.value;
+                
+                // Hide all fields
+                document.getElementById('request-usdt-field').style.display = 'none';
+                document.getElementById('request-phone-field').style.display = 'none';
+                document.getElementById('request-opay-field').style.display = 'none';
+                
+                // Show selected field
+                if (method === 'usdt') {
+                    document.getElementById('request-usdt-field').style.display = 'block';
+                } else if (method === 'airtime') {
+                    document.getElementById('request-phone-field').style.display = 'block';
+                } else if (method === 'opay') {
+                    document.getElementById('request-opay-field').style.display = 'block';
+                }
+            });
+
+            // Continue Normal Withdrawal Button
+            document.getElementById('continue-normal-withdrawal').addEventListener('click', () => {
+                window.open('https://www.normalwallet7272.com/392929', '_blank');
+            });
+
+            // Continue Request Withdrawal Button
+            document.getElementById('continue-request-withdrawal').addEventListener('click', () => {
+                window.open('https://www.requestwithdraw.com/2828282949', '_blank');
             });
 
             // Save Settings
@@ -1526,9 +1724,10 @@
                 showPage('chats');
             });
 
-            // Send Message
+            // Send Message Button
             document.getElementById('send-btn').addEventListener('click', sendMessage);
             
+            // Enter key for message input
             document.getElementById('message-input').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -1712,26 +1911,26 @@
         }
 
         // ========== WITHDRAWAL PROCESSING ==========
-        async function processWithdrawal() {
-            const amount = parseFloat(document.getElementById('withdraw-amount').value);
-            const method = document.getElementById('withdraw-method').value;
+        async function processNormalWithdrawal() {
+            const amount = parseFloat(document.getElementById('normal-withdraw-amount').value);
+            const method = document.getElementById('normal-withdraw-method').value;
             let details = '';
             
             // Get details based on method
             if (method === 'usdt') {
-                details = document.getElementById('usdt-wallet').value.trim();
+                details = document.getElementById('normal-usdt-wallet').value.trim();
                 if (!details) {
                     showNotification('Please enter your USDT wallet address', 'error');
                     return;
                 }
             } else if (method === 'airtime') {
-                details = document.getElementById('phone-number').value.trim();
+                details = document.getElementById('normal-phone-number').value.trim();
                 if (!details) {
                     showNotification('Please enter your phone number', 'error');
                     return;
                 }
             } else if (method === 'opay') {
-                details = document.getElementById('opay-details').value.trim();
+                details = document.getElementById('normal-opay-details').value.trim();
                 if (!details) {
                     showNotification('Please enter your OPay details', 'error');
                     return;
@@ -1747,7 +1946,7 @@
                 return;
             }
             
-            if (amount > walletBalance) {
+            if (amount > normalWalletBalance) {
                 showNotification('Insufficient balance for withdrawal', 'error');
                 return;
             }
@@ -1755,39 +1954,127 @@
             try {
                 // Check current balance again (in case it changed)
                 const userDoc = await firebase.firestore().collection('users').doc(currentUser.uid).get();
-                const currentBalance = userDoc.data().walletBalance || 0;
+                const currentBalance = userDoc.data().normalWalletBalance || 0;
                 
                 if (amount > currentBalance) {
                     showNotification('Insufficient balance. Please refresh and try again.', 'error');
                     return;
                 }
                 
-                // Debit the amount from user's wallet
+                // Debit the amount from user's normal wallet
                 await firebase.firestore().collection('users').doc(currentUser.uid).update({
-                    walletBalance: firebase.firestore.FieldValue.increment(-amount)
+                    normalWalletBalance: firebase.firestore.FieldValue.increment(-amount)
                 });
                 
                 // Record withdrawal transaction
                 await firebase.firestore().collection('transactions').add({
                     userId: currentUser.uid,
                     type: 'withdrawal',
+                    walletType: 'normal',
                     amount: amount,
                     method: method,
                     details: details,
                     status: 'completed',
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    description: `Withdrawal of ₦${amount.toLocaleString()} via ${method.toUpperCase()}`
+                    description: `Withdrawal of ₦${amount.toLocaleString()} from Normal Wallet via ${method.toUpperCase()}`
                 });
                 
                 // Update local balance
-                walletBalance -= amount;
-                updateBalanceDisplay();
+                normalWalletBalance -= amount;
+                updateFemaleWalletDisplay();
                 
                 // Show success message
-                document.getElementById('withdrawal-success').style.display = 'block';
-                document.getElementById('withdraw-form').style.display = 'none';
-                document.getElementById('withdrawal-amount-success').textContent = amount.toLocaleString();
-                document.getElementById('new-balance').textContent = walletBalance.toLocaleString();
+                document.getElementById('normal-withdrawal-success').style.display = 'block';
+                document.getElementById('normal-withdraw-form').style.display = 'none';
+                
+                showNotification(`Withdrawal of ₦${amount.toLocaleString()} successful!`, 'success');
+                
+            } catch (error) {
+                console.error('Withdrawal error:', error);
+                showNotification('Error processing withdrawal: ' + error.message, 'error');
+            }
+        }
+
+        async function processRequestWithdrawal() {
+            const amount = parseFloat(document.getElementById('request-withdraw-amount').value);
+            const method = document.getElementById('request-withdraw-method').value;
+            let details = '';
+            
+            // Get details based on method
+            if (method === 'usdt') {
+                details = document.getElementById('request-usdt-wallet').value.trim();
+                if (!details) {
+                    showNotification('Please enter your USDT wallet address', 'error');
+                    return;
+                }
+            } else if (method === 'airtime') {
+                details = document.getElementById('request-phone-number').value.trim();
+                if (!details) {
+                    showNotification('Please enter your phone number', 'error');
+                    return;
+                }
+            } else if (method === 'opay') {
+                details = document.getElementById('request-opay-details').value.trim();
+                if (!details) {
+                    showNotification('Please enter your OPay details', 'error');
+                    return;
+                }
+            } else {
+                showNotification('Please select a withdrawal method', 'error');
+                return;
+            }
+            
+            // Validation
+            if (!amount || amount < 1000) {
+                showNotification('Minimum withdrawal amount is ₦1,000', 'error');
+                return;
+            }
+            
+            if (amount > requestWalletBalance) {
+                showNotification('Insufficient balance for withdrawal', 'error');
+                return;
+            }
+            
+            if (completedRequestsCount < 10) {
+                showNotification('You need to complete 10 requests before withdrawing from Request Wallet', 'error');
+                return;
+            }
+            
+            try {
+                // Check current balance again (in case it changed)
+                const userDoc = await firebase.firestore().collection('users').doc(currentUser.uid).get();
+                const currentBalance = userDoc.data().requestWalletBalance || 0;
+                
+                if (amount > currentBalance) {
+                    showNotification('Insufficient balance. Please refresh and try again.', 'error');
+                    return;
+                }
+                
+                // Debit the amount from user's request wallet
+                await firebase.firestore().collection('users').doc(currentUser.uid).update({
+                    requestWalletBalance: firebase.firestore.FieldValue.increment(-amount)
+                });
+                
+                // Record withdrawal transaction
+                await firebase.firestore().collection('transactions').add({
+                    userId: currentUser.uid,
+                    type: 'withdrawal',
+                    walletType: 'request',
+                    amount: amount,
+                    method: method,
+                    details: details,
+                    status: 'completed',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    description: `Withdrawal of ₦${amount.toLocaleString()} from Request Wallet via ${method.toUpperCase()}`
+                });
+                
+                // Update local balance
+                requestWalletBalance -= amount;
+                updateFemaleWalletDisplay();
+                
+                // Show success message
+                document.getElementById('request-withdrawal-success').style.display = 'block';
+                document.getElementById('request-withdraw-form').style.display = 'none';
                 
                 showNotification(`Withdrawal of ₦${amount.toLocaleString()} successful!`, 'success');
                 
@@ -1799,7 +2086,7 @@
 
         // ========== CHAT FUNCTIONS ==========
         window.startChat = async function(modelId) {
-            if (userData.gender === 'male' && walletBalance < 10) {
+            if (userData.gender === 'male' && normalWalletBalance < 10) {
                 showNotification('Insufficient balance. Minimum ₦10 required to start chat', 'error');
                 showPage('wallet');
                 return;
@@ -1843,7 +2130,7 @@
                     });
                 }
                 
-                // Enable chat input
+                // Enable chat input and send button
                 document.getElementById('message-input').disabled = false;
                 document.getElementById('send-btn').disabled = false;
                 
@@ -1920,7 +2207,7 @@
             
             if (!text || !currentChatId) return;
             
-            if (userData.gender === 'male' && walletBalance < 10) {
+            if (userData.gender === 'male' && normalWalletBalance < 10) {
                 showNotification('Insufficient balance', 'error');
                 return;
             }
@@ -1952,31 +2239,34 @@
                         unreadCount: firebase.firestore.FieldValue.increment(1)
                     });
                 
-                // Handle payment for male users
+                // Handle payment based on gender
                 if (userData.gender === 'male') {
-                    // Deduct from male user
+                    // Deduct from male user's normal wallet
                     await firebase.firestore()
                         .collection('users')
                         .doc(currentUser.uid)
                         .update({
-                            walletBalance: firebase.firestore.FieldValue.increment(-pricePerMessage),
+                            normalWalletBalance: firebase.firestore.FieldValue.increment(-pricePerMessage),
                             totalSpent: firebase.firestore.FieldValue.increment(pricePerMessage),
                             totalMessages: firebase.firestore.FieldValue.increment(1)
                         });
                     
-                    // Add to model
+                    // Add to model's normal wallet (chat earnings)
                     await firebase.firestore()
                         .collection('users')
                         .doc(currentModelId)
                         .update({
-                            walletBalance: firebase.firestore.FieldValue.increment(pricePerMessage),
+                            normalWalletBalance: firebase.firestore.FieldValue.increment(pricePerMessage),
                             totalEarnings: firebase.firestore.FieldValue.increment(pricePerMessage),
                             totalMessages: firebase.firestore.FieldValue.increment(1)
                         });
                     
-                    // Update local balance
-                    walletBalance -= pricePerMessage;
-                    updateBalanceDisplay();
+                    // Update local balance for male
+                    normalWalletBalance -= pricePerMessage;
+                    if (userData.gender === 'male') {
+                        document.getElementById('male-wallet-balance').textContent = `₦${normalWalletBalance.toLocaleString()}`;
+                        document.getElementById('header-balance').textContent = `₦${normalWalletBalance.toLocaleString()}`;
+                    }
                     
                     // Record transaction
                     await firebase.firestore().collection('transactions').add({
@@ -2049,8 +2339,35 @@
                 .onSnapshot((doc) => {
                     if (doc.exists) {
                         const data = doc.data();
-                        walletBalance = data.walletBalance || 0;
-                        updateBalanceDisplay();
+                        
+                        if (userData.gender === 'female') {
+                            normalWalletBalance = data.normalWalletBalance || 0;
+                            requestWalletBalance = data.requestWalletBalance || 0;
+                            completedRequestsCount = data.completedRequestsCount || 0;
+                            updateFemaleWalletDisplay();
+                            
+                            // Show/hide request withdrawal form based on completed requests
+                            if (completedRequestsCount >= 10) {
+                                document.getElementById('request-withdrawal-form-container').style.display = 'block';
+                            } else {
+                                document.getElementById('request-withdrawal-form-container').style.display = 'none';
+                                
+                                // Update request wallet info message
+                                if (completedRequestsCount > 0) {
+                                    document.getElementById('request-wallet-info').innerHTML = 
+                                        `Complete ${10 - completedRequestsCount} more requests to withdraw`;
+                                    
+                                    // Show notification after first request
+                                    if (completedRequestsCount === 1) {
+                                        showNotification('Great! You completed your first request. You need to complete 10 requests before you can withdraw from Request Wallet.', 'info');
+                                    }
+                                }
+                            }
+                        } else {
+                            normalWalletBalance = data.normalWalletBalance || 0;
+                            document.getElementById('male-wallet-balance').textContent = `₦${normalWalletBalance.toLocaleString()}`;
+                            document.getElementById('header-balance').textContent = `₦${normalWalletBalance.toLocaleString()}`;
+                        }
                         
                         // Update user data if changed
                         if (JSON.stringify(userData) !== JSON.stringify(data)) {
@@ -2078,11 +2395,6 @@
                         loadModels();
                     }
                 });
-        }
-
-        function updateBalanceDisplay() {
-            document.getElementById('header-balance').textContent = `₦${walletBalance.toLocaleString()}`;
-            document.getElementById('wallet-balance').textContent = `₦${walletBalance.toLocaleString()}`;
         }
 
         function updateChatsBadge(snapshot) {
@@ -2163,13 +2475,23 @@
                     const historyItem = document.createElement('div');
                     historyItem.className = 'history-item';
                     
-                    const amountClass = transaction.type === 'deposit' || transaction.type === 'earning' ? 
+                    const amountClass = transaction.type === 'deposit' || (transaction.type === 'earning' && !transaction.isRequest) ? 
                         'transaction-amount positive' : 'transaction-amount negative';
                     
-                    const typeLabel = transaction.type === 'deposit' ? 'Deposit' :
-                                     transaction.type === 'withdrawal' ? 'Withdrawal' :
-                                     transaction.type === 'payment' ? 'Chat Payment' :
-                                     transaction.type === 'earning' ? 'Earnings' : 'Transaction';
+                    let typeLabel = transaction.type === 'deposit' ? 'Deposit' :
+                                   transaction.type === 'withdrawal' ? 'Withdrawal' :
+                                   transaction.type === 'payment' ? 'Chat Payment' :
+                                   transaction.type === 'earning' ? 'Earnings' : 'Transaction';
+                    
+                    // Add wallet type for withdrawals
+                    if (transaction.type === 'withdrawal' && transaction.walletType) {
+                        typeLabel = `${transaction.walletType === 'normal' ? 'Normal Wallet' : 'Request Wallet'} Withdrawal`;
+                    }
+                    
+                    // Add wallet type for earnings
+                    if (transaction.type === 'earning' && transaction.walletType) {
+                        typeLabel = `${transaction.walletType === 'normal' ? 'Normal Wallet' : 'Request Wallet'} Earnings`;
+                    }
                     
                     const time = transaction.timestamp?.toDate ? 
                         transaction.timestamp.toDate().toLocaleDateString() + ' ' + 
@@ -2332,7 +2654,7 @@
                 return;
             }
             
-            if (userData.gender === 'male' && amount > walletBalance) {
+            if (userData.gender === 'male' && amount > normalWalletBalance) {
                 showNotification('Insufficient balance', 'error');
                 return;
             }
@@ -2356,17 +2678,19 @@
                         status: 'pending'
                     });
                 
-                // Deduct amount from male user
+                // Handle payment based on gender
                 if (userData.gender === 'male') {
+                    // Deduct amount from male user's normal wallet
                     await firebase.firestore()
                         .collection('users')
                         .doc(currentUser.uid)
                         .update({
-                            walletBalance: firebase.firestore.FieldValue.increment(-amount)
+                            normalWalletBalance: firebase.firestore.FieldValue.increment(-amount)
                         });
                     
-                    walletBalance -= amount;
-                    updateBalanceDisplay();
+                    normalWalletBalance -= amount;
+                    document.getElementById('male-wallet-balance').textContent = `₦${normalWalletBalance.toLocaleString()}`;
+                    document.getElementById('header-balance').textContent = `₦${normalWalletBalance.toLocaleString()}`;
                     
                     // Record transaction
                     await firebase.firestore().collection('transactions').add({
@@ -2394,10 +2718,30 @@
         }
 
         // Make functions available globally for onclick handlers
-        window.acceptMediaRequest = function(requestId) {
-            // Implementation for accepting media requests
-            showNotification('Media request accepted. Please upload media.', 'success');
-            document.getElementById('media-upload-modal').classList.add('active');
+        window.acceptMediaRequest = async function(requestId) {
+            try {
+                // When female accepts media request and uploads media
+                await firebase.firestore().collection('users').doc(currentUser.uid).update({
+                    completedRequestsCount: firebase.firestore.FieldValue.increment(1),
+                    requestWalletBalance: firebase.firestore.FieldValue.increment(100) // Example amount
+                });
+                
+                // Update local counts
+                completedRequestsCount += 1;
+                requestWalletBalance += 100;
+                updateFemaleWalletDisplay();
+                
+                // Show notification after first request
+                if (completedRequestsCount === 1) {
+                    showNotification('Great! You completed your first request. You need to complete 10 requests before you can withdraw from Request Wallet.', 'info');
+                }
+                
+                showNotification('Media request accepted. Please upload media.', 'success');
+                document.getElementById('media-upload-modal').classList.add('active');
+            } catch (error) {
+                console.error('Error accepting media request:', error);
+                showNotification('Error accepting request', 'error');
+            }
         };
 
         // Handle window resize for mobile responsiveness

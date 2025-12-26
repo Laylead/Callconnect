@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIP Dashboard - Camsilo</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <!-- External Configuration -->
+    <script src="firebase-config.js" defer></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* CSS Variables */
+        :root {
+            --primary-color: #7c3aed;
+            --primary-dark: #5b21b6;
+            --primary-light: #a78bfa;
+            --primary-gradient: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+            --accent-color: #ec4899;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #3b82f6;
+            --dark-color: #1f2937;
+            --darker-color: #111827;
+            --light-color: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-700: #374151;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.15);
+            --shadow-xl: 0 25px 50px rgba(124, 58, 237, 0.15);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --border-radius: 12px;
+            --border-radius-lg: 20px;
+        }
+
+        /* Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: 'Poppins', sans-serif;
+            overflow-x: hidden;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--dark-color);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Secret Container */
+        .secret-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Header */
+        .secret-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .tagline {
+            color: var(--gray-700);
+            font-size: 1.1rem;
+        }
+
+        .vip-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: white;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        /* User Info */
+        .user-info-card {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(236, 72, 153, 0.1));
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--primary-color);
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--darker-color);
+            margin-bottom: 5px;
+        }
+
+        .user-email {
+            color: var(--gray-700);
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+        }
+
+        .balance-display {
+            background: white;
+            padding: 15px 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .balance-label {
+            font-size: 0.9rem;
+            color: var(--gray-700);
+            margin-bottom: 5px;
+        }
+
+        .balance-amount {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+
+        /* Add Money Section */
+        .add-money-section {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--darker-color);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+        }
+
+        /* Quick Amounts */
+        .quick-amounts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 576px) {
+            .quick-amounts {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .amount-btn {
+            padding: 18px;
+            background: var(--gray-100);
+            border: 2px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .amount-btn:hover {
+            background: var(--primary-light);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .amount-btn.active {
+            background: var(--primary-gradient);
+            color: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 5px 15px rgba(124, 58, 237, 0.3);
+        }
+
+        /* Custom Amount */
+        .custom-amount {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark-color);
+            font-size: 0.95rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 18px 20px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            font-family: 'Poppins', sans-serif;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .input-group .currency-symbol {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .input-with-icon {
+            position: relative;
+        }
+
+        .input-with-icon input {
+            padding-left: 50px;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 576px) {
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+
+        .btn {
+            padding: 18px 30px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--dark-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+            transform: translateY(-2px);
+        }
+
+        /* Transactions History */
+        .transactions-section {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .transactions-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .transaction-item {
+            padding: 18px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-info h4 {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .transaction-amount {
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .transaction-amount.positive {
+            color: var(--success-color);
+        }
+
+        .transaction-time {
+            color: var(--gray-700);
+            font-size: 0.85rem;
+        }
+
+        /* Success Message */
+        .success-message {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            border: 2px solid var(--success-color);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeIn 0.5s ease;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .success-message i {
+            font-size: 3rem;
+            color: var(--success-color);
+            margin-bottom: 15px;
+        }
+
+        .success-message h3 {
+            color: var(--success-color);
+            margin-bottom: 10px;
+        }
+
+        .success-message p {
+            color: var(--gray-700);
+            margin-bottom: 20px;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 50px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(124, 58, 237, 0.2);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            max-width: 400px;
+            padding: 16px 20px;
+            border-radius: var(--border-radius);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: var(--transition);
+            z-index: 10000;
+            box-shadow: var(--shadow);
+            font-size: 0.95rem;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .notification.success {
+            background: var(--success-color);
+        }
+
+        .notification.error {
+            background: var(--danger-color);
+        }
+
+        .notification.warning {
+            background: var(--warning-color);
+        }
+
+        .notification.info {
+            background: var(--info-color);
+        }
+
+        /* Logout Button */
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, var(--danger-color), #dc2626);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Footer */
+        .secret-footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-200);
+            color: var(--gray-700);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            .secret-container {
+                padding: 20px;
+            }
+            
+            .user-info-card {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .balance-display {
+                min-width: 100%;
+            }
+            
+            .amount-btn {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .secret-container {
+                padding: 15px;
+            }
+            
+            .logo {
+                font-size: 2rem;
+            }
+            
+            .section-title {
+                font-size: 1.3rem;
+            }
+            
+            .btn {
+                padding: 15px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Logout Button -->
+    <button class="logout-btn" id="logout-btn">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+    </button>
+
+    <!-- Main Container -->
+    <div class="secret-container">
+        <!-- Header -->
+        <div class="secret-header">
+            <div class="logo">CAMSILO VIP</div>
+            <p class="tagline">Exclusive VIP Fund Management</p>
+            <div class="vip-badge">
+                <i class="fas fa-crown"></i> VIP ACCESS ONLY
+            </div>
+        </div>
+
+        <!-- User Info -->
+        <div id="user-info" class="user-info-card">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- Success Message -->
+        <div id="success-message" class="success-message">
+            <i class="fas fa-check-circle"></i>
+            <h3>Funds Added Successfully!</h3>
+            <p>Your balance has been updated and the transaction has been recorded.</p>
+            <p id="added-amount-display" style="font-weight: 700; font-size: 1.2rem; margin: 10px 0;"></p>
+            <button class="btn btn-success" onclick="resetForm()">
+                <i class="fas fa-plus"></i> Add More Funds
+            </button>
+        </div>
+
+        <!-- Add Money Section -->
+        <div class="add-money-section">
+            <h2 class="section-title">
+                <i class="fas fa-money-bill-wave"></i>
+                Add Funds
+            </h2>
+
+            <!-- Quick Amounts -->
+            <div class="quick-amounts" id="quick-amounts">
+                <button class="amount-btn" data-amount="1000">₦1,000</button>
+                <button class="amount-btn" data-amount="5000">₦5,000</button>
+                <button class="amount-btn" data-amount="10000">₦10,000</button>
+                <button class="amount-btn" data-amount="20000">₦20,000</button>
+                <button class="amount-btn" data-amount="50000">₦50,000</button>
+                <button class="amount-btn" data-amount="100000">₦100,000</button>
+            </div>
+
+            <!-- Custom Amount -->
+            <div class="custom-amount">
+                <div class="input-group">
+                    <label for="custom-amount">
+                        <i class="fas fa-pen"></i> Custom Amount
+                    </label>
+                    <div class="input-with-icon">
+                        <span class="currency-symbol">₦</span>
+                        <input type="number" 
+                               id="custom-amount" 
+                               placeholder="Enter custom amount" 
+                               min="100" 
+                               step="100"
+                               onkeypress="handleEnterKey(event)">
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--gray-700); margin-top: 8px;">
+                        Minimum: ₦100 | Press Enter to add funds
+                    </p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-secondary" onclick="resetForm()">
+                    <i class="fas fa-redo"></i> Reset
+                </button>
+                <button class="btn btn-primary" onclick="addFunds()">
+                    <i class="fas fa-plus-circle"></i> Add Funds Now
+                </button>
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="transactions-section">
+            <h2 class="section-title">
+                <i class="fas fa-history"></i>
+                Recent VIP Transactions
+            </h2>
+            <div id="transactions-list" class="transactions-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="secret-footer">
+            <p>VIP Access Only • This dashboard is for authorized personnel only</p>
+            <p style="margin-top: 5px; font-size: 0.8rem; color: var(--gray-300);">
+                <i class="fas fa-shield-alt"></i> Secure VIP Portal
+            </p>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+
+    <script>
+        // ========== GLOBAL VARIABLES ==========
+        let currentUser = null;
+        let userData = null;
+        let selectedAmount = 0;
+
+        // ========== INITIALIZATION ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+        });
+
+        async function initializeApp() {
+            try {
+                // Check if Firebase config is loaded
+                if (typeof firebaseConfig === 'undefined') {
+                    showNotification('Firebase configuration not loaded', 'error');
+                    return;
+                }
+
+                // Initialize Firebase
+                firebase.initializeApp(firebaseConfig);
+                
+                // Check authentication state
+                firebase.auth().onAuthStateChanged(async (user) => {
+                    if (user) {
+                        console.log('VIP User authenticated:', user.uid);
+                        currentUser = user;
+                        await loadUserData();
+                        setupEventListeners();
+                        loadRecentTransactions();
+                    } else {
+                        // Redirect to login page
+                        console.log('No VIP user, redirecting to login');
+                        window.location.href = 'login.html';
+                    }
+                });
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showNotification('Error initializing VIP dashboard', 'error');
+            }
+        }
+
+        // ========== USER DATA ==========
+        async function loadUserData() {
+            try {
+                console.log('Loading VIP user data for:', currentUser.uid);
+                const userDoc = await firebase.firestore()
+                    .collection('users')
+                    .doc(currentUser.uid)
+                    .get();
+                
+                if (userDoc.exists) {
+                    userData = userDoc.data();
+                    console.log('VIP User data loaded:', userData);
+                    updateUserInfo();
+                } else {
+                    console.log('VIP User document does not exist');
+                    showNotification('User data not found', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading VIP user data:', error);
+                showNotification('Error loading user data', 'error');
+            }
+        }
+
+        function updateUserInfo() {
+            if (!userData) return;
+            
+            const userInfoDiv = document.getElementById('user-info');
+            const balance = userData.normalWalletBalance || 0;
+            
+            userInfoDiv.innerHTML = `
+                <img src="${userData.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'VIP')}&background=7c3aed&color=fff`}" 
+                     alt="Profile" 
+                     class="user-avatar">
+                <div class="user-details">
+                    <div class="user-name">${userData.name || 'VIP User'}</div>
+                    <div class="user-email">${currentUser.email}</div>
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <span style="background: ${userData.gender === 'male' ? 'var(--info-color)' : 'var(--accent-color)'}; 
+                              color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem;">
+                            ${userData.gender === 'male' ? 'Male Client' : 'Female Model'}
+                        </span>
+                        <span style="background: var(--primary-color); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem;">
+                            <i class="fas fa-star"></i> VIP
+                        </span>
+                    </div>
+                </div>
+                <div class="balance-display">
+                    <div class="balance-label">Current Balance</div>
+                    <div class="balance-amount" id="current-balance">₦${balance.toLocaleString()}</div>
+                </div>
+            `;
+        }
+
+        // ========== EVENT LISTENERS ==========
+        function setupEventListeners() {
+            // Logout
+            document.getElementById('logout-btn').addEventListener('click', async () => {
+                try {
+                    await firebase.auth().signOut();
+                    showNotification('Logged out successfully', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 1000);
+                } catch (error) {
+                    showNotification('Error logging out', 'error');
+                }
+            });
+
+            // Quick amount buttons
+            document.querySelectorAll('.amount-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Remove active class from all buttons
+                    document.querySelectorAll('.amount-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked button
+                    btn.classList.add('active');
+                    
+                    // Set selected amount
+                    selectedAmount = parseInt(btn.dataset.amount);
+                    document.getElementById('custom-amount').value = selectedAmount;
+                    
+                    showNotification(`Selected: ₦${selectedAmount.toLocaleString()}`, 'info');
+                });
+            });
+
+            // Custom amount input
+            document.getElementById('custom-amount').addEventListener('input', (e) => {
+                selectedAmount = parseInt(e.target.value) || 0;
+                
+                // Remove active class from quick amount buttons
+                document.querySelectorAll('.amount-btn').forEach(b => {
+                    b.classList.remove('active');
+                });
+                
+                // Highlight matching quick amount button
+                if (selectedAmount > 0) {
+                    document.querySelectorAll('.amount-btn').forEach(b => {
+                        if (parseInt(b.dataset.amount) === selectedAmount) {
+                            b.classList.add('active');
+                        }
+                    });
+                }
+            });
+
+            // Enter key handler for custom amount
+            window.handleEnterKey = function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    addFunds();
+                }
+            };
+        }
+
+        // ========== ADD FUNDS FUNCTION ==========
+        async function addFunds() {
+            const amountInput = document.getElementById('custom-amount');
+            const amount = parseInt(amountInput.value) || selectedAmount;
+            
+            // Validation
+            if (!amount || amount < 100) {
+                showNotification('Minimum amount is ₦100', 'error');
+                return;
+            }
+            
+            if (amount > 1000000) {
+                showNotification('Maximum amount is ₦1,000,000 per transaction', 'error');
+                return;
+            }
+            
+            try {
+                // Show loading
+                showNotification('Processing...', 'info');
+                
+                // Update user's wallet balance
+                await firebase.firestore().collection('users').doc(currentUser.uid).update({
+                    normalWalletBalance: firebase.firestore.FieldValue.increment(amount),
+                    lastVipTopUp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Record VIP transaction
+                await firebase.firestore().collection('vip_transactions').add({
+                    userId: currentUser.uid,
+                    userName: userData.name,
+                    userEmail: currentUser.email,
+                    type: 'vip_topup',
+                    amount: amount,
+                    status: 'completed',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    description: `VIP Funds Addition: ₦${amount.toLocaleString()}`,
+                    processedBy: 'vip_dashboard'
+                });
+                
+                // Also record in regular transactions for consistency
+                await firebase.firestore().collection('transactions').add({
+                    userId: currentUser.uid,
+                    type: 'vip_deposit',
+                    amount: amount,
+                    status: 'completed',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    description: `VIP Deposit: ₦${amount.toLocaleString()}`
+                });
+                
+                // Update local balance
+                if (userData.normalWalletBalance) {
+                    userData.normalWalletBalance += amount;
+                } else {
+                    userData.normalWalletBalance = amount;
+                }
+                
+                // Update UI
+                updateUserInfo();
+                
+                // Show success message
+                document.getElementById('added-amount-display').textContent = 
+                    `Added: ₦${amount.toLocaleString()}`;
+                document.getElementById('success-message').classList.add('show');
+                
+                // Hide success message after 10 seconds
+                setTimeout(() => {
+                    document.getElementById('success-message').classList.remove('show');
+                }, 10000);
+                
+                // Reset form
+                resetForm();
+                
+                // Show success notification
+                showNotification(`Successfully added ₦${amount.toLocaleString()} to your account!`, 'success');
+                
+                // Reload recent transactions
+                loadRecentTransactions();
+                
+            } catch (error) {
+                console.error('Error adding funds:', error);
+                showNotification('Error adding funds: ' + error.message, 'error');
+            }
+        }
+
+        // ========== RESET FORM ==========
+        function resetForm() {
+            selectedAmount = 0;
+            document.getElementById('custom-amount').value = '';
+            document.querySelectorAll('.amount-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            
+            // Focus on custom amount input
+            document.getElementById('custom-amount').focus();
+            
+            showNotification('Form reset', 'info');
+        }
+
+        // ========== LOAD RECENT TRANSACTIONS ==========
+        async function loadRecentTransactions() {
+            const container = document.getElementById('transactions-list');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            
+            try {
+                const transactionsSnapshot = await firebase.firestore()
+                    .collection('vip_transactions')
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('timestamp', 'desc')
+                    .limit(10)
+                    .get();
+                
+                container.innerHTML = '';
+                
+                if (transactionsSnapshot.empty) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 30px; color: var(--gray-700);">
+                            <i class="fas fa-receipt" style="font-size: 2rem; margin-bottom: 15px;"></i>
+                            <p>No VIP transactions yet</p>
+                            <p style="font-size: 0.9rem; margin-top: 10px;">Add funds to see transaction history</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                transactionsSnapshot.forEach(doc => {
+                    const transaction = doc.data();
+                    createTransactionItem(transaction);
+                });
+                
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: var(--danger-color);">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 15px;"></i>
+                        <p>Error loading transactions</p>
+                        <p style="font-size: 0.9rem; margin-top: 10px;">Please try again</p>
+                    </div>
+                `;
+            }
+        }
+
+        function createTransactionItem(transaction) {
+            const container = document.getElementById('transactions-list');
+            const item = document.createElement('div');
+            item.className = 'transaction-item';
+            
+            const time = transaction.timestamp?.toDate ? 
+                transaction.timestamp.toDate().toLocaleString() : 
+                'Just now';
+            
+            item.innerHTML = `
+                <div class="transaction-info">
+                    <h4 style="margin: 0 0 5px 0;">VIP Funds Addition</h4>
+                    <div class="transaction-time">${time}</div>
+                    <div style="font-size: 0.85rem; color: var(--gray-700); margin-top: 5px;">
+                        <i class="fas fa-id-card"></i> ${transaction.processedBy || 'VIP Dashboard'}
+                    </div>
+                </div>
+                <div class="transaction-amount positive">
+                    +₦${transaction.amount?.toLocaleString() || '0'}
+                </div>
+            `;
+            
+            container.appendChild(item);
+        }
+
+        // ========== NOTIFICATION SYSTEM ==========
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notification-container');
+            
+            // Remove existing notifications
+            container.innerHTML = '';
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                                 type === 'error' ? 'exclamation-circle' : 
+                                 type === 'warning' ? 'exclamation-triangle' : 
+                                 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            container.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => notification.classList.add('show'), 10);
+            
+            // Remove notification after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode === container) {
+                        container.removeChild(notification);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        // ========== GLOBAL FUNCTIONS ==========
+        window.addFunds = addFunds;
+        window.resetForm = resetForm;
+        window.handleEnterKey = handleEnterKey;
+    </script>
+</body>
+</html>

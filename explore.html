@@ -57,7 +57,7 @@
             overflow-x: hidden;
             position: relative;
             touch-action: pan-y;
-            padding: env(safe-area-inset-top) 0 env(safe-area-bottom) 0;
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
             overscroll-behavior: none;
         }
 
@@ -2768,21 +2768,30 @@
                         const story = childSnapshot.val();
                         story.id = childSnapshot.key;
                         
-                        // Ensure required fields exist
-                        story.title = story.title || 'Untitled Story';
-                        story.description = story.description || 'No description available';
-                        story.authorName = story.authorName || 'Anonymous';
-                        story.category = story.category || 'audio';
-                        story.duration = story.duration || 300; // 5 minutes default
-                        story.playCount = story.playCount || 0;
-                        story.likeCount = story.likeCount || 0;
-                        story.saveCount = story.saveCount || 0;
-                        story.createdAt = story.createdAt || Date.now();
-                        story.tags = story.tags || [];
-                        story.parts = story.parts || [];
-                        
-                        stories.unshift(story); // Newest first
+                        // Only include stories with real audio URLs
+                        if (story.audioUrl && story.audioUrl.trim() !== '') {
+                            // Ensure required fields exist
+                            story.title = story.title || 'Untitled Story';
+                            story.description = story.description || 'No description available';
+                            story.authorName = story.authorName || 'Anonymous';
+                            story.authorRole = story.authorRole || 'Creator';
+                            story.category = story.category || 'audio';
+                            story.duration = story.duration || 300;
+                            story.playCount = story.playCount || 0;
+                            story.likeCount = story.likeCount || 0;
+                            story.saveCount = story.saveCount || 0;
+                            story.createdAt = story.createdAt || Date.now();
+                            story.tags = story.tags || [];
+                            story.parts = story.parts || [];
+                            story.isFeatured = story.isFeatured || false;
+                            
+                            stories.unshift(story);
+                        }
                     });
+                    
+                    if (stories.length === 0) {
+                        showToast("No audio stories found. Add stories with audio to Firebase.", "info");
+                    }
                     
                     currentStories = stories;
                     cacheStories(stories);
@@ -2793,13 +2802,13 @@
                     // Update filter counts
                     updateFilterCounts(stories);
                 } else {
-                    showToast("No stories found. Stories will appear here once they're added.", "info");
+                    showToast("No stories found in database. Add stories to Firebase.", "info");
                     currentStories = [];
                     applyCurrentFilters();
                 }
             } catch (error) {
                 console.error("Error fetching stories:", error);
-                showToast("Error loading stories. Please try again.", "error");
+                showToast("Error loading stories from database. Please check Firebase connection.", "error");
                 currentStories = [];
                 applyCurrentFilters();
             }
@@ -2870,20 +2879,25 @@
                         const story = childSnapshot.val();
                         story.id = childSnapshot.key;
                         
-                        // Ensure required fields exist
-                        story.title = story.title || 'Untitled Story';
-                        story.description = story.description || 'No description available';
-                        story.authorName = story.authorName || 'Anonymous';
-                        story.category = story.category || 'audio';
-                        story.duration = story.duration || 300;
-                        story.playCount = story.playCount || 0;
-                        story.likeCount = story.likeCount || 0;
-                        story.saveCount = story.saveCount || 0;
-                        story.createdAt = story.createdAt || Date.now();
-                        story.tags = story.tags || [];
-                        story.parts = story.parts || [];
-                        
-                        newStories.unshift(story);
+                        // Only include stories with real audio URLs
+                        if (story.audioUrl && story.audioUrl.trim() !== '') {
+                            // Ensure required fields exist
+                            story.title = story.title || 'Untitled Story';
+                            story.description = story.description || 'No description available';
+                            story.authorName = story.authorName || 'Anonymous';
+                            story.authorRole = story.authorRole || 'Creator';
+                            story.category = story.category || 'audio';
+                            story.duration = story.duration || 300;
+                            story.playCount = story.playCount || 0;
+                            story.likeCount = story.likeCount || 0;
+                            story.saveCount = story.saveCount || 0;
+                            story.createdAt = story.createdAt || Date.now();
+                            story.tags = story.tags || [];
+                            story.parts = story.parts || [];
+                            story.isFeatured = story.isFeatured || false;
+                            
+                            newStories.unshift(story);
+                        }
                     });
 
                     if (newStories.length > 0) {
@@ -2922,10 +2936,10 @@
                 grid.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">
-                            <i class="fas fa-search"></i>
+                            <i class="fas fa-microphone-slash"></i>
                         </div>
-                        <h3 class="empty-state-title">No stories found</h3>
-                        <p class="empty-state-message">Try adjusting your filters or search terms to find what you're looking for.</p>
+                        <h3 class="empty-state-title">No audio stories available</h3>
+                        <p class="empty-state-message">Add stories with audio files to Firebase to see them here.</p>
                         <button class="load-more-btn" onclick="resetFilters()">
                             <i class="fas fa-redo"></i>
                             Reset Filters
@@ -3011,6 +3025,11 @@
             // Get author initial for avatar
             const authorInitial = story.authorName ? story.authorName.charAt(0).toUpperCase() : 'A';
             
+            // Check if audio is available
+            const hasAudio = story.audioUrl && story.audioUrl.trim() !== '';
+            const playButtonDisabled = !hasAudio ? 'disabled style="opacity:0.5;"' : '';
+            const playButtonText = hasAudio ? 'Play' : 'No Audio';
+            
             card.innerHTML = `
                 <div class="card-header">
                     <div class="card-gradient" style="background: ${gradient};"></div>
@@ -3064,14 +3083,14 @@
                         <div class="author-avatar">${authorInitial}</div>
                         <div class="author-info">
                             <div class="author-name">${story.authorName}</div>
-                            <div class="author-role">Story Creator</div>
+                            <div class="author-role">${story.authorRole || 'Creator'}</div>
                         </div>
                     </div>
                     
                     <div class="card-actions">
-                        <button class="card-action-btn play" onclick="playStory('${story.id}', event)">
+                        <button class="card-action-btn play" onclick="playStory('${story.id}', event)" ${playButtonDisabled}>
                             <i class="fas fa-play"></i>
-                            <span>Play</span>
+                            <span>${playButtonText}</span>
                         </button>
                         <button class="${saveBtnClass}" onclick="toggleSave('${story.id}', this, event)">
                             <i class="${saveIcon}"></i>
@@ -3155,6 +3174,19 @@
                 return;
             }
             
+            // Check if audio URL exists
+            if (!story.audioUrl || story.audioUrl.trim() === '') {
+                showToast("Audio not available for this story", "error");
+                return;
+            }
+            
+            // Validate audio URL
+            const url = story.audioUrl.toLowerCase();
+            if (!url.startsWith('http') || (!url.endsWith('.mp3') && !url.endsWith('.wav') && !url.endsWith('.ogg') && !url.endsWith('.m4a'))) {
+                showToast("Invalid audio format", "error");
+                return;
+            }
+            
             currentStory = story;
             
             // Stop current audio if playing
@@ -3163,11 +3195,13 @@
                 clearInterval(audioUpdateInterval);
             }
             
-            // Load and play new audio
-            currentAudio.src = story.audioUrl || 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+            // Load and play real audio from Firebase
+            currentAudio.src = story.audioUrl;
+            currentAudio.load(); // Pre-load the audio
+            
             currentAudio.play().catch(error => {
                 console.error("Playback error:", error);
-                showToast("Error playing audio. Please try again.", "error");
+                showToast("Cannot play audio. URL may be invalid or inaccessible.", "error");
             });
             
             // Update UI

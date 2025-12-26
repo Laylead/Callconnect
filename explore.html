@@ -242,6 +242,11 @@
             z-index: 1000;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             height: 60px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .header.hidden {
+            transform: translateY(-100%);
         }
 
         .logo {
@@ -291,6 +296,15 @@
             padding: 80px 16px 90px;
             max-width: 1400px;
             margin: 0 auto;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .explore-content.filter-active {
+            transform: scale(0.95);
+            filter: blur(4px);
+            pointer-events: none;
+            user-select: none;
         }
 
         /* ===== ENHANCED SEARCH BAR ===== */
@@ -374,7 +388,7 @@
             color: var(--text-primary);
         }
 
-        /* ===== ENHANCED FILTER SYSTEM ===== */
+        /* ===== ENHANCED FILTER BUTTONS ===== */
         .filter-section {
             margin-bottom: 40px;
         }
@@ -421,19 +435,19 @@
             transform: translateY(-2px);
         }
 
-        /* ===== FILTER TABS ===== */
-        .filter-tabs {
-            display: flex;
-            gap: 12px;
+        /* ===== FILTER BUTTONS GRID ===== */
+        .filter-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
             margin-bottom: 25px;
-            flex-wrap: wrap;
         }
 
-        .filter-tab {
-            padding: 12px 24px;
+        .filter-button {
+            padding: 16px 20px;
             background: rgba(255, 255, 255, 0.05);
             border: 2px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
+            border-radius: 16px;
             color: var(--text-secondary);
             font-size: 14px;
             font-weight: 600;
@@ -441,31 +455,32 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 10px;
-            white-space: nowrap;
         }
 
-        .filter-tab:hover {
+        .filter-button:hover {
             background: rgba(255, 255, 255, 0.08);
             border-color: rgba(255, 255, 255, 0.12);
             color: var(--text-primary);
+            transform: translateY(-3px);
         }
 
-        .filter-tab.active {
+        .filter-button.active {
             background: linear-gradient(135deg, rgba(106, 13, 255, 0.2), rgba(211, 0, 255, 0.2));
             border-color: var(--primary-purple);
             color: var(--primary-purple);
             box-shadow: 0 5px 20px rgba(106, 13, 255, 0.2);
         }
 
-        .filter-tab i {
+        .filter-button i {
             font-size: 16px;
         }
 
-        .filter-tab-badge {
+        .filter-button-badge {
             background: rgba(255, 255, 255, 0.1);
             color: var(--text-primary);
-            padding: 2px 8px;
+            padding: 4px 10px;
             border-radius: 10px;
             font-size: 12px;
             font-weight: 700;
@@ -473,166 +488,9 @@
             text-align: center;
         }
 
-        /* ===== FILTER CONTENT AREA ===== */
-        .filter-content {
-            background: rgba(5, 0, 22, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            display: none;
-        }
-
-        .filter-content.active {
-            display: block;
-            animation: slideDown 0.3s ease-out;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .filter-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 25px;
-        }
-
-        .filter-option-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            padding: 20px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .filter-option-card:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.12);
-            transform: translateY(-5px);
-        }
-
-        .filter-option-card.active {
-            background: linear-gradient(135deg, rgba(106, 13, 255, 0.15), rgba(211, 0, 255, 0.15));
-            border-color: var(--primary-purple);
-            box-shadow: 0 8px 30px rgba(106, 13, 255, 0.2);
-        }
-
-        .filter-option-card.active::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--primary-purple), var(--neon-magenta));
-        }
-
-        .filter-option-icon {
-            width: 50px;
-            height: 50px;
-            background: rgba(106, 13, 255, 0.1);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
-            font-size: 22px;
-            color: var(--primary-purple);
-        }
-
-        .filter-option-card.active .filter-option-icon {
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            color: white;
-        }
-
-        .filter-option-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-        }
-
-        .filter-option-description {
-            font-size: 13px;
-            color: var(--text-secondary);
-            line-height: 1.4;
-        }
-
-        .filter-option-check {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 24px;
-            height: 24px;
+        .filter-button.active .filter-button-badge {
             background: var(--primary-purple);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             color: white;
-            font-size: 12px;
-            opacity: 0;
-            transform: scale(0.5);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .filter-option-card.active .filter-option-check {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        /* ===== FILTER ACTION BUTTONS ===== */
-        .filter-actions {
-            display: flex;
-            gap: 15px;
-            padding-top: 25px;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .filter-action-btn {
-            flex: 1;
-            padding: 16px;
-            border-radius: 14px;
-            border: none;
-            font-size: 15px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .filter-action-btn.apply {
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            color: white;
-            box-shadow: 0 5px 20px rgba(106, 13, 255, 0.3);
-        }
-
-        .filter-action-btn.cancel {
-            background: rgba(255, 255, 255, 0.07);
-            border: 2px solid rgba(255, 255, 255, 0.12);
-            color: var(--text-primary);
-        }
-
-        .filter-action-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
 
         /* ===== ACTIVE FILTERS DISPLAY ===== */
@@ -641,6 +499,16 @@
             flex-wrap: wrap;
             gap: 10px;
             margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            min-height: 60px;
+            align-items: center;
+        }
+
+        .active-filters:empty {
+            display: none;
         }
 
         .active-filter-tag {
@@ -654,6 +522,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            animation: slideIn 0.3s ease-out;
         }
 
         .active-filter-tag i {
@@ -667,17 +536,226 @@
             opacity: 1;
         }
 
-        /* ===== GRID LAYOUT ===== */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== FILTER MODAL POPUP ===== */
+        .filter-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            padding: 20px;
+        }
+
+        .filter-modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .filter-modal {
+            background: linear-gradient(135deg, rgba(5, 0, 22, 0.98), rgba(26, 4, 58, 0.98));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow: hidden;
+            transform: scale(0.9) translateY(50px);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+        }
+
+        .filter-modal-overlay.active .filter-modal {
+            transform: scale(1) translateY(0);
+        }
+
+        .filter-modal-header {
+            padding: 25px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .filter-modal-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .filter-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 24px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .filter-modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .filter-modal-content {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .filter-options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .filter-option {
+            padding: 18px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            color: var(--text-secondary);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .filter-option:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.12);
+            color: var(--text-primary);
+            transform: translateY(-3px);
+        }
+
+        .filter-option.active {
+            background: linear-gradient(135deg, rgba(106, 13, 255, 0.2), rgba(211, 0, 255, 0.2));
+            border-color: var(--primary-purple);
+            color: var(--primary-purple);
+            box-shadow: 0 8px 25px rgba(106, 13, 255, 0.2);
+        }
+
+        .filter-option.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-purple), var(--neon-magenta));
+        }
+
+        .filter-option i {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .filter-option-check {
+            margin-left: auto;
+            width: 20px;
+            height: 20px;
+            background: var(--primary-purple);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .filter-option.active .filter-option-check {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .filter-modal-footer {
+            padding: 20px 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+
+        .filter-modal-btn {
+            padding: 14px 28px;
+            border-radius: 14px;
+            border: none;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-modal-btn.apply {
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            color: white;
+            box-shadow: 0 5px 20px rgba(106, 13, 255, 0.3);
+        }
+
+        .filter-modal-btn.cancel {
+            background: rgba(255, 255, 255, 0.07);
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-primary);
+        }
+
+        .filter-modal-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ===== ENHANCED STORY CARDS ===== */
         .stories-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 25px;
             margin-bottom: 40px;
         }
 
         @media (max-width: 768px) {
             .stories-grid {
-                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
                 gap: 20px;
             }
         }
@@ -689,7 +767,6 @@
             }
         }
 
-        /* ===== ENHANCED STORY CARD ===== */
         .story-card {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -710,40 +787,15 @@
             background: rgba(255, 255, 255, 0.08);
         }
 
-        .card-image {
-            height: 200px;
-            width: 100%;
+        .card-header {
+            padding: 25px 25px 0;
             position: relative;
-            overflow: hidden;
         }
 
-        .card-image::before {
-            content: '';
+        .card-category {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
-            opacity: 0.8;
-            z-index: 1;
-        }
-
-        .card-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.6s ease;
-        }
-
-        .story-card:hover .card-image img {
-            transform: scale(1.1);
-        }
-
-        .card-type-badge {
-            position: absolute;
-            top: 15px;
-            left: 15px;
+            top: 25px;
+            left: 25px;
             background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(10px);
             padding: 8px 16px;
@@ -758,27 +810,27 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .card-type-badge.podcast {
+        .card-category.podcast {
             background: linear-gradient(135deg, rgba(106, 13, 255, 0.8), rgba(211, 0, 255, 0.8));
         }
 
-        .card-type-badge.audio {
+        .card-category.audio {
             background: linear-gradient(135deg, rgba(255, 170, 0, 0.8), rgba(255, 215, 0, 0.8));
         }
 
-        .card-type-badge.live {
+        .card-category.live {
             background: linear-gradient(135deg, rgba(255, 71, 87, 0.8), rgba(255, 107, 107, 0.8));
             animation: pulse 1.5s infinite;
         }
 
-        .card-type-badge.music {
+        .card-category.music {
             background: linear-gradient(135deg, rgba(0, 149, 255, 0.8), rgba(0, 213, 143, 0.8));
         }
 
         .card-ribbon {
             position: absolute;
-            top: 15px;
-            right: 15px;
+            top: 25px;
+            right: 25px;
             background: linear-gradient(135deg, var(--success), #00b894);
             color: white;
             padding: 6px 12px;
@@ -789,16 +841,60 @@
             box-shadow: 0 4px 15px rgba(0, 214, 143, 0.3);
         }
 
-        .card-content {
-            padding: 25px;
+        .card-visual {
+            height: 180px;
+            width: 100%;
             position: relative;
+            overflow: hidden;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, rgba(106, 13, 255, 0.2), rgba(211, 0, 255, 0.2));
+        }
+
+        .card-visual-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .card-visual-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: var(--primary-purple);
+            filter: drop-shadow(0 4px 15px rgba(106, 13, 255, 0.3));
+        }
+
+        .card-visual-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1.3;
+            margin-bottom: 8px;
+        }
+
+        .card-visual-author {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .card-content {
+            padding: 0 25px 25px;
         }
 
         .card-title {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 800;
             color: var(--text-primary);
-            margin-bottom: 12px;
+            margin-bottom: 15px;
             line-height: 1.3;
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -807,10 +903,10 @@
         }
 
         .card-description {
-            font-size: 14px;
+            font-size: 15px;
             color: var(--text-secondary);
             margin-bottom: 20px;
-            line-height: 1.5;
+            line-height: 1.6;
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
@@ -822,8 +918,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            font-size: 13px;
-            color: var(--text-secondary);
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .card-author {
@@ -832,12 +928,17 @@
             gap: 10px;
         }
 
-        .card-author img {
+        .card-author-icon {
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(106, 13, 255, 0.3);
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
         }
 
         .card-stats {
@@ -849,6 +950,8 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
             transition: all 0.3s ease;
         }
 
@@ -856,16 +959,18 @@
             color: var(--text-primary);
         }
 
+        .stat-item i {
+            font-size: 14px;
+        }
+
         .card-actions {
             display: flex;
             gap: 12px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .action-btn {
             flex: 1;
-            padding: 12px;
+            padding: 14px;
             border-radius: 14px;
             border: none;
             background: rgba(255, 255, 255, 0.07);
@@ -878,6 +983,8 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+            position: relative;
+            overflow: hidden;
         }
 
         .action-btn:hover {
@@ -897,17 +1004,17 @@
         }
 
         .action-btn.save {
-            position: relative;
-            overflow: hidden;
+            background: rgba(255, 255, 255, 0.07);
+            border: 2px solid rgba(255, 255, 255, 0.12);
         }
 
-        .action-btn.saved {
+        .action-btn.save.saved {
             background: linear-gradient(135deg, rgba(106, 13, 255, 0.2), rgba(211, 0, 255, 0.2));
+            border-color: var(--primary-purple);
             color: var(--primary-purple);
-            border: 2px solid var(--primary-purple);
         }
 
-        .action-btn.save::after {
+        .action-btn::after {
             content: '';
             position: absolute;
             top: -50%;
@@ -919,8 +1026,39 @@
             transition: transform 0.6s;
         }
 
-        .action-btn.save:hover::after {
+        .action-btn:hover::after {
             transform: rotate(45deg) translate(50%, 50%);
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .empty-state-message {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            font-size: 16px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
         }
 
         /* ===== LOAD MORE BUTTON ===== */
@@ -1319,12 +1457,17 @@
             gap: 15px;
         }
 
-        .story-author-large img {
+        .story-author-large .author-icon {
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid var(--primary-purple);
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 20px;
         }
 
         .story-parts {
@@ -1811,31 +1954,14 @@
                 font-size: 18px;
             }
             
-            .filter-tabs {
-                gap: 8px;
-            }
-            
-            .filter-tab {
-                padding: 10px 18px;
-                font-size: 13px;
-            }
-            
-            .filter-grid {
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-                gap: 15px;
-            }
-            
-            .filter-option-card {
-                padding: 16px;
+            .filter-buttons-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 12px;
             }
             
             .stories-grid {
-                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
                 gap: 20px;
-            }
-            
-            .card-image {
-                height: 180px;
             }
             
             .story-title-large {
@@ -1929,17 +2055,13 @@
         }
 
         @media (max-width: 480px) {
-            .filter-grid {
+            .filter-buttons-grid {
                 grid-template-columns: 1fr;
             }
             
             .stories-grid {
                 grid-template-columns: 1fr;
                 gap: 16px;
-            }
-            
-            .card-image {
-                height: 160px;
             }
             
             .story-title-large {
@@ -2041,35 +2163,6 @@
         .fade-in {
             animation: fadeInUp 0.5s ease-out;
         }
-
-        .empty-state {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 80px 20px;
-        }
-
-        .empty-state-icon {
-            font-size: 64px;
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-            opacity: 0.5;
-        }
-
-        .empty-state-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 10px;
-        }
-
-        .empty-state-message {
-            color: var(--text-secondary);
-            margin-bottom: 30px;
-            font-size: 16px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-        }
     </style>
 </head>
 <body>
@@ -2112,6 +2205,34 @@
         </div>
     </div>
 
+    <!-- Filter Modal Popup -->
+    <div class="filter-modal-overlay" id="filterModal">
+        <div class="filter-modal">
+            <div class="filter-modal-header">
+                <h3 class="filter-modal-title" id="filterModalTitle">
+                    <i class="fas fa-filter"></i>
+                    Filter Stories
+                </h3>
+                <button class="filter-modal-close" onclick="closeFilterModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="filter-modal-content" id="filterModalContent">
+                <!-- Filter options will be loaded here -->
+            </div>
+            <div class="filter-modal-footer">
+                <button class="filter-modal-btn cancel" onclick="closeFilterModal()">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+                <button class="filter-modal-btn apply" onclick="applyFilterModal()">
+                    <i class="fas fa-check"></i>
+                    Apply Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Fullscreen Player -->
     <div class="fullscreen-player" id="fullscreenPlayer">
         <div class="fullscreen-header">
@@ -2125,8 +2246,8 @@
             <div class="story-header">
                 <h1 class="story-title-large" id="fullscreenStoryTitle">Story Title</h1>
                 <div class="story-author-large" id="fullscreenStoryAuthor">
-                    <img src="https://i.pravatar.cc/150?img=1" alt="Author">
-                    <span>Author Name</span>
+                    <div class="author-icon" id="authorIcon">A</div>
+                    <span id="authorName">Author Name</span>
                 </div>
             </div>
             
@@ -2303,7 +2424,7 @@
         </header>
 
         <!-- Explore Content -->
-        <div class="explore-content">
+        <div class="explore-content" id="exploreContent">
             <!-- Search Section -->
             <div class="search-section">
                 <div class="search-container">
@@ -2333,383 +2454,43 @@
                     <!-- Active filters will appear here -->
                 </div>
 
-                <!-- Filter Tabs -->
-                <div class="filter-tabs">
-                    <button class="filter-tab active" onclick="showFilterContent('category')">
-                        <i class="fas fa-tags"></i>
-                        Category
-                        <span class="filter-tab-badge" id="categoryBadge">0</span>
+                <!-- Filter Buttons Grid -->
+                <div class="filter-buttons-grid">
+                    <button class="filter-button" onclick="openFilterModal('category')">
+                        <div class="filter-button-content">
+                            <i class="fas fa-tags"></i>
+                            <span>Category</span>
+                        </div>
+                        <span class="filter-button-badge" id="categoryBadge">0</span>
                     </button>
-                    <button class="filter-tab" onclick="showFilterContent('sort')">
-                        <i class="fas fa-sort-amount-down"></i>
-                        Sort By
-                        <span class="filter-tab-badge" id="sortBadge">0</span>
+                    <button class="filter-button" onclick="openFilterModal('sort')">
+                        <div class="filter-button-content">
+                            <i class="fas fa-sort-amount-down"></i>
+                            <span>Sort By</span>
+                        </div>
+                        <span class="filter-button-badge" id="sortBadge">0</span>
                     </button>
-                    <button class="filter-tab" onclick="showFilterContent('date')">
-                        <i class="fas fa-calendar-alt"></i>
-                        Date Range
-                        <span class="filter-tab-badge" id="dateBadge">0</span>
+                    <button class="filter-button" onclick="openFilterModal('date')">
+                        <div class="filter-button-content">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Date Range</span>
+                        </div>
+                        <span class="filter-button-badge" id="dateBadge">0</span>
                     </button>
-                    <button class="filter-tab" onclick="showFilterContent('duration')">
-                        <i class="fas fa-clock"></i>
-                        Duration
-                        <span class="filter-tab-badge" id="durationBadge">0</span>
+                    <button class="filter-button" onclick="openFilterModal('duration')">
+                        <div class="filter-button-content">
+                            <i class="fas fa-clock"></i>
+                            <span>Duration</span>
+                        </div>
+                        <span class="filter-button-badge" id="durationBadge">0</span>
                     </button>
-                    <button class="filter-tab" onclick="showFilterContent('tags')">
-                        <i class="fas fa-hashtag"></i>
-                        Tags
-                        <span class="filter-tab-badge" id="tagsBadge">0</span>
+                    <button class="filter-button" onclick="openFilterModal('tags')">
+                        <div class="filter-button-content">
+                            <i class="fas fa-hashtag"></i>
+                            <span>Tags</span>
+                        </div>
+                        <span class="filter-button-badge" id="tagsBadge">0</span>
                     </button>
-                </div>
-
-                <!-- Category Filter Content -->
-                <div class="filter-content active" id="categoryContent">
-                    <div class="filter-grid">
-                        <div class="filter-option-card" onclick="toggleFilterOption('category', 'all')" data-value="all">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-globe"></i>
-                            </div>
-                            <div class="filter-option-title">All Categories</div>
-                            <div class="filter-option-description">Show all content types</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('category', 'podcast')" data-value="podcast">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-podcast"></i>
-                            </div>
-                            <div class="filter-option-title">Podcasts</div>
-                            <div class="filter-option-description">Professional audio shows</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('category', 'audio')" data-value="audio">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-headphones"></i>
-                            </div>
-                            <div class="filter-option-title">Audio Stories</div>
-                            <div class="filter-option-description">Narrated stories & audiobooks</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('category', 'live')" data-value="live">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-broadcast-tower"></i>
-                            </div>
-                            <div class="filter-option-title">Live Radio</div>
-                            <div class="filter-option-description">Live streaming content</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('category', 'music')" data-value="music">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-music"></i>
-                            </div>
-                            <div class="filter-option-title">Music</div>
-                            <div class="filter-option-description">Curated music collections</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('category', 'news')" data-value="news">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-newspaper"></i>
-                            </div>
-                            <div class="filter-option-title">News</div>
-                            <div class="filter-option-description">Latest news & updates</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="filter-actions">
-                        <button class="filter-action-btn apply" onclick="applyFilters()">
-                            <i class="fas fa-check"></i>
-                            Apply Filters
-                        </button>
-                        <button class="filter-action-btn cancel" onclick="hideFilterContent()">
-                            <i class="fas fa-times"></i>
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Sort Filter Content -->
-                <div class="filter-content" id="sortContent">
-                    <div class="filter-grid">
-                        <div class="filter-option-card" onclick="toggleFilterOption('sort', 'newest')" data-value="newest">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="filter-option-title">Newest First</div>
-                            <div class="filter-option-description">Latest content first</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('sort', 'popular')" data-value="popular">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-fire"></i>
-                            </div>
-                            <div class="filter-option-title">Most Popular</div>
-                            <div class="filter-option-description">Highest play count</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('sort', 'trending')" data-value="trending">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                            <div class="filter-option-title">Trending Now</div>
-                            <div class="filter-option-description">Rising in popularity</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('sort', 'liked')" data-value="liked">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-heart"></i>
-                            </div>
-                            <div class="filter-option-title">Most Liked</div>
-                            <div class="filter-option-description">Highest like count</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('sort', 'saved')" data-value="saved">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-bookmark"></i>
-                            </div>
-                            <div class="filter-option-title">Most Saved</div>
-                            <div class="filter-option-description">Highest save count</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('sort', 'duration')" data-value="duration">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-hourglass-half"></i>
-                            </div>
-                            <div class="filter-option-title">By Duration</div>
-                            <div class="filter-option-description">Short to long</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="filter-actions">
-                        <button class="filter-action-btn apply" onclick="applyFilters()">
-                            <i class="fas fa-check"></i>
-                            Apply Filters
-                        </button>
-                        <button class="filter-action-btn cancel" onclick="hideFilterContent()">
-                            <i class="fas fa-times"></i>
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Date Filter Content -->
-                <div class="filter-content" id="dateContent">
-                    <div class="filter-grid">
-                        <div class="filter-option-card" onclick="toggleFilterOption('date', 'all')" data-value="all">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-infinity"></i>
-                            </div>
-                            <div class="filter-option-title">All Time</div>
-                            <div class="filter-option-description">Show all content</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('date', 'today')" data-value="today">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-sun"></i>
-                            </div>
-                            <div class="filter-option-title">Today</div>
-                            <div class="filter-option-description">Last 24 hours</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('date', 'week')" data-value="week">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-calendar-week"></i>
-                            </div>
-                            <div class="filter-option-title">This Week</div>
-                            <div class="filter-option-description">Last 7 days</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('date', 'month')" data-value="month">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-calendar"></i>
-                            </div>
-                            <div class="filter-option-title">This Month</div>
-                            <div class="filter-option-description">Last 30 days</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('date', 'year')" data-value="year">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-calendar-alt"></i>
-                            </div>
-                            <div class="filter-option-title">This Year</div>
-                            <div class="filter-option-description">Last 365 days</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="filter-actions">
-                        <button class="filter-action-btn apply" onclick="applyFilters()">
-                            <i class="fas fa-check"></i>
-                            Apply Filters
-                        </button>
-                        <button class="filter-action-btn cancel" onclick="hideFilterContent()">
-                            <i class="fas fa-times"></i>
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Duration Filter Content -->
-                <div class="filter-content" id="durationContent">
-                    <div class="filter-grid">
-                        <div class="filter-option-card" onclick="toggleFilterOption('duration', 'all')" data-value="all">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-infinity"></i>
-                            </div>
-                            <div class="filter-option-title">Any Duration</div>
-                            <div class="filter-option-description">All lengths</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('duration', 'short')" data-value="short">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="filter-option-title">Short (< 10 min)</div>
-                            <div class="filter-option-description">Quick listens</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('duration', 'medium')" data-value="medium">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-hourglass-half"></i>
-                            </div>
-                            <div class="filter-option-title">Medium (10-30 min)</div>
-                            <div class="filter-option-description">Standard length</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('duration', 'long')" data-value="long">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-hourglass-end"></i>
-                            </div>
-                            <div class="filter-option-title">Long (> 30 min)</div>
-                            <div class="filter-option-description">Deep dives</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="filter-actions">
-                        <button class="filter-action-btn apply" onclick="applyFilters()">
-                            <i class="fas fa-check"></i>
-                            Apply Filters
-                        </button>
-                        <button class="filter-action-btn cancel" onclick="hideFilterContent()">
-                            <i class="fas fa-times"></i>
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Tags Filter Content -->
-                <div class="filter-content" id="tagsContent">
-                    <div class="filter-grid">
-                        <div class="filter-option-card" onclick="toggleFilterOption('tag', 'all')" data-value="all">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-tags"></i>
-                            </div>
-                            <div class="filter-option-title">All Tags</div>
-                            <div class="filter-option-description">Show all content</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('tag', 'music')" data-value="music">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-music"></i>
-                            </div>
-                            <div class="filter-option-title">Music</div>
-                            <div class="filter-option-description">Audio with music</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('tag', 'news')" data-value="news">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-newspaper"></i>
-                            </div>
-                            <div class="filter-option-title">News</div>
-                            <div class="filter-option-description">Current events</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('tag', 'comedy')" data-value="comedy">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-laugh"></i>
-                            </div>
-                            <div class="filter-option-title">Comedy</div>
-                            <div class="filter-option-description">Funny content</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('tag', 'education')" data-value="education">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-graduation-cap"></i>
-                            </div>
-                            <div class="filter-option-title">Education</div>
-                            <div class="filter-option-description">Learning content</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div class="filter-option-card" onclick="toggleFilterOption('tag', 'storytelling')" data-value="storytelling">
-                            <div class="filter-option-icon">
-                                <i class="fas fa-book-open"></i>
-                            </div>
-                            <div class="filter-option-title">Storytelling</div>
-                            <div class="filter-option-description">Narrated stories</div>
-                            <div class="filter-option-check">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="filter-actions">
-                        <button class="filter-action-btn apply" onclick="applyFilters()">
-                            <i class="fas fa-check"></i>
-                            Apply Filters
-                        </button>
-                        <button class="filter-action-btn cancel" onclick="hideFilterContent()">
-                            <i class="fas fa-times"></i>
-                            Cancel
-                        </button>
-                    </div>
                 </div>
             </div>
             
@@ -2759,6 +2540,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <script src="firebase-config.js"></script>
+    <script src="agora.js"></script>
 
     <!-- Main Application Script -->
     <script>
@@ -2802,13 +2584,14 @@
         };
         let pendingNavigation = null;
         let isNavigating = false;
+        let currentFilterModal = null;
 
         // Local Storage Keys
         const STORAGE_KEYS = {
-            CACHED_STORIES: 'radio_explore_stories_v2',
-            CACHE_TIMESTAMP: 'radio_explore_cache_time_v2',
-            SAVED_STORIES: 'radio_saved_stories_v2',
-            FILTERS: 'radio_explore_filters_v2'
+            CACHED_STORIES: 'radio_explore_stories_v3',
+            CACHE_TIMESTAMP: 'radio_explore_cache_time_v3',
+            SAVED_STORIES: 'radio_saved_stories_v3',
+            FILTERS: 'radio_explore_filters_v3'
         };
 
         // Filter Labels
@@ -2842,25 +2625,63 @@
                 medium: 'Medium (10-30 min)',
                 long: 'Long (> 30 min)'
             },
-            tag: {
+            tags: {
                 all: 'All Tags',
                 music: 'Music',
                 news: 'News',
                 comedy: 'Comedy',
                 education: 'Education',
-                storytelling: 'Storytelling'
+                storytelling: 'Storytelling',
+                technology: 'Technology',
+                business: 'Business'
             }
+        };
+
+        // Filter Options
+        const FILTER_OPTIONS = {
+            category: [
+                { value: 'all', label: 'All Categories', icon: 'fas fa-globe' },
+                { value: 'podcast', label: 'Podcasts', icon: 'fas fa-podcast' },
+                { value: 'audio', label: 'Audio Stories', icon: 'fas fa-headphones' },
+                { value: 'live', label: 'Live Radio', icon: 'fas fa-broadcast-tower' },
+                { value: 'music', label: 'Music', icon: 'fas fa-music' },
+                { value: 'news', label: 'News', icon: 'fas fa-newspaper' }
+            ],
+            sort: [
+                { value: 'newest', label: 'Newest First', icon: 'fas fa-clock' },
+                { value: 'popular', label: 'Most Popular', icon: 'fas fa-fire' },
+                { value: 'trending', label: 'Trending', icon: 'fas fa-chart-line' },
+                { value: 'liked', label: 'Most Liked', icon: 'fas fa-heart' },
+                { value: 'saved', label: 'Most Saved', icon: 'fas fa-bookmark' },
+                { value: 'duration', label: 'By Duration', icon: 'fas fa-hourglass-half' }
+            ],
+            date: [
+                { value: 'all', label: 'All Time', icon: 'fas fa-infinity' },
+                { value: 'today', label: 'Today', icon: 'fas fa-sun' },
+                { value: 'week', label: 'This Week', icon: 'fas fa-calendar-week' },
+                { value: 'month', label: 'This Month', icon: 'fas fa-calendar' },
+                { value: 'year', label: 'This Year', icon: 'fas fa-calendar-alt' }
+            ],
+            duration: [
+                { value: 'all', label: 'Any Duration', icon: 'fas fa-infinity' },
+                { value: 'short', label: 'Short (< 10 min)', icon: 'fas fa-clock' },
+                { value: 'medium', label: 'Medium (10-30 min)', icon: 'fas fa-hourglass-half' },
+                { value: 'long', label: 'Long (> 30 min)', icon: 'fas fa-hourglass-end' }
+            ],
+            tags: [
+                { value: 'all', label: 'All Tags', icon: 'fas fa-tags' },
+                { value: 'music', label: 'Music', icon: 'fas fa-music' },
+                { value: 'news', label: 'News', icon: 'fas fa-newspaper' },
+                { value: 'comedy', label: 'Comedy', icon: 'fas fa-laugh' },
+                { value: 'education', label: 'Education', icon: 'fas fa-graduation-cap' },
+                { value: 'storytelling', label: 'Storytelling', icon: 'fas fa-book-open' },
+                { value: 'technology', label: 'Technology', icon: 'fas fa-microchip' },
+                { value: 'business', label: 'Business', icon: 'fas fa-chart-line' }
+            ]
         };
 
         // Initialize app when DOM loads
         document.addEventListener('DOMContentLoaded', function() {
-            // Close filter content when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.filter-section')) {
-                    hideFilterContent();
-                }
-            });
-
             // Load saved stories from localStorage
             loadSavedStoriesFromStorage();
 
@@ -2879,13 +2700,23 @@
             // Initialize floating player
             initFloatingPlayer();
 
+            // Initialize search clear button
+            document.getElementById('searchInput').addEventListener('input', function() {
+                const clearBtn = document.getElementById('searchClear');
+                if (this.value.trim()) {
+                    clearBtn.classList.add('visible');
+                } else {
+                    clearBtn.classList.remove('visible');
+                }
+            });
+
             // Close modals on ESC key
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     closeFullscreenPlayer();
                     closeAudioPlayer();
                     document.getElementById('warningModal').classList.remove('active');
-                    hideFilterContent();
+                    closeFilterModal();
                 }
                 
                 // Space bar to play/pause
@@ -2895,14 +2726,19 @@
                 }
             });
 
-            // Initialize search clear button
-            document.getElementById('searchInput').addEventListener('input', function() {
-                const clearBtn = document.getElementById('searchClear');
-                if (this.value.trim()) {
-                    clearBtn.classList.add('visible');
-                } else {
-                    clearBtn.classList.remove('visible');
+            // Header hide on scroll
+            let lastScrollTop = 0;
+            const exploreContent = document.getElementById('exploreContent');
+            exploreContent.addEventListener('scroll', function() {
+                const scrollTop = exploreContent.scrollTop;
+                
+                if (scrollTop > lastScrollTop && scrollTop > 100) {
+                    document.getElementById('mainHeader').classList.add('hidden');
+                } else if (scrollTop < lastScrollTop) {
+                    document.getElementById('mainHeader').classList.remove('hidden');
                 }
+                
+                lastScrollTop = scrollTop;
             });
         });
 
@@ -2964,6 +2800,19 @@
                     snapshot.forEach(childSnapshot => {
                         const story = childSnapshot.val();
                         story.id = childSnapshot.key;
+                        
+                        // Ensure required fields
+                        story.title = story.title || 'Untitled Story';
+                        story.description = story.description || 'No description available';
+                        story.author = story.author || 'Unknown Author';
+                        story.category = story.category || 'podcast';
+                        story.duration = story.duration || 0;
+                        story.plays = story.plays || 0;
+                        story.saves = story.saves || 0;
+                        story.likes = story.likes || 0;
+                        story.createdAt = story.createdAt || Date.now();
+                        story.tags = story.tags || [];
+                        
                         stories.unshift(story); // Newest first
                     });
                     
@@ -2973,13 +2822,13 @@
                     // Apply current filters
                     applyCurrentFilters();
                 } else {
-                    // Use demo data if no Firebase stories
-                    loadDemoStories();
+                    // Show empty state
+                    showEmptyState();
                 }
             } catch (error) {
                 console.error("Error fetching stories:", error);
                 showToast("Error loading stories", "error");
-                loadDemoStories();
+                showEmptyState();
             }
         }
 
@@ -3024,217 +2873,22 @@
             }
         }
 
-        function loadDemoStories() {
-            // Enhanced demo stories with more variety
-            currentStories = [
-                {
-                    id: '1',
-                    title: "Midnight Thoughts",
-                    description: "A late-night reflection on life, dreams, and the universe. Recorded during a quiet winter night.",
-                    category: "podcast",
-                    author: "Alex Johnson",
-                    authorAvatar: "https://i.pravatar.cc/150?img=1",
-                    duration: 2712, // 45:12 in seconds
-                    plays: 1245,
-                    saves: 42,
-                    likes: 89,
-                    createdAt: Date.now() - 86400000, // 1 day ago
-                    tags: ["reflection", "philosophy", "life"],
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-                    parts: [
-                        { title: "Part 1: The Beginning", duration: "15:30", description: "Introduction to midnight thoughts" },
-                        { title: "Part 2: Deep Reflection", duration: "20:42", description: "Exploring the depths of consciousness" },
-                        { title: "Part 3: The Awakening", duration: "9:00", description: "Coming to new realizations" }
-                    ],
-                    isFeatured: true
-                },
-                {
-                    id: '2',
-                    title: "Urban Legends: The Subway Mystery",
-                    description: "True crime stories from the city that never sleeps. Episode 3: The Subway Mystery.",
-                    category: "audio",
-                    author: "True Crime Network",
-                    authorAvatar: "https://i.pravatar.cc/150?img=2",
-                    duration: 1965, // 32:45
-                    plays: 2892,
-                    saves: 131,
-                    likes: 245,
-                    createdAt: Date.now() - 172800000, // 2 days ago
-                    tags: ["true-crime", "mystery", "urban", "thriller"],
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-                    parts: [
-                        { title: "The Disappearance", duration: "10:15", description: "A commuter vanishes without a trace" },
-                        { title: "The Investigation", duration: "12:30", description: "Police uncover strange clues" },
-                        { title: "The Revelation", duration: "10:00", description: "Shocking truth revealed" }
-                    ],
-                    isTrending: true
-                },
-                {
-                    id: '3',
-                    title: "Science Simplified: Quantum Physics",
-                    description: "Quantum physics explained in simple terms. Today: The Double Slit Experiment.",
-                    category: "podcast",
-                    author: "Dr. Sarah Chen",
-                    authorAvatar: "https://i.pravatar.cc/150?img=3",
-                    duration: 1700, // 28:20
-                    plays: 1567,
-                    saves: 78,
-                    likes: 123,
-                    createdAt: Date.now() - 259200000, // 3 days ago
-                    tags: ["science", "education", "physics", "quantum"],
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-                    parts: [
-                        { title: "Introduction to Quantum", duration: "8:20", description: "Basics of quantum mechanics" },
-                        { title: "The Experiment", duration: "12:00", description: "Understanding the double slit" },
-                        { title: "Implications", duration: "8:00", description: "What it means for reality" }
-                    ]
-                },
-                {
-                    id: '4',
-                    title: "Poetry Hour: Classics & Contemporary",
-                    description: "Classic and contemporary poetry readings with musical accompaniment.",
-                    category: "audio",
-                    author: "Literary Society",
-                    authorAvatar: "https://i.pravatar.cc/150?img=4",
-                    duration: 3600, // 60:00
-                    plays: 2341,
-                    saves: 156,
-                    likes: 189,
-                    createdAt: Date.now() - 345600000, // 4 days ago
-                    tags: ["poetry", "arts", "literature", "music"],
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
-                    parts: [
-                        { title: "Classic Poetry", duration: "20:00", description: "Readings from classic poets" },
-                        { title: "Modern Voices", duration: "25:00", description: "Contemporary poetry selections" },
-                        { title: "Musical Interlude", duration: "15:00", description: "Poetry set to music" }
-                    ]
-                },
-                {
-                    id: '5',
-                    title: "History Uncovered: Secret Resistance",
-                    description: "Forgotten stories from World War II. Episode: The Secret Resistance.",
-                    category: "podcast",
-                    author: "Historical Society",
-                    authorAvatar: "https://i.pravatar.cc/150?img=5",
-                    duration: 3150, // 52:30
-                    plays: 1456,
-                    saves: 89,
-                    likes: 167,
-                    createdAt: Date.now() - 432000000, // 5 days ago
-                    tags: ["history", "documentary", "war", "resistance"],
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
-                    parts: [
-                        { title: "The Resistance Forms", duration: "15:30", description: "How the resistance began" },
-                        { title: "Secret Operations", duration: "20:00", description: "Covert missions and activities" },
-                        { title: "Legacy", duration: "17:00", description: "Impact on modern history" }
-                    ]
-                },
-                {
-                    id: '6',
-                    title: "Meditation Guide for Beginners",
-                    description: "Guided meditation for stress relief and mindfulness. Perfect for beginners.",
-                    category: "audio",
-                    author: "Mindful Moments",
-                    authorAvatar: "https://i.pravatar.cc/150?img=6",
-                    duration: 1515, // 25:15
-                    plays: 3890,
-                    saves: 273,
-                    likes: 345,
-                    createdAt: Date.now() - 518400000, // 6 days ago
-                    tags: ["meditation", "wellness", "health", "mindfulness"],
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
-                    parts: [
-                        { title: "Breathing Exercise", duration: "5:15", description: "Basic breathing techniques" },
-                        { title: "Body Scan", duration: "10:00", description: "Mindful body awareness" },
-                        { title: "Visualization", duration: "10:00", description: "Peaceful visualization exercise" }
-                    ],
-                    isFeatured: true
-                },
-                {
-                    id: '7',
-                    title: "Tech Talk Daily: Quantum Computing",
-                    description: "Latest tech news and AI developments. Today: The Future of Quantum Computing.",
-                    category: "podcast",
-                    author: "Tech Insider",
-                    authorAvatar: "https://i.pravatar.cc/150?img=7",
-                    duration: 2325, // 38:45
-                    plays: 3321,
-                    saves: 124,
-                    likes: 278,
-                    createdAt: Date.now() - 604800000, // 7 days ago
-                    tags: ["tech", "ai", "quantum", "computing"],
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
-                    parts: [
-                        { title: "Quantum Basics", duration: "10:45", description: "Introduction to quantum computing" },
-                        { title: "Current Research", duration: "15:00", description: "Latest developments in the field" },
-                        { title: "Future Applications", duration: "13:00", description: "How quantum will change tech" }
-                    ]
-                },
-                {
-                    id: '8',
-                    title: "Jazz Classics: Miles & Coltrane",
-                    description: "Smooth jazz recordings from the 1950s-60s. Featuring Miles Davis and John Coltrane.",
-                    category: "music",
-                    author: "Jazz Archive",
-                    authorAvatar: "https://i.pravatar.cc/150?img=8",
-                    duration: 4520, // 75:20
-                    plays: 2789,
-                    saves: 188,
-                    likes: 312,
-                    createdAt: Date.now() - 691200000, // 8 days ago
-                    tags: ["music", "jazz", "classic", "instrumental"],
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
-                    parts: [
-                        { title: "Miles Davis Collection", duration: "25:20", description: "Iconic recordings from Miles Davis" },
-                        { title: "John Coltrane Special", duration: "30:00", description: "Coltrane's groundbreaking work" },
-                        { title: "Jazz Legends", duration: "20:00", description: "Other influential jazz artists" }
-                    ],
-                    isTrending: true
-                },
-                {
-                    id: '9',
-                    title: "Morning News Update",
-                    description: "Latest news from around the world. Your daily morning briefing.",
-                    category: "news",
-                    author: "News Network",
-                    authorAvatar: "https://i.pravatar.cc/150?img=9",
-                    duration: 900, // 15:00
-                    plays: 4321,
-                    saves: 210,
-                    likes: 189,
-                    createdAt: Date.now() - 86400000, // 1 day ago
-                    tags: ["news", "current-events", "briefing"],
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-                    parts: [
-                        { title: "Headlines", duration: "5:00", description: "Top stories of the day" },
-                        { title: "Business", duration: "5:00", description: "Market updates and business news" },
-                        { title: "Technology", duration: "5:00", description: "Latest in tech" }
-                    ]
-                },
-                {
-                    id: '10',
-                    title: "Comedy Hour: Stand-up Special",
-                    description: "Live stand-up comedy from top comedians. Recorded live at the Comedy Cellar.",
-                    category: "podcast",
-                    author: "Comedy Central",
-                    authorAvatar: "https://i.pravatar.cc/150?img=10",
-                    duration: 2700, // 45:00
-                    plays: 1890,
-                    saves: 95,
-                    likes: 167,
-                    createdAt: Date.now() - 345600000, // 4 days ago
-                    tags: ["comedy", "stand-up", "entertainment"],
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-                    parts: [
-                        { title: "Opening Acts", duration: "15:00", description: "Upcoming comedians" },
-                        { title: "Headliner", duration: "25:00", description: "Featured comedian" },
-                        { title: "Encore", duration: "5:00", description: "Bonus material" }
-                    ]
-                }
-            ];
-            
-            cacheStories(currentStories);
-            applyCurrentFilters();
+        function showEmptyState() {
+            const grid = document.getElementById('storiesGrid');
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-podcast"></i>
+                    </div>
+                    <h3 class="empty-state-title">No Stories Yet</h3>
+                    <p class="empty-state-message">Be the first to share your story or check back later for new content.</p>
+                    <button class="load-more-btn" onclick="loadStories()">
+                        <i class="fas fa-redo"></i>
+                        Retry Loading
+                    </button>
+                </div>
+            `;
+            document.getElementById('loadMoreContainer').style.display = 'none';
         }
 
         function renderStories() {
@@ -3282,61 +2936,32 @@
 
         function createStoryCard(story) {
             const card = document.createElement('div');
-            card.className = 'story-card';
+            card.className = 'story-card fade-in';
             card.dataset.id = story.id;
             
             const isSaved = savedStories.has(story.id);
-            const saveBtnClass = isSaved ? 'action-btn saved' : 'action-btn save';
+            const saveBtnClass = isSaved ? 'action-btn save saved' : 'action-btn save';
             const saveIcon = isSaved ? 'fas fa-bookmark' : 'far fa-bookmark';
+            const saveText = isSaved ? 'Saved' : 'Save';
             
             const durationFormatted = formatDuration(story.duration);
             const playsFormatted = formatNumber(story.plays || 0);
             const savesFormatted = formatNumber(story.saves || 0);
             const likesFormatted = formatNumber(story.likes || 0);
             
-            let badgeClass = 'card-type-badge';
-            let badgeIcon = 'fas fa-podcast';
+            // Get author initial for icon
+            const authorInitial = story.author ? story.author.charAt(0).toUpperCase() : 'A';
             
+            // Visual icon based on category
+            let visualIcon = 'fas fa-podcast';
             switch(story.category) {
-                case 'podcast':
-                    badgeClass += ' podcast';
-                    badgeIcon = 'fas fa-podcast';
-                    break;
-                case 'audio':
-                    badgeClass += ' audio';
-                    badgeIcon = 'fas fa-headphones';
-                    break;
-                case 'live':
-                    badgeClass += ' live';
-                    badgeIcon = 'fas fa-broadcast-tower';
-                    break;
-                case 'music':
-                    badgeClass += ' music';
-                    badgeIcon = 'fas fa-music';
-                    break;
-                case 'news':
-                    badgeClass += ' podcast';
-                    badgeIcon = 'fas fa-newspaper';
-                    break;
-                default:
-                    badgeClass += ' podcast';
+                case 'audio': visualIcon = 'fas fa-headphones'; break;
+                case 'live': visualIcon = 'fas fa-broadcast-tower'; break;
+                case 'music': visualIcon = 'fas fa-music'; break;
+                case 'news': visualIcon = 'fas fa-newspaper'; break;
             }
             
-            // Generate consistent gradient based on story ID
-            const gradientId = parseInt(story.id) || Math.floor(Math.random() * 8);
-            const gradients = [
-                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-                'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
-                'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
-                'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)'
-            ];
-            const gradient = gradients[gradientId % gradients.length];
-            
-            // Check for featured/trending status
+            // Ribbon for featured/trending
             let ribbon = '';
             if (story.isFeatured) {
                 ribbon = '<div class="card-ribbon">Featured</div>';
@@ -3345,17 +2970,21 @@
             }
             
             card.innerHTML = `
-                <div class="card-image" style="background: ${gradient};">
-                    <div class="${badgeClass}">
-                        <i class="${badgeIcon}"></i>
-                        <span>${story.category === 'podcast' ? 'Podcast' : 
-                               story.category === 'audio' ? 'Audio Story' :
-                               story.category === 'live' ? 'Live Now' :
-                               story.category === 'music' ? 'Music' :
-                               story.category === 'news' ? 'News' : 'Story'}</span>
+                <div class="card-header">
+                    <div class="card-category ${story.category}">
+                        <i class="${visualIcon}"></i>
+                        <span>${FILTER_LABELS.category[story.category] || 'Story'}</span>
                     </div>
                     ${ribbon}
-                    <img src="https://images.unsplash.com/photo-${gradientId + 1}?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="${story.title}">
+                    <div class="card-visual">
+                        <div class="card-visual-content">
+                            <div class="card-visual-icon">
+                                <i class="${visualIcon}"></i>
+                            </div>
+                            <div class="card-visual-title">${story.title}</div>
+                            <div class="card-visual-author">${story.author}</div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="card-content">
@@ -3364,7 +2993,9 @@
                     
                     <div class="card-meta">
                         <div class="card-author">
-                            <img src="${story.authorAvatar || 'https://i.pravatar.cc/150'}" alt="${story.author}">
+                            <div class="card-author-icon">
+                                ${authorInitial}
+                            </div>
                             <span>${story.author}</span>
                         </div>
                         <div class="card-stats">
@@ -3390,7 +3021,7 @@
                         </button>
                         <button class="${saveBtnClass}" onclick="toggleSave('${story.id}', this, event)">
                             <i class="${saveIcon}"></i>
-                            <span>${isSaved ? 'Saved' : 'Save'}</span>
+                            <span>${saveText}</span>
                         </button>
                     </div>
                 </div>
@@ -3423,40 +3054,62 @@
         }
 
         // ===== ENHANCED FILTER SYSTEM =====
-        function showFilterContent(filterType) {
-            // Hide all filter content
-            document.querySelectorAll('.filter-content').forEach(content => {
-                content.classList.remove('active');
+        function openFilterModal(filterType) {
+            currentFilterModal = filterType;
+            const modal = document.getElementById('filterModal');
+            const content = document.getElementById('filterModalContent');
+            
+            // Update modal title
+            document.getElementById('filterModalTitle').innerHTML = `
+                <i class="fas fa-filter"></i>
+                ${FILTER_LABELS[filterType] ? 'Filter by ' + FILTER_LABELS[filterType][currentFilters[filterType]] : 'Filter'}
+            `;
+            
+            // Build filter options
+            let optionsHTML = '';
+            const options = FILTER_OPTIONS[filterType] || [];
+            
+            options.forEach(option => {
+                let isActive = false;
+                
+                if (filterType === 'tags') {
+                    isActive = currentFilters.tags.includes(option.value);
+                } else {
+                    isActive = currentFilters[filterType] === option.value;
+                }
+                
+                optionsHTML += `
+                    <div class="filter-option ${isActive ? 'active' : ''}" onclick="toggleFilterOption('${filterType}', '${option.value}')">
+                        <i class="${option.icon}"></i>
+                        <span>${option.label}</span>
+                        <div class="filter-option-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                `;
             });
             
-            // Remove active class from all tabs
-            document.querySelectorAll('.filter-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
+            content.innerHTML = `
+                <div class="filter-options-grid">
+                    ${optionsHTML}
+                </div>
+            `;
             
-            // Show selected filter content
-            document.getElementById(`${filterType}Content`).classList.add('active');
-            document.querySelector(`.filter-tab[onclick*="${filterType}"]`).classList.add('active');
-            
-            // Update filter options to reflect current selection
-            updateFilterOptions();
+            // Show modal and scale down content
+            modal.classList.add('active');
+            document.getElementById('exploreContent').classList.add('filter-active');
+            document.body.style.overflow = 'hidden';
         }
 
-        function hideFilterContent() {
-            document.querySelectorAll('.filter-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            document.querySelectorAll('.filter-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
+        function closeFilterModal() {
+            document.getElementById('filterModal').classList.remove('active');
+            document.getElementById('exploreContent').classList.remove('filter-active');
+            document.body.style.overflow = 'auto';
+            currentFilterModal = null;
         }
 
         function toggleFilterOption(filterType, value) {
-            const event = window.event || arguments.callee.caller.arguments[0];
-            if (event) event.stopPropagation();
-            
-            if (filterType === 'tag') {
+            if (filterType === 'tags') {
                 // Handle tag multi-selection
                 if (value === 'all') {
                     currentFilters.tags = ['all'];
@@ -3482,30 +3135,29 @@
                 currentFilters[filterType] = value;
             }
             
-            // Update UI
-            updateFilterOptions();
-            updateActiveFiltersDisplay();
-            updateFilterBadges();
+            // Update UI in modal
+            updateFilterModalOptions();
         }
 
-        function updateFilterOptions() {
-            // Update all filter option cards
-            document.querySelectorAll('.filter-option-card').forEach(card => {
-                const filterType = card.closest('.filter-content').id.replace('Content', '');
-                const value = card.dataset.value;
+        function updateFilterModalOptions() {
+            if (!currentFilterModal) return;
+            
+            const options = document.querySelectorAll('.filter-option');
+            options.forEach(option => {
+                const value = option.getAttribute('onclick').match(/'([^']+)'/)[1];
                 
-                if (filterType === 'tag') {
+                if (currentFilterModal === 'tags') {
                     const isActive = currentFilters.tags.includes(value);
-                    card.classList.toggle('active', isActive);
+                    option.classList.toggle('active', isActive);
                 } else {
-                    const isActive = currentFilters[filterType] === value;
-                    card.classList.toggle('active', isActive);
+                    const isActive = currentFilters[currentFilterModal] === value;
+                    option.classList.toggle('active', isActive);
                 }
             });
         }
 
-        function applyFilters() {
-            hideFilterContent();
+        function applyFilterModal() {
+            closeFilterModal();
             applyCurrentFilters();
             showToast("Filters applied", "success");
         }
@@ -3663,7 +3315,7 @@
                     const tag = document.createElement('div');
                     tag.className = 'active-filter-tag';
                     tag.innerHTML = `
-                        <span>${FILTER_LABELS.tag[tagValue]}</span>
+                        <span>${FILTER_LABELS.tags[tagValue]}</span>
                         <i class="fas fa-times" onclick="removeTagFilter('${tagValue}')"></i>
                     `;
                     activeFiltersContainer.appendChild(tag);
@@ -3839,8 +3491,10 @@
             // Update fullscreen player
             document.getElementById('fullscreenTitle').textContent = story.title;
             document.getElementById('fullscreenStoryTitle').textContent = story.title;
+            
+            const authorInitial = story.author ? story.author.charAt(0).toUpperCase() : 'A';
             document.getElementById('fullscreenStoryAuthor').innerHTML = `
-                <img src="${story.authorAvatar || 'https://i.pravatar.cc/150'}" alt="${story.author}">
+                <div class="author-icon">${authorInitial}</div>
                 <span>${story.author}</span>
             `;
             
@@ -3858,7 +3512,7 @@
                 saveBtn.innerHTML = isSaved ? 
                     '<i class="fas fa-bookmark"></i><span>Saved</span>' :
                     '<i class="far fa-bookmark"></i><span>Save</span>';
-                saveBtn.className = isSaved ? 'action-btn saved' : 'action-btn save';
+                saveBtn.className = isSaved ? 'action-btn save saved' : 'action-btn save';
             }
             
             // Load story parts
@@ -4068,7 +3722,7 @@
                 savedStories.add(storyId);
                 if (button) {
                     button.innerHTML = '<i class="fas fa-bookmark"></i><span>Saved</span>';
-                    button.className = 'action-btn saved';
+                    button.className = 'action-btn save saved';
                 }
                 showToast("Story saved to collection!", "success");
             }
@@ -4160,7 +3814,6 @@
                     currentFilters = JSON.parse(savedFilters);
                     
                     // Update UI
-                    updateFilterOptions();
                     updateActiveFiltersDisplay();
                     updateFilterBadges();
                     

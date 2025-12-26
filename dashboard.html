@@ -1484,7 +1484,8 @@
                     </div>
                 </div>
             </div>
-            <button id="request-media-btn" class="btn btn-primary" style="padding: 10px 15px; min-width: auto;">
+            <!-- Media Request Button - Only show for models (females) when chatting with clients -->
+            <button id="request-media-btn" class="btn btn-primary" style="padding: 10px 15px; min-width: auto; display: none;">
                 <i class="fas fa-camera"></i>
                 <span class="desktop-only">Request</span>
             </button>
@@ -1749,7 +1750,6 @@
                 // Check authentication state
                 firebase.auth().onAuthStateChanged(async (user) => {
                     if (user) {
-                        console.log('User authenticated:', user.uid);
                         currentUser = user;
                         await loadUserData();
                         setupEventListeners();
@@ -1763,7 +1763,6 @@
                         });
                     } else {
                         // Redirect to login page
-                        console.log('No user, redirecting to login');
                         window.location.href = 'login.html';
                     }
                 });
@@ -1776,7 +1775,6 @@
         // ========== USER DATA ==========
         async function loadUserData() {
             try {
-                console.log('Loading user data for:', currentUser.uid);
                 const userDoc = await firebase.firestore()
                     .collection('users')
                     .doc(currentUser.uid)
@@ -1784,7 +1782,6 @@
                 
                 if (userDoc.exists) {
                     userData = userDoc.data();
-                    console.log('User data loaded:', userData);
                     
                     // Initialize wallet balances with default values if not exists
                     normalWalletBalance = userData.normalWalletBalance || 0;
@@ -1796,7 +1793,6 @@
                     updateWalletUI();
                     
                 } else {
-                    console.log('User document does not exist, creating new...');
                     // User document doesn't exist, create it
                     await firebase.firestore().collection('users').doc(currentUser.uid).set({
                         uid: currentUser.uid,
@@ -1817,7 +1813,6 @@
                         online: true
                     });
                     
-                    console.log('User document created');
                     // Reload user data
                     await loadUserData();
                 }
@@ -1828,12 +1823,8 @@
         }
 
         function updateUserProfile() {
-            if (!userData) {
-                console.error('No user data available');
-                return;
-            }
+            if (!userData) return;
             
-            console.log('Updating user profile with:', userData);
             document.getElementById('username').textContent = userData.name || 'User';
             document.getElementById('user-role').textContent = userData.gender === 'male' ? 'Client' : 'Model';
             document.getElementById('user-avatar').src = userData.profileImage || 
@@ -1850,12 +1841,7 @@
         }
 
         function updateWalletUI() {
-            if (!userData) {
-                console.error('No user data available for wallet update');
-                return;
-            }
-            
-            console.log('Updating wallet UI for gender:', userData.gender);
+            if (!userData) return;
             
             if (userData.gender === 'male') {
                 // Show male wallet view
@@ -1864,7 +1850,6 @@
                 
                 // Update male wallet balance
                 const maleBalance = normalWalletBalance.toLocaleString();
-                console.log('Male balance:', maleBalance);
                 document.getElementById('male-wallet-balance').textContent = `₦${maleBalance}`;
                 document.getElementById('header-balance').textContent = `₦${maleBalance}`;
                 
@@ -1892,8 +1877,6 @@
             const normalBalance = normalWalletBalance.toLocaleString();
             const requestBalance = requestWalletBalance.toLocaleString();
             
-            console.log('Female balances - Normal:', normalBalance, 'Request:', requestBalance);
-            
             document.getElementById('normal-wallet-balance').textContent = `₦${normalBalance}`;
             document.getElementById('normal-total-earnings').textContent = `₦${(userData.totalEarnings || 0).toLocaleString()}`;
             document.getElementById('normal-total-messages').textContent = (userData.totalMessages || 0).toLocaleString();
@@ -1919,8 +1902,6 @@
             document.getElementById('request-status-pending').style.display = 'none';
             document.getElementById('request-status-ready').style.display = 'none';
             
-            console.log('Completed requests count:', completedRequestsCount);
-            
             if (completedRequestsCount === 0) {
                 // No requests completed
                 document.getElementById('request-status-no-requests').style.display = 'block';
@@ -1941,8 +1922,6 @@
                 // Show message AFTER first request (per your requirement)
                 if (completedRequestsCount === 1) {
                     pendingMessage.textContent = 'Great! Complete 10 requests to withdraw from this wallet';
-                    // Show notification after first request
-                    showNotification('Great! You completed your first request. You need to complete 10 requests before you can withdraw from Request Wallet.', 'info');
                 } else {
                     pendingMessage.textContent = `Complete ${10 - completedRequestsCount} more requests to withdraw`;
                 }
@@ -1966,8 +1945,6 @@
 
         // ========== EVENT LISTENERS ==========
         function setupEventListeners() {
-            console.log('Setting up event listeners');
-            
             // Sidebar Toggle
             document.getElementById('open-sidebar').addEventListener('click', () => {
                 document.getElementById('sidebar').classList.add('active');
@@ -2005,13 +1982,11 @@
 
             // Male Deposit Button
             document.getElementById('male-deposit-btn')?.addEventListener('click', () => {
-                console.log('Deposit button clicked');
                 document.getElementById('deposit-modal').classList.add('active');
             });
 
             // Normal Wallet Withdraw Button (Females)
             document.getElementById('normal-withdraw-btn')?.addEventListener('click', () => {
-                console.log('Normal withdraw button clicked');
                 // Reset form
                 document.getElementById('normal-withdrawal-success').style.display = 'none';
                 document.getElementById('normal-withdraw-form').style.display = 'block';
@@ -2022,8 +1997,6 @@
 
             // Request Wallet Withdraw Button (Females)
             document.getElementById('request-withdraw-btn')?.addEventListener('click', () => {
-                console.log('Request withdraw button clicked, completed requests:', completedRequestsCount);
-                
                 if (completedRequestsCount < 10) {
                     showNotification('Complete 10 requests to withdraw from Request Wallet', 'error');
                     return;
@@ -2172,7 +2145,7 @@
                 }
             });
 
-            // Media Request
+            // Media Request Button (Only for males chatting with models)
             document.getElementById('request-media-btn').addEventListener('click', () => {
                 if (!currentChatId) {
                     showNotification('Please start a chat first', 'error');
@@ -2338,6 +2311,37 @@
             const isOnline = model.online === true;
             const price = model.pricePerMessage || 10;
             
+            // Check if current user is female (model) - she can't start chats with other models
+            const isCurrentUserFemale = userData && userData.gender === 'female';
+            const isOwnProfile = model.id === currentUser.uid;
+            
+            let buttonHTML = '';
+            
+            if (isCurrentUserFemale) {
+                if (isOwnProfile) {
+                    // This is the model's own profile
+                    buttonHTML = `
+                        <button class="chat-btn" disabled style="background: var(--gray-300); cursor: not-allowed;">
+                            <i class="fas fa-user"></i> Your Profile
+                        </button>
+                    `;
+                } else {
+                    // Female user viewing another model - can't chat
+                    buttonHTML = `
+                        <button class="chat-btn" disabled style="background: var(--gray-300); cursor: not-allowed;">
+                            <i class="fas fa-user-friends"></i> View Model
+                        </button>
+                    `;
+                }
+            } else {
+                // Male user - can start chat
+                buttonHTML = `
+                    <button class="chat-btn" onclick="startChat('${model.id}')" ${isOnline ? '' : 'disabled style="opacity: 0.6; cursor: not-allowed;"'}>
+                        <i class="fas fa-comment"></i> ${isOnline ? `Start Chat - ₦${price}/msg` : 'Offline'}
+                    </button>
+                `;
+            }
+            
             card.innerHTML = `
                 <div class="model-header">
                     <img src="${model.profileImage || 'https://via.placeholder.com/300x200?text=Model'}" 
@@ -2363,9 +2367,7 @@
                             <div class="stat-label">Per Message</div>
                         </div>
                     </div>
-                    <button class="chat-btn" onclick="startChat('${model.id}')" ${isOnline ? '' : 'disabled style="opacity: 0.6; cursor: not-allowed;"'}>
-                        <i class="fas fa-comment"></i> ${isOnline ? `Start Chat - ₦${price}/msg` : 'Offline'}
-                    </button>
+                    ${buttonHTML}
                 </div>
             `;
             container.appendChild(card);
@@ -2547,6 +2549,12 @@
 
         // ========== CHAT FUNCTIONS ==========
         window.startChat = async function(modelId) {
+            // If current user is female (model), she can't start chats
+            if (userData.gender === 'female') {
+                showNotification('Models cannot start chats with other models', 'error');
+                return;
+            }
+            
             if (userData.gender === 'male' && normalWalletBalance < 10) {
                 showNotification('Insufficient balance. Minimum ₦10 required to start chat', 'error');
                 showPage('wallet');
@@ -2595,6 +2603,13 @@
                 document.getElementById('message-input').disabled = false;
                 document.getElementById('send-btn').disabled = false;
                 
+                // Show/hide request media button based on user gender
+                if (userData.gender === 'male') {
+                    document.getElementById('request-media-btn').style.display = 'flex';
+                } else {
+                    document.getElementById('request-media-btn').style.display = 'none';
+                }
+                
                 // Load chat history
                 await loadChatHistory();
                 
@@ -2616,6 +2631,86 @@
             }
         };
 
+        // Function for models to open existing chats
+        window.openChat = async function(chatId, clientId) {
+            // This function is called from the chats list for models
+            currentModelId = clientId;
+            currentChatId = chatId;
+            
+            try {
+                // Get client info
+                const clientDoc = await firebase.firestore().collection('users').doc(clientId).get();
+                const client = clientDoc.data();
+                
+                // Update chat header
+                document.getElementById('chat-partner-name').textContent = client.name || 'Client';
+                document.getElementById('chat-partner-avatar').src = client.profileImage || 'https://via.placeholder.com/50';
+                
+                // Enable chat input and send button for model
+                document.getElementById('message-input').disabled = false;
+                document.getElementById('send-btn').disabled = false;
+                
+                // Hide request media button for models (only clients can request)
+                document.getElementById('request-media-btn').style.display = 'none';
+                
+                // Load chat history
+                await loadChatHistory();
+                
+                // Switch to chat page
+                document.querySelector('.app-container').style.display = 'none';
+                document.getElementById('chat-page').style.display = 'flex';
+                
+                // Focus on message input
+                setTimeout(() => {
+                    document.getElementById('message-input').focus();
+                }, 100);
+                
+                // Listen for new messages
+                setupChatListener();
+                
+                // Mark messages as read
+                await markMessagesAsRead();
+                
+            } catch (error) {
+                console.error('Error opening chat:', error);
+                showNotification('Error opening chat', 'error');
+            }
+        };
+
+        async function markMessagesAsRead() {
+            if (!currentChatId || !currentUser) return;
+            
+            try {
+                // Get all unread messages in this chat
+                const messagesSnapshot = await firebase.firestore()
+                    .collection('chats').doc(currentChatId)
+                    .collection('messages')
+                    .where('read', '==', false)
+                    .where('senderId', '!=', currentUser.uid)
+                    .get();
+                
+                // Mark each message as read
+                const batch = firebase.firestore().batch();
+                messagesSnapshot.forEach(doc => {
+                    batch.update(doc.ref, { read: true });
+                });
+                
+                if (!messagesSnapshot.empty) {
+                    await batch.commit();
+                    
+                    // Update chat unread count
+                    await firebase.firestore()
+                        .collection('chats')
+                        .doc(currentChatId)
+                        .update({
+                            unreadCount: firebase.firestore.FieldValue.increment(-messagesSnapshot.size)
+                        });
+                }
+            } catch (error) {
+                console.error('Error marking messages as read:', error);
+            }
+        }
+
         async function loadChatHistory() {
             const container = document.getElementById('messages-container');
             container.innerHTML = '';
@@ -2628,6 +2723,18 @@
                     .get();
                 
                 if (messagesSnapshot.empty) {
+                    // Show welcome message based on user role
+                    if (userData.gender === 'female') {
+                        container.innerHTML = `
+                            <div style="text-align: center; padding: 40px;">
+                                <h3 style="margin-bottom: 15px; color: var(--gray-700);">Chat with Client</h3>
+                                <p style="color: var(--gray-700); margin-bottom: 10px;">Start chatting with your client</p>
+                                <p style="color: var(--success-color); margin-top: 10px;">
+                                    <i class="fas fa-info-circle"></i> You earn ₦10 per message from this client
+                                </p>
+                            </div>
+                        `;
+                    }
                     return;
                 }
                 
@@ -2637,6 +2744,10 @@
                 
                 // Scroll to bottom
                 container.scrollTop = container.scrollHeight;
+                
+                // Mark messages as read
+                await markMessagesAsRead();
+                
             } catch (error) {
                 console.error('Error loading chat history:', error);
             }
@@ -2657,6 +2768,12 @@
                             // Scroll to bottom
                             const container = document.getElementById('messages-container');
                             container.scrollTop = container.scrollHeight;
+                            
+                            // Mark new message as read if it's from the other participant
+                            const message = change.doc.data();
+                            if (message.senderId !== currentUser.uid) {
+                                markMessagesAsRead();
+                            }
                         }
                     });
                 });
@@ -2668,15 +2785,13 @@
             
             if (!text || !currentChatId) return;
             
+            // Male users need balance to send messages
             if (userData.gender === 'male' && normalWalletBalance < 10) {
                 showNotification('Insufficient balance', 'error');
                 return;
             }
             
             try {
-                const model = models.find(m => m.id === currentModelId);
-                const pricePerMessage = model?.pricePerMessage || 10;
-                
                 const message = {
                     senderId: currentUser.uid,
                     text: text,
@@ -2702,6 +2817,10 @@
                 
                 // Handle payment based on gender
                 if (userData.gender === 'male') {
+                    // Male user sending message - deduct from his wallet, credit model
+                    const model = models.find(m => m.id === currentModelId);
+                    const pricePerMessage = model?.pricePerMessage || 10;
+                    
                     // Deduct from male user's normal wallet
                     await firebase.firestore()
                         .collection('users')
@@ -2735,6 +2854,14 @@
                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                         description: `Chat message to ${model.name}`
                     });
+                } else {
+                    // Female model sending message - no payment, just update message count
+                    await firebase.firestore()
+                        .collection('users')
+                        .doc(currentUser.uid)
+                        .update({
+                            totalMessages: firebase.firestore.FieldValue.increment(1)
+                        });
                 }
                 
                 // Clear input
@@ -2775,7 +2902,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <strong style="color: var(--warning-color);">₦${message.amount?.toLocaleString() || '0'}</strong>
                             ${!isSender && userData.gender === 'female' ? 
-                                `<button onclick="acceptMediaRequest('${message.requestId}')" class="btn btn-primary" style="padding: 8px 15px; font-size: 0.9rem;">
+                                `<button onclick="acceptMediaRequest('${message.requestId}', ${message.amount})" class="btn btn-primary" style="padding: 8px 15px; font-size: 0.9rem;">
                                     Accept & Upload
                                 </button>` : 
                                 '<span style="color: var(--gray-700); font-size: 0.9rem;">Pending</span>'
@@ -2797,7 +2924,6 @@
                 .onSnapshot((doc) => {
                     if (doc.exists) {
                         const data = doc.data();
-                        console.log('Realtime update received:', data);
                         
                         if (userData.gender === 'female') {
                             normalWalletBalance = data.normalWalletBalance || 0;
@@ -2990,7 +3116,7 @@
                         <div style="text-align: center; padding: 40px; color: var(--gray-700);">
                             <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 20px;"></i>
                             <h3>No chats yet</h3>
-                            <p>Start a chat with a model to begin</p>
+                            <p>${userData.gender === 'female' ? 'Clients will appear here when they start chatting with you' : 'Start a chat with a model to begin'}</p>
                         </div>
                     `;
                     return;
@@ -3069,16 +3195,34 @@
                 </div>
             `;
             
-            chatItem.addEventListener('click', () => {
-                currentModelId = chat.participants.find(id => id !== currentUser.uid);
-                startChat(currentModelId);
-            });
+            // For models (females), they open existing chats with clients
+            // For males, they start new chats (handled elsewhere)
+            if (userData.gender === 'female') {
+                // Female user (model) clicking on a chat with a client
+                const clientId = chat.participants.find(id => id !== currentUser.uid);
+                chatItem.addEventListener('click', () => {
+                    openChat(chat.id, clientId);
+                });
+            } else {
+                // Male user clicking on a chat with a model
+                const modelId = chat.participants.find(id => id !== currentUser.uid);
+                chatItem.addEventListener('click', () => {
+                    currentModelId = modelId;
+                    startChat(modelId);
+                });
+            }
             
             container.appendChild(chatItem);
         }
 
         // ========== MEDIA REQUEST ==========
         async function submitMediaRequest() {
+            // Only males can submit media requests
+            if (userData.gender !== 'male') {
+                showNotification('Only clients can request media', 'error');
+                return;
+            }
+            
             const type = document.getElementById('media-type').value;
             const description = document.getElementById('media-description').value.trim();
             const amount = parseFloat(document.getElementById('media-amount').value);
@@ -3156,19 +3300,24 @@
         }
 
         // Make functions available globally for onclick handlers
-        window.acceptMediaRequest = async function(requestId) {
+        window.acceptMediaRequest = async function(requestId, amount = 100) {
             try {
                 // When female accepts media request and uploads media
                 await firebase.firestore().collection('users').doc(currentUser.uid).update({
                     completedRequestsCount: firebase.firestore.FieldValue.increment(1),
-                    requestWalletBalance: firebase.firestore.FieldValue.increment(100) // Example amount
+                    requestWalletBalance: firebase.firestore.FieldValue.increment(amount)
                 });
                 
                 // Update local counts
                 completedRequestsCount += 1;
-                requestWalletBalance += 100;
+                requestWalletBalance += amount;
                 updateFemaleWalletDisplay();
                 updateRequestWalletUI();
+                
+                // Show notification after first request
+                if (completedRequestsCount === 1) {
+                    showNotification('Great! You completed your first request. You need to complete 10 requests before you can withdraw from Request Wallet.', 'info');
+                }
                 
                 showNotification('Media request accepted. Please upload media.', 'success');
                 document.getElementById('media-upload-modal').classList.add('active');

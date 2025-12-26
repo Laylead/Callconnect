@@ -57,7 +57,7 @@
             overflow-x: hidden;
             position: relative;
             touch-action: pan-y;
-            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+            padding: env(safe-area-inset-top) 0 env(safe-area-bottom) 0;
             overscroll-behavior: none;
         }
 
@@ -2768,9 +2768,9 @@
                         const story = childSnapshot.val();
                         story.id = childSnapshot.key;
                         
-                        // Only include stories with real audio URLs
-                        if (story.audioUrl && story.audioUrl.trim() !== '') {
-                            // Ensure required fields exist
+                        // Only include stories with real audio URLs from Firebase
+                        if (story.audioUrl) {
+                            // Ensure required fields exist with real data
                             story.title = story.title || 'Untitled Story';
                             story.description = story.description || 'No description available';
                             story.authorName = story.authorName || 'Anonymous';
@@ -2790,7 +2790,7 @@
                     });
                     
                     if (stories.length === 0) {
-                        showToast("No audio stories found. Add stories with audio to Firebase.", "info");
+                        showToast("No stories with audio found. Add stories with audio to Firebase.", "info");
                     }
                     
                     currentStories = stories;
@@ -2808,7 +2808,7 @@
                 }
             } catch (error) {
                 console.error("Error fetching stories:", error);
-                showToast("Error loading stories from database. Please check Firebase connection.", "error");
+                showToast("Error loading stories from Firebase. Please check connection.", "error");
                 currentStories = [];
                 applyCurrentFilters();
             }
@@ -2880,12 +2880,11 @@
                         story.id = childSnapshot.key;
                         
                         // Only include stories with real audio URLs
-                        if (story.audioUrl && story.audioUrl.trim() !== '') {
+                        if (story.audioUrl) {
                             // Ensure required fields exist
                             story.title = story.title || 'Untitled Story';
                             story.description = story.description || 'No description available';
                             story.authorName = story.authorName || 'Anonymous';
-                            story.authorRole = story.authorRole || 'Creator';
                             story.category = story.category || 'audio';
                             story.duration = story.duration || 300;
                             story.playCount = story.playCount || 0;
@@ -2894,7 +2893,6 @@
                             story.createdAt = story.createdAt || Date.now();
                             story.tags = story.tags || [];
                             story.parts = story.parts || [];
-                            story.isFeatured = story.isFeatured || false;
                             
                             newStories.unshift(story);
                         }
@@ -2936,10 +2934,10 @@
                 grid.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">
-                            <i class="fas fa-microphone-slash"></i>
+                            <i class="fas fa-search"></i>
                         </div>
-                        <h3 class="empty-state-title">No audio stories available</h3>
-                        <p class="empty-state-message">Add stories with audio files to Firebase to see them here.</p>
+                        <h3 class="empty-state-title">No stories found</h3>
+                        <p class="empty-state-message">Try adjusting your filters or search terms to find what you're looking for.</p>
                         <button class="load-more-btn" onclick="resetFilters()">
                             <i class="fas fa-redo"></i>
                             Reset Filters
@@ -2973,6 +2971,7 @@
             card.dataset.id = story.id;
             
             const isSaved = savedStories.has(story.id);
+            const hasAudio = story.audioUrl ? true : false;
             const saveBtnClass = isSaved ? 'card-action-btn saved' : 'card-action-btn save';
             const saveIcon = isSaved ? 'fas fa-bookmark' : 'far fa-bookmark';
             
@@ -3025,28 +3024,19 @@
             // Get author initial for avatar
             const authorInitial = story.authorName ? story.authorName.charAt(0).toUpperCase() : 'A';
             
-            // Check if audio is available
-            const hasAudio = story.audioUrl && story.audioUrl.trim() !== '';
-            const playButtonDisabled = !hasAudio ? 'disabled style="opacity:0.5;"' : '';
-            const playButtonText = hasAudio ? 'Play' : 'No Audio';
-            
             card.innerHTML = `
                 <div class="card-header">
                     <div class="card-gradient" style="background: ${gradient};"></div>
                     <div class="${badgeClass}">
                         <i class="${badgeIcon}"></i>
-                        <span>${story.category === 'podcast' ? 'Podcast' : 
-                               story.category === 'audio' ? 'Audio Story' :
-                               story.category === 'live' ? 'Live Now' :
-                               story.category === 'music' ? 'Music' :
-                               story.category === 'news' ? 'News' : 'Story'}</span>
+                        <span>${story.category || 'Story'}</span>
                     </div>
                     ${story.isFeatured ? '<div class="card-featured-badge">Featured</div>' : ''}
                 </div>
                 
                 <div class="card-content">
-                    <h3 class="card-title">${story.title}</h3>
-                    <p class="card-description">${story.description}</p>
+                    <h3 class="card-title">${story.title || 'Untitled Story'}</h3>
+                    <p class="card-description">${story.description || 'No description available'}</p>
                     
                     <div class="card-stats">
                         <div class="stat-item plays">
@@ -3082,15 +3072,15 @@
                     <div class="card-author">
                         <div class="author-avatar">${authorInitial}</div>
                         <div class="author-info">
-                            <div class="author-name">${story.authorName}</div>
+                            <div class="author-name">${story.authorName || 'Anonymous'}</div>
                             <div class="author-role">${story.authorRole || 'Creator'}</div>
                         </div>
                     </div>
                     
                     <div class="card-actions">
-                        <button class="card-action-btn play" onclick="playStory('${story.id}', event)" ${playButtonDisabled}>
+                        <button class="card-action-btn play" onclick="playStory('${story.id}', event)" ${!hasAudio ? 'disabled style="opacity:0.5;"' : ''}>
                             <i class="fas fa-play"></i>
-                            <span>${playButtonText}</span>
+                            <span>${hasAudio ? 'Play' : 'No Audio'}</span>
                         </button>
                         <button class="${saveBtnClass}" onclick="toggleSave('${story.id}', this, event)">
                             <i class="${saveIcon}"></i>
@@ -3174,16 +3164,16 @@
                 return;
             }
             
-            // Check if audio URL exists
-            if (!story.audioUrl || story.audioUrl.trim() === '') {
+            // Check if audio URL exists and is valid
+            if (!story.audioUrl) {
                 showToast("Audio not available for this story", "error");
                 return;
             }
             
-            // Validate audio URL
-            const url = story.audioUrl.toLowerCase();
-            if (!url.startsWith('http') || (!url.endsWith('.mp3') && !url.endsWith('.wav') && !url.endsWith('.ogg') && !url.endsWith('.m4a'))) {
-                showToast("Invalid audio format", "error");
+            // Validate audio URL format
+            const audioError = checkAudioAvailability(story);
+            if (audioError) {
+                showToast(audioError, "error");
                 return;
             }
             
@@ -3195,13 +3185,11 @@
                 clearInterval(audioUpdateInterval);
             }
             
-            // Load and play real audio from Firebase
+            // Load and play real audio from Firebase - NO DEMO DATA
             currentAudio.src = story.audioUrl;
-            currentAudio.load(); // Pre-load the audio
-            
             currentAudio.play().catch(error => {
                 console.error("Playback error:", error);
-                showToast("Cannot play audio. URL may be invalid or inaccessible.", "error");
+                showToast("Error playing audio. URL may be invalid or inaccessible.", "error");
             });
             
             // Update UI
@@ -3209,6 +3197,20 @@
             
             // Show floating player
             showFloatingPlayer();
+        }
+        
+        function checkAudioAvailability(story) {
+            if (!story.audioUrl) {
+                return "No audio URL available";
+            }
+            
+            // Check if audio URL is valid
+            const url = story.audioUrl.toLowerCase();
+            if (!url.startsWith('http')) {
+                return "Invalid audio URL format";
+            }
+            
+            return null;
         }
 
         function updatePlayerUI(story) {
@@ -3257,13 +3259,12 @@
                     partItem.innerHTML = `
                         <div class="part-header">
                             <div class="part-title">${part.title || `Part ${index + 1}`}</div>
-                            <div class="part-duration">${part.duration || formatDuration(story.duration / (story.parts.length || 1))}</div>
+                            <div class="part-duration">${formatDuration(part.duration) || formatDuration(story.duration / (story.parts.length || 1))}</div>
                         </div>
                         <div class="part-description">${part.description || 'Story segment'}</div>
                     `;
                     
                     partItem.addEventListener('click', () => {
-                        // In a real app, this would load the specific part
                         document.querySelectorAll('.part-item').forEach(item => item.classList.remove('active'));
                         partItem.classList.add('active');
                         showToast(`Playing: ${part.title || `Part ${index + 1}`}`, "info");
@@ -3580,6 +3581,7 @@
 
         // ===== UTILITY FUNCTIONS =====
         function formatDuration(seconds) {
+            if (!seconds || isNaN(seconds)) return "0:00";
             const minutes = Math.floor(seconds / 60);
             const remainingSeconds = Math.floor(seconds % 60);
             return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;

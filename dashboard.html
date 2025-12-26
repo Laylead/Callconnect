@@ -1186,6 +1186,67 @@
                 font-size: 2rem;
             }
         }
+
+        /* Affiliate Section */
+        .affiliate-card {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+        }
+
+        .affiliate-card h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--darker-color);
+        }
+
+        .referral-code {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 2px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .referral-code:hover {
+            transform: scale(1.02);
+            box-shadow: var(--shadow);
+        }
+
+        .referral-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .referral-stat {
+            background: var(--gray-100);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .referral-stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .referral-stat-label {
+            font-size: 0.9rem;
+            color: var(--gray-700);
+        }
     </style>
 </head>
 <body>
@@ -1225,6 +1286,10 @@
                 <button class="nav-item" data-page="wallet">
                     <i class="fas fa-wallet"></i>
                     <span>Wallet</span>
+                </button>
+                <button class="nav-item" data-page="affiliate">
+                    <i class="fas fa-gift"></i>
+                    <span>Affiliate</span>
                 </button>
                 <button class="nav-item" data-page="history">
                     <i class="fas fa-history"></i>
@@ -1433,6 +1498,50 @@
                     </div>
                 </div>
 
+                <!-- Affiliate Page -->
+                <div class="page affiliate-page">
+                    <div class="wallet-container">
+                        <div class="affiliate-card">
+                            <h3>Your Referral Program</h3>
+                            <p style="color: var(--gray-700); margin-bottom: 20px;">
+                                Invite friends and earn commissions when they use Camsilo
+                            </p>
+                            
+                            <div class="referral-code" id="referral-code-display">
+                                Click to copy
+                            </div>
+                            <p style="text-align: center; color: var(--gray-700); font-size: 0.9rem;">
+                                Share this code with friends
+                            </p>
+                            
+                            <div class="referral-stats">
+                                <div class="referral-stat">
+                                    <div class="referral-stat-value" id="total-referrals">0</div>
+                                    <div class="referral-stat-label">Total Referrals</div>
+                                </div>
+                                <div class="referral-stat">
+                                    <div class="referral-stat-value" id="referral-earnings">₦0</div>
+                                    <div class="referral-stat-label">Total Earnings</div>
+                                </div>
+                                <div class="referral-stat">
+                                    <div class="referral-stat-value" id="pending-earnings">₦0</div>
+                                    <div class="referral-stat-label">Pending</div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 30px;">
+                                <h4>How It Works</h4>
+                                <ul style="color: var(--gray-700); margin-top: 15px; padding-left: 20px;">
+                                    <li style="margin-bottom: 10px;">Share your referral code with friends</li>
+                                    <li style="margin-bottom: 10px;">They get 10% bonus on their first deposit</li>
+                                    <li style="margin-bottom: 10px;">You earn 5% of their first deposit</li>
+                                    <li style="margin-bottom: 10px;">Track your earnings in real-time</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- History Page -->
                 <div class="page history-page">
                     <div id="history-container">
@@ -1556,8 +1665,12 @@
                 <input type="file" id="media-file" accept="image/*,video/*">
             </div>
             <div id="media-preview" style="margin: 20px 0; text-align: center;"></div>
+            <div class="input-group">
+                <label for="media-upload-description">Description (Optional)</label>
+                <textarea id="media-upload-description" placeholder="Add a description for your media..." rows="2"></textarea>
+            </div>
             <button id="upload-media-btn" class="btn btn-primary">
-                <i class="fas fa-upload"></i> Upload Media
+                <i class="fas fa-upload"></i> Upload & Complete Request
             </button>
         </div>
     </div>
@@ -1715,6 +1828,31 @@
         </div>
     </div>
 
+    <!-- Referral Code Modal -->
+    <div id="referral-modal" class="modal-overlay">
+        <div class="modal">
+            <div style="text-align: center;">
+                <i class="fas fa-gift" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 20px;"></i>
+                <h3 style="margin: 0 0 10px 0;">Welcome to Camsilo!</h3>
+                <p style="color: var(--gray-700); margin-bottom: 25px;">
+                    Have a referral code? Enter it below to get bonus credits. (Optional)
+                </p>
+                
+                <div class="input-group">
+                    <input type="text" id="referral-code-input" placeholder="Enter referral code (optional)" style="text-align: center; letter-spacing: 2px;">
+                </div>
+                
+                <button id="submit-referral" class="btn btn-primary" style="margin-bottom: 15px;">
+                    <i class="fas fa-check"></i> Continue
+                </button>
+                
+                <button id="skip-referral" class="btn btn-secondary">
+                    <i class="fas fa-forward"></i> Skip for now
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Notification Container -->
     <div id="notification-container"></div>
 
@@ -1727,8 +1865,10 @@
         let completedRequestsCount = 0;
         let currentChatId = null;
         let currentModelId = null;
+        let currentRequestId = null;
         let models = [];
         let chats = [];
+        let notificationSound = null;
 
         // ========== INITIALIZATION ==========
         document.addEventListener('DOMContentLoaded', () => {
@@ -1761,6 +1901,9 @@
                             online: true,
                             lastSeen: firebase.firestore.FieldValue.serverTimestamp()
                         });
+                        
+                        // Check if user needs to see referral modal
+                        checkReferralModal();
                     } else {
                         // Redirect to login page
                         console.log('No user, redirecting to login');
@@ -1795,8 +1938,14 @@
                     updateUserProfile();
                     updateWalletUI();
                     
+                    // Update affiliate section
+                    updateAffiliateSection();
+                    
                 } else {
                     console.log('User document does not exist, creating new...');
+                    // Generate referral code for new user
+                    const referralCode = generateReferralCode();
+                    
                     // User document doesn't exist, create it
                     await firebase.firestore().collection('users').doc(currentUser.uid).set({
                         uid: currentUser.uid,
@@ -1810,14 +1959,19 @@
                         totalEarnings: 0,
                         totalSpent: 0,
                         totalMessages: 0,
+                        referralCode: referralCode,
+                        referredBy: null,
+                        referralCount: 0,
+                        referralEarnings: 0,
                         profileImage: currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName || 'User')}&background=7c3aed&color=fff`,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                         lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
                         status: 'active',
-                        online: true
+                        online: true,
+                        hasSeenReferralModal: false
                     });
                     
-                    console.log('User document created');
+                    console.log('User document created with referral code:', referralCode);
                     // Reload user data
                     await loadUserData();
                 }
@@ -1961,6 +2115,70 @@
                 
                 requestWithdrawBtn.disabled = false;
                 requestWithdrawBtn.innerHTML = '<i class="fas fa-paper-plane"></i><span>Withdraw Funds</span>';
+            }
+        }
+
+        function updateAffiliateSection() {
+            if (!userData) return;
+            
+            // Update referral code display
+            document.getElementById('referral-code-display').textContent = userData.referralCode || 'CLICK-TO-GENERATE';
+            
+            // Update stats
+            document.getElementById('total-referrals').textContent = userData.referralCount || 0;
+            document.getElementById('referral-earnings').textContent = `₦${(userData.referralEarnings || 0).toLocaleString()}`;
+            document.getElementById('pending-earnings').textContent = `₦${((userData.referralCount || 0) * 500).toLocaleString()}`; // Example: ₦500 per referral
+        }
+
+        // ========== REFERRAL SYSTEM ==========
+        function generateReferralCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let code = '';
+            for (let i = 0; i < 8; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
+        async function checkReferralModal() {
+            if (!userData) return;
+            
+            // Check if user has seen the referral modal
+            if (!userData.hasSeenReferralModal) {
+                // Show referral modal after 1 second
+                setTimeout(() => {
+                    document.getElementById('referral-modal').classList.add('active');
+                }, 1000);
+            }
+        }
+
+        async function processReferralCode(code) {
+            if (!code || code.trim() === '') return null;
+            
+            try {
+                // Find user with this referral code
+                const usersSnapshot = await firebase.firestore()
+                    .collection('users')
+                    .where('referralCode', '==', code.toUpperCase())
+                    .limit(1)
+                    .get();
+                
+                if (usersSnapshot.empty) {
+                    return null;
+                }
+                
+                const referrerDoc = usersSnapshot.docs[0];
+                const referrerId = referrerDoc.id;
+                
+                // Make sure user is not referring themselves
+                if (referrerId === currentUser.uid) {
+                    return null;
+                }
+                
+                return referrerId;
+            } catch (error) {
+                console.error('Error processing referral code:', error);
+                return null;
             }
         }
 
@@ -2184,6 +2402,67 @@
             // Submit Media Request
             document.getElementById('submit-media-request').addEventListener('click', submitMediaRequest);
 
+            // Upload Media Button
+            document.getElementById('upload-media-btn').addEventListener('click', uploadMedia);
+
+            // Referral Code Submit
+            document.getElementById('submit-referral').addEventListener('click', async () => {
+                const code = document.getElementById('referral-code-input').value.trim().toUpperCase();
+                
+                if (code) {
+                    const referrerId = await processReferralCode(code);
+                    
+                    if (referrerId) {
+                        // Update user with referral information
+                        await firebase.firestore().collection('users').doc(currentUser.uid).update({
+                            referredBy: referrerId,
+                            hasSeenReferralModal: true
+                        });
+                        
+                        // Update referrer's referral count
+                        await firebase.firestore().collection('users').doc(referrerId).update({
+                            referralCount: firebase.firestore.FieldValue.increment(1),
+                            referralEarnings: firebase.firestore.FieldValue.increment(500) // ₦500 bonus
+                        });
+                        
+                        // Give new user bonus
+                        await firebase.firestore().collection('users').doc(currentUser.uid).update({
+                            normalWalletBalance: firebase.firestore.FieldValue.increment(1000) // ₦1000 welcome bonus
+                        });
+                        
+                        showNotification('Referral code applied! You received ₦1000 bonus!', 'success');
+                    } else {
+                        showNotification('Invalid referral code', 'error');
+                        return;
+                    }
+                } else {
+                    // User skipped referral
+                    await firebase.firestore().collection('users').doc(currentUser.uid).update({
+                        hasSeenReferralModal: true
+                    });
+                }
+                
+                document.getElementById('referral-modal').classList.remove('active');
+                updateWalletUI();
+            });
+
+            // Skip Referral
+            document.getElementById('skip-referral').addEventListener('click', async () => {
+                await firebase.firestore().collection('users').doc(currentUser.uid).update({
+                    hasSeenReferralModal: true
+                });
+                document.getElementById('referral-modal').classList.remove('active');
+            });
+
+            // Copy Referral Code
+            document.getElementById('referral-code-display').addEventListener('click', () => {
+                const code = userData?.referralCode;
+                if (code) {
+                    navigator.clipboard.writeText(code);
+                    showNotification('Referral code copied to clipboard!', 'success');
+                }
+            });
+
             // Modal Close Buttons
             document.querySelectorAll('.modal-close').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -2241,6 +2520,7 @@
                 'models': 'Premium Models',
                 'chats': 'My Chats',
                 'wallet': 'Wallet',
+                'affiliate': 'Affiliate Program',
                 'history': 'Transaction History',
                 'settings': 'Settings'
             };
@@ -2259,6 +2539,11 @@
                 document.getElementById('sidebar').classList.remove('active');
             }
             
+            // Close all modals when switching pages
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.classList.remove('active');
+            });
+            
             // Load page-specific data
             switch(page) {
                 case 'models':
@@ -2270,11 +2555,8 @@
                 case 'history':
                     loadTransactionHistory();
                     break;
-                case 'wallet':
-                    // Close all modals when switching to wallet page
-                    document.querySelectorAll('.modal-overlay').forEach(modal => {
-                        modal.classList.remove('active');
-                    });
+                case 'affiliate':
+                    updateAffiliateSection();
                     break;
             }
         }
@@ -2312,7 +2594,14 @@
                         ...doc.data()
                     };
                     models.push(model);
-                    createModelCard(model);
+                    
+                    // Only show chat button for males, not for females (models)
+                    if (userData.gender === 'male') {
+                        createModelCard(model);
+                    } else {
+                        // For females (models), show view-only card without chat button
+                        createModelViewCard(model);
+                    }
                 });
                 
                 // Update notification badge
@@ -2337,26 +2626,6 @@
             
             const isOnline = model.online === true;
             const price = model.pricePerMessage || 10;
-            
-            // For males: Show chat button always (online/offline)
-            // For females (models): Don't show chat button, they can only reply to messages
-            let chatButtonHTML = '';
-            
-            if (userData.gender === 'male') {
-                // Male clients can message any model at any time
-                chatButtonHTML = `
-                    <button class="chat-btn" onclick="startChat('${model.id}')">
-                        <i class="fas fa-comment"></i> Start Chat - ₦${price}/msg
-                    </button>
-                `;
-            } else {
-                // Female models can see other models but cannot message them
-                chatButtonHTML = `
-                    <div style="text-align: center; padding: 10px; color: var(--gray-700);">
-                        <i class="fas fa-info-circle"></i> View Only
-                    </div>
-                `;
-            }
             
             card.innerHTML = `
                 <div class="model-header">
@@ -2383,10 +2652,646 @@
                             <div class="stat-label">Per Message</div>
                         </div>
                     </div>
-                    ${chatButtonHTML}
+                    <button class="chat-btn" onclick="startChat('${model.id}')">
+                        <i class="fas fa-comment"></i> ${isOnline ? `Start Chat - ₦${price}/msg` : 'Send Message'}
+                    </button>
                 </div>
             `;
             container.appendChild(card);
+        }
+
+        function createModelViewCard(model) {
+            const container = document.getElementById('models-container');
+            const card = document.createElement('div');
+            card.className = 'model-card';
+            
+            const isOnline = model.online === true;
+            const price = model.pricePerMessage || 10;
+            
+            card.innerHTML = `
+                <div class="model-header">
+                    <img src="${model.profileImage || 'https://via.placeholder.com/300x200?text=Model'}" 
+                         alt="${model.name}" 
+                         class="model-img">
+                    <span class="online-badge" style="background: ${isOnline ? 'var(--success-color)' : 'var(--gray-700)'};">
+                        ${isOnline ? 'Online' : 'Offline'}
+                    </span>
+                </div>
+                <div class="model-info">
+                    <h3 class="model-name">${model.name}</h3>
+                    <div class="model-stats">
+                        <div class="stat">
+                            <div class="stat-value">${model.rating || '5.0'}</div>
+                            <div class="stat-label">Rating</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${model.responseRate || '95%'}</div>
+                            <div class="stat-label">Response Rate</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">₦${price}</div>
+                            <div class="stat-label">Per Message</div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; padding: 10px; color: var(--gray-700); font-size: 0.9rem;">
+                        <i class="fas fa-info-circle"></i> You can reply to messages in your chats
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        }
+
+        // ========== CHAT FUNCTIONS ==========
+        window.startChat = async function(modelId) {
+            // Allow males to message any model (online or offline)
+            if (userData.gender === 'male' && normalWalletBalance < 10) {
+                showNotification('Insufficient balance. Minimum ₦10 required to start chat', 'error');
+                showPage('wallet');
+                return;
+            }
+            
+            currentModelId = modelId;
+            const model = models.find(m => m.id === modelId);
+            
+            if (!model) {
+                showNotification('Model not found', 'error');
+                return;
+            }
+            
+            try {
+                // Update chat header
+                document.getElementById('chat-partner-name').textContent = model.name;
+                document.getElementById('chat-partner-avatar').src = model.profileImage || 'https://via.placeholder.com/50';
+                
+                // Generate chat ID
+                currentChatId = [currentUser.uid, modelId].sort().join('_');
+                
+                // Create or get chat document
+                const chatRef = firebase.firestore().collection('chats').doc(currentChatId);
+                const chatDoc = await chatRef.get();
+                
+                if (!chatDoc.exists) {
+                    await chatRef.set({
+                        participants: [currentUser.uid, modelId],
+                        clientName: userData.name,
+                        modelName: model.name,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastMessage: null,
+                        lastMessageTime: null,
+                        isActive: true,
+                        unreadCount: 0,
+                        lastMessageSender: null
+                    });
+                } else {
+                    // Reset unread count for current user
+                    await chatRef.update({
+                        isActive: true,
+                        unreadCount: 0
+                    });
+                }
+                
+                // Enable chat input and send button
+                document.getElementById('message-input').disabled = false;
+                document.getElementById('send-btn').disabled = false;
+                
+                // Load chat history
+                await loadChatHistory();
+                
+                // Switch to chat page
+                document.querySelector('.app-container').style.display = 'none';
+                document.getElementById('chat-page').style.display = 'flex';
+                
+                // Focus on message input
+                setTimeout(() => {
+                    document.getElementById('message-input').focus();
+                }, 100);
+                
+                // Listen for new messages
+                setupChatListener();
+                
+            } catch (error) {
+                console.error('Error starting chat:', error);
+                showNotification('Error starting chat', 'error');
+            }
+        };
+
+        // Models can reply to any existing chat
+        async function loadChatsList() {
+            const container = document.getElementById('chats-container');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            
+            try {
+                const chatsSnapshot = await firebase.firestore()
+                    .collection('chats')
+                    .where('participants', 'array-contains', currentUser.uid)
+                    .orderBy('lastMessageTime', 'desc')
+                    .get();
+                
+                container.innerHTML = '';
+                
+                if (chatsSnapshot.empty) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: var(--gray-700);">
+                            <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                            <h3>No chats yet</h3>
+                            <p>${userData.gender === 'male' ? 'Start a chat with a model to begin' : 'Clients will appear here when they message you'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                chats = [];
+                const promises = [];
+                
+                chatsSnapshot.forEach(async (doc) => {
+                    const chat = {
+                        id: doc.id,
+                        ...doc.data()
+                    };
+                    chats.push(chat);
+                    
+                    // Get the other participant's info
+                    const otherUserId = chat.participants.find(id => id !== currentUser.uid);
+                    if (otherUserId) {
+                        promises.push(
+                            firebase.firestore().collection('users').doc(otherUserId).get()
+                                .then(userDoc => {
+                                    if (userDoc.exists) {
+                                        const userData = userDoc.data();
+                                        createChatItem(chat, userData);
+                                    }
+                                })
+                        );
+                    }
+                });
+                
+                await Promise.all(promises);
+            } catch (error) {
+                console.error('Error loading chats:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--danger-color);">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                        <h3>Error loading chats</h3>
+                        <p>Please try again later</p>
+                    </div>
+                `;
+            }
+        }
+
+        function createChatItem(chat, userData) {
+            const container = document.getElementById('chats-container');
+            const chatItem = document.createElement('div');
+            chatItem.className = 'history-item';
+            chatItem.style.cursor = 'pointer';
+            
+            const lastMessage = chat.lastMessage ? 
+                (chat.lastMessage.length > 50 ? chat.lastMessage.substring(0, 50) + '...' : chat.lastMessage) : 
+                'No messages yet';
+            
+            const time = chat.lastMessageTime?.toDate ? 
+                chat.lastMessageTime.toDate().toLocaleDateString([], { month: 'short', day: 'numeric' }) : '';
+            
+            // Show who sent the last message
+            const lastSender = chat.lastMessageSender === currentUser.uid ? 'You' : userData.name;
+            
+            chatItem.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <img src="${userData.profileImage || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userData.name) + '&background=7c3aed&color=fff'}" 
+                         alt="${userData.name}" 
+                         style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);">
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h4 style="margin: 0; font-weight: 600;">${userData.name}</h4>
+                            <div style="font-size: 0.8rem; color: var(--gray-700);">
+                                ${time}
+                            </div>
+                        </div>
+                        <p style="margin: 5px 0 0 0; color: var(--gray-700); font-size: 0.9rem;">
+                            <strong>${lastSender}:</strong> ${lastMessage}
+                        </p>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    ${chat.unreadCount && chat.unreadCount > 0 && chat.lastMessageSender !== currentUser.uid ? 
+                        `<span style="background: var(--accent-color); color: white; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; margin-top: 5px;">${chat.unreadCount}</span>` : 
+                        ''}
+                </div>
+            `;
+            
+            chatItem.addEventListener('click', () => {
+                currentModelId = chat.participants.find(id => id !== currentUser.uid);
+                startChat(currentModelId);
+            });
+            
+            container.appendChild(chatItem);
+        }
+
+        async function loadChatHistory() {
+            const container = document.getElementById('messages-container');
+            container.innerHTML = '';
+            
+            try {
+                const messagesSnapshot = await firebase.firestore()
+                    .collection('chats').doc(currentChatId)
+                    .collection('messages')
+                    .orderBy('timestamp', 'asc')
+                    .get();
+                
+                if (messagesSnapshot.empty) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px;">
+                            <h3 style="margin-bottom: 15px; color: var(--gray-700);">Start a conversation</h3>
+                            <p style="color: var(--gray-700);">
+                                ${userData.gender === 'male' ? 
+                                    'Send your first message to start chatting' : 
+                                    'Reply to the client\'s message'}
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                messagesSnapshot.forEach(doc => {
+                    displayMessage(doc.data());
+                });
+                
+                // Scroll to bottom
+                container.scrollTop = container.scrollHeight;
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+            }
+        }
+
+        function setupChatListener() {
+            if (!currentChatId) return;
+            
+            firebase.firestore()
+                .collection('chats').doc(currentChatId)
+                .collection('messages')
+                .orderBy('timestamp', 'desc')
+                .limit(1)
+                .onSnapshot((snapshot) => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            displayMessage(change.doc.data());
+                            // Scroll to bottom
+                            const container = document.getElementById('messages-container');
+                            container.scrollTop = container.scrollHeight;
+                            
+                            // Play notification sound for new messages
+                            if (notificationSound) {
+                                notificationSound.play().catch(e => console.log('Notification sound error:', e));
+                            }
+                        }
+                    });
+                });
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+            
+            if (!text || !currentChatId) return;
+            
+            // For males, check balance
+            if (userData.gender === 'male' && normalWalletBalance < 10) {
+                showNotification('Insufficient balance', 'error');
+                return;
+            }
+            
+            try {
+                const model = models.find(m => m.id === currentModelId);
+                const pricePerMessage = model?.pricePerMessage || 10;
+                
+                const message = {
+                    senderId: currentUser.uid,
+                    text: text,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    type: 'text',
+                    read: false
+                };
+                
+                // Add message to Firestore
+                await firebase.firestore()
+                    .collection('chats').doc(currentChatId)
+                    .collection('messages')
+                    .add(message);
+                
+                // Update chat last message
+                await firebase.firestore()
+                    .collection('chats').doc(currentChatId)
+                    .update({
+                        lastMessage: text.length > 50 ? text.substring(0, 50) + '...' : text,
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                        unreadCount: firebase.firestore.FieldValue.increment(1),
+                        lastMessageSender: currentUser.uid
+                    });
+                
+                // Handle payment based on gender
+                if (userData.gender === 'male') {
+                    // Deduct from male user's normal wallet
+                    await firebase.firestore()
+                        .collection('users')
+                        .doc(currentUser.uid)
+                        .update({
+                            normalWalletBalance: firebase.firestore.FieldValue.increment(-pricePerMessage),
+                            totalSpent: firebase.firestore.FieldValue.increment(pricePerMessage),
+                            totalMessages: firebase.firestore.FieldValue.increment(1)
+                        });
+                    
+                    // Add to model's normal wallet (chat earnings)
+                    await firebase.firestore()
+                        .collection('users')
+                        .doc(currentModelId)
+                        .update({
+                            normalWalletBalance: firebase.firestore.FieldValue.increment(pricePerMessage),
+                            totalEarnings: firebase.firestore.FieldValue.increment(pricePerMessage),
+                            totalMessages: firebase.firestore.FieldValue.increment(1)
+                        });
+                    
+                    // Update local balance for male
+                    normalWalletBalance -= pricePerMessage;
+                    updateWalletUI();
+                    
+                    // Record transaction
+                    await firebase.firestore().collection('transactions').add({
+                        userId: currentUser.uid,
+                        type: 'payment',
+                        amount: pricePerMessage,
+                        recipientId: currentModelId,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        description: `Chat message to ${model.name}`
+                    });
+                } else if (userData.gender === 'female') {
+                    // For models, update their message count
+                    await firebase.firestore()
+                        .collection('users')
+                        .doc(currentUser.uid)
+                        .update({
+                            totalMessages: firebase.firestore.FieldValue.increment(1)
+                        });
+                }
+                
+                // Clear input
+                input.value = '';
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showNotification('Error sending message', 'error');
+            }
+        }
+
+        function displayMessage(message) {
+            const container = document.getElementById('messages-container');
+            const isSender = message.senderId === currentUser.uid;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isSender ? 'sent' : 'received'}`;
+            
+            const time = message.timestamp?.toDate ? 
+                message.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 
+                'Just now';
+            
+            if (message.type === 'text') {
+                messageDiv.innerHTML = `
+                    <div class="message-bubble">
+                        <div class="message-text">${message.text}</div>
+                        <div class="message-time" style="font-size: 0.8rem; opacity: 0.8; text-align: right; margin-top: 5px;">${time}</div>
+                    </div>
+                `;
+            } else if (message.type === 'media_request') {
+                messageDiv.innerHTML = `
+                    <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid var(--warning-color); border-radius: var(--border-radius); padding: 15px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <i class="fas fa-${message.mediaType === 'image' ? 'image' : 'video'}"></i>
+                            <strong>Media Request</strong>
+                            ${message.status === 'completed' ? 
+                                '<span style="background: var(--success-color); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem;">Completed</span>' : 
+                                '<span style="background: var(--warning-color); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem;">Pending</span>'
+                            }
+                        </div>
+                        <p style="margin-bottom: 10px;">${message.description || 'No description provided'}</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong style="color: var(--warning-color);">₦${message.amount?.toLocaleString() || '0'}</strong>
+                            ${!isSender && userData.gender === 'female' && message.status !== 'completed' ? 
+                                `<button onclick="acceptMediaRequest('${message.requestId}', '${message.senderId}', ${message.amount}, '${message.mediaType}')" class="btn btn-primary" style="padding: 8px 15px; font-size: 0.9rem;">
+                                    Accept & Upload
+                                </button>` : 
+                                ''
+                            }
+                        </div>
+                    </div>
+                `;
+            } else if (message.type === 'media_upload') {
+                messageDiv.innerHTML = `
+                    <div style="background: linear-gradient(135deg, #d1fae5, #a7f3d0); border: 2px solid var(--success-color); border-radius: var(--border-radius); padding: 15px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <i class="fas fa-${message.mediaType === 'image' ? 'image' : 'video'}"></i>
+                            <strong>Media Delivered</strong>
+                            <span style="background: var(--success-color); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem;">Completed</span>
+                        </div>
+                        <p style="margin-bottom: 10px;">${message.description || 'Media uploaded'}</p>
+                        ${message.mediaUrl ? `
+                            <div style="margin: 10px 0;">
+                                <a href="${message.mediaUrl}" target="_blank" style="color: var(--primary-color); text-decoration: none;">
+                                    <i class="fas fa-external-link-alt"></i> View Media
+                                </a>
+                            </div>
+                        ` : ''}
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                            <strong style="color: var(--success-color);">₦${message.amount?.toLocaleString() || '0'}</strong>
+                            <span style="color: var(--gray-700); font-size: 0.9rem;">Payment received</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            container.appendChild(messageDiv);
+        }
+
+        // ========== MEDIA REQUEST FUNCTIONS ==========
+        async function submitMediaRequest() {
+            const type = document.getElementById('media-type').value;
+            const description = document.getElementById('media-description').value.trim();
+            const amount = parseFloat(document.getElementById('media-amount').value);
+            
+            if (!description) {
+                showNotification('Please enter a description', 'error');
+                return;
+            }
+            
+            if (amount < 100) {
+                showNotification('Minimum amount is ₦100', 'error');
+                return;
+            }
+            
+            if (userData.gender === 'male' && amount > normalWalletBalance) {
+                showNotification('Insufficient balance', 'error');
+                return;
+            }
+            
+            try {
+                const requestId = 'media_req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                
+                // Add media request message
+                await firebase.firestore()
+                    .collection('chats').doc(currentChatId)
+                    .collection('messages')
+                    .add({
+                        senderId: currentUser.uid,
+                        type: 'media_request',
+                        mediaType: type,
+                        description: description,
+                        amount: amount,
+                        requestId: requestId,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        read: false,
+                        status: 'pending'
+                    });
+                
+                // Handle payment based on gender
+                if (userData.gender === 'male') {
+                    // Deduct amount from male user's normal wallet
+                    await firebase.firestore()
+                        .collection('users')
+                        .doc(currentUser.uid)
+                        .update({
+                            normalWalletBalance: firebase.firestore.FieldValue.increment(-amount)
+                        });
+                    
+                    normalWalletBalance -= amount;
+                    updateWalletUI();
+                    
+                    // Record transaction
+                    await firebase.firestore().collection('transactions').add({
+                        userId: currentUser.uid,
+                        type: 'payment',
+                        amount: amount,
+                        recipientId: currentModelId,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        description: `Media request: ${description.substring(0, 50)}...`
+                    });
+                }
+                
+                // Close modal
+                document.getElementById('media-request-modal').classList.remove('active');
+                showNotification('Media request sent successfully', 'success');
+                
+                // Clear form
+                document.getElementById('media-description').value = '';
+                document.getElementById('media-amount').value = '';
+                
+            } catch (error) {
+                console.error('Error submitting media request:', error);
+                showNotification('Error submitting request', 'error');
+            }
+        }
+
+        // Make functions available globally for onclick handlers
+        window.acceptMediaRequest = async function(requestId, senderId, amount, mediaType) {
+            try {
+                currentRequestId = requestId;
+                document.getElementById('media-upload-modal').classList.add('active');
+                showNotification('Please upload the requested media to complete the request', 'info');
+            } catch (error) {
+                console.error('Error accepting media request:', error);
+                showNotification('Error accepting request', 'error');
+            }
+        };
+
+        async function uploadMedia() {
+            const fileInput = document.getElementById('media-file');
+            const description = document.getElementById('media-upload-description').value.trim();
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showNotification('Please select a file to upload', 'error');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const storageRef = firebase.storage().ref();
+            const fileRef = storageRef.child(`media/${currentUser.uid}/${Date.now()}_${file.name}`);
+            
+            try {
+                // Show uploading state
+                document.getElementById('upload-media-btn').disabled = true;
+                document.getElementById('upload-media-btn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+                
+                // Upload file to Firebase Storage
+                const uploadTask = await fileRef.put(file);
+                const downloadURL = await uploadTask.ref.getDownloadURL();
+                
+                // Find the media request message and update it
+                const messagesSnapshot = await firebase.firestore()
+                    .collection('chats').doc(currentChatId)
+                    .collection('messages')
+                    .where('requestId', '==', currentRequestId)
+                    .get();
+                
+                if (!messagesSnapshot.empty) {
+                    const messageDoc = messagesSnapshot.docs[0];
+                    const messageData = messageDoc.data();
+                    
+                    // Update the original request message to show completed
+                    await messageDoc.ref.update({
+                        status: 'completed'
+                    });
+                    
+                    // Add new message showing media uploaded
+                    await firebase.firestore()
+                        .collection('chats').doc(currentChatId)
+                        .collection('messages')
+                        .add({
+                            senderId: currentUser.uid,
+                            type: 'media_upload',
+                            mediaType: messageData.mediaType,
+                            description: description || 'Media uploaded',
+                            amount: messageData.amount,
+                            mediaUrl: downloadURL,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                            read: false,
+                            requestId: currentRequestId
+                        });
+                    
+                    // Credit model's request wallet
+                    await firebase.firestore().collection('users').doc(currentUser.uid).update({
+                        requestWalletBalance: firebase.firestore.FieldValue.increment(messageData.amount),
+                        completedRequestsCount: firebase.firestore.FieldValue.increment(1)
+                    });
+                    
+                    // Update local counts
+                    requestWalletBalance += messageData.amount;
+                    completedRequestsCount += 1;
+                    updateFemaleWalletDisplay();
+                    updateRequestWalletUI();
+                    
+                    // Record transaction
+                    await firebase.firestore().collection('transactions').add({
+                        userId: currentUser.uid,
+                        type: 'earning',
+                        walletType: 'request',
+                        amount: messageData.amount,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        description: `Media request completed: ${messageData.description?.substring(0, 50) || 'Custom media'}`
+                    });
+                    
+                    showNotification('Media uploaded successfully! Request completed and payment received.', 'success');
+                }
+                
+                // Close modal and reset form
+                document.getElementById('media-upload-modal').classList.remove('active');
+                document.getElementById('media-file').value = '';
+                document.getElementById('media-upload-description').value = '';
+                document.getElementById('media-preview').innerHTML = '';
+                document.getElementById('upload-media-btn').disabled = false;
+                document.getElementById('upload-media-btn').innerHTML = '<i class="fas fa-upload"></i> Upload & Complete Request';
+                
+            } catch (error) {
+                console.error('Error uploading media:', error);
+                showNotification('Error uploading media: ' + error.message, 'error');
+                document.getElementById('upload-media-btn').disabled = false;
+                document.getElementById('upload-media-btn').innerHTML = '<i class="fas fa-upload"></i> Upload & Complete Request';
+            }
         }
 
         // ========== WITHDRAWAL PROCESSING ==========
@@ -2563,303 +3468,6 @@
             }
         }
 
-        // ========== CHAT FUNCTIONS ==========
-        window.startChat = async function(modelId) {
-            // Only males can start new chats
-            if (userData.gender === 'female') {
-                showNotification('Models can only reply to existing messages', 'error');
-                return;
-            }
-            
-            if (userData.gender === 'male' && normalWalletBalance < 10) {
-                showNotification('Insufficient balance. Minimum ₦10 required to start chat', 'error');
-                showPage('wallet');
-                return;
-            }
-            
-            currentModelId = modelId;
-            const model = models.find(m => m.id === modelId);
-            
-            if (!model) {
-                showNotification('Model not found', 'error');
-                return;
-            }
-            
-            try {
-                // Update chat header
-                document.getElementById('chat-partner-name').textContent = model.name;
-                document.getElementById('chat-partner-avatar').src = model.profileImage || 'https://via.placeholder.com/50';
-                
-                // Generate chat ID
-                currentChatId = [currentUser.uid, modelId].sort().join('_');
-                
-                // Create or get chat document
-                const chatRef = firebase.firestore().collection('chats').doc(currentChatId);
-                const chatDoc = await chatRef.get();
-                
-                if (!chatDoc.exists) {
-                    await chatRef.set({
-                        participants: [currentUser.uid, modelId],
-                        clientName: userData.name,
-                        modelName: model.name,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastMessage: null,
-                        lastMessageTime: null,
-                        isActive: true,
-                        unreadCount: 0
-                    });
-                } else {
-                    // Reset unread count for this user
-                    await chatRef.update({
-                        isActive: true,
-                        unreadCount: 0
-                    });
-                }
-                
-                // Enable chat input and send button
-                document.getElementById('message-input').disabled = false;
-                document.getElementById('send-btn').disabled = false;
-                
-                // Load chat history
-                await loadChatHistory();
-                
-                // Switch to chat page
-                document.querySelector('.app-container').style.display = 'none';
-                document.getElementById('chat-page').style.display = 'flex';
-                
-                // Focus on message input
-                setTimeout(() => {
-                    document.getElementById('message-input').focus();
-                }, 100);
-                
-                // Listen for new messages
-                setupChatListener();
-                
-            } catch (error) {
-                console.error('Error starting chat:', error);
-                showNotification('Error starting chat', 'error');
-            }
-        };
-
-        async function loadChatHistory() {
-            const container = document.getElementById('messages-container');
-            container.innerHTML = '';
-            
-            try {
-                const messagesSnapshot = await firebase.firestore()
-                    .collection('chats').doc(currentChatId)
-                    .collection('messages')
-                    .orderBy('timestamp', 'asc')
-                    .get();
-                
-                if (messagesSnapshot.empty) {
-                    container.innerHTML = `
-                        <div style="text-align: center; padding: 40px;">
-                            <h3 style="margin-bottom: 15px; color: var(--gray-700);">Start a conversation with ${document.getElementById('chat-partner-name').textContent}</h3>
-                            <p style="color: var(--gray-700); margin-bottom: 10px;">Send your first message to begin chatting</p>
-                            ${userData.gender === 'male' ? 
-                                `<p style="color: var(--primary-color); margin-top: 10px;">
-                                    <i class="fas fa-info-circle"></i> Each message costs ₦10
-                                </p>` : 
-                                `<p style="color: var(--success-color); margin-top: 10px;">
-                                    <i class="fas fa-info-circle"></i> You earn ₦10 per message
-                                </p>`
-                            }
-                        </div>
-                    `;
-                    return;
-                }
-                
-                messagesSnapshot.forEach(doc => {
-                    displayMessage(doc.data());
-                });
-                
-                // Scroll to bottom
-                container.scrollTop = container.scrollHeight;
-            } catch (error) {
-                console.error('Error loading chat history:', error);
-            }
-        }
-
-        function setupChatListener() {
-            if (!currentChatId) return;
-            
-            firebase.firestore()
-                .collection('chats').doc(currentChatId)
-                .collection('messages')
-                .orderBy('timestamp', 'desc')
-                .limit(1)
-                .onSnapshot((snapshot) => {
-                    snapshot.docChanges().forEach(change => {
-                        if (change.type === 'added') {
-                            displayMessage(change.doc.data());
-                            // Scroll to bottom
-                            const container = document.getElementById('messages-container');
-                            container.scrollTop = container.scrollHeight;
-                            
-                            // Show notification for new messages
-                            const message = change.doc.data();
-                            if (message.senderId !== currentUser.uid) {
-                                showNotification(`New message from ${document.getElementById('chat-partner-name').textContent}`, 'info');
-                            }
-                        }
-                    });
-                });
-        }
-
-        async function sendMessage() {
-            const input = document.getElementById('message-input');
-            const text = input.value.trim();
-            
-            if (!text || !currentChatId) return;
-            
-            if (userData.gender === 'male' && normalWalletBalance < 10) {
-                showNotification('Insufficient balance', 'error');
-                return;
-            }
-            
-            try {
-                const model = models.find(m => m.id === currentModelId);
-                const pricePerMessage = model?.pricePerMessage || 10;
-                
-                const message = {
-                    senderId: currentUser.uid,
-                    text: text,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    type: 'text',
-                    read: false
-                };
-                
-                // Add message to Firestore
-                await firebase.firestore()
-                    .collection('chats').doc(currentChatId)
-                    .collection('messages')
-                    .add(message);
-                
-                // Update chat last message
-                await firebase.firestore()
-                    .collection('chats').doc(currentChatId)
-                    .update({
-                        lastMessage: text.length > 50 ? text.substring(0, 50) + '...' : text,
-                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
-                        unreadCount: firebase.firestore.FieldValue.increment(1)
-                    });
-                
-                // Handle payment based on gender
-                if (userData.gender === 'male') {
-                    // Deduct from male user's normal wallet
-                    await firebase.firestore()
-                        .collection('users')
-                        .doc(currentUser.uid)
-                        .update({
-                            normalWalletBalance: firebase.firestore.FieldValue.increment(-pricePerMessage),
-                            totalSpent: firebase.firestore.FieldValue.increment(pricePerMessage),
-                            totalMessages: firebase.firestore.FieldValue.increment(1)
-                        });
-                    
-                    // Add to model's normal wallet (chat earnings)
-                    await firebase.firestore()
-                        .collection('users')
-                        .doc(currentModelId)
-                        .update({
-                            normalWalletBalance: firebase.firestore.FieldValue.increment(pricePerMessage),
-                            totalEarnings: firebase.firestore.FieldValue.increment(pricePerMessage),
-                            totalMessages: firebase.firestore.FieldValue.increment(1)
-                        });
-                    
-                    // Update local balance for male
-                    normalWalletBalance -= pricePerMessage;
-                    updateWalletUI();
-                    
-                    // Record transaction
-                    await firebase.firestore().collection('transactions').add({
-                        userId: currentUser.uid,
-                        type: 'payment',
-                        amount: pricePerMessage,
-                        recipientId: currentModelId,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                        description: `Chat message to ${model.name}`
-                    });
-                } else {
-                    // For females (models), just record the message
-                    await firebase.firestore()
-                        .collection('users')
-                        .doc(currentUser.uid)
-                        .update({
-                            totalMessages: firebase.firestore.FieldValue.increment(1)
-                        });
-                }
-                
-                // Clear input
-                input.value = '';
-                
-            } catch (error) {
-                console.error('Error sending message:', error);
-                showNotification('Error sending message', 'error');
-            }
-        }
-
-        function displayMessage(message) {
-            const container = document.getElementById('messages-container');
-            const isSender = message.senderId === currentUser.uid;
-            
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isSender ? 'sent' : 'received'}`;
-            
-            const time = message.timestamp?.toDate ? 
-                message.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 
-                'Just now';
-            
-            if (message.type === 'text') {
-                messageDiv.innerHTML = `
-                    <div class="message-bubble">
-                        <div class="message-text">${message.text}</div>
-                        <div class="message-time" style="font-size: 0.8rem; opacity: 0.8; text-align: right; margin-top: 5px;">${time}</div>
-                    </div>
-                `;
-            } else if (message.type === 'media_request') {
-                messageDiv.innerHTML = `
-                    <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid var(--warning-color); border-radius: var(--border-radius); padding: 15px;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                            <i class="fas fa-${message.mediaType === 'image' ? 'image' : 'video'}"></i>
-                            <strong>Media Request</strong>
-                        </div>
-                        <p style="margin-bottom: 10px;">${message.description || 'No description provided'}</p>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <strong style="color: var(--warning-color);">₦${message.amount?.toLocaleString() || '0'}</strong>
-                            ${!isSender && userData.gender === 'female' ? 
-                                `<button onclick="acceptMediaRequest('${message.requestId}', ${message.amount})" class="btn btn-primary" style="padding: 8px 15px; font-size: 0.9rem;">
-                                    Accept & Upload
-                                </button>` : 
-                                '<span style="color: var(--gray-700); font-size: 0.9rem;">Pending</span>'
-                            }
-                        </div>
-                        ${message.status === 'completed' ? 
-                            `<div style="margin-top: 10px; padding: 8px; background: var(--success-color); color: white; border-radius: var(--border-radius); text-align: center; font-size: 0.9rem;">
-                                <i class="fas fa-check-circle"></i> Completed
-                            </div>` : ''
-                        }
-                    </div>
-                `;
-            } else if (message.type === 'media_response') {
-                messageDiv.innerHTML = `
-                    <div style="background: linear-gradient(135deg, #d1fae5, #a7f3d0); border: 2px solid var(--success-color); border-radius: var(--border-radius); padding: 15px;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                            <i class="fas fa-${message.mediaType === 'image' ? 'image' : 'video'}"></i>
-                            <strong>Media Delivered</strong>
-                        </div>
-                        <p style="margin-bottom: 10px;">${message.description || 'Media delivered'}</p>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <strong style="color: var(--success-color);">Media Sent</strong>
-                            <span style="color: var(--gray-700); font-size: 0.9rem;">Completed</span>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            container.appendChild(messageDiv);
-        }
-
         // ========== UTILITY FUNCTIONS ==========
         function setupRealtimeListeners() {
             if (!currentUser) return;
@@ -2885,41 +3493,16 @@
                         // Update user data if changed
                         userData = data;
                         updateUserProfile();
+                        updateAffiliateSection();
                     }
                 });
 
             // Listen for new messages in user's chats
-            const chatsQuery = firebase.firestore().collection('chats')
-                .where('participants', 'array-contains', currentUser.uid);
-            
-            chatsQuery.onSnapshot((snapshot) => {
-                updateChatsBadge(snapshot);
-                
-                // Show notification for new chats
-                snapshot.docChanges().forEach(change => {
-                    if (change.type === 'added' || change.type === 'modified') {
-                        const chat = change.doc.data();
-                        if (chat.lastMessageTime) {
-                            const now = new Date();
-                            const messageTime = chat.lastMessageTime.toDate ? chat.lastMessageTime.toDate() : new Date();
-                            
-                            // Show notification for messages received in the last 5 seconds
-                            if (now - messageTime < 5000) {
-                                const otherParticipantId = chat.participants.find(id => id !== currentUser.uid);
-                                if (otherParticipantId) {
-                                    firebase.firestore().collection('users').doc(otherParticipantId).get()
-                                        .then(userDoc => {
-                                            if (userDoc.exists) {
-                                                const userData = userDoc.data();
-                                                showNotification(`New message from ${userData.name}`, 'info');
-                                            }
-                                        });
-                                }
-                            }
-                        }
-                    }
+            firebase.firestore().collection('chats')
+                .where('participants', 'array-contains', currentUser.uid)
+                .onSnapshot((snapshot) => {
+                    updateChatsBadge(snapshot);
                 });
-            });
 
             // Listen for new models coming online
             firebase.firestore().collection('users')
@@ -2938,7 +3521,7 @@
             let unreadCount = 0;
             snapshot.forEach(doc => {
                 const chat = doc.data();
-                if (chat.unreadCount && chat.unreadCount > 0) {
+                if (chat.unreadCount && chat.unreadCount > 0 && chat.lastMessageSender !== currentUser.uid) {
                     unreadCount += chat.unreadCount;
                 }
             });
@@ -3012,7 +3595,7 @@
                     const historyItem = document.createElement('div');
                     historyItem.className = 'history-item';
                     
-                    const amountClass = transaction.type === 'deposit' || (transaction.type === 'earning' && !transaction.isRequest) ? 
+                    const amountClass = transaction.type === 'deposit' || transaction.type === 'earning' ? 
                         'transaction-amount positive' : 'transaction-amount negative';
                     
                     let typeLabel = transaction.type === 'deposit' ? 'Deposit' :
@@ -3028,6 +3611,11 @@
                     // Add wallet type for earnings
                     if (transaction.type === 'earning' && transaction.walletType) {
                         typeLabel = `${transaction.walletType === 'normal' ? 'Normal Wallet' : 'Request Wallet'} Earnings`;
+                    }
+                    
+                    // Add referral label
+                    if (transaction.type === 'referral') {
+                        typeLabel = 'Referral Bonus';
                     }
                     
                     const time = transaction.timestamp?.toDate ? 
@@ -3049,7 +3637,7 @@
                                 ''}
                         </div>
                         <div class="${amountClass}">
-                            ${transaction.type === 'deposit' || transaction.type === 'earning' ? '+' : '-'}₦${transaction.amount?.toLocaleString() || '0'}
+                            ${transaction.type === 'deposit' || transaction.type === 'earning' || transaction.type === 'referral' ? '+' : '-'}₦${transaction.amount?.toLocaleString() || '0'}
                         </div>
                     `;
                     
@@ -3068,334 +3656,6 @@
                 `;
             }
         }
-
-        // ========== CHATS LIST ==========
-        async function loadChatsList() {
-            const container = document.getElementById('chats-container');
-            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-            
-            try {
-                const chatsSnapshot = await firebase.firestore()
-                    .collection('chats')
-                    .where('participants', 'array-contains', currentUser.uid)
-                    .orderBy('lastMessageTime', 'desc')
-                    .get();
-                
-                container.innerHTML = '';
-                
-                if (chatsSnapshot.empty) {
-                    container.innerHTML = `
-                        <div style="text-align: center; padding: 40px; color: var(--gray-700);">
-                            <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 20px;"></i>
-                            <h3>No chats yet</h3>
-                            <p>${userData.gender === 'male' ? 'Start a chat with a model to begin' : 'Wait for clients to message you'}</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                chats = [];
-                const promises = [];
-                
-                chatsSnapshot.forEach(async (doc) => {
-                    const chat = {
-                        id: doc.id,
-                        ...doc.data()
-                    };
-                    chats.push(chat);
-                    
-                    // Get the other participant's info
-                    const otherUserId = chat.participants.find(id => id !== currentUser.uid);
-                    if (otherUserId) {
-                        promises.push(
-                            firebase.firestore().collection('users').doc(otherUserId).get()
-                                .then(userDoc => {
-                                    if (userDoc.exists) {
-                                        const userData = userDoc.data();
-                                        createChatItem(chat, userData);
-                                    }
-                                })
-                        );
-                    }
-                });
-                
-                await Promise.all(promises);
-            } catch (error) {
-                console.error('Error loading chats:', error);
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: var(--danger-color);">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 20px;"></i>
-                        <h3>Error loading chats</h3>
-                        <p>Please try again later</p>
-                    </div>
-                `;
-            }
-        }
-
-        function createChatItem(chat, userData) {
-            const container = document.getElementById('chats-container');
-            const chatItem = document.createElement('div');
-            chatItem.className = 'history-item';
-            chatItem.style.cursor = 'pointer';
-            
-            const lastMessage = chat.lastMessage ? 
-                (chat.lastMessage.length > 50 ? chat.lastMessage.substring(0, 50) + '...' : chat.lastMessage) : 
-                'No messages yet';
-            
-            const time = chat.lastMessageTime?.toDate ? 
-                chat.lastMessageTime.toDate().toLocaleDateString([], { month: 'short', day: 'numeric' }) : '';
-            
-            chatItem.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <img src="${userData.profileImage || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userData.name) + '&background=7c3aed&color=fff'}" 
-                         alt="${userData.name}" 
-                         style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);">
-                    <div>
-                        <h4 style="margin: 0; font-weight: 600;">${userData.name}</h4>
-                        <p style="margin: 5px 0 0 0; color: var(--gray-700); font-size: 0.9rem;">
-                            ${lastMessage}
-                        </p>
-                    </div>
-                </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 0.8rem; color: var(--gray-700);">
-                        ${time}
-                    </div>
-                    ${chat.unreadCount && chat.unreadCount > 0 ? 
-                        `<span style="background: var(--accent-color); color: white; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; margin-top: 5px;">${chat.unreadCount}</span>` : 
-                        ''}
-                </div>
-            `;
-            
-            chatItem.addEventListener('click', () => {
-                currentModelId = chat.participants.find(id => id !== currentUser.uid);
-                // For models, they can only reply to existing chats
-                if (userData.gender === 'female') {
-                    openChatForModel(chat.id, userData);
-                } else {
-                    startChat(currentModelId);
-                }
-            });
-            
-            container.appendChild(chatItem);
-        }
-
-        async function openChatForModel(chatId, userData) {
-            currentChatId = chatId;
-            currentModelId = userData.id;
-            
-            try {
-                // Update chat header
-                document.getElementById('chat-partner-name').textContent = userData.name;
-                document.getElementById('chat-partner-avatar').src = userData.profileImage || 'https://via.placeholder.com/50';
-                
-                // Enable chat input and send button for models to reply
-                document.getElementById('message-input').disabled = false;
-                document.getElementById('send-btn').disabled = false;
-                
-                // Reset unread count for this chat
-                await firebase.firestore().collection('chats').doc(chatId).update({
-                    unreadCount: 0
-                });
-                
-                // Load chat history
-                await loadChatHistory();
-                
-                // Switch to chat page
-                document.querySelector('.app-container').style.display = 'none';
-                document.getElementById('chat-page').style.display = 'flex';
-                
-                // Focus on message input
-                setTimeout(() => {
-                    document.getElementById('message-input').focus();
-                }, 100);
-                
-                // Listen for new messages
-                setupChatListener();
-                
-            } catch (error) {
-                console.error('Error opening chat:', error);
-                showNotification('Error opening chat', 'error');
-            }
-        }
-
-        // ========== MEDIA REQUEST ==========
-        async function submitMediaRequest() {
-            const type = document.getElementById('media-type').value;
-            const description = document.getElementById('media-description').value.trim();
-            const amount = parseFloat(document.getElementById('media-amount').value);
-            
-            if (!description) {
-                showNotification('Please enter a description', 'error');
-                return;
-            }
-            
-            if (amount < 100) {
-                showNotification('Minimum amount is ₦100', 'error');
-                return;
-            }
-            
-            if (userData.gender === 'male' && amount > normalWalletBalance) {
-                showNotification('Insufficient balance', 'error');
-                return;
-            }
-            
-            try {
-                const requestId = 'media_req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                
-                // Add media request message
-                await firebase.firestore()
-                    .collection('chats').doc(currentChatId)
-                    .collection('messages')
-                    .add({
-                        senderId: currentUser.uid,
-                        type: 'media_request',
-                        mediaType: type,
-                        description: description,
-                        amount: amount,
-                        requestId: requestId,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                        read: false,
-                        status: 'pending'
-                    });
-                
-                // Handle payment based on gender
-                if (userData.gender === 'male') {
-                    // Deduct amount from male user's normal wallet
-                    await firebase.firestore()
-                        .collection('users')
-                        .doc(currentUser.uid)
-                        .update({
-                            normalWalletBalance: firebase.firestore.FieldValue.increment(-amount)
-                        });
-                    
-                    normalWalletBalance -= amount;
-                    updateWalletUI();
-                    
-                    // Record transaction
-                    await firebase.firestore().collection('transactions').add({
-                        userId: currentUser.uid,
-                        type: 'payment',
-                        amount: amount,
-                        recipientId: currentModelId,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                        description: `Media request: ${description.substring(0, 50)}...`
-                    });
-                }
-                
-                // Close modal
-                document.getElementById('media-request-modal').classList.remove('active');
-                showNotification('Media request sent successfully', 'success');
-                
-                // Clear form
-                document.getElementById('media-description').value = '';
-                document.getElementById('media-amount').value = '';
-                
-            } catch (error) {
-                console.error('Error submitting media request:', error);
-                showNotification('Error submitting request', 'error');
-            }
-        }
-
-        // Make functions available globally for onclick handlers
-        window.acceptMediaRequest = async function(requestId, amount) {
-            try {
-                // Show upload modal
-                document.getElementById('media-upload-modal').classList.add('active');
-                
-                // Store the request ID and amount for when media is uploaded
-                window.currentMediaRequest = {
-                    requestId: requestId,
-                    amount: amount
-                };
-                
-                // Set up upload button listener
-                document.getElementById('upload-media-btn').onclick = async () => {
-                    await completeMediaRequest(requestId, amount);
-                };
-                
-            } catch (error) {
-                console.error('Error accepting media request:', error);
-                showNotification('Error accepting request', 'error');
-            }
-        };
-
-        async function completeMediaRequest(requestId, amount) {
-            try {
-                // When female uploads media and completes the request
-                const fileInput = document.getElementById('media-file');
-                const file = fileInput.files[0];
-                
-                if (!file) {
-                    showNotification('Please select a file to upload', 'error');
-                    return;
-                }
-                
-                // Upload file to Firebase Storage
-                const storageRef = firebase.storage().ref();
-                const fileRef = storageRef.child(`media/${currentUser.uid}/${Date.now()}_${file.name}`);
-                await fileRef.put(file);
-                const downloadURL = await fileRef.getDownloadURL();
-                
-                // Add media response message
-                await firebase.firestore()
-                    .collection('chats').doc(currentChatId)
-                    .collection('messages')
-                    .add({
-                        senderId: currentUser.uid,
-                        type: 'media_response',
-                        mediaType: file.type.startsWith('image') ? 'image' : 'video',
-                        mediaUrl: downloadURL,
-                        description: 'Media delivered as requested',
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                        read: false,
-                        status: 'completed',
-                        requestId: requestId
-                    });
-                
-                // Update media request message to completed
-                const messagesSnapshot = await firebase.firestore()
-                    .collection('chats').doc(currentChatId)
-                    .collection('messages')
-                    .where('requestId', '==', requestId)
-                    .get();
-                
-                if (!messagesSnapshot.empty) {
-                    const messageDoc = messagesSnapshot.docs[0];
-                    await messageDoc.ref.update({
-                        status: 'completed'
-                    });
-                }
-                
-                // Credit model's request wallet with the exact amount
-                await firebase.firestore().collection('users').doc(currentUser.uid).update({
-                    completedRequestsCount: firebase.firestore.FieldValue.increment(1),
-                    requestWalletBalance: firebase.firestore.FieldValue.increment(amount)
-                });
-                
-                // Update local counts
-                completedRequestsCount += 1;
-                requestWalletBalance += amount;
-                updateFemaleWalletDisplay();
-                updateRequestWalletUI();
-                
-                // Close modal
-                document.getElementById('media-upload-modal').classList.remove('active');
-                
-                // Show success message
-                showNotification('Media uploaded and request completed successfully!', 'success');
-                
-                // Clear file input
-                document.getElementById('media-file').value = '';
-                
-                // Reload chat to show updated message
-                await loadChatHistory();
-                
-            } catch (error) {
-                console.error('Error completing media request:', error);
-                showNotification('Error completing request', 'error');
-            }
-        };
 
         // Handle window resize for mobile responsiveness
         window.addEventListener('resize', () => {

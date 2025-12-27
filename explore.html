@@ -2405,10 +2405,10 @@
 
         // Local Storage Keys
         const STORAGE_KEYS = {
-            CACHED_STORIES: 'radio_explore_stories_v3',
-            CACHE_TIMESTAMP: 'radio_explore_cache_time_v3',
-            SAVED_STORIES: 'radio_saved_stories_v3',
-            FILTERS: 'radio_explore_filters_v3'
+            CACHED_STORIES: 'radio_explore_stories_v4',
+            CACHE_TIMESTAMP: 'radio_explore_cache_time_v4',
+            SAVED_STORIES: 'radio_saved_stories_v4',
+            FILTERS: 'radio_explore_filters_v4'
         };
 
         // Filter Configuration
@@ -2760,7 +2760,7 @@
 
         async function fetchStoriesFromFirebase() {
             try {
-                // Fetch stories from the correct Firebase path: 'stories'
+                // Fetch all stories from the 'stories' path
                 const snapshot = await db.ref('stories').orderByChild('createdAt').limitToLast(100).once('value');
                 
                 if (snapshot.exists()) {
@@ -2769,7 +2769,7 @@
                         const story = childSnapshot.val();
                         story.id = childSnapshot.key;
                         
-                        // Ensure required fields exist - NO DEMO DATA
+                        // Ensure required fields exist
                         story.title = story.title || 'Untitled Story';
                         story.description = story.description || 'No description available';
                         story.authorName = story.authorName || 'Anonymous';
@@ -2782,11 +2782,9 @@
                         story.tags = story.tags || [];
                         story.parts = story.parts || [];
                         story.isFeatured = story.isFeatured || false;
+                        story.audioUrl = story.audioUrl || '';
                         
-                        // ONLY include stories with audioUrl from Firebase
-                        if (story.audioUrl) {
-                            stories.unshift(story); // Newest first
-                        }
+                        stories.unshift(story); // Newest first
                     });
                     
                     currentStories = stories;
@@ -2799,7 +2797,7 @@
                     updateFilterCounts(stories);
                     
                     if (stories.length === 0) {
-                        showToast("No stories with audio found. Add stories with audio to Firebase.", "info");
+                        showToast("No stories found. Add stories to Firebase database.", "info");
                     }
                 } else {
                     showToast("No stories found in database. Add stories to Firebase.", "info");
@@ -2879,7 +2877,7 @@
                         const story = childSnapshot.val();
                         story.id = childSnapshot.key;
                         
-                        // Ensure required fields exist - NO DEMO DATA
+                        // Ensure required fields exist
                         story.title = story.title || 'Untitled Story';
                         story.description = story.description || 'No description available';
                         story.authorName = story.authorName || 'Anonymous';
@@ -2892,11 +2890,9 @@
                         story.tags = story.tags || [];
                         story.parts = story.parts || [];
                         story.isFeatured = story.isFeatured || false;
+                        story.audioUrl = story.audioUrl || '';
                         
-                        // ONLY include stories with audioUrl from Firebase
-                        if (story.audioUrl) {
-                            newStories.unshift(story);
-                        }
+                        newStories.unshift(story);
                     });
 
                     if (newStories.length > 0) {

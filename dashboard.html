@@ -1651,7 +1651,7 @@
             <!-- Chat Messages -->
             <div class="chat-messages" id="messages-container">
                 <!-- Messages will be loaded here -->
-                <div style="text-align: center; padding: 40px;">
+                <div style="text-align: center; padding: 40px;" class="initial-welcome">
                     <h3 style="margin-bottom: 15px; color: var(--gray-700);">Welcome to Camsilo Chat</h3>
                     <p style="color: var(--gray-700); margin-bottom: 10px;">Select a model to start chatting</p>
                     <p style="color: var(--primary-color); margin-top: 10px;">
@@ -1934,6 +1934,9 @@
                 // Initialize Firebase
                 firebase.initializeApp(firebaseConfig);
                 
+                // Test connections
+                await testFirebaseConnection();
+                
                 // Check authentication state
                 firebase.auth().onAuthStateChanged(async (user) => {
                     if (user) {
@@ -1957,7 +1960,54 @@
                 });
             } catch (error) {
                 console.error('Initialization error:', error);
-                showNotification('Error initializing application', 'error');
+                showNotification('Error initializing application: ' + error.message, 'error');
+            }
+        }
+
+        // Test Firebase connection
+        async function testFirebaseConnection() {
+            try {
+                console.log('Testing Firebase connection...');
+                
+                // Test Firestore
+                const firestoreTest = await firebase.firestore().collection('test').doc('test').get();
+                console.log('Firestore connection: OK');
+                
+                // Test Storage
+                const storageRef = firebase.storage().ref();
+                console.log('Storage connection: OK');
+                
+                // Test Auth
+                const authUser = firebase.auth().currentUser;
+                console.log('Auth connection: OK, User:', authUser?.email);
+                
+                return true;
+            } catch (error) {
+                console.error('Firebase connection test failed:', error);
+                showNotification('Firebase connection error: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // Handle Firebase Storage errors
+        function handleStorageError(error) {
+            console.error('Storage error:', error);
+            
+            switch (error.code) {
+                case 'storage/unauthorized':
+                    return 'You don\'t have permission to upload files';
+                case 'storage/canceled':
+                    return 'Upload was canceled';
+                case 'storage/unknown':
+                    return 'Unknown error occurred';
+                case 'storage/quota-exceeded':
+                    return 'Storage quota exceeded. Please try a smaller file';
+                case 'storage/unauthenticated':
+                    return 'Please login to upload files';
+                case 'storage/retry-limit-exceeded':
+                    return 'Upload failed after several attempts. Please try again';
+                default:
+                    return 'Upload failed: ' + error.message;
             }
         }
 
@@ -2541,22 +2591,62 @@
                     return;
                 }
                 
+                // Check file size (50MB max)
+                const maxSize = 50 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    preview.innerHTML = `
+                        <div style="color: var(--danger-color); padding: 10px; background: rgba(239,68,68,0.1); border-radius: var(--border-radius);">
+                            <i class="fas fa-exclamation-triangle"></i> File too large (${(file.size / (1024 * 1024)).toFixed(2)} MB)<br>
+                            Maximum size: 50MB
+                        </div>
+                    `;
+                    this.value = '';
+                    return;
+                }
+                
+                // Check file type
+                if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+                    preview.innerHTML = `
+                        <div style="color: var(--warning-color); padding: 10px; background: rgba(245,158,11,0.1); border-radius: var(--border-radius);">
+                            <i class="fas fa-exclamation-triangle"></i> Please select only image or video files
+                        </div>
+                    `;
+                    this.value = '';
+                    return;
+                }
+                
                 preview.innerHTML = '';
                 
                 if (file.type.startsWith('image/')) {
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        preview.innerHTML = `<img src="${e.target.result}" style="max-width: 200px; border-radius: var(--border-radius);" alt="Preview">`;
+                        preview.innerHTML = `
+                            <div style="text-align: center;">
+                                <img src="${e.target.result}" 
+                                     style="max-width: 200px; max-height: 200px; border-radius: var(--border-radius); object-fit: cover; border: 2px solid var(--primary-color);"
+                                     alt="Preview">
+                                <p style="margin-top: 10px; font-size: 0.9rem; color: var(--gray-700);">
+                                    ${file.name}<br>
+                                    ${(file.size / (1024 * 1024)).toFixed(2)} MB
+                                </p>
+                            </div>
+                        `;
                     };
                     reader.readAsDataURL(file);
                 } else if (file.type.startsWith('video/')) {
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         preview.innerHTML = `
-                            <video controls style="max-width: 200px; border-radius: var(--border-radius);">
-                                <source src="${e.target.result}" type="${file.type}">
-                                Your browser does not support the video tag.
-                            </video>
+                            <div style="text-align: center;">
+                                <video controls style="max-width: 200px; border-radius: var(--border-radius);">
+                                    <source src="${e.target.result}" type="${file.type}">
+                                    Your browser does not support the video tag.
+                                </video>
+                                <p style="margin-top: 10px; font-size: 0.9rem; color: var(--gray-700);">
+                                    ${file.name}<br>
+                                    ${(file.size / (1024 * 1024)).toFixed(2)} MB
+                                </p>
+                            </div>
                         `;
                     };
                     reader.readAsDataURL(file);
@@ -2898,7 +2988,12 @@
 
         async function loadChatHistory() {
             const container = document.getElementById('messages-container');
+            // Clear existing messages except the initial welcome message
+            const initialContent = container.querySelector('.initial-welcome');
             container.innerHTML = '';
+            if (initialContent) {
+                container.appendChild(initialContent);
+            }
             
             try {
                 const messagesSnapshot = await firebase.firestore()
@@ -2938,27 +3033,24 @@
             firebase.firestore()
                 .collection('chats').doc(currentChatId)
                 .collection('messages')
-                .orderBy('timestamp', 'desc')
-                .limit(1)
+                .orderBy('timestamp', 'asc')
                 .onSnapshot((snapshot) => {
-                    snapshot.docChanges().forEach(change => {
-                        if (change.type === 'added') {
-                            const message = change.doc.data();
-                            displayMessage(message);
-                            
-                            // Scroll to bottom
-                            const container = document.getElementById('messages-container');
-                            container.scrollTop = container.scrollHeight;
-                            
-                            // Show notification if chat is not focused
-                            if (!document.getElementById('chat-page').style.display || 
-                                document.getElementById('chat-page').style.display === 'none') {
-                                const senderName = message.senderId === currentUser.uid ? 'You' : 
-                                    (userData.gender === 'male' ? 'Model' : 'Client');
-                                showNotification(`New message from ${senderName}: ${message.text ? message.text.substring(0, 50) : 'Media'}...`, 'info');
-                            }
-                        }
+                    // Clear existing messages except the initial welcome message
+                    const container = document.getElementById('messages-container');
+                    const initialContent = container.querySelector('.initial-welcome');
+                    container.innerHTML = '';
+                    if (initialContent) {
+                        container.appendChild(initialContent);
+                    }
+                    
+                    // Add all messages
+                    snapshot.forEach(doc => {
+                        const message = doc.data();
+                        displayMessage(message);
                     });
+                    
+                    // Scroll to bottom
+                    container.scrollTop = container.scrollHeight;
                 });
         }
 
@@ -3070,14 +3162,20 @@
                 if (message.status === 'completed' && message.mediaUrl) {
                     if (message.mediaType === 'image') {
                         mediaHtml = `<div style="margin-top: 10px;">
-                            <img src="${message.mediaUrl}" alt="Uploaded Media" style="max-width: 200px; max-height: 200px; border-radius: var(--border-radius); object-fit: cover;">
+                            <img src="${message.mediaUrl}" alt="Uploaded Media" 
+                                 style="max-width: 300px; max-height: 300px; border-radius: var(--border-radius); object-fit: cover; cursor: pointer;"
+                                 onclick="openMediaPreview('${message.mediaUrl}', '${message.mediaType}')">
+                            <p style="font-size: 0.8rem; color: var(--gray-700); margin-top: 5px;">Click to view full size</p>
                         </div>`;
                     } else if (message.mediaType === 'video') {
                         mediaHtml = `<div style="margin-top: 10px;">
-                            <video controls style="max-width: 200px; max-height: 200px; border-radius: var(--border-radius);">
+                            <video controls 
+                                   style="max-width: 300px; max-height: 300px; border-radius: var(--border-radius);"
+                                   onclick="openMediaPreview('${message.mediaUrl}', '${message.mediaType}')">
                                 <source src="${message.mediaUrl}" type="video/mp4">
                                 Your browser does not support the video tag.
                             </video>
+                            <p style="font-size: 0.8rem; color: var(--gray-700); margin-top: 5px;">Click to view full screen</p>
                         </div>`;
                     }
                 }
@@ -3111,19 +3209,27 @@
             } else if (message.type === 'media') {
                 let mediaHtml = '';
                 if (message.mediaType === 'image') {
-                    mediaHtml = `<img src="${message.mediaUrl}" alt="Media" style="max-width: 200px; max-height: 200px; border-radius: var(--border-radius); object-fit: cover;">`;
+                    mediaHtml = `<img src="${message.mediaUrl}" alt="Media" 
+                           style="max-width: 300px; max-height: 300px; border-radius: var(--border-radius); object-fit: cover; cursor: pointer;"
+                           onclick="openMediaPreview('${message.mediaUrl}', '${message.mediaType}')">
+                       <p style="font-size: 0.8rem; color: var(--gray-700); margin-top: 5px;">Click to view full size</p>`;
                 } else if (message.mediaType === 'video') {
-                    mediaHtml = `<video controls style="max-width: 200px; max-height: 200px; border-radius: var(--border-radius);">
+                    mediaHtml = `<video controls 
+                           style="max-width: 300px; max-height: 300px; border-radius: var(--border-radius);"
+                           onclick="openMediaPreview('${message.mediaUrl}', '${message.mediaType}')">
                         <source src="${message.mediaUrl}" type="video/mp4">
                         Your browser does not support the video tag.
-                    </video>`;
+                    </video>
+                    <p style="font-size: 0.8rem; color: var(--gray-700); margin-top: 5px;">Click to view full screen</p>`;
                 }
                 
                 messageDiv.innerHTML = `
                     <div class="message-bubble">
                         <div class="message-text">
                             ${message.description ? `<p style="margin-bottom: 10px;">${message.description}</p>` : ''}
-                            ${mediaHtml}
+                            <div style="margin-top: 10px;">
+                                ${mediaHtml}
+                            </div>
                         </div>
                         <div class="message-time" style="font-size: 0.8rem; opacity: 0.8; text-align: right; margin-top: 5px;">${time}</div>
                     </div>
@@ -3259,102 +3365,156 @@
             try {
                 showNotification('Uploading media...', 'info');
                 
+                // Validate file type
+                const fileType = file.type.startsWith('image/') ? 'image' : 
+                                file.type.startsWith('video/') ? 'video' : 
+                                'unknown';
+                
+                if (fileType === 'unknown') {
+                    showNotification('Please select only image or video files', 'error');
+                    return;
+                }
+                
+                // Validate file size (50MB max)
+                const maxSize = 50 * 1024 * 1024; // 50MB
+                if (file.size > maxSize) {
+                    showNotification('File too large (max 50MB)', 'error');
+                    return;
+                }
+                
                 // Create storage reference
                 const storageRef = firebase.storage().ref();
-                const fileRef = storageRef.child(`media/${currentUser.uid}/${Date.now()}_${file.name}`);
+                const fileName = `media_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+                const fileRef = storageRef.child(`media/${currentUser.uid}/${fileName}`);
+                
+                console.log('Uploading file:', fileName, 'Size:', file.size, 'Type:', fileType);
+                
+                // Show upload progress
+                const progressContainer = document.createElement('div');
+                progressContainer.innerHTML = `
+                    <div style="margin: 10px 0; background: var(--gray-200); border-radius: var(--border-radius); overflow: hidden;">
+                        <div id="upload-progress-bar" style="height: 5px; background: var(--primary-gradient); width: 0%; transition: width 0.3s;"></div>
+                    </div>
+                    <p id="upload-progress-text" style="font-size: 0.8rem; color: var(--gray-700); margin-top: 5px;">Uploading: 0%</p>
+                `;
+                document.getElementById('media-preview').appendChild(progressContainer);
                 
                 // Upload file
                 const uploadTask = fileRef.put(file);
                 
-                // Show upload progress
                 uploadTask.on('state_changed',
                     (snapshot) => {
-                        // Progress tracking can be added here
+                        // Progress tracking
                         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        console.log('Upload is ' + progress + '% done');
+                        console.log('Upload progress:', progress + '%');
+                        
+                        const progressBar = document.getElementById('upload-progress-bar');
+                        const progressText = document.getElementById('upload-progress-text');
+                        
+                        if (progressBar) progressBar.style.width = progress + '%';
+                        if (progressText) progressText.textContent = `Uploading: ${Math.round(progress)}%`;
                     },
                     (error) => {
                         console.error('Upload error:', error);
-                        showNotification('Upload failed: ' + error.message, 'error');
+                        const errorMessage = handleStorageError(error);
+                        showNotification(errorMessage, 'error');
                         return;
                     },
                     async () => {
-                        // Upload completed successfully
-                        const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-                        
-                        console.log('File available at:', downloadURL);
-                        
-                        // Find and update the media request message
-                        const messagesSnapshot = await firebase.firestore()
-                            .collection('chats').doc(currentChatId)
-                            .collection('messages')
-                            .where('requestId', '==', currentMediaRequestId)
-                            .get();
-                        
-                        if (!messagesSnapshot.empty) {
-                            const messageDoc = messagesSnapshot.docs[0];
-                            const requestData = messageDoc.data();
+                        try {
+                            // Upload completed successfully
+                            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                            console.log('File uploaded successfully. Download URL:', downloadURL);
                             
-                            // Update the request message to completed
-                            await messageDoc.ref.update({
-                                status: 'completed',
-                                mediaUrl: downloadURL,
-                                completedAt: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                            
-                            // Send a media message with the uploaded content
-                            await firebase.firestore()
+                            // Find and update the media request message
+                            const messagesSnapshot = await firebase.firestore()
                                 .collection('chats').doc(currentChatId)
                                 .collection('messages')
-                                .add({
-                                    senderId: currentUser.uid,
-                                    type: 'media',
-                                    mediaType: requestData.mediaType,
-                                    mediaUrl: downloadURL,
-                                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                                    read: false,
-                                    description: `Request completed: ${requestData.description}`
-                                });
+                                .where('requestId', '==', currentMediaRequestId)
+                                .get();
                             
-                            // Update chat last message
-                            await firebase.firestore()
-                                .collection('chats').doc(currentChatId)
-                                .update({
-                                    lastMessage: `Media sent: ${requestData.description.substring(0, 30)}...`,
-                                    lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
-                                    unreadCount: firebase.firestore.FieldValue.increment(1)
+                            if (!messagesSnapshot.empty) {
+                                const messageDoc = messagesSnapshot.docs[0];
+                                const requestData = messageDoc.data();
+                                
+                                console.log('Updating request message:', currentMediaRequestId);
+                                
+                                // Update the request message to completed
+                                await messageDoc.ref.update({
+                                    status: 'completed',
+                                    mediaUrl: downloadURL,
+                                    mediaType: fileType,
+                                    fileName: file.name,
+                                    fileSize: file.size,
+                                    completedAt: firebase.firestore.FieldValue.serverTimestamp()
                                 });
+                                
+                                // Also create a new message with the media
+                                await firebase.firestore()
+                                    .collection('chats').doc(currentChatId)
+                                    .collection('messages')
+                                    .add({
+                                        senderId: currentUser.uid,
+                                        type: 'media',
+                                        mediaType: fileType,
+                                        mediaUrl: downloadURL,
+                                        fileName: file.name,
+                                        fileSize: file.size,
+                                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                        read: false,
+                                        description: `Completed: ${requestData.description || 'Media request'}`,
+                                        requestId: currentMediaRequestId
+                                    });
+                                
+                                // Update chat last message
+                                await firebase.firestore()
+                                    .collection('chats').doc(currentChatId)
+                                    .update({
+                                        lastMessage: `Media sent: ${requestData.description?.substring(0, 30) || 'Media'}...`,
+                                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                                        unreadCount: firebase.firestore.FieldValue.increment(1)
+                                    });
+                                
+                                // Credit model's request wallet
+                                await firebase.firestore().collection('users').doc(currentUser.uid).update({
+                                    requestWalletBalance: firebase.firestore.FieldValue.increment(currentMediaRequestAmount),
+                                    completedRequestsCount: firebase.firestore.FieldValue.increment(1)
+                                });
+                                
+                                // Update local counts
+                                requestWalletBalance += currentMediaRequestAmount;
+                                completedRequestsCount += 1;
+                                updateFemaleWalletDisplay();
+                                updateRequestWalletUI();
+                                
+                                // Close modal and show success
+                                setTimeout(() => {
+                                    document.getElementById('media-upload-modal').classList.remove('active');
+                                    showNotification('Media uploaded and sent successfully!', 'success');
+                                }, 500);
+                                
+                                // Record transaction
+                                await firebase.firestore().collection('transactions').add({
+                                    userId: currentUser.uid,
+                                    type: 'earning',
+                                    walletType: 'request',
+                                    amount: currentMediaRequestAmount,
+                                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                    description: `Completed media request: ${requestData.description?.substring(0, 50) || 'Media'}`
+                                });
+                                
+                                // Reset form
+                                document.getElementById('media-preview').innerHTML = '';
+                                document.getElementById('media-file').value = '';
+                                currentMediaRequestId = null;
+                                currentMediaRequestAmount = 0;
+                            } else {
+                                showNotification('Media request not found', 'error');
+                            }
+                        } catch (error) {
+                            console.error('Error in upload completion:', error);
+                            showNotification('Error completing upload: ' + error.message, 'error');
                         }
-                        
-                        // Credit model's request wallet
-                        await firebase.firestore().collection('users').doc(currentUser.uid).update({
-                            requestWalletBalance: firebase.firestore.FieldValue.increment(currentMediaRequestAmount),
-                            completedRequestsCount: firebase.firestore.FieldValue.increment(1)
-                        });
-                        
-                        // Update local counts
-                        requestWalletBalance += currentMediaRequestAmount;
-                        completedRequestsCount += 1;
-                        updateFemaleWalletDisplay();
-                        updateRequestWalletUI();
-                        
-                        // Show success message
-                        document.getElementById('media-upload-modal').classList.remove('active');
-                        showNotification('Media uploaded successfully! Request completed and amount credited to your request wallet.', 'success');
-                        
-                        // Record transaction
-                        await firebase.firestore().collection('transactions').add({
-                            userId: currentUser.uid,
-                            type: 'earning',
-                            walletType: 'request',
-                            amount: currentMediaRequestAmount,
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                            description: `Completed media request: ${currentMediaRequestAmount}`
-                        });
-                        
-                        // Reset
-                        currentMediaRequestId = null;
-                        currentMediaRequestAmount = 0;
                     }
                 );
                 
@@ -3363,6 +3523,65 @@
                 showNotification('Error uploading media: ' + error.message, 'error');
             }
         }
+
+        // ========== MEDIA PREVIEW FUNCTION ==========
+        window.openMediaPreview = function(mediaUrl, mediaType) {
+            const modal = document.createElement('div');
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100%';
+            modal.style.height = '100%';
+            modal.style.backgroundColor = 'rgba(0,0,0,0.9)';
+            modal.style.display = 'flex';
+            modal.style.alignItems = 'center';
+            modal.style.justifyContent = 'center';
+            modal.style.zIndex = '9999';
+            modal.style.cursor = 'pointer';
+            
+            let mediaElement;
+            if (mediaType === 'image') {
+                mediaElement = document.createElement('img');
+                mediaElement.src = mediaUrl;
+                mediaElement.style.maxWidth = '90%';
+                mediaElement.style.maxHeight = '90%';
+                mediaElement.style.objectFit = 'contain';
+                mediaElement.style.borderRadius = '10px';
+            } else if (mediaType === 'video') {
+                mediaElement = document.createElement('video');
+                mediaElement.src = mediaUrl;
+                mediaElement.controls = true;
+                mediaElement.autoplay = true;
+                mediaElement.style.maxWidth = '90%';
+                mediaElement.style.maxHeight = '90%';
+            }
+            
+            // Close button
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '×';
+            closeBtn.style.position = 'absolute';
+            closeBtn.style.top = '20px';
+            closeBtn.style.right = '40px';
+            closeBtn.style.fontSize = '40px';
+            closeBtn.style.color = 'white';
+            closeBtn.style.background = 'none';
+            closeBtn.style.border = 'none';
+            closeBtn.style.cursor = 'pointer';
+            closeBtn.style.zIndex = '10000';
+            
+            closeBtn.onclick = (e) => {
+                e.stopPropagation();
+                document.body.removeChild(modal);
+            };
+            
+            modal.onclick = () => {
+                document.body.removeChild(modal);
+            };
+            
+            modal.appendChild(mediaElement);
+            modal.appendChild(closeBtn);
+            document.body.appendChild(modal);
+        };
 
         // ========== WITHDRAWAL PROCESSING ==========
         async function processNormalWithdrawal() {

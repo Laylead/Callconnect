@@ -1,0 +1,2445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RADIO | Saved Stories</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* ===== RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        :root {
+            --primary-purple: #6A0DFF;
+            --secondary-purple: #8A4FFF;
+            --light-purple: #CBB2FF;
+            --neon-magenta: #D300FF;
+            --dark-bg-1: #1A043A;
+            --dark-bg-2: #09001F;
+            --dark-bg-3: #050016;
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --border-light: rgba(255, 255, 255, 0.12);
+            --text-primary: #F8F8FF;
+            --text-secondary: #C8C8D9;
+            --text-accent: #CBB2FF;
+            --green-accent: #00FF88;
+            --red-accent: #FF4757;
+            --yellow-accent: #FFD700;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --success: #00D68F;
+            --info: #0095FF;
+            --warning: #FFAA00;
+            --safe-area-top: env(safe-area-inset-top);
+            --safe-area-bottom: env(safe-area-inset-bottom);
+        }
+
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(160deg, var(--dark-bg-1) 0%, var(--dark-bg-2) 50%, var(--dark-bg-3) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            touch-action: pan-y;
+            padding: env(safe-area-inset-top) 0 env(safe-area-bottom) 0;
+            overscroll-behavior: none;
+        }
+
+        /* ===== PERFECT BACKGROUND ===== */
+        .bg-blur {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: 0;
+            pointer-events: none;
+            will-change: transform;
+        }
+
+        .bg-blur-1 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--primary-purple) 0%, transparent 70%);
+            top: -200px;
+            left: -200px;
+            animation: float 25s infinite ease-in-out;
+        }
+
+        .bg-blur-2 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, var(--neon-magenta) 0%, transparent 70%);
+            bottom: -150px;
+            right: -150px;
+            animation: float 30s infinite ease-in-out reverse;
+        }
+
+        /* ===== LOADING ANIMATION ===== */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--dark-bg-3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 1;
+            visibility: visible;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .radio-loader {
+            text-align: center;
+        }
+
+        .radio-icon {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            margin: 0 auto 30px;
+        }
+
+        .radio-icon-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+            position: relative;
+            animation: pulseGlow 2s infinite ease-in-out;
+            box-shadow: 0 0 60px rgba(106, 13, 255, 0.5),
+                        0 0 100px rgba(211, 0, 255, 0.3);
+        }
+
+        .radio-icon-inner::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            opacity: 0.3;
+            filter: blur(20px);
+            z-index: -1;
+            animation: pulseRing 2s infinite ease-in-out;
+        }
+
+        .radio-waves {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px;
+            height: 180px;
+        }
+
+        .wave {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px solid var(--primary-purple);
+            border-radius: 50%;
+            opacity: 0;
+            animation: waveExpand 2s infinite ease-out;
+        }
+
+        .wave:nth-child(2) { animation-delay: 0.5s; }
+        .wave:nth-child(3) { animation-delay: 1s; }
+
+        .loading-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: textPulse 2s infinite;
+        }
+
+        .loading-subtext {
+            font-size: 14px;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 60px rgba(106, 13, 255, 0.5), 0 0 100px rgba(211, 0, 255, 0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 0 80px rgba(106, 13, 255, 0.7), 0 0 120px rgba(211, 0, 255, 0.5); }
+        }
+
+        @keyframes pulseRing {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+        }
+
+        @keyframes waveExpand {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        @keyframes textPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* ===== MAIN CONTAINER ===== */
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(5, 0, 22, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            position: fixed;
+            top: var(--safe-area-top);
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            height: 60px;
+            transform: translateY(0);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .header.hidden {
+            transform: translateY(-100%);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 900;
+            font-size: 24px;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--light-purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-transform: uppercase;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .header-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(106, 13, 255, 0.3);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            background: var(--primary-purple);
+            border-radius: 50%;
+            border: 2px solid var(--dark-bg-2);
+            animation: pulse 1.5s infinite;
+        }
+
+        /* ===== SAVED CONTENT ===== */
+        .saved-content {
+            padding: 80px 16px 100px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .saved-header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .saved-title {
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 12px;
+        }
+
+        .saved-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        /* ===== GRID LAYOUT ===== */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+        }
+
+        /* ===== EXPLORE CARD ===== */
+        .explore-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            cursor: pointer;
+            animation: cardAppear 0.5s ease-out;
+            animation-fill-mode: both;
+        }
+
+        @keyframes cardAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .explore-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4),
+                        0 0 0 1px rgba(106, 13, 255, 0.2);
+            border-color: var(--primary-purple);
+        }
+
+        .card-image {
+            height: 200px;
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .explore-card:hover .card-image img {
+            transform: scale(1.05);
+        }
+
+        .card-type {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card-type.podcast {
+            background: linear-gradient(135deg, rgba(106, 13, 255, 0.8), rgba(211, 0, 255, 0.8));
+        }
+
+        .card-type.audio {
+            background: linear-gradient(135deg, rgba(255, 170, 0, 0.8), rgba(255, 215, 0, 0.8));
+        }
+
+        .card-type.story {
+            background: linear-gradient(135deg, rgba(0, 149, 255, 0.8), rgba(0, 213, 143, 0.8));
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.3;
+            flex: 1;
+        }
+
+        .card-save {
+            background: none;
+            border: none;
+            color: var(--primary-purple);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .card-save:hover {
+            transform: scale(1.2);
+            color: var(--neon-magenta);
+        }
+
+        .card-save.saved {
+            color: var(--primary-purple);
+            animation: pulse 1s ease;
+        }
+
+        .card-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-author {
+            font-size: 14px;
+            color: var(--text-accent);
+            font-weight: 500;
+        }
+
+        .card-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .card-stats {
+            display: flex;
+            gap: 15px;
+        }
+
+        .card-stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .card-stat i {
+            font-size: 14px;
+        }
+
+        .card-stat.likes i {
+            color: var(--red-accent);
+        }
+
+        .card-stat.plays i {
+            color: var(--primary-purple);
+        }
+
+        .card-stat.duration i {
+            color: var(--info);
+        }
+
+        .card-play {
+            width: 100%;
+            padding: 12px;
+            background: rgba(106, 13, 255, 0.1);
+            border: 1px solid rgba(106, 13, 255, 0.3);
+            border-radius: 12px;
+            color: var(--primary-purple);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .card-play:hover {
+            background: rgba(106, 13, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .card-play.playing {
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            color: white;
+            box-shadow: 0 5px 15px rgba(106, 13, 255, 0.4);
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            grid-column: 1 / -1;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .empty-icon {
+            font-size: 80px;
+            color: var(--primary-purple);
+            margin-bottom: 25px;
+            opacity: 0.5;
+            animation: float 3s infinite ease-in-out;
+        }
+
+        .empty-state h3 {
+            font-size: 28px;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto 30px;
+            line-height: 1.5;
+        }
+
+        .explore-btn {
+            padding: 16px 32px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 25px rgba(106, 13, 255, 0.4);
+            text-decoration: none;
+        }
+
+        .explore-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 35px rgba(106, 13, 255, 0.6);
+        }
+
+        /* ===== AUDIO PLAYER POPUP ===== */
+        .audio-player-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            z-index: 4000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            padding: 20px;
+        }
+
+        .audio-player-popup.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .audio-player-container {
+            background: linear-gradient(135deg, rgba(5, 0, 22, 0.98), rgba(26, 4, 58, 0.98));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+            transform: scale(0.9) translateY(50px);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .audio-player-popup.active .audio-player-container {
+            transform: scale(1) translateY(0);
+        }
+
+        .audio-player-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 28px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .audio-player-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .audio-player-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .audio-player-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+
+        .audio-player-author {
+            font-size: 16px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* ===== STORY PARTS ===== */
+        .story-parts {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .story-parts-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .parts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .part-item {
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .part-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary-purple);
+        }
+
+        .part-item.active {
+            background: rgba(106, 13, 255, 0.2);
+            border-color: var(--primary-purple);
+        }
+
+        .part-title {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .part-duration {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* ===== AUDIO VISUALIZER LARGE ===== */
+        .audio-visualizer-large {
+            width: 100%;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .visualizer-bars {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 6px;
+            height: 120px;
+        }
+
+        .visualizer-bar {
+            width: 8px;
+            background: linear-gradient(180deg, var(--primary-purple), var(--neon-magenta));
+            border-radius: 4px;
+            animation: visualizerWave 1.5s ease-in-out infinite;
+        }
+
+        .visualizer-bar:nth-child(1) { height: 40px; animation-delay: 0.1s; }
+        .visualizer-bar:nth-child(2) { height: 60px; animation-delay: 0.2s; }
+        .visualizer-bar:nth-child(3) { height: 80px; animation-delay: 0.3s; }
+        .visualizer-bar:nth-child(4) { height: 100px; animation-delay: 0.4s; }
+        .visualizer-bar:nth-child(5) { height: 120px; animation-delay: 0.5s; }
+        .visualizer-bar:nth-child(6) { height: 100px; animation-delay: 0.6s; }
+        .visualizer-bar:nth-child(7) { height: 80px; animation-delay: 0.7s; }
+        .visualizer-bar:nth-child(8) { height: 60px; animation-delay: 0.8s; }
+        .visualizer-bar:nth-child(9) { height: 40px; animation-delay: 0.9s; }
+        .visualizer-bar:nth-child(10) { height: 60px; animation-delay: 1.0s; }
+        .visualizer-bar:nth-child(11) { height: 80px; animation-delay: 1.1s; }
+        .visualizer-bar:nth-child(12) { height: 100px; animation-delay: 1.2s; }
+
+        @keyframes visualizerWave {
+            0%, 100% { transform: scaleY(0.5); }
+            50% { transform: scaleY(1); }
+        }
+
+        /* ===== AUDIO CONTROLS ===== */
+        .audio-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .audio-control-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .audio-control-btn:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .audio-control-btn.play-pause {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            border: none;
+            font-size: 28px;
+            box-shadow: 0 10px 30px rgba(106, 13, 255, 0.4);
+        }
+
+        .audio-control-btn.play-pause:hover {
+            box-shadow: 0 15px 40px rgba(106, 13, 255, 0.6);
+            transform: scale(1.15);
+        }
+
+        /* ===== SEEK BAR ===== */
+        .seek-bar-container {
+            width: 100%;
+            margin: 30px 0;
+        }
+
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .seek-bar {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+            overflow: hidden;
+        }
+
+        .seek-bar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-purple);
+            cursor: pointer;
+            border: 3px solid var(--dark-bg-1);
+            box-shadow: 0 0 10px rgba(106, 13, 255, 0.5);
+        }
+
+        .seek-bar::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-purple);
+            cursor: pointer;
+            border: 3px solid var(--dark-bg-1);
+            box-shadow: 0 0 10px rgba(106, 13, 255, 0.5);
+        }
+
+        .seek-bar::-webkit-slider-runnable-track {
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary-purple) 0%, var(--primary-purple) var(--progress, 0%), rgba(255, 255, 255, 0.1) var(--progress, 0%));
+            border-radius: 3px;
+        }
+
+        /* ===== PLAYER ACTIONS ===== */
+        .player-actions {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .player-action-btn {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .player-action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .player-action-btn.save {
+            background: rgba(106, 13, 255, 0.1);
+            border-color: rgba(106, 13, 255, 0.3);
+            color: var(--primary-purple);
+        }
+
+        .player-action-btn.save.saved {
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            color: white;
+        }
+
+        .player-action-btn.minimize {
+            background: rgba(0, 149, 255, 0.1);
+            border-color: rgba(0, 149, 255, 0.3);
+            color: var(--info);
+        }
+
+        /* ===== FLOATING PLAYER WIDGET ===== */
+        .floating-player {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 350px;
+            background: rgba(5, 0, 22, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 15px;
+            z-index: 2000;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @media (max-width: 480px) {
+            .floating-player {
+                width: calc(100% - 40px);
+                bottom: 80px;
+            }
+        }
+
+        .floating-player.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .floating-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .floating-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        .floating-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .floating-close:hover {
+            color: var(--text-primary);
+        }
+
+        .floating-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .floating-play-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            border: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .floating-seek-bar {
+            flex: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .floating-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-purple), var(--neon-magenta));
+            width: var(--progress, 0%);
+            transition: width 0.1s linear;
+        }
+
+        /* ===== WARNING MODAL ===== */
+        .warning-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            padding: 20px;
+        }
+
+        .warning-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .warning-content {
+            background: linear-gradient(135deg, rgba(5, 0, 22, 0.98), rgba(26, 4, 58, 0.98));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            transform: scale(0.9) translateY(50px);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+        }
+
+        .warning-modal.active .warning-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .warning-icon {
+            font-size: 64px;
+            color: var(--warning);
+            margin-bottom: 20px;
+        }
+
+        .warning-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .warning-message {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .warning-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .warning-btn {
+            flex: 1;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .warning-btn.leave {
+            background: linear-gradient(135deg, var(--red-accent), #ff6b6b);
+            color: white;
+        }
+
+        .warning-btn.stay {
+            background: linear-gradient(135deg, var(--success), #00b894);
+            color: white;
+        }
+
+        .warning-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ===== BOTTOM NAVIGATION ===== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(5, 0, 22, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+            z-index: 1000;
+            height: 70px;
+        }
+
+        .nav-items {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 480px;
+            margin: 0 auto;
+            height: 100%;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 11px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 10px 14px;
+            border-radius: 16px;
+            min-width: 60px;
+            font-weight: 600;
+        }
+
+        .nav-item.active {
+            color: var(--primary-purple);
+            background: rgba(106, 13, 255, 0.15);
+            box-shadow: 0 4px 20px rgba(106, 13, 255, 0.2);
+        }
+
+        .nav-item i {
+            font-size: 20px;
+        }
+
+        .nav-item:hover {
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        .submit-story-btn {
+            background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
+            color: white;
+            border: none;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 30px rgba(106, 13, 255, 0.4);
+            margin-top: -30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-story-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: transform 0.6s;
+        }
+
+        .submit-story-btn:hover::after {
+            transform: rotate(45deg) translate(50%, 50%);
+        }
+
+        .submit-story-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 40px rgba(106, 13, 255, 0.6);
+        }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: rgba(5, 0, 22, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 16px 24px;
+            color: white;
+            font-weight: 600;
+            z-index: 3000;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            font-size: 15px;
+            max-width: 90%;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(40px, -60px) rotate(120deg); }
+            66% { transform: translate(-30px, 30px) rotate(240deg); }
+        }
+
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(40px) scale(0.95); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                opacity: 1; 
+                transform: scale(1); 
+            }
+            50% { 
+                opacity: 0.7; 
+                transform: scale(1.1); 
+            }
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 16px;
+                height: 56px;
+            }
+            
+            .logo {
+                font-size: 22px;
+            }
+            
+            .header-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
+            
+            .saved-content {
+                padding: 70px 12px 100px;
+            }
+            
+            .saved-title {
+                font-size: 28px;
+            }
+            
+            .saved-subtitle {
+                font-size: 14px;
+            }
+            
+            .audio-player-container {
+                padding: 24px;
+                max-width: 90%;
+            }
+            
+            .audio-player-title {
+                font-size: 24px;
+            }
+            
+            .audio-visualizer-large {
+                height: 150px;
+                margin: 20px 0;
+            }
+            
+            .visualizer-bars {
+                gap: 4px;
+                height: 100px;
+            }
+            
+            .visualizer-bar {
+                width: 6px;
+            }
+            
+            .audio-control-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+            
+            .audio-control-btn.play-pause {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+            }
+            
+            .audio-controls {
+                gap: 20px;
+                margin: 20px 0;
+            }
+            
+            .radio-icon {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .radio-icon-inner {
+                font-size: 40px;
+            }
+            
+            .loading-text {
+                font-size: 18px;
+            }
+            
+            .empty-icon {
+                font-size: 64px;
+            }
+            
+            .empty-state h3 {
+                font-size: 24px;
+            }
+            
+            .bottom-nav {
+                padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+                height: 70px;
+            }
+            
+            .nav-item {
+                padding: 8px 12px;
+                min-width: 56px;
+                font-size: 10px;
+            }
+            
+            .nav-item i {
+                font-size: 18px;
+            }
+            
+            .submit-story-btn {
+                width: 48px;
+                height: 48px;
+                font-size: 22px;
+                margin-top: -24px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .saved-content {
+                padding: 65px 10px 100px;
+            }
+            
+            .saved-title {
+                font-size: 24px;
+            }
+            
+            .empty-state {
+                padding: 60px 16px;
+            }
+            
+            .empty-icon {
+                font-size: 56px;
+            }
+            
+            .empty-state h3 {
+                font-size: 22px;
+            }
+            
+            .empty-state p {
+                font-size: 14px;
+            }
+            
+            .explore-btn {
+                padding: 14px 24px;
+                font-size: 15px;
+            }
+            
+            .audio-player-title {
+                font-size: 22px;
+            }
+            
+            .audio-player-author {
+                font-size: 14px;
+            }
+            
+            .audio-visualizer-large {
+                height: 120px;
+            }
+            
+            .visualizer-bars {
+                height: 80px;
+                gap: 3px;
+            }
+            
+            .visualizer-bar {
+                width: 5px;
+            }
+            
+            .audio-control-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 18px;
+            }
+            
+            .audio-control-btn.play-pause {
+                width: 55px;
+                height: 55px;
+                font-size: 22px;
+            }
+            
+            .audio-controls {
+                gap: 15px;
+            }
+            
+            .radio-icon {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .radio-icon-inner {
+                font-size: 32px;
+            }
+            
+            .loading-text {
+                font-size: 16px;
+            }
+        }
+
+        /* ===== UTILITY CLASSES ===== */
+        .hide {
+            display: none !important;
+        }
+
+        .show {
+            display: block !important;
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Animation -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="radio-loader">
+            <div class="radio-icon">
+                <div class="radio-icon-inner">
+                    <i class="fas fa-podcast"></i>
+                </div>
+                <div class="radio-waves">
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                </div>
+            </div>
+            <h3 class="loading-text">RADIO</h3>
+            <p class="loading-subtext">Loading saved stories...</p>
+        </div>
+    </div>
+
+    <!-- Audio Player Popup -->
+    <div class="audio-player-popup" id="audioPlayerPopup">
+        <div class="audio-player-container">
+            <button class="audio-player-close" onclick="closeAudioPlayer()">×</button>
+            
+            <div class="audio-player-header">
+                <h3 class="audio-player-title" id="audioPlayerTitle">Story Title</h3>
+                <p class="audio-player-author" id="audioPlayerAuthor">Author Name</p>
+            </div>
+            
+            <!-- Story Parts -->
+            <div class="story-parts">
+                <div class="story-parts-title">
+                    <i class="fas fa-list-ul"></i>
+                    <span>Story Parts</span>
+                </div>
+                <div class="parts-list" id="storyPartsList">
+                    <!-- Parts will be dynamically added here -->
+                </div>
+            </div>
+            
+            <div class="audio-visualizer-large">
+                <div class="visualizer-bars">
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                </div>
+            </div>
+            
+            <div class="seek-bar-container">
+                <div class="time-display">
+                    <span id="currentTime">00:00</span>
+                    <span id="totalTime">00:00</span>
+                </div>
+                <input type="range" id="seekBar" class="seek-bar" min="0" max="100" value="0" oninput="seekAudio(this.value)" onchange="seekAudio(this.value)">
+            </div>
+            
+            <div class="audio-controls">
+                <button class="audio-control-btn" onclick="skipBackward()">
+                    <i class="fas fa-backward"></i>
+                </button>
+                <button class="audio-control-btn play-pause" id="playPauseBtn" onclick="togglePlayPause()">
+                    <i class="fas fa-pause"></i>
+                </button>
+                <button class="audio-control-btn" onclick="skipForward()">
+                    <i class="fas fa-forward"></i>
+                </button>
+            </div>
+            
+            <div class="player-actions">
+                <button class="player-action-btn save" id="playerSaveBtn" onclick="saveCurrentStory()">
+                    <i class="far fa-bookmark"></i>
+                    <span>Save</span>
+                </button>
+                <button class="player-action-btn minimize" onclick="minimizePlayer()">
+                    <i class="fas fa-window-minimize"></i>
+                    <span>Minimize</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Player Widget -->
+    <div class="floating-player" id="floatingPlayer">
+        <div class="floating-header">
+            <div class="floating-title" id="floatingTitle">Now Playing</div>
+            <button class="floating-close" onclick="closeFloatingPlayer()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="floating-controls">
+            <button class="floating-play-btn" id="floatingPlayBtn" onclick="togglePlayPause()">
+                <i class="fas fa-pause"></i>
+            </button>
+            <div class="floating-seek-bar">
+                <div class="floating-progress" id="floatingProgress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warning Modal -->
+    <div class="warning-modal" id="warningModal">
+        <div class="warning-content">
+            <div class="warning-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="warning-title">Audio Playing</h3>
+            <p class="warning-message">You have audio playing. If you leave this page, the audio will stop. Are you sure you want to leave?</p>
+            <div class="warning-actions">
+                <button class="warning-btn leave" onclick="leavePage()">Leave Page</button>
+                <button class="warning-btn stay" onclick="stayOnPage()">Stay Here</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Animated Background -->
+    <div class="bg-blur bg-blur-1"></div>
+    <div class="bg-blur bg-blur-2"></div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Main App -->
+    <div class="container" id="mainApp">
+        <!-- Header -->
+        <header class="header" id="mainHeader">
+            <div class="logo">
+                <span>RADIO</span>
+            </div>
+            <div class="header-right">
+                <button class="header-btn" id="notificationBtn" onclick="showComingSoon('Notifications')">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge"></span>
+                </button>
+                <button class="header-btn" id="profileBtn" onclick="window.location.href='dashboard.html'">
+                    <span id="profileInitials">U</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Saved Content -->
+        <main class="saved-content">
+            <div class="saved-header">
+                <h1 class="saved-title">Saved Stories</h1>
+                <p class="saved-subtitle">Your collection of bookmarked podcasts, audio stories, and radio shows</p>
+            </div>
+            
+            <!-- Grid Container -->
+            <div class="grid-container" id="gridContainer">
+                <!-- Saved cards will be loaded dynamically -->
+            </div>
+            
+            <!-- Empty State -->
+            <div class="empty-state hide" id="emptyState">
+                <div class="empty-icon">
+                    <i class="fas fa-bookmark"></i>
+                </div>
+                <h3>No saved stories yet</h3>
+                <p>Save stories you love by clicking the bookmark icon on any story. They'll appear here for easy listening anytime.</p>
+                <a href="explore.html" class="explore-btn">
+                    <i class="fas fa-compass"></i>
+                    <span>Explore Stories</span>
+                </a>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <div class="nav-items">
+                <a href="dashboard.html" class="nav-item">
+                    <i class="fas fa-stream"></i>
+                    <span>Feed</span>
+                </a>
+                <a href="explore.html" class="nav-item">
+                    <i class="fas fa-compass"></i>
+                    <span>Explore</span>
+                </a>
+                <button class="submit-story-btn" onclick="window.location.href='dashboard.html'">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <a href="donate.html" class="nav-item">
+                    <i class="fas fa-heart"></i>
+                    <span>Donate</span>
+                </a>
+                <a href="saved.html" class="nav-item active">
+                    <i class="fas fa-bookmark"></i>
+                    <span>Saved</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- External Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <!-- Saved Page Script -->
+    <script>
+        // Firebase Initialization
+        let firebaseApp;
+        let auth;
+        let db;
+
+        try {
+            firebaseApp = firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.database();
+            console.log("Firebase initialized successfully");
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+            showToast("Firebase initialization failed", "error");
+        }
+
+        // Variables
+        let savedStories = new Set();
+        let savedStoriesData = [];
+        let currentAudio = null;
+        let currentPlayingStory = null;
+        let audioUpdateInterval = null;
+        let isAudioPlayerOpen = false;
+        let isFloatingPlayerActive = false;
+        let playerWarningShown = false;
+
+        // Initialize on DOM load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is logged in
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    console.log("User logged in:", user.email);
+                    updateUserProfile(user);
+                    loadSavedContent(user.uid);
+                } else {
+                    // Redirect to login if not logged in
+                    showToast("Please login to view saved stories", "error");
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1500);
+                }
+            });
+
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Hide loading after a minimum time
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }, 1000);
+        });
+
+        function setupEventListeners() {
+            // Audio player and warning modal listeners
+            document.getElementById('audioPlayerPopup').addEventListener('click', function(e) {
+                if (e.target === this) closeAudioPlayer();
+            });
+
+            document.getElementById('warningModal').addEventListener('click', function(e) {
+                if (e.target === this) stayOnPage();
+            });
+
+            // Navigation warning
+            document.querySelectorAll('a[href]:not([onclick])').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    if (currentAudio && !currentAudio.paused) {
+                        e.preventDefault();
+                        showWarningModal(this.href);
+                    }
+                });
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeAudioPlayer();
+                }
+
+                if (e.key === ' ' && !e.target.matches('input, textarea')) {
+                    e.preventDefault();
+                    if (currentAudio) {
+                        togglePlayPause();
+                    }
+                }
+            });
+        }
+
+        // ===== LOAD SAVED CONTENT =====
+        async function loadSavedContent(userId) {
+            showLoading(true);
+            
+            try {
+                // Load saved story IDs
+                const savedSnapshot = await db.ref('user_saves/' + userId).once('value');
+                if (savedSnapshot.exists()) {
+                    const savedIds = Object.keys(savedSnapshot.val());
+                    savedStories = new Set(savedIds);
+                    
+                    if (savedIds.length === 0) {
+                        showEmptyState();
+                        showLoading(false);
+                        return;
+                    }
+                    
+                    // Load saved stories data
+                    const storiesPromises = savedIds.map(async (storyId) => {
+                        const storySnapshot = await db.ref('stories/' + storyId).once('value');
+                        if (storySnapshot.exists()) {
+                            const story = storySnapshot.val();
+                            story.id = storyId;
+                            // Add default values if missing
+                            story.type = story.type || 'story';
+                            story.likes = story.likes || 0;
+                            story.plays = story.plays || 0;
+                            story.duration = story.duration || '10:00';
+                            story.createdAt = story.createdAt || Date.now();
+                            story.author = story.author || 'Unknown Author';
+                            story.description = story.description || 'A fascinating story worth listening to.';
+                            return story;
+                        }
+                        return null;
+                    });
+                    
+                    const stories = await Promise.all(storiesPromises);
+                    savedStoriesData = stories.filter(story => story !== null);
+                    
+                    // Sort by save date (most recent first)
+                    savedStoriesData.sort((a, b) => b.createdAt - a.createdAt);
+                    
+                    renderSavedStories();
+                } else {
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error("Error loading saved content:", error);
+                // Load demo saved stories if Firebase fails
+                loadDemoSavedStories();
+            }
+            
+            showLoading(false);
+        }
+
+        function loadDemoSavedStories() {
+            // Enhanced demo saved stories with better data
+            savedStoriesData = [
+                {
+                    id: 'story1',
+                    title: "Midnight Thoughts",
+                    description: "A late-night reflection on life, dreams, and the universe. Recorded during a quiet winter night with ambient sounds.",
+                    type: "podcast",
+                    likes: 245,
+                    plays: 1245,
+                    duration: "45:12",
+                    createdAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
+                    author: "Alex Johnson",
+                    category: "podcast",
+                    tags: ["reflection", "philosophy", "mindfulness"]
+                },
+                {
+                    id: 'story2',
+                    title: "Urban Legends",
+                    description: "True crime stories from the city that never sleeps. Episode 3: The Subway Mystery.",
+                    type: "audio",
+                    likes: 567,
+                    plays: 2892,
+                    duration: "32:45",
+                    createdAt: Date.now() - 5 * 24 * 60 * 60 * 1000,
+                    author: "True Crime Network",
+                    category: "audio",
+                    tags: ["true-crime", "mystery", "urban"]
+                },
+                {
+                    id: 'story3',
+                    title: "Science Simplified",
+                    description: "Quantum physics explained in simple terms. Today: The Double Slit Experiment.",
+                    type: "radio",
+                    likes: 342,
+                    plays: 1567,
+                    duration: "28:20",
+                    createdAt: Date.now() - 1 * 24 * 60 * 60 * 1000,
+                    author: "Dr. Sarah Chen",
+                    category: "radio",
+                    tags: ["science", "education", "physics"]
+                },
+                {
+                    id: 'story4',
+                    title: "Poetry Hour",
+                    description: "Classic and contemporary poetry readings with musical accompaniment and insightful commentary.",
+                    type: "podcast",
+                    likes: 432,
+                    plays: 2341,
+                    duration: "60:00",
+                    createdAt: Date.now() - 7 * 24 * 60 * 60 * 1000,
+                    author: "Literary Society",
+                    category: "podcast",
+                    tags: ["poetry", "arts", "literature"]
+                },
+                {
+                    id: 'story5',
+                    title: "History Uncovered",
+                    description: "Forgotten stories from World War II. Episode: The Secret Resistance and their heroic acts.",
+                    type: "audio",
+                    likes: 321,
+                    plays: 1456,
+                    duration: "52:30",
+                    createdAt: Date.now() - 3 * 24 * 60 * 60 * 1000,
+                    author: "Historical Society",
+                    category: "audio",
+                    tags: ["history", "documentary", "ww2"]
+                }
+            ];
+            
+            savedStories = new Set(savedStoriesData.map(story => story.id));
+            renderSavedStories();
+        }
+
+        function renderSavedStories() {
+            const container = document.getElementById('gridContainer');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (savedStoriesData.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hide');
+                return;
+            }
+            
+            emptyState.classList.add('hide');
+            container.innerHTML = '';
+            
+            savedStoriesData.forEach((story, index) => {
+                const card = createSavedStoryCard(story, index);
+                container.appendChild(card);
+                
+                // Add animation delay
+                card.style.animationDelay = `${index * 0.05}s`;
+            });
+        }
+
+        function createSavedStoryCard(story, index) {
+            const card = document.createElement('div');
+            card.className = 'explore-card';
+            card.dataset.id = story.id;
+            
+            // Format date
+            const date = new Date(story.createdAt);
+            const formattedDate = date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            
+            // Get icon based on type
+            const typeIcon = story.type === 'podcast' ? 'fa-podcast' :
+                           story.type === 'audio' ? 'fa-headphones' : 'fa-broadcast-tower';
+            
+            card.innerHTML = `
+                <div class="card-image">
+                    <div class="card-type ${story.type}">
+                        <i class="fas ${typeIcon}"></i>
+                        ${story.type === 'podcast' ? 'Podcast' : story.type === 'audio' ? 'Audio Story' : 'Radio Show'}
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="card-header">
+                        <h3 class="card-title">${story.title}</h3>
+                        <button class="card-save saved" onclick="removeFromSaved('${story.id}', this, event)">
+                            <i class="fas fa-bookmark"></i>
+                        </button>
+                    </div>
+                    <p class="card-description">${story.description}</p>
+                    <div class="card-meta">
+                        <span class="card-author">${story.author}</span>
+                        <span class="card-date">${formattedDate}</span>
+                    </div>
+                    <div class="card-stats">
+                        <div class="card-stat likes">
+                            <i class="fas fa-heart"></i>
+                            <span>${formatNumber(story.likes)}</span>
+                        </div>
+                        <div class="card-stat plays">
+                            <i class="fas fa-play-circle"></i>
+                            <span>${formatNumber(story.plays)}</span>
+                        </div>
+                        <div class="card-stat duration">
+                            <i class="fas fa-clock"></i>
+                            <span>${story.duration}</span>
+                        </div>
+                    </div>
+                    <button class="card-play" onclick="playStory('${story.id}', this, event)">
+                        <i class="fas fa-play"></i>
+                        <span>Play Now</span>
+                    </button>
+                </div>
+            `;
+            
+            // Set random gradient background
+            const gradients = [
+                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
+                'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+                'linear-gradient(135deg, #5ee7df 0%, #b490ca 100%)'
+            ];
+            
+            const imageDiv = card.querySelector('.card-image');
+            imageDiv.style.background = gradients[index % gradients.length];
+            
+            return card;
+        }
+
+        function showEmptyState() {
+            const container = document.getElementById('gridContainer');
+            const emptyState = document.getElementById('emptyState');
+            
+            container.innerHTML = '';
+            emptyState.classList.remove('hide');
+        }
+
+        // ===== REMOVE FROM SAVED =====
+        async function removeFromSaved(storyId, button, event) {
+            if (event) event.stopPropagation();
+            
+            const currentUser = auth.currentUser;
+            if (!currentUser) {
+                showToast("Please login to manage saved stories", "error");
+                return;
+            }
+            
+            try {
+                // Remove from Firebase
+                await db.ref('user_saves/' + currentUser.uid + '/' + storyId).remove();
+                
+                // Update story likes
+                await db.ref('stories/' + storyId + '/likes').transaction(current => (current || 1) - 1);
+                
+                // Remove from local arrays
+                savedStories.delete(storyId);
+                savedStoriesData = savedStoriesData.filter(story => story.id !== storyId);
+                
+                // Animate removal
+                const card = button.closest('.explore-card');
+                card.style.transform = 'scale(0.95)';
+                card.style.opacity = '0.5';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.transform = 'translateX(-100%)';
+                    card.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        card.remove();
+                        
+                        // Check if empty
+                        if (savedStoriesData.length === 0) {
+                            showEmptyState();
+                        }
+                    }, 300);
+                }, 100);
+                
+                showToast("Removed from saved", "info");
+                
+                // Update player save button if this story is playing
+                if (currentPlayingStory && currentPlayingStory.id === storyId) {
+                    const playerSaveBtn = document.getElementById('playerSaveBtn');
+                    playerSaveBtn.classList.remove('saved');
+                    playerSaveBtn.innerHTML = '<i class="far fa-bookmark"></i><span>Save</span>';
+                }
+            } catch (error) {
+                console.error("Error removing from saved:", error);
+                showToast("Failed to remove from saved", "error");
+            }
+        }
+
+        // ===== AUDIO PLAYER FUNCTIONS =====
+        function playStory(storyId, button, event) {
+            if (event) event.stopPropagation();
+            
+            const story = savedStoriesData.find(s => s.id === storyId);
+            if (!story) return;
+            
+            // Stop current audio if playing
+            if (currentAudio) {
+                currentAudio.pause();
+                clearInterval(audioUpdateInterval);
+                updateAllPlayButtons(false);
+            }
+            
+            // Update play count
+            story.plays = (story.plays || 0) + 1;
+            
+            // Create audio element with demo URLs
+            const audioIndex = (parseInt(storyId.replace('story', '')) || Math.floor(Math.random() * 8)) % 8;
+            const audioUrls = [
+                'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+                'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+                'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+                'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+                'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
+                'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
+                'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3',
+                'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3'
+            ];
+            
+            currentAudio = new Audio(audioUrls[audioIndex]);
+            currentPlayingStory = story;
+            
+            // Setup audio events
+            currentAudio.addEventListener('play', function() {
+                updateAllPlayButtons(true);
+                updatePlayPauseButton(true);
+                startAudioUpdates();
+                
+                if (!isAudioPlayerOpen) {
+                    openAudioPlayer(story);
+                }
+                
+                updateFloatingPlayer(story);
+            });
+            
+            currentAudio.addEventListener('pause', function() {
+                updateAllPlayButtons(false);
+                updatePlayPauseButton(false);
+            });
+            
+            currentAudio.addEventListener('ended', function() {
+                updateAllPlayButtons(false);
+                updatePlayPauseButton(false);
+                clearInterval(audioUpdateInterval);
+                resetAudioProgress();
+            });
+            
+            currentAudio.addEventListener('loadedmetadata', function() {
+                document.getElementById('totalTime').textContent = formatTime(currentAudio.duration);
+            });
+            
+            // Generate story parts
+            generateStoryParts(story);
+            
+            // Play audio
+            currentAudio.play();
+            
+            // Update UI
+            if (button) {
+                button.classList.add('playing');
+                button.innerHTML = '<i class="fas fa-pause"></i><span>Playing</span>';
+            }
+        }
+
+        function generateStoryParts(story) {
+            const partsList = document.getElementById('storyPartsList');
+            partsList.innerHTML = '';
+            
+            // Generate 3-6 parts for the story
+            const partCount = Math.floor(Math.random() * 4) + 3;
+            const totalMinutes = parseInt(story.duration.split(':')[0]) || 30;
+            const partDuration = Math.floor(totalMinutes * 60 / partCount);
+            
+            for (let i = 1; i <= partCount; i++) {
+                const part = document.createElement('div');
+                part.className = `part-item ${i === 1 ? 'active' : ''}`;
+                const partTitles = ['Beginning', 'Development', 'Climax', 'Resolution', 'Epilogue', 'Conclusion'];
+                part.innerHTML = `
+                    <span class="part-title">Part ${i}: ${partTitles[i-1] || 'Chapter ' + i}</span>
+                    <span class="part-duration">${formatTime(partDuration * (i-1))} - ${formatTime(partDuration * i)}</span>
+                `;
+                part.addEventListener('click', () => {
+                    if (currentAudio) {
+                        currentAudio.currentTime = partDuration * (i-1);
+                        updateAudioProgress();
+                        
+                        // Update active part
+                        document.querySelectorAll('.part-item').forEach(p => p.classList.remove('active'));
+                        part.classList.add('active');
+                    }
+                });
+                partsList.appendChild(part);
+            }
+        }
+
+        function openAudioPlayer(story) {
+            document.getElementById('audioPlayerTitle').textContent = story.title;
+            document.getElementById('audioPlayerAuthor').textContent = story.author;
+            document.getElementById('audioPlayerPopup').classList.add('active');
+            isAudioPlayerOpen = true;
+            
+            // Update save button
+            const saveBtn = document.getElementById('playerSaveBtn');
+            const isSaved = savedStories.has(story.id);
+            saveBtn.classList.toggle('saved', isSaved);
+            saveBtn.innerHTML = `<i class="${isSaved ? 'fas' : 'far'} fa-bookmark"></i><span>${isSaved ? 'Saved' : 'Save'}</span>`;
+        }
+
+        function closeAudioPlayer() {
+            document.getElementById('audioPlayerPopup').classList.remove('active');
+            isAudioPlayerOpen = false;
+            
+            // If audio is playing, minimize to floating player
+            if (currentAudio && !currentAudio.paused) {
+                minimizePlayer();
+            }
+        }
+
+        function minimizePlayer() {
+            closeAudioPlayer();
+            showFloatingPlayer();
+        }
+
+        function togglePlayPause() {
+            if (!currentAudio) return;
+            
+            if (currentAudio.paused) {
+                currentAudio.play();
+            } else {
+                currentAudio.pause();
+            }
+        }
+
+        function updateAllPlayButtons(isPlaying) {
+            document.querySelectorAll('.card-play').forEach(btn => {
+                if (isPlaying) {
+                    btn.classList.remove('playing');
+                    btn.innerHTML = '<i class="fas fa-play"></i><span>Play Now</span>';
+                }
+            });
+        }
+
+        function updatePlayPauseButton(isPlaying) {
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            const floatingPlayBtn = document.getElementById('floatingPlayBtn');
+            
+            if (isPlaying) {
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                floatingPlayBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            } else {
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                floatingPlayBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
+        }
+
+        function showFloatingPlayer() {
+            if (!currentAudio || !currentPlayingStory) return;
+            
+            const floatingPlayer = document.getElementById('floatingPlayer');
+            document.getElementById('floatingTitle').textContent = currentPlayingStory.title;
+            floatingPlayer.classList.add('active');
+            isFloatingPlayerActive = true;
+        }
+
+        function closeFloatingPlayer() {
+            const floatingPlayer = document.getElementById('floatingPlayer');
+            floatingPlayer.classList.remove('active');
+            isFloatingPlayerActive = false;
+            
+            if (currentAudio) {
+                currentAudio.pause();
+                clearInterval(audioUpdateInterval);
+                updateAllPlayButtons(false);
+                updatePlayPauseButton(false);
+            }
+        }
+
+        function updateFloatingPlayer(story) {
+            document.getElementById('floatingTitle').textContent = story.title;
+            
+            if (!isFloatingPlayerActive) {
+                showFloatingPlayer();
+            }
+        }
+
+        function startAudioUpdates() {
+            clearInterval(audioUpdateInterval);
+            audioUpdateInterval = setInterval(updateAudioProgress, 100);
+        }
+
+        function updateAudioProgress() {
+            if (!currentAudio || currentAudio.paused) return;
+            
+            const currentTime = currentAudio.currentTime;
+            const duration = currentAudio.duration;
+            
+            if (duration) {
+                const progressPercent = (currentTime / duration) * 100;
+                
+                // Update popup player
+                document.getElementById('currentTime').textContent = formatTime(currentTime);
+                document.getElementById('seekBar').value = progressPercent;
+                document.getElementById('seekBar').style.setProperty('--progress', progressPercent + '%');
+                
+                // Update floating player
+                document.getElementById('floatingProgress').style.width = progressPercent + '%';
+            }
+        }
+
+        function resetAudioProgress() {
+            document.getElementById('currentTime').textContent = '00:00';
+            document.getElementById('seekBar').value = 0;
+            document.getElementById('seekBar').style.setProperty('--progress', '0%');
+            document.getElementById('floatingProgress').style.width = '0%';
+        }
+
+        function skipBackward() {
+            if (!currentAudio) return;
+            
+            currentAudio.currentTime = Math.max(0, currentAudio.currentTime - 30);
+            updateAudioProgress();
+            showToast("Rewinded 30 seconds", "info");
+        }
+
+        function skipForward() {
+            if (!currentAudio) return;
+            
+            currentAudio.currentTime = Math.min(currentAudio.duration, currentAudio.currentTime + 30);
+            updateAudioProgress();
+            showToast("Fast forwarded 30 seconds", "info");
+        }
+
+        function seekAudio(value) {
+            if (!currentAudio) return;
+            
+            const seekTime = (value / 100) * currentAudio.duration;
+            currentAudio.currentTime = seekTime;
+            updateAudioProgress();
+        }
+
+        function saveCurrentStory() {
+            if (!currentPlayingStory) return;
+            const saveBtn = document.querySelector(`.explore-card[data-id="${currentPlayingStory.id}"] .card-save`);
+            if (saveBtn) {
+                removeFromSaved(currentPlayingStory.id, saveBtn, new Event('click'));
+            }
+        }
+
+        // ===== UTILITY FUNCTIONS =====
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "00:00";
+            
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+
+        function showLoading(show) {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (show) {
+                loadingOverlay.classList.remove('hidden');
+            } else {
+                loadingOverlay.classList.add('hidden');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast';
+            
+            if (type === 'success') {
+                toast.style.background = 'linear-gradient(135deg, var(--success), #00b894)';
+            } else if (type === 'error') {
+                toast.style.background = 'linear-gradient(135deg, var(--red-accent), #ff6b6b)';
+            } else if (type === 'warning') {
+                toast.style.background = 'linear-gradient(135deg, var(--warning), #ffaa00)';
+            } else {
+                toast.style.background = 'linear-gradient(135deg, var(--primary-purple), var(--neon-magenta))';
+            }
+            
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function showComingSoon(feature) {
+            showToast(`${feature} feature coming soon!`, "info");
+        }
+
+        function updateUserProfile(user) {
+            const profileBtn = document.getElementById('profileBtn');
+            const profileInitials = document.getElementById('profileInitials');
+            
+            if (user) {
+                let initials = 'U';
+                if (user.displayName) {
+                    initials = user.displayName.charAt(0).toUpperCase();
+                } else if (user.email) {
+                    initials = user.email.charAt(0).toUpperCase();
+                }
+                
+                if (user.photoURL) {
+                    profileBtn.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                } else {
+                    profileInitials.textContent = initials;
+                }
+            }
+        }
+
+        function showWarningModal(targetUrl) {
+            if (playerWarningShown) return;
+            
+            playerWarningShown = true;
+            document.getElementById('warningModal').classList.add('active');
+            document.getElementById('warningModal').dataset.targetUrl = targetUrl;
+        }
+
+        function stayOnPage() {
+            document.getElementById('warningModal').classList.remove('active');
+            playerWarningShown = false;
+        }
+
+        function leavePage() {
+            if (currentAudio) {
+                currentAudio.pause();
+                clearInterval(audioUpdateInterval);
+            }
+            
+            const targetUrl = document.getElementById('warningModal').dataset.targetUrl;
+            window.location.href = targetUrl;
+        }
+    </script>
+</body>
+</html>

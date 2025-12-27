@@ -9,7 +9,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    
+    <!-- Cloudinary SDK -->
+    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
     
     <!-- External Configurations -->
     <script src="firebase-config.js" defer></script>
@@ -1651,7 +1653,7 @@
             <!-- Chat Messages -->
             <div class="chat-messages" id="messages-container">
                 <!-- Messages will be loaded here -->
-                <div style="text-align: center; padding: 40px;" class="initial-welcome">
+                <div style="text-align: center; padding: 40px;">
                     <h3 style="margin-bottom: 15px; color: var(--gray-700);">Welcome to Camsilo Chat</h3>
                     <p style="color: var(--gray-700); margin-bottom: 10px;">Select a model to start chatting</p>
                     <p style="color: var(--primary-color); margin-top: 10px;">
@@ -1701,24 +1703,43 @@
         </div>
     </div>
 
-    <!-- Media Upload Modal -->
+    <!-- Cloudinary Media Upload Modal -->
     <div id="media-upload-modal" class="modal-overlay">
         <div class="modal">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin: 0;">Upload Media</h3>
+                <h3 style="margin: 0;">Upload Media to Cloudinary</h3>
                 <button style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--gray-700);" class="modal-close">&times;</button>
             </div>
             <div id="media-upload-info" style="margin-bottom: 20px; padding: 15px; background: var(--gray-100); border-radius: var(--border-radius);">
                 <p style="margin-bottom: 10px; color: var(--gray-700);"><strong>Request:</strong> <span id="media-request-description">No description</span></p>
                 <p style="color: var(--primary-color); font-weight: 600;">Amount: ₦<span id="media-request-amount">0</span></p>
             </div>
-            <div class="input-group">
-                <label for="media-file">Select Media File</label>
-                <input type="file" id="media-file" accept="image/*,video/*">
+            
+            <div style="margin-bottom: 20px;">
+                <button id="open-cloudinary-widget" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-cloud-upload-alt"></i> Select & Upload Media
+                </button>
+                <p style="font-size: 0.85rem; color: var(--gray-700); margin-top: 10px; text-align: center;">
+                    Click above to select image or video from your device
+                </p>
             </div>
-            <div id="media-preview" style="margin: 20px 0; text-align: center;"></div>
-            <button id="upload-media-btn" class="btn btn-primary">
-                <i class="fas fa-upload"></i> Upload & Complete Request
+            
+            <div id="media-preview" style="margin: 20px 0; text-align: center; min-height: 100px;"></div>
+            
+            <div id="upload-status" style="display: none;">
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>Upload Progress</span>
+                        <span id="upload-progress-text">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="upload-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="complete-media-request" class="btn btn-primary" style="display: none; width: 100%;">
+                <i class="fas fa-check-circle"></i> Complete Request & Send Media
             </button>
         </div>
     </div>
@@ -1915,8 +1936,18 @@
         let currentModelId = null;
         let currentMediaRequestId = null;
         let currentMediaRequestAmount = 0;
+        let currentMediaCloudinaryUrl = null;
+        let currentMediaType = null;
         let models = [];
         let chats = [];
+        let cloudinaryWidget = null;
+
+        // Cloudinary Configuration
+        const CLOUDINARY_CONFIG = {
+            cloudName: 'dedxasxjy',
+            apiKey: '554157312131256',
+            uploadPreset: 'ml_default' // You need to create this preset in Cloudinary dashboard
+        };
 
         // ========== INITIALIZATION ==========
         document.addEventListener('DOMContentLoaded', () => {
@@ -1934,8 +1965,8 @@
                 // Initialize Firebase
                 firebase.initializeApp(firebaseConfig);
                 
-                // Test connections
-                await testFirebaseConnection();
+                // Initialize Cloudinary Widget
+                initializeCloudinaryWidget();
                 
                 // Check authentication state
                 firebase.auth().onAuthStateChanged(async (user) => {
@@ -1960,54 +1991,118 @@
                 });
             } catch (error) {
                 console.error('Initialization error:', error);
-                showNotification('Error initializing application: ' + error.message, 'error');
+                showNotification('Error initializing application', 'error');
             }
         }
 
-        // Test Firebase connection
-        async function testFirebaseConnection() {
-            try {
-                console.log('Testing Firebase connection...');
-                
-                // Test Firestore
-                const firestoreTest = await firebase.firestore().collection('test').doc('test').get();
-                console.log('Firestore connection: OK');
-                
-                // Test Storage
-                const storageRef = firebase.storage().ref();
-                console.log('Storage connection: OK');
-                
-                // Test Auth
-                const authUser = firebase.auth().currentUser;
-                console.log('Auth connection: OK, User:', authUser?.email);
-                
-                return true;
-            } catch (error) {
-                console.error('Firebase connection test failed:', error);
-                showNotification('Firebase connection error: ' + error.message, 'error');
-                return false;
-            }
+        // ========== CLOUDINARY INITIALIZATION ==========
+        function initializeCloudinaryWidget() {
+            cloudinaryWidget = cloudinary.createUploadWidget(
+                {
+                    cloudName: CLOUDINARY_CONFIG.cloudName,
+                    uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
+                    sources: ['local', 'url', 'camera', 'image_search'],
+                    multiple: false,
+                    maxFiles: 1,
+                    clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'avi', 'mkv', 'webm'],
+                    maxFileSize: 50000000, // 50MB
+                    resourceType: 'auto',
+                    showAdvancedOptions: false,
+                    cropping: false,
+                    showPoweredBy: false,
+                    styles: {
+                        palette: {
+                            window: "#FFF",
+                            windowBorder: "#7c3aed",
+                            tabIcon: "#7c3aed",
+                            menuIcons: "#5A616A",
+                            textDark: "#000",
+                            textLight: "#FFF",
+                            link: "#7c3aed",
+                            action: "#FF620C",
+                            inactiveTabIcon: "#0E2F5A",
+                            error: "#F44235",
+                            inProgress: "#7c3aed",
+                            complete: "#20B832",
+                            sourceBg: "#E4EBF1"
+                        },
+                        fonts: {
+                            default: null,
+                            "'Poppins', sans-serif": {
+                                url: "https://fonts.googleapis.com/css?family=Poppins",
+                                active: true
+                            }
+                        }
+                    }
+                },
+                (error, result) => {
+                    if (!error && result && result.event === "success") {
+                        console.log('Cloudinary upload successful:', result.info);
+                        
+                        // Store the Cloudinary URL and type
+                        currentMediaCloudinaryUrl = result.info.secure_url;
+                        currentMediaType = result.info.resource_type; // 'image' or 'video'
+                        
+                        // Update preview
+                        updateCloudinaryPreview(result.info);
+                        
+                        // Show complete button
+                        document.getElementById('complete-media-request').style.display = 'block';
+                        
+                        // Hide upload status
+                        document.getElementById('upload-status').style.display = 'none';
+                        
+                        showNotification('Media uploaded to Cloudinary successfully!', 'success');
+                    }
+                    
+                    if (result && result.event === "progress") {
+                        // Show upload progress
+                        document.getElementById('upload-status').style.display = 'block';
+                        const progress = result.info.progress;
+                        const progressBar = document.getElementById('upload-progress-bar');
+                        const progressText = document.getElementById('upload-progress-text');
+                        
+                        if (progressBar) progressBar.style.width = `${progress * 100}%`;
+                        if (progressText) progressText.textContent = `${Math.round(progress * 100)}%`;
+                    }
+                    
+                    if (error) {
+                        console.error('Cloudinary upload error:', error);
+                        showNotification('Cloudinary upload failed: ' + error.message, 'error');
+                    }
+                }
+            );
         }
 
-        // Handle Firebase Storage errors
-        function handleStorageError(error) {
-            console.error('Storage error:', error);
+        function updateCloudinaryPreview(info) {
+            const preview = document.getElementById('media-preview');
             
-            switch (error.code) {
-                case 'storage/unauthorized':
-                    return 'You don\'t have permission to upload files';
-                case 'storage/canceled':
-                    return 'Upload was canceled';
-                case 'storage/unknown':
-                    return 'Unknown error occurred';
-                case 'storage/quota-exceeded':
-                    return 'Storage quota exceeded. Please try a smaller file';
-                case 'storage/unauthenticated':
-                    return 'Please login to upload files';
-                case 'storage/retry-limit-exceeded':
-                    return 'Upload failed after several attempts. Please try again';
-                default:
-                    return 'Upload failed: ' + error.message;
+            if (info.resource_type === 'image') {
+                preview.innerHTML = `
+                    <div style="text-align: center;">
+                        <img src="${info.secure_url}" 
+                             style="max-width: 250px; max-height: 250px; border-radius: var(--border-radius); object-fit: cover; border: 2px solid var(--primary-color);"
+                             alt="Cloudinary Preview">
+                        <p style="margin-top: 10px; font-size: 0.9rem; color: var(--gray-700);">
+                            ${info.original_filename}<br>
+                            Size: ${(info.bytes / (1024 * 1024)).toFixed(2)} MB
+                        </p>
+                    </div>
+                `;
+            } else if (info.resource_type === 'video') {
+                preview.innerHTML = `
+                    <div style="text-align: center;">
+                        <video controls 
+                               style="max-width: 250px; max-height: 250px; border-radius: var(--border-radius); background: black;">
+                            <source src="${info.secure_url}" type="${info.format ? 'video/' + info.format : 'video/mp4'}">
+                            Your browser does not support the video tag.
+                        </video>
+                        <p style="margin-top: 10px; font-size: 0.9rem; color: var(--gray-700);">
+                            ${info.original_filename}<br>
+                            Size: ${(info.bytes / (1024 * 1024)).toFixed(2)} MB
+                        </p>
+                    </div>
+                `;
             }
         }
 
@@ -2553,8 +2648,17 @@
             // Submit Media Request
             document.getElementById('submit-media-request').addEventListener('click', submitMediaRequest);
 
-            // Upload Media
-            document.getElementById('upload-media-btn').addEventListener('click', uploadMedia);
+            // Cloudinary Upload Widget
+            document.getElementById('open-cloudinary-widget').addEventListener('click', () => {
+                if (cloudinaryWidget) {
+                    cloudinaryWidget.open();
+                } else {
+                    showNotification('Cloudinary upload widget not initialized', 'error');
+                }
+            });
+
+            // Complete Media Request
+            document.getElementById('complete-media-request').addEventListener('click', completeMediaRequest);
 
             // Modal Close Buttons
             document.querySelectorAll('.modal-close').forEach(btn => {
@@ -2562,6 +2666,9 @@
                     document.querySelectorAll('.modal-overlay').forEach(modal => {
                         modal.classList.remove('active');
                     });
+                    
+                    // Reset media upload modal
+                    resetMediaUploadModal();
                 });
             });
 
@@ -2570,6 +2677,11 @@
                 modal.addEventListener('click', (e) => {
                     if (e.target === modal) {
                         modal.classList.remove('active');
+                        
+                        // Reset media upload modal if closing
+                        if (modal.id === 'media-upload-modal') {
+                            resetMediaUploadModal();
+                        }
                     }
                 });
             });
@@ -2580,78 +2692,6 @@
                     el.style.display = 'none';
                 });
             }
-            
-            // File input change for media preview
-            document.getElementById('media-file').addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                const preview = document.getElementById('media-preview');
-                
-                if (!file) {
-                    preview.innerHTML = '';
-                    return;
-                }
-                
-                // Check file size (50MB max)
-                const maxSize = 50 * 1024 * 1024;
-                if (file.size > maxSize) {
-                    preview.innerHTML = `
-                        <div style="color: var(--danger-color); padding: 10px; background: rgba(239,68,68,0.1); border-radius: var(--border-radius);">
-                            <i class="fas fa-exclamation-triangle"></i> File too large (${(file.size / (1024 * 1024)).toFixed(2)} MB)<br>
-                            Maximum size: 50MB
-                        </div>
-                    `;
-                    this.value = '';
-                    return;
-                }
-                
-                // Check file type
-                if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-                    preview.innerHTML = `
-                        <div style="color: var(--warning-color); padding: 10px; background: rgba(245,158,11,0.1); border-radius: var(--border-radius);">
-                            <i class="fas fa-exclamation-triangle"></i> Please select only image or video files
-                        </div>
-                    `;
-                    this.value = '';
-                    return;
-                }
-                
-                preview.innerHTML = '';
-                
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        preview.innerHTML = `
-                            <div style="text-align: center;">
-                                <img src="${e.target.result}" 
-                                     style="max-width: 200px; max-height: 200px; border-radius: var(--border-radius); object-fit: cover; border: 2px solid var(--primary-color);"
-                                     alt="Preview">
-                                <p style="margin-top: 10px; font-size: 0.9rem; color: var(--gray-700);">
-                                    ${file.name}<br>
-                                    ${(file.size / (1024 * 1024)).toFixed(2)} MB
-                                </p>
-                            </div>
-                        `;
-                    };
-                    reader.readAsDataURL(file);
-                } else if (file.type.startsWith('video/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        preview.innerHTML = `
-                            <div style="text-align: center;">
-                                <video controls style="max-width: 200px; border-radius: var(--border-radius);">
-                                    <source src="${e.target.result}" type="${file.type}">
-                                    Your browser does not support the video tag.
-                                </video>
-                                <p style="margin-top: 10px; font-size: 0.9rem; color: var(--gray-700);">
-                                    ${file.name}<br>
-                                    ${(file.size / (1024 * 1024)).toFixed(2)} MB
-                                </p>
-                            </div>
-                        `;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
             
             // Copy Referral Code
             document.getElementById('copy-referral-btn')?.addEventListener('click', () => {
@@ -2676,6 +2716,14 @@
                     showNotification('Referral code copied to clipboard!', 'success');
                 }
             });
+        }
+
+        function resetMediaUploadModal() {
+            document.getElementById('media-preview').innerHTML = '';
+            document.getElementById('complete-media-request').style.display = 'none';
+            document.getElementById('upload-status').style.display = 'none';
+            currentMediaCloudinaryUrl = null;
+            currentMediaType = null;
         }
 
         function resetNormalFormFields() {
@@ -2988,12 +3036,7 @@
 
         async function loadChatHistory() {
             const container = document.getElementById('messages-container');
-            // Clear existing messages except the initial welcome message
-            const initialContent = container.querySelector('.initial-welcome');
             container.innerHTML = '';
-            if (initialContent) {
-                container.appendChild(initialContent);
-            }
             
             try {
                 const messagesSnapshot = await firebase.firestore()
@@ -3033,24 +3076,27 @@
             firebase.firestore()
                 .collection('chats').doc(currentChatId)
                 .collection('messages')
-                .orderBy('timestamp', 'asc')
+                .orderBy('timestamp', 'desc')
+                .limit(1)
                 .onSnapshot((snapshot) => {
-                    // Clear existing messages except the initial welcome message
-                    const container = document.getElementById('messages-container');
-                    const initialContent = container.querySelector('.initial-welcome');
-                    container.innerHTML = '';
-                    if (initialContent) {
-                        container.appendChild(initialContent);
-                    }
-                    
-                    // Add all messages
-                    snapshot.forEach(doc => {
-                        const message = doc.data();
-                        displayMessage(message);
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const message = change.doc.data();
+                            displayMessage(message);
+                            
+                            // Scroll to bottom
+                            const container = document.getElementById('messages-container');
+                            container.scrollTop = container.scrollHeight;
+                            
+                            // Show notification if chat is not focused
+                            if (!document.getElementById('chat-page').style.display || 
+                                document.getElementById('chat-page').style.display === 'none') {
+                                const senderName = message.senderId === currentUser.uid ? 'You' : 
+                                    (userData.gender === 'male' ? 'Model' : 'Client');
+                                showNotification(`New message from ${senderName}: ${message.text ? message.text.substring(0, 50) : 'Media'}...`, 'info');
+                            }
+                        }
                     });
-                    
-                    // Scroll to bottom
-                    container.scrollTop = container.scrollHeight;
                 });
         }
 
@@ -3162,7 +3208,7 @@
                 if (message.status === 'completed' && message.mediaUrl) {
                     if (message.mediaType === 'image') {
                         mediaHtml = `<div style="margin-top: 10px;">
-                            <img src="${message.mediaUrl}" alt="Uploaded Media" 
+                            <img src="${message.mediaUrl}" alt="Cloudinary Media" 
                                  style="max-width: 300px; max-height: 300px; border-radius: var(--border-radius); object-fit: cover; cursor: pointer;"
                                  onclick="openMediaPreview('${message.mediaUrl}', '${message.mediaType}')">
                             <p style="font-size: 0.8rem; color: var(--gray-700); margin-top: 5px;">Click to view full size</p>
@@ -3170,7 +3216,7 @@
                     } else if (message.mediaType === 'video') {
                         mediaHtml = `<div style="margin-top: 10px;">
                             <video controls 
-                                   style="max-width: 300px; max-height: 300px; border-radius: var(--border-radius);"
+                                   style="max-width: 300px; max-height: 300px; border-radius: var(--border-radius); background: black;"
                                    onclick="openMediaPreview('${message.mediaUrl}', '${message.mediaType}')">
                                 <source src="${message.mediaUrl}" type="video/mp4">
                                 Your browser does not support the video tag.
@@ -3209,18 +3255,18 @@
             } else if (message.type === 'media') {
                 let mediaHtml = '';
                 if (message.mediaType === 'image') {
-                    mediaHtml = `<img src="${message.mediaUrl}" alt="Media" 
-                           style="max-width: 300px; max-height: 300px; border-radius: var(--border-radius); object-fit: cover; cursor: pointer;"
-                           onclick="openMediaPreview('${message.mediaUrl}', '${message.mediaType}')">
-                       <p style="font-size: 0.8rem; color: var(--gray-700); margin-top: 5px;">Click to view full size</p>`;
+                    mediaHtml = `<img src="${message.mediaUrl}" alt="Cloudinary Media" 
+                               style="max-width: 300px; max-height: 300px; border-radius: var(--border-radius); object-fit: cover; cursor: pointer;"
+                               onclick="openMediaPreview('${message.mediaUrl}', '${message.mediaType}')">
+                           <p style="font-size: 0.8rem; color: var(--gray-700); margin-top: 5px;">Click to view full size</p>`;
                 } else if (message.mediaType === 'video') {
                     mediaHtml = `<video controls 
-                           style="max-width: 300px; max-height: 300px; border-radius: var(--border-radius);"
-                           onclick="openMediaPreview('${message.mediaUrl}', '${message.mediaType}')">
-                        <source src="${message.mediaUrl}" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                    <p style="font-size: 0.8rem; color: var(--gray-700); margin-top: 5px;">Click to view full screen</p>`;
+                               style="max-width: 300px; max-height: 300px; border-radius: var(--border-radius); background: black;"
+                               onclick="openMediaPreview('${message.mediaUrl}', '${message.mediaType}')">
+                            <source src="${message.mediaUrl}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <p style="font-size: 0.8rem; color: var(--gray-700); margin-top: 5px;">Click to view full screen</p>`;
                 }
                 
                 messageDiv.innerHTML = `
@@ -3335,9 +3381,8 @@
                 document.getElementById('media-request-description').textContent = description;
                 document.getElementById('media-request-amount').textContent = amount.toLocaleString();
                 
-                // Clear previous preview
-                document.getElementById('media-preview').innerHTML = '';
-                document.getElementById('media-file').value = '';
+                // Reset preview and buttons
+                resetMediaUploadModal();
                 
                 // Show upload modal
                 document.getElementById('media-upload-modal').classList.add('active');
@@ -3348,12 +3393,9 @@
             }
         };
 
-        async function uploadMedia() {
-            const fileInput = document.getElementById('media-file');
-            const file = fileInput.files[0];
-            
-            if (!file) {
-                showNotification('Please select a file to upload', 'error');
+        async function completeMediaRequest() {
+            if (!currentMediaCloudinaryUrl || !currentMediaType) {
+                showNotification('Please upload media first', 'error');
                 return;
             }
             
@@ -3363,164 +3405,89 @@
             }
             
             try {
-                showNotification('Uploading media...', 'info');
+                showNotification('Completing media request...', 'info');
                 
-                // Validate file type
-                const fileType = file.type.startsWith('image/') ? 'image' : 
-                                file.type.startsWith('video/') ? 'video' : 
-                                'unknown';
+                // Find and update the media request message
+                const messagesSnapshot = await firebase.firestore()
+                    .collection('chats').doc(currentChatId)
+                    .collection('messages')
+                    .where('requestId', '==', currentMediaRequestId)
+                    .get();
                 
-                if (fileType === 'unknown') {
-                    showNotification('Please select only image or video files', 'error');
-                    return;
+                if (!messagesSnapshot.empty) {
+                    const messageDoc = messagesSnapshot.docs[0];
+                    const requestData = messageDoc.data();
+                    
+                    console.log('Updating request message with Cloudinary URL:', currentMediaRequestId);
+                    
+                    // Update the request message to completed
+                    await messageDoc.ref.update({
+                        status: 'completed',
+                        mediaUrl: currentMediaCloudinaryUrl,
+                        mediaType: currentMediaType,
+                        completedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Also create a new message with the media
+                    await firebase.firestore()
+                        .collection('chats').doc(currentChatId)
+                        .collection('messages')
+                        .add({
+                            senderId: currentUser.uid,
+                            type: 'media',
+                            mediaType: currentMediaType,
+                            mediaUrl: currentMediaCloudinaryUrl,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                            read: false,
+                            description: `Completed: ${requestData.description || 'Media request'}`,
+                            requestId: currentMediaRequestId
+                        });
+                    
+                    // Update chat last message
+                    await firebase.firestore()
+                        .collection('chats').doc(currentChatId)
+                        .update({
+                            lastMessage: `Media sent: ${requestData.description?.substring(0, 30) || 'Media'}...`,
+                            lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                            unreadCount: firebase.firestore.FieldValue.increment(1)
+                        });
+                    
+                    // Credit model's request wallet
+                    await firebase.firestore().collection('users').doc(currentUser.uid).update({
+                        requestWalletBalance: firebase.firestore.FieldValue.increment(currentMediaRequestAmount),
+                        completedRequestsCount: firebase.firestore.FieldValue.increment(1)
+                    });
+                    
+                    // Update local counts
+                    requestWalletBalance += currentMediaRequestAmount;
+                    completedRequestsCount += 1;
+                    updateFemaleWalletDisplay();
+                    updateRequestWalletUI();
+                    
+                    // Close modal and show success
+                    document.getElementById('media-upload-modal').classList.remove('active');
+                    showNotification('Media request completed successfully!', 'success');
+                    
+                    // Record transaction
+                    await firebase.firestore().collection('transactions').add({
+                        userId: currentUser.uid,
+                        type: 'earning',
+                        walletType: 'request',
+                        amount: currentMediaRequestAmount,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        description: `Completed media request via Cloudinary: ${currentMediaRequestAmount}`
+                    });
+                    
+                    // Reset
+                    resetMediaUploadModal();
+                    currentMediaRequestId = null;
+                    currentMediaRequestAmount = 0;
+                } else {
+                    showNotification('Media request not found', 'error');
                 }
-                
-                // Validate file size (50MB max)
-                const maxSize = 50 * 1024 * 1024; // 50MB
-                if (file.size > maxSize) {
-                    showNotification('File too large (max 50MB)', 'error');
-                    return;
-                }
-                
-                // Create storage reference
-                const storageRef = firebase.storage().ref();
-                const fileName = `media_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-                const fileRef = storageRef.child(`media/${currentUser.uid}/${fileName}`);
-                
-                console.log('Uploading file:', fileName, 'Size:', file.size, 'Type:', fileType);
-                
-                // Show upload progress
-                const progressContainer = document.createElement('div');
-                progressContainer.innerHTML = `
-                    <div style="margin: 10px 0; background: var(--gray-200); border-radius: var(--border-radius); overflow: hidden;">
-                        <div id="upload-progress-bar" style="height: 5px; background: var(--primary-gradient); width: 0%; transition: width 0.3s;"></div>
-                    </div>
-                    <p id="upload-progress-text" style="font-size: 0.8rem; color: var(--gray-700); margin-top: 5px;">Uploading: 0%</p>
-                `;
-                document.getElementById('media-preview').appendChild(progressContainer);
-                
-                // Upload file
-                const uploadTask = fileRef.put(file);
-                
-                uploadTask.on('state_changed',
-                    (snapshot) => {
-                        // Progress tracking
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        console.log('Upload progress:', progress + '%');
-                        
-                        const progressBar = document.getElementById('upload-progress-bar');
-                        const progressText = document.getElementById('upload-progress-text');
-                        
-                        if (progressBar) progressBar.style.width = progress + '%';
-                        if (progressText) progressText.textContent = `Uploading: ${Math.round(progress)}%`;
-                    },
-                    (error) => {
-                        console.error('Upload error:', error);
-                        const errorMessage = handleStorageError(error);
-                        showNotification(errorMessage, 'error');
-                        return;
-                    },
-                    async () => {
-                        try {
-                            // Upload completed successfully
-                            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-                            console.log('File uploaded successfully. Download URL:', downloadURL);
-                            
-                            // Find and update the media request message
-                            const messagesSnapshot = await firebase.firestore()
-                                .collection('chats').doc(currentChatId)
-                                .collection('messages')
-                                .where('requestId', '==', currentMediaRequestId)
-                                .get();
-                            
-                            if (!messagesSnapshot.empty) {
-                                const messageDoc = messagesSnapshot.docs[0];
-                                const requestData = messageDoc.data();
-                                
-                                console.log('Updating request message:', currentMediaRequestId);
-                                
-                                // Update the request message to completed
-                                await messageDoc.ref.update({
-                                    status: 'completed',
-                                    mediaUrl: downloadURL,
-                                    mediaType: fileType,
-                                    fileName: file.name,
-                                    fileSize: file.size,
-                                    completedAt: firebase.firestore.FieldValue.serverTimestamp()
-                                });
-                                
-                                // Also create a new message with the media
-                                await firebase.firestore()
-                                    .collection('chats').doc(currentChatId)
-                                    .collection('messages')
-                                    .add({
-                                        senderId: currentUser.uid,
-                                        type: 'media',
-                                        mediaType: fileType,
-                                        mediaUrl: downloadURL,
-                                        fileName: file.name,
-                                        fileSize: file.size,
-                                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                                        read: false,
-                                        description: `Completed: ${requestData.description || 'Media request'}`,
-                                        requestId: currentMediaRequestId
-                                    });
-                                
-                                // Update chat last message
-                                await firebase.firestore()
-                                    .collection('chats').doc(currentChatId)
-                                    .update({
-                                        lastMessage: `Media sent: ${requestData.description?.substring(0, 30) || 'Media'}...`,
-                                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
-                                        unreadCount: firebase.firestore.FieldValue.increment(1)
-                                    });
-                                
-                                // Credit model's request wallet
-                                await firebase.firestore().collection('users').doc(currentUser.uid).update({
-                                    requestWalletBalance: firebase.firestore.FieldValue.increment(currentMediaRequestAmount),
-                                    completedRequestsCount: firebase.firestore.FieldValue.increment(1)
-                                });
-                                
-                                // Update local counts
-                                requestWalletBalance += currentMediaRequestAmount;
-                                completedRequestsCount += 1;
-                                updateFemaleWalletDisplay();
-                                updateRequestWalletUI();
-                                
-                                // Close modal and show success
-                                setTimeout(() => {
-                                    document.getElementById('media-upload-modal').classList.remove('active');
-                                    showNotification('Media uploaded and sent successfully!', 'success');
-                                }, 500);
-                                
-                                // Record transaction
-                                await firebase.firestore().collection('transactions').add({
-                                    userId: currentUser.uid,
-                                    type: 'earning',
-                                    walletType: 'request',
-                                    amount: currentMediaRequestAmount,
-                                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                                    description: `Completed media request: ${requestData.description?.substring(0, 50) || 'Media'}`
-                                });
-                                
-                                // Reset form
-                                document.getElementById('media-preview').innerHTML = '';
-                                document.getElementById('media-file').value = '';
-                                currentMediaRequestId = null;
-                                currentMediaRequestAmount = 0;
-                            } else {
-                                showNotification('Media request not found', 'error');
-                            }
-                        } catch (error) {
-                            console.error('Error in upload completion:', error);
-                            showNotification('Error completing upload: ' + error.message, 'error');
-                        }
-                    }
-                );
-                
             } catch (error) {
-                console.error('Error uploading media:', error);
-                showNotification('Error uploading media: ' + error.message, 'error');
+                console.error('Error completing media request:', error);
+                showNotification('Error completing request: ' + error.message, 'error');
             }
         }
 
@@ -3532,7 +3499,7 @@
             modal.style.left = '0';
             modal.style.width = '100%';
             modal.style.height = '100%';
-            modal.style.backgroundColor = 'rgba(0,0,0,0.9)';
+            modal.style.backgroundColor = 'rgba(0,0,0,0.95)';
             modal.style.display = 'flex';
             modal.style.alignItems = 'center';
             modal.style.justifyContent = 'center';
@@ -3543,8 +3510,8 @@
             if (mediaType === 'image') {
                 mediaElement = document.createElement('img');
                 mediaElement.src = mediaUrl;
-                mediaElement.style.maxWidth = '90%';
-                mediaElement.style.maxHeight = '90%';
+                mediaElement.style.maxWidth = '95%';
+                mediaElement.style.maxHeight = '95%';
                 mediaElement.style.objectFit = 'contain';
                 mediaElement.style.borderRadius = '10px';
             } else if (mediaType === 'video') {
@@ -3552,8 +3519,8 @@
                 mediaElement.src = mediaUrl;
                 mediaElement.controls = true;
                 mediaElement.autoplay = true;
-                mediaElement.style.maxWidth = '90%';
-                mediaElement.style.maxHeight = '90%';
+                mediaElement.style.maxWidth = '95%';
+                mediaElement.style.maxHeight = '95%';
             }
             
             // Close button

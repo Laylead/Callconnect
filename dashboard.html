@@ -11,12 +11,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     
-    <!-- Agora SDK -->
-    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.18.2.js"></script>
-    
     <!-- External Configurations -->
     <script src="firebase-config.js" defer></script>
-    <script src="agora.js" defer></script>
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1921,7 +1917,6 @@
         let currentMediaRequestAmount = 0;
         let models = [];
         let chats = [];
-        let pendingNotification = null;
 
         // ========== INITIALIZATION ==========
         document.addEventListener('DOMContentLoaded', () => {
@@ -1979,25 +1974,10 @@
                     userData = userDoc.data();
                     console.log('User data loaded:', userData);
                     
-                    // Fetch ALL balances from Firestore - including existing ones
-                    normalWalletBalance = userData.normalWalletBalance || userData.walletBalance || 0;
+                    // Initialize wallet balances with default values if not exists
+                    normalWalletBalance = userData.normalWalletBalance || 0;
                     requestWalletBalance = userData.requestWalletBalance || 0;
                     completedRequestsCount = userData.completedRequestsCount || 0;
-                    
-                    // Check if user needs to enter referral code (new user without referralCodeUsed field)
-                    if (!userData.referralCodeUsed && userData.createdAt && 
-                        (new Date() - userData.createdAt.toDate()) < 86400000) { // Within 24 hours of creation
-                        setTimeout(() => {
-                            document.getElementById('referral-modal').classList.add('active');
-                        }, 2000);
-                    }
-                    
-                    // Generate referral code if not exists
-                    if (!userData.referralCode) {
-                        await generateReferralCode();
-                        await loadUserData(); // Reload to get the generated code
-                        return;
-                    }
                     
                     // Update UI
                     updateUserProfile();
@@ -2041,25 +2021,6 @@
             }
         }
 
-        async function generateReferralCode() {
-            try {
-                // Generate unique referral code from name + random string
-                const name = userData?.name || currentUser.displayName || 'user';
-                const baseCode = name.replace(/\s+/g, '').toLowerCase().substring(0, 6);
-                const random = Math.random().toString(36).substring(2, 6);
-                const referralCode = (baseCode + random).toUpperCase();
-                
-                await firebase.firestore().collection('users').doc(currentUser.uid).update({
-                    referralCode: referralCode
-                });
-                
-                console.log('Referral code generated:', referralCode);
-                return referralCode;
-            } catch (error) {
-                console.error('Error generating referral code:', error);
-            }
-        }
-
         function updateUserProfile() {
             if (!userData) {
                 console.error('No user data available');
@@ -2068,17 +2029,9 @@
             
             console.log('Updating user profile with:', userData);
             document.getElementById('username').textContent = userData.name || 'User';
-            const role = userData.isModel ? 'Model' : (userData.gender === 'male' ? 'Client' : 'Model');
-            document.getElementById('user-role').textContent = role;
+            document.getElementById('user-role').textContent = userData.gender === 'male' ? 'Client' : 'Model';
             document.getElementById('user-avatar').src = userData.profileImage || 
                 `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=7c3aed&color=fff`;
-            
-            // Update referral code display
-            if (userData.referralCode) {
-                document.getElementById('referral-code-text').textContent = userData.referralCode;
-                document.getElementById('referral-code-input').value = userData.referralCode;
-                document.getElementById('referral-link').value = `https://camsilo.com/ref/${userData.referralCode}`;
-            }
             
             // Update settings preview
             document.getElementById('settings-name-preview').textContent = userData.name || 'User';
@@ -2250,29 +2203,6 @@
                 } catch (error) {
                     showNotification('Error logging out', 'error');
                 }
-            });
-
-            // Copy Referral Code
-            document.getElementById('copy-referral-btn').addEventListener('click', () => {
-                const codeInput = document.getElementById('referral-code-input');
-                codeInput.select();
-                document.execCommand('copy');
-                showNotification('Referral code copied!', 'success');
-            });
-
-            // Copy Referral Link
-            document.getElementById('copy-link-btn').addEventListener('click', () => {
-                const linkInput = document.getElementById('referral-link');
-                linkInput.select();
-                document.execCommand('copy');
-                showNotification('Referral link copied!', 'success');
-            });
-
-            // Copy referral code from sidebar
-            document.getElementById('referral-code-display').addEventListener('click', () => {
-                const code = document.getElementById('referral-code-text').textContent;
-                navigator.clipboard.writeText(code);
-                showNotification('Referral code copied!', 'success');
             });
 
             // Male Deposit Button
@@ -2466,17 +2396,6 @@
             // Upload Media
             document.getElementById('upload-media-btn').addEventListener('click', uploadMedia);
 
-            // Referral Form
-            document.getElementById('referral-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await processReferralCode();
-            });
-
-            // Skip Referral
-            document.getElementById('skip-referral').addEventListener('click', () => {
-                document.getElementById('referral-modal').classList.remove('active');
-            });
-
             // Modal Close Buttons
             document.querySelectorAll('.modal-close').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -2493,24 +2412,6 @@
                         modal.classList.remove('active');
                     }
                 });
-            });
-
-            // File input preview
-            document.getElementById('media-file').addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                const preview = document.getElementById('media-preview');
-                
-                if (file) {
-                    if (file.type.startsWith('image/')) {
-                        preview.innerHTML = `<img src="${URL.createObjectURL(file)}" style="max-width: 100%; max-height: 200px; border-radius: var(--border-radius);">`;
-                    } else if (file.type.startsWith('video/')) {
-                        preview.innerHTML = `<video controls style="max-width: 100%; max-height: 200px; border-radius: var(--border-radius);">
-                            <source src="${URL.createObjectURL(file)}" type="${file.type}">
-                        </video>`;
-                    }
-                } else {
-                    preview.innerHTML = '';
-                }
             });
 
             // Hide desktop-only text on mobile
@@ -2695,16 +2596,15 @@
 
         // ========== CHAT FUNCTIONS ==========
         window.startChat = async function(modelId) {
-            // Allow males to message any model (online or offline)
-            if (userData.gender === 'male' && normalWalletBalance < 10) {
-                showNotification('Insufficient balance. Minimum ₦10 required to start chat', 'error');
-                showPage('wallet');
+            // Only males can start new chats
+            if (userData.gender === 'female' || userData.isModel) {
+                showNotification('Models can only reply to existing messages', 'error');
                 return;
             }
             
-            // Prevent models from messaging other models
-            if (userData.gender === 'female' || userData.isModel) {
-                showNotification('Models can only reply to messages from clients', 'info');
+            if (userData.gender === 'male' && normalWalletBalance < 10) {
+                showNotification('Insufficient balance. Minimum ₦10 required to start chat', 'error');
+                showPage('wallet');
                 return;
             }
             
@@ -3384,89 +3284,6 @@
             }
         }
 
-        // ========== REFERRAL SYSTEM ==========
-        async function processReferralCode() {
-            const referralCode = document.getElementById('referral-code').value.trim().toUpperCase();
-            
-            if (!referralCode) {
-                // User skipped referral
-                await firebase.firestore().collection('users').doc(currentUser.uid).update({
-                    referralCodeUsed: null
-                });
-                document.getElementById('referral-modal').classList.remove('active');
-                showNotification('Welcome to Camsilo!', 'success');
-                return;
-            }
-            
-            try {
-                // Check if referral code exists and is not the user's own code
-                if (referralCode === userData.referralCode) {
-                    showNotification('You cannot use your own referral code', 'error');
-                    return;
-                }
-                
-                // Find user with this referral code
-                const usersSnapshot = await firebase.firestore()
-                    .collection('users')
-                    .where('referralCode', '==', referralCode)
-                    .get();
-                
-                if (usersSnapshot.empty) {
-                    showNotification('Invalid referral code', 'error');
-                    return;
-                }
-                
-                const referrerDoc = usersSnapshot.docs[0];
-                const referrerId = referrerDoc.id;
-                
-                // Update current user with referral info
-                await firebase.firestore().collection('users').doc(currentUser.uid).update({
-                    referralCodeUsed: referralCode,
-                    referredBy: referrerId
-                });
-                
-                // Update referrer's stats
-                await firebase.firestore().collection('users').doc(referrerId).update({
-                    totalReferrals: firebase.firestore.FieldValue.increment(1),
-                    pendingBonus: firebase.firestore.FieldValue.increment(500) // ₦500 bonus for referrer
-                });
-                
-                // Add bonus to new user's wallet
-                await firebase.firestore().collection('users').doc(currentUser.uid).update({
-                    normalWalletBalance: firebase.firestore.FieldValue.increment(500)
-                });
-                
-                // Update local balance
-                normalWalletBalance += 500;
-                updateWalletUI();
-                
-                // Record transactions
-                await firebase.firestore().collection('transactions').add({
-                    userId: currentUser.uid,
-                    type: 'bonus',
-                    amount: 500,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    description: 'Welcome bonus for using referral code'
-                });
-                
-                await firebase.firestore().collection('transactions').add({
-                    userId: referrerId,
-                    type: 'referral',
-                    amount: 500,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    description: 'Referral bonus for new user signup'
-                });
-                
-                // Close modal and show success
-                document.getElementById('referral-modal').classList.remove('active');
-                showNotification('Thank you! ₦500 bonus has been added to your wallet.', 'success');
-                
-            } catch (error) {
-                console.error('Error processing referral:', error);
-                showNotification('Error processing referral code', 'error');
-            }
-        }
-
         // ========== UTILITY FUNCTIONS ==========
         function setupRealtimeListeners() {
             if (!currentUser) return;
@@ -3479,7 +3296,7 @@
                         console.log('Realtime update received:', data);
                         
                         // Update ALL balances from Firestore
-                        normalWalletBalance = data.normalWalletBalance || data.walletBalance || 0;
+                        normalWalletBalance = data.normalWalletBalance || 0;
                         requestWalletBalance = data.requestWalletBalance || 0;
                         completedRequestsCount = data.completedRequestsCount || 0;
                         
@@ -3700,7 +3517,24 @@
                                     if (userDoc.exists) {
                                         const userData = userDoc.data();
                                         createChatItem(chat, userData);
+                                    } else {
+                                        // If user doesn't exist, use default data from chat
+                                        const defaultUserData = {
+                                            id: otherUserId,
+                                            name: chat.clientId === currentUser.uid ? chat.modelName : chat.clientName,
+                                            profileImage: 'https://ui-avatars.com/api/?name=User&background=7c3aed&color=fff'
+                                        };
+                                        createChatItem(chat, defaultUserData);
                                     }
+                                }).catch(error => {
+                                    console.error('Error fetching user:', error);
+                                    // Use default data if fetch fails
+                                    const defaultUserData = {
+                                        id: otherUserId,
+                                        name: chat.clientId === currentUser.uid ? chat.modelName : chat.clientName,
+                                        profileImage: 'https://ui-avatars.com/api/?name=User&background=7c3aed&color=fff'
+                                    };
+                                    createChatItem(chat, defaultUserData);
                                 })
                         );
                     }
@@ -3780,14 +3614,24 @@
                 
                 const chatData = chatDoc.data();
                 
-                // Get other user info
-                const otherUserDoc = await firebase.firestore().collection('users').doc(otherUserId).get();
-                if (!otherUserDoc.exists) {
-                    showNotification('User not found', 'error');
-                    return;
+                // Get other user info with error handling
+                let otherUserData = null;
+                try {
+                    const otherUserDoc = await firebase.firestore().collection('users').doc(otherUserId).get();
+                    if (otherUserDoc.exists) {
+                        otherUserData = otherUserDoc.data();
+                    }
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
                 }
                 
-                const otherUserData = otherUserDoc.data();
+                // If user data not found, use default from chat data
+                if (!otherUserData) {
+                    otherUserData = {
+                        name: chatData.clientId === currentUser.uid ? chatData.modelName : chatData.clientName,
+                        profileImage: 'https://ui-avatars.com/api/?name=User&background=7c3aed&color=fff'
+                    };
+                }
                 
                 // Update chat header
                 document.getElementById('chat-partner-name').textContent = otherUserData.name;

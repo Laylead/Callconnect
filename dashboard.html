@@ -1986,6 +1986,10 @@
                     
                 } else {
                     console.log('User document does not exist, creating new...');
+                    
+                    // Generate referral code
+                    const referralCode = generateReferralCode();
+                    
                     // User document doesn't exist, create it
                     await firebase.firestore().collection('users').doc(currentUser.uid).set({
                         uid: currentUser.uid,
@@ -1999,7 +2003,7 @@
                         totalEarnings: 0,
                         totalSpent: 0,
                         totalMessages: 0,
-                        referralCode: null,
+                        referralCode: referralCode,
                         referralCodeUsed: null,
                         totalReferrals: 0,
                         referralEarnings: 0,
@@ -2021,6 +2025,16 @@
             }
         }
 
+        function generateReferralCode() {
+            // Generate a random 8-character alphanumeric code
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let code = '';
+            for (let i = 0; i < 8; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
         function updateUserProfile() {
             if (!userData) {
                 console.error('No user data available');
@@ -2033,6 +2047,11 @@
             document.getElementById('user-avatar').src = userData.profileImage || 
                 `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=7c3aed&color=fff`;
             
+            // Update referral code in sidebar
+            if (userData.referralCode) {
+                document.getElementById('referral-code-text').textContent = userData.referralCode;
+            }
+            
             // Update settings preview
             document.getElementById('settings-name-preview').textContent = userData.name || 'User';
             document.getElementById('settings-avatar-preview').src = userData.profileImage || 
@@ -2041,6 +2060,25 @@
             // Fill settings form
             document.getElementById('settings-name').value = userData.name || '';
             document.getElementById('settings-photo').value = userData.profileImage || '';
+            
+            // Update affiliate page
+            updateReferralUI();
+        }
+
+        function updateReferralUI() {
+            if (!userData) return;
+            
+            console.log('Updating referral UI with code:', userData.referralCode);
+            
+            // Update referral code and link
+            document.getElementById('referral-code-input').value = userData.referralCode || 'N/A';
+            const referralLink = `${window.location.origin}/signup.html?ref=${userData.referralCode || ''}`;
+            document.getElementById('referral-link').value = referralLink;
+            
+            // Update affiliate stats
+            document.getElementById('total-referrals').textContent = userData.totalReferrals || 0;
+            document.getElementById('referral-earnings').textContent = `₦${(userData.referralEarnings || 0).toLocaleString()}`;
+            document.getElementById('pending-bonus').textContent = `₦${(userData.pendingBonus || 0).toLocaleString()}`;
         }
 
         function updateWalletUI() {
@@ -2452,6 +2490,30 @@
                     reader.readAsDataURL(file);
                 }
             });
+            
+            // Copy Referral Code
+            document.getElementById('copy-referral-btn')?.addEventListener('click', () => {
+                const codeInput = document.getElementById('referral-code-input');
+                codeInput.select();
+                document.execCommand('copy');
+                showNotification('Referral code copied to clipboard!', 'success');
+            });
+            
+            // Copy Referral Link
+            document.getElementById('copy-link-btn')?.addEventListener('click', () => {
+                const linkInput = document.getElementById('referral-link');
+                linkInput.select();
+                document.execCommand('copy');
+                showNotification('Referral link copied to clipboard!', 'success');
+            });
+            
+            // Copy referral code from sidebar
+            document.getElementById('referral-code-display')?.addEventListener('click', () => {
+                if (userData.referralCode) {
+                    navigator.clipboard.writeText(userData.referralCode);
+                    showNotification('Referral code copied to clipboard!', 'success');
+                }
+            });
         }
 
         function resetNormalFormFields() {
@@ -2516,7 +2578,7 @@
                     loadTransactionHistory();
                     break;
                 case 'affiliate':
-                    updateAffiliateStats();
+                    updateReferralUI();
                     break;
                 case 'wallet':
                     // Close all modals when switching to wallet page
@@ -2706,10 +2768,7 @@
             }
         };
 
-        // New function for models to view chats with clients
         window.viewModelChat = async function(modelId) {
-            // This function is for models to view their chat with a client
-            // Since models can't initiate chats, this would only work if a chat already exists
             currentModelId = modelId;
             const model = models.find(m => m.id === modelId);
             
@@ -2824,7 +2883,7 @@
                                 document.getElementById('chat-page').style.display === 'none') {
                                 const senderName = message.senderId === currentUser.uid ? 'You' : 
                                     (userData.gender === 'male' ? 'Model' : 'Client');
-                                showNotification(`New message from ${senderName}: ${message.text.substring(0, 50)}...`, 'info');
+                                showNotification(`New message from ${senderName}: ${message.text ? message.text.substring(0, 50) : 'Media'}...`, 'info');
                             }
                         }
                     });
@@ -2939,11 +2998,11 @@
                 if (message.status === 'completed' && message.mediaUrl) {
                     if (message.mediaType === 'image') {
                         mediaHtml = `<div style="margin-top: 10px;">
-                            <img src="${message.mediaUrl}" alt="Uploaded Media" style="max-width: 200px; border-radius: var(--border-radius);">
+                            <img src="${message.mediaUrl}" alt="Uploaded Media" style="max-width: 200px; max-height: 200px; border-radius: var(--border-radius); object-fit: cover;">
                         </div>`;
                     } else if (message.mediaType === 'video') {
                         mediaHtml = `<div style="margin-top: 10px;">
-                            <video controls style="max-width: 200px; border-radius: var(--border-radius);">
+                            <video controls style="max-width: 200px; max-height: 200px; border-radius: var(--border-radius);">
                                 <source src="${message.mediaUrl}" type="video/mp4">
                                 Your browser does not support the video tag.
                             </video>
@@ -2962,7 +3021,7 @@
                             }
                         </div>
                         <p style="margin-bottom: 10px;">${message.description || 'No description provided'}</p>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <strong style="color: var(--warning-color);">₦${message.amount?.toLocaleString() || '0'}</strong>
                             ${!isSender && userData.gender === 'female' && message.status === 'pending' ? 
                                 `<button onclick="acceptMediaRequest('${message.requestId}', '${message.description}', ${message.amount})" class="btn btn-primary" style="padding: 8px 15px; font-size: 0.9rem;">
@@ -2974,15 +3033,15 @@
                             }
                         </div>
                         ${mediaHtml}
+                        <div class="message-time" style="font-size: 0.8rem; opacity: 0.8; text-align: right; margin-top: 5px;">${time}</div>
                     </div>
                 `;
             } else if (message.type === 'media') {
-                // This is for media messages (images/videos sent in chat)
                 let mediaHtml = '';
                 if (message.mediaType === 'image') {
-                    mediaHtml = `<img src="${message.mediaUrl}" alt="Media" style="max-width: 200px; border-radius: var(--border-radius);">`;
+                    mediaHtml = `<img src="${message.mediaUrl}" alt="Media" style="max-width: 200px; max-height: 200px; border-radius: var(--border-radius); object-fit: cover;">`;
                 } else if (message.mediaType === 'video') {
-                    mediaHtml = `<video controls style="max-width: 200px; border-radius: var(--border-radius);">
+                    mediaHtml = `<video controls style="max-width: 200px; max-height: 200px; border-radius: var(--border-radius);">
                         <source src="${message.mediaUrl}" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>`;
@@ -2991,6 +3050,7 @@
                 messageDiv.innerHTML = `
                     <div class="message-bubble">
                         <div class="message-text">
+                            ${message.description ? `<p style="margin-bottom: 10px;">${message.description}</p>` : ''}
                             ${mediaHtml}
                         </div>
                         <div class="message-time" style="font-size: 0.8rem; opacity: 0.8; text-align: right; margin-top: 5px;">${time}</div>
@@ -3041,6 +3101,15 @@
                         status: 'pending'
                     });
                 
+                // Update chat last message
+                await firebase.firestore()
+                    .collection('chats').doc(currentChatId)
+                    .update({
+                        lastMessage: `Media Request: ${description.substring(0, 30)}...`,
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                        unreadCount: firebase.firestore.FieldValue.increment(1)
+                    });
+                
                 // Handle payment for male clients
                 if (userData.gender === 'male') {
                     // Deduct amount from male user's normal wallet
@@ -3079,7 +3148,6 @@
             }
         }
 
-        // Make functions available globally for onclick handlers
         window.acceptMediaRequest = async function(requestId, description, amount) {
             try {
                 currentMediaRequestId = requestId;
@@ -3124,71 +3192,99 @@
                 const fileRef = storageRef.child(`media/${currentUser.uid}/${Date.now()}_${file.name}`);
                 
                 // Upload file
-                await fileRef.put(file);
-                const downloadURL = await fileRef.getDownloadURL();
+                const uploadTask = fileRef.put(file);
                 
-                // Find and update the media request message to mark as completed
-                const messagesSnapshot = await firebase.firestore()
-                    .collection('chats').doc(currentChatId)
-                    .collection('messages')
-                    .where('requestId', '==', currentMediaRequestId)
-                    .get();
-                
-                if (!messagesSnapshot.empty) {
-                    const messageDoc = messagesSnapshot.docs[0];
-                    const requestData = messageDoc.data();
-                    
-                    // Update the request message to completed
-                    await messageDoc.ref.update({
-                        status: 'completed',
-                        mediaUrl: downloadURL,
-                        completedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    
-                    // Send a separate media message with the uploaded content
-                    await firebase.firestore()
-                        .collection('chats').doc(currentChatId)
-                        .collection('messages')
-                        .add({
-                            senderId: currentUser.uid,
-                            type: 'media',
-                            mediaType: requestData.mediaType,
-                            mediaUrl: downloadURL,
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                            read: false,
-                            description: `Request completed: ${requestData.description}`
+                // Show upload progress
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        // Progress tracking can be added here
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        console.log('Upload is ' + progress + '% done');
+                    },
+                    (error) => {
+                        console.error('Upload error:', error);
+                        showNotification('Upload failed: ' + error.message, 'error');
+                        return;
+                    },
+                    async () => {
+                        // Upload completed successfully
+                        const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                        
+                        console.log('File available at:', downloadURL);
+                        
+                        // Find and update the media request message
+                        const messagesSnapshot = await firebase.firestore()
+                            .collection('chats').doc(currentChatId)
+                            .collection('messages')
+                            .where('requestId', '==', currentMediaRequestId)
+                            .get();
+                        
+                        if (!messagesSnapshot.empty) {
+                            const messageDoc = messagesSnapshot.docs[0];
+                            const requestData = messageDoc.data();
+                            
+                            // Update the request message to completed
+                            await messageDoc.ref.update({
+                                status: 'completed',
+                                mediaUrl: downloadURL,
+                                completedAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            
+                            // Send a media message with the uploaded content
+                            await firebase.firestore()
+                                .collection('chats').doc(currentChatId)
+                                .collection('messages')
+                                .add({
+                                    senderId: currentUser.uid,
+                                    type: 'media',
+                                    mediaType: requestData.mediaType,
+                                    mediaUrl: downloadURL,
+                                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                    read: false,
+                                    description: `Request completed: ${requestData.description}`
+                                });
+                            
+                            // Update chat last message
+                            await firebase.firestore()
+                                .collection('chats').doc(currentChatId)
+                                .update({
+                                    lastMessage: `Media sent: ${requestData.description.substring(0, 30)}...`,
+                                    lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                                    unreadCount: firebase.firestore.FieldValue.increment(1)
+                                });
+                        }
+                        
+                        // Credit model's request wallet
+                        await firebase.firestore().collection('users').doc(currentUser.uid).update({
+                            requestWalletBalance: firebase.firestore.FieldValue.increment(currentMediaRequestAmount),
+                            completedRequestsCount: firebase.firestore.FieldValue.increment(1)
                         });
-                }
-                
-                // Credit model's request wallet (ONLY after media is uploaded)
-                await firebase.firestore().collection('users').doc(currentUser.uid).update({
-                    requestWalletBalance: firebase.firestore.FieldValue.increment(currentMediaRequestAmount),
-                    completedRequestsCount: firebase.firestore.FieldValue.increment(1)
-                });
-                
-                // Update local counts
-                requestWalletBalance += currentMediaRequestAmount;
-                completedRequestsCount += 1;
-                updateFemaleWalletDisplay();
-                updateRequestWalletUI();
-                
-                // Show success message
-                document.getElementById('media-upload-modal').classList.remove('active');
-                showNotification('Media uploaded successfully! Request completed and amount credited to your request wallet.', 'success');
-                
-                // Record transaction
-                await firebase.firestore().collection('transactions').add({
-                    userId: currentUser.uid,
-                    type: 'earning',
-                    walletType: 'request',
-                    amount: currentMediaRequestAmount,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    description: `Completed media request: ${currentMediaRequestAmount}`
-                });
-                
-                // Reset
-                currentMediaRequestId = null;
-                currentMediaRequestAmount = 0;
+                        
+                        // Update local counts
+                        requestWalletBalance += currentMediaRequestAmount;
+                        completedRequestsCount += 1;
+                        updateFemaleWalletDisplay();
+                        updateRequestWalletUI();
+                        
+                        // Show success message
+                        document.getElementById('media-upload-modal').classList.remove('active');
+                        showNotification('Media uploaded successfully! Request completed and amount credited to your request wallet.', 'success');
+                        
+                        // Record transaction
+                        await firebase.firestore().collection('transactions').add({
+                            userId: currentUser.uid,
+                            type: 'earning',
+                            walletType: 'request',
+                            amount: currentMediaRequestAmount,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                            description: `Completed media request: ${currentMediaRequestAmount}`
+                        });
+                        
+                        // Reset
+                        currentMediaRequestId = null;
+                        currentMediaRequestAmount = 0;
+                    }
+                );
                 
             } catch (error) {
                 console.error('Error uploading media:', error);
@@ -3397,6 +3493,7 @@
                         userData = data;
                         updateUserProfile();
                         updateAffiliateStats();
+                        updateReferralUI();
                     }
                 });
 

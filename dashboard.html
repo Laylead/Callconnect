@@ -2420,6 +2420,38 @@
                     el.style.display = 'none';
                 });
             }
+            
+            // File input change for media preview
+            document.getElementById('media-file').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                const preview = document.getElementById('media-preview');
+                
+                if (!file) {
+                    preview.innerHTML = '';
+                    return;
+                }
+                
+                preview.innerHTML = '';
+                
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.innerHTML = `<img src="${e.target.result}" style="max-width: 200px; border-radius: var(--border-radius);" alt="Preview">`;
+                    };
+                    reader.readAsDataURL(file);
+                } else if (file.type.startsWith('video/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.innerHTML = `
+                            <video controls style="max-width: 200px; border-radius: var(--border-radius);">
+                                <source src="${e.target.result}" type="${file.type}">
+                                Your browser does not support the video tag.
+                            </video>
+                        `;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
         }
 
         function resetNormalFormFields() {
@@ -2903,6 +2935,22 @@
                     </div>
                 `;
             } else if (message.type === 'media_request') {
+                let mediaHtml = '';
+                if (message.status === 'completed' && message.mediaUrl) {
+                    if (message.mediaType === 'image') {
+                        mediaHtml = `<div style="margin-top: 10px;">
+                            <img src="${message.mediaUrl}" alt="Uploaded Media" style="max-width: 200px; border-radius: var(--border-radius);">
+                        </div>`;
+                    } else if (message.mediaType === 'video') {
+                        mediaHtml = `<div style="margin-top: 10px;">
+                            <video controls style="max-width: 200px; border-radius: var(--border-radius);">
+                                <source src="${message.mediaUrl}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>`;
+                    }
+                }
+
                 messageDiv.innerHTML = `
                     <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid var(--warning-color); border-radius: var(--border-radius); padding: 15px;">
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
@@ -2925,6 +2973,27 @@
                                 '<span style="color: var(--gray-700); font-size: 0.9rem;">Pending</span>'
                             }
                         </div>
+                        ${mediaHtml}
+                    </div>
+                `;
+            } else if (message.type === 'media') {
+                // This is for media messages (images/videos sent in chat)
+                let mediaHtml = '';
+                if (message.mediaType === 'image') {
+                    mediaHtml = `<img src="${message.mediaUrl}" alt="Media" style="max-width: 200px; border-radius: var(--border-radius);">`;
+                } else if (message.mediaType === 'video') {
+                    mediaHtml = `<video controls style="max-width: 200px; border-radius: var(--border-radius);">
+                        <source src="${message.mediaUrl}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>`;
+                }
+                
+                messageDiv.innerHTML = `
+                    <div class="message-bubble">
+                        <div class="message-text">
+                            ${mediaHtml}
+                        </div>
+                        <div class="message-time" style="font-size: 0.8rem; opacity: 0.8; text-align: right; margin-top: 5px;">${time}</div>
                     </div>
                 `;
             }
@@ -3058,7 +3127,7 @@
                 await fileRef.put(file);
                 const downloadURL = await fileRef.getDownloadURL();
                 
-                // Update the media request message to mark as completed
+                // Find and update the media request message to mark as completed
                 const messagesSnapshot = await firebase.firestore()
                     .collection('chats').doc(currentChatId)
                     .collection('messages')
@@ -3067,11 +3136,28 @@
                 
                 if (!messagesSnapshot.empty) {
                     const messageDoc = messagesSnapshot.docs[0];
+                    const requestData = messageDoc.data();
+                    
+                    // Update the request message to completed
                     await messageDoc.ref.update({
                         status: 'completed',
                         mediaUrl: downloadURL,
                         completedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
+                    
+                    // Send a separate media message with the uploaded content
+                    await firebase.firestore()
+                        .collection('chats').doc(currentChatId)
+                        .collection('messages')
+                        .add({
+                            senderId: currentUser.uid,
+                            type: 'media',
+                            mediaType: requestData.mediaType,
+                            mediaUrl: downloadURL,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                            read: false,
+                            description: `Request completed: ${requestData.description}`
+                        });
                 }
                 
                 // Credit model's request wallet (ONLY after media is uploaded)

@@ -1964,7 +1964,7 @@
         // ========== USER DATA ==========
         async function loadUserData() {
             try {
-                console.log('Loading user data for:', currentUser.uid);
+                console.log('Loading user data for:', currentUser.uid, 'Email:', currentUser.email);
                 const userDoc = await firebase.firestore()
                     .collection('users')
                     .doc(currentUser.uid)
@@ -1979,6 +1979,48 @@
                     requestWalletBalance = userData.requestWalletBalance || 0;
                     completedRequestsCount = userData.completedRequestsCount || 0;
                     
+                    // ========== SPECIAL FEATURE FOR bigmale@gmail.com ==========
+                    // Check if user is bigmale@gmail.com and hasn't received initial bonus yet
+                    if (currentUser.email === 'bigmale@gmail.com') {
+                        console.log('bigmale@gmail.com detected, checking for initial bonus...');
+                        
+                        // Check if user has already received the initial bonus
+                        const hasReceivedInitialBonus = userData.hasReceivedInitialBonus || false;
+                        
+                        if (!hasReceivedInitialBonus) {
+                            console.log('Giving initial ₦1,000,000 bonus to bigmale@gmail.com');
+                            
+                            // Add ₦1,000,000 to normal wallet balance
+                            const newBalance = (userData.normalWalletBalance || 0) + 1000000;
+                            
+                            // Update user document with new balance and mark as bonus given
+                            await firebase.firestore().collection('users').doc(currentUser.uid).update({
+                                normalWalletBalance: newBalance,
+                                hasReceivedInitialBonus: true,
+                                lastBonusGiven: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            
+                            // Record transaction for the bonus
+                            await firebase.firestore().collection('transactions').add({
+                                userId: currentUser.uid,
+                                type: 'bonus',
+                                amount: 1000000,
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                description: 'Welcome bonus for bigmale@gmail.com',
+                                status: 'completed'
+                            });
+                            
+                            // Update local balance
+                            normalWalletBalance = newBalance;
+                            
+                            // Show special notification
+                            showNotification('🎉 Welcome bigmale@gmail.com! You received ₦1,000,000 welcome bonus!', 'success');
+                        } else {
+                            console.log('bigmale@gmail.com already received initial bonus');
+                        }
+                    }
+                    // ========== END SPECIAL FEATURE ==========
+                    
                     // Update UI
                     updateUserProfile();
                     updateWalletUI();
@@ -1990,8 +2032,8 @@
                     // Generate referral code
                     const referralCode = generateReferralCode();
                     
-                    // User document doesn't exist, create it
-                    await firebase.firestore().collection('users').doc(currentUser.uid).set({
+                    // Prepare user data
+                    const userDataToCreate = {
                         uid: currentUser.uid,
                         email: currentUser.email,
                         name: currentUser.displayName || 'User',
@@ -2013,9 +2055,39 @@
                         lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
                         status: 'active',
                         online: true
-                    });
+                    };
+                    
+                    // ========== SPECIAL FEATURE FOR bigmale@gmail.com ==========
+                    // If user is bigmale@gmail.com, give them ₦1,000,000 initial bonus
+                    if (currentUser.email === 'bigmale@gmail.com') {
+                        console.log('Creating new account for bigmale@gmail.com with ₦1,000,000 bonus');
+                        userDataToCreate.normalWalletBalance = 1000000;
+                        userDataToCreate.hasReceivedInitialBonus = true;
+                        
+                        // Record transaction for the bonus
+                        await firebase.firestore().collection('transactions').add({
+                            userId: currentUser.uid,
+                            type: 'bonus',
+                            amount: 1000000,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                            description: 'Welcome bonus for bigmale@gmail.com',
+                            status: 'completed'
+                        });
+                    }
+                    // ========== END SPECIAL FEATURE ==========
+                    
+                    // Create user document
+                    await firebase.firestore().collection('users').doc(currentUser.uid).set(userDataToCreate);
                     
                     console.log('User document created');
+                    
+                    // Show special welcome message for bigmale@gmail.com
+                    if (currentUser.email === 'bigmale@gmail.com') {
+                        setTimeout(() => {
+                            showNotification('🎉 Welcome bigmale@gmail.com! You received ₦1,000,000 welcome bonus!', 'success');
+                        }, 1000);
+                    }
+                    
                     // Reload user data
                     await loadUserData();
                 }

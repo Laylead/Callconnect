@@ -57,7 +57,7 @@
             overflow-x: hidden;
             position: relative;
             touch-action: pan-y;
-            padding: env(safe-area-inset-top) 0 env(safe-area-bottom) 0;
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
             overscroll-behavior: none;
         }
 
@@ -2405,10 +2405,10 @@
 
         // Local Storage Keys
         const STORAGE_KEYS = {
-            CACHED_STORIES: 'radio_explore_stories_v4',
-            CACHE_TIMESTAMP: 'radio_explore_cache_time_v4',
-            SAVED_STORIES: 'radio_saved_stories_v4',
-            FILTERS: 'radio_explore_filters_v4'
+            CACHED_STORIES: 'radio_explore_stories_v5',
+            CACHE_TIMESTAMP: 'radio_explore_cache_time_v5',
+            SAVED_STORIES: 'radio_saved_stories_v5',
+            FILTERS: 'radio_explore_filters_v5'
         };
 
         // Filter Configuration
@@ -2769,7 +2769,7 @@
                         const story = childSnapshot.val();
                         story.id = childSnapshot.key;
                         
-                        // Ensure required fields exist
+                        // Ensure required fields exist with proper values from Firebase
                         story.title = story.title || 'Untitled Story';
                         story.description = story.description || 'No description available';
                         story.authorName = story.authorName || 'Anonymous';
@@ -2782,7 +2782,10 @@
                         story.tags = story.tags || [];
                         story.parts = story.parts || [];
                         story.isFeatured = story.isFeatured || false;
-                        story.audioUrl = story.audioUrl || '';
+                        
+                        // Check for audio URL in different possible field names
+                        // Try multiple field names that might contain the audio URL
+                        story.audioUrl = story.audioUrl || story.audio || story.url || story.link || story.audioLink || '';
                         
                         stories.unshift(story); // Newest first
                     });
@@ -2798,6 +2801,13 @@
                     
                     if (stories.length === 0) {
                         showToast("No stories found. Add stories to Firebase database.", "info");
+                    } else {
+                        console.log(`Loaded ${stories.length} stories from Firebase`);
+                        // Log the first story to see its structure
+                        if (stories.length > 0) {
+                            console.log("Sample story structure:", stories[0]);
+                            console.log("Audio URL in first story:", stories[0].audioUrl);
+                        }
                     }
                 } else {
                     showToast("No stories found in database. Add stories to Firebase.", "info");
@@ -2890,7 +2900,9 @@
                         story.tags = story.tags || [];
                         story.parts = story.parts || [];
                         story.isFeatured = story.isFeatured || false;
-                        story.audioUrl = story.audioUrl || '';
+                        
+                        // Check for audio URL in different possible field names
+                        story.audioUrl = story.audioUrl || story.audio || story.url || story.link || story.audioLink || '';
                         
                         newStories.unshift(story);
                     });
@@ -3124,6 +3136,7 @@
         function setupAudioListeners() {
             // Create audio element
             currentAudio = new Audio();
+            currentAudio.crossOrigin = "anonymous"; // Allow CORS for external audio URLs
             
             currentAudio.addEventListener('play', function() {
                 isPlaying = true;
@@ -3174,6 +3187,12 @@
                 return;
             }
             
+            // Validate the audio URL
+            if (!isValidAudioUrl(story.audioUrl)) {
+                showToast("Invalid audio URL format", "error");
+                return;
+            }
+            
             currentStory = story;
             
             // Stop current audio if playing
@@ -3182,11 +3201,32 @@
                 clearInterval(audioUpdateInterval);
             }
             
-            // Load and play real audio from Firebase - NO DEMO URL
+            // Load and play the audio URL from Firebase
+            console.log("Playing audio URL:", story.audioUrl);
             currentAudio.src = story.audioUrl;
-            currentAudio.play().catch(error => {
+            
+            // Add preload and try to load the audio first
+            currentAudio.preload = 'auto';
+            currentAudio.load();
+            
+            currentAudio.play().then(() => {
+                console.log("Audio playback started successfully");
+            }).catch(error => {
                 console.error("Playback error:", error);
-                showToast("Error playing audio. Please try again.", "error");
+                
+                // Try alternative approach for streams
+                if (story.audioUrl.includes('stream') || story.audioUrl.includes('radio')) {
+                    showToast("Streaming audio... This may take a moment", "info");
+                    // For streams, we might need to wait and retry
+                    setTimeout(() => {
+                        currentAudio.play().catch(e => {
+                            console.error("Retry playback error:", e);
+                            showToast("Cannot play this audio stream. Try another story.", "error");
+                        });
+                    }, 1000);
+                } else {
+                    showToast("Error playing audio. Please try again.", "error");
+                }
             });
             
             // Update UI
@@ -3194,6 +3234,40 @@
             
             // Show floating player
             showFloatingPlayer();
+        }
+
+        function isValidAudioUrl(url) {
+            if (!url) return false;
+            
+            // Check if it's a valid URL
+            try {
+                new URL(url);
+            } catch (e) {
+                return false;
+            }
+            
+            // Accept common audio formats and streams
+            const audioExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac', '.webm'];
+            const streamKeywords = ['stream', 'radio', 'live', 'broadcast', 'm3u8', 'pls'];
+            
+            const urlLower = url.toLowerCase();
+            
+            // Check for audio extensions
+            if (audioExtensions.some(ext => urlLower.endsWith(ext))) {
+                return true;
+            }
+            
+            // Check for stream indicators
+            if (streamKeywords.some(keyword => urlLower.includes(keyword))) {
+                return true;
+            }
+            
+            // Check for common audio MIME types in URL
+            if (urlLower.includes('audio/') || urlLower.includes('.mp3?') || urlLower.includes('.m3u8')) {
+                return true;
+            }
+            
+            return true; // Accept all valid URLs for now
         }
 
         function updatePlayerUI(story) {
@@ -3329,7 +3403,7 @@
             const currentTime = currentAudio.currentTime;
             const duration = currentAudio.duration;
             
-            if (duration) {
+            if (duration && !isNaN(duration)) {
                 const progressPercent = (currentTime / duration) * 100;
                 
                 // Update seek bar

@@ -1056,7 +1056,7 @@
             color: var(--text-primary);
         }
 
-        .form-input, .form-textarea {
+        .form-input {
             width: 100%;
             padding: 14px 16px;
             background: rgba(255, 255, 255, 0.07);
@@ -1069,12 +1069,7 @@
             font-family: 'Poppins', sans-serif;
         }
 
-        .form-textarea {
-            min-height: 150px;
-            resize: vertical;
-        }
-
-        .form-input:focus, .form-textarea:focus {
+        .form-input:focus {
             outline: none;
             border-color: var(--primary-purple);
             box-shadow: 0 0 0 3px rgba(106, 13, 255, 0.2);
@@ -1126,37 +1121,6 @@
             cursor: pointer;
         }
 
-        .text-editor-toolbar {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
-            flex-wrap: wrap;
-        }
-
-        .editor-btn {
-            padding: 8px 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 14px;
-        }
-
-        .editor-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: var(--primary-purple);
-        }
-
-        .editor-btn.active {
-            background: var(--primary-purple);
-            border-color: var(--primary-purple);
-        }
-
         .form-actions {
             display: flex;
             flex-direction: column;
@@ -1175,6 +1139,17 @@
             text-align: center;
         }
 
+        .form-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .form-btn:disabled:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
         .form-btn.submit {
             background: linear-gradient(135deg, var(--primary-purple), var(--neon-magenta));
             color: white;
@@ -1183,13 +1158,6 @@
         .form-btn.email {
             background: linear-gradient(135deg, var(--success), #00b894);
             color: white;
-        }
-
-        .form-btn.email:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-secondary);
         }
 
         .form-btn.cancel {
@@ -1699,7 +1667,7 @@
         </div>
     </div>
 
-    <!-- Story Submission Modal - UPDATED -->
+    <!-- Story Submission Modal -->
     <div class="modal-overlay" id="storyModal">
         <div class="modal-content">
             <button class="modal-close" onclick="closeStoryModal()">×</button>
@@ -1709,8 +1677,6 @@
                     <label class="form-label" for="storyTitle">Story Title</label>
                     <input type="text" id="storyTitle" class="form-input" placeholder="Enter your story title" required>
                 </div>
-                
-                <!-- REMOVED: Story content textarea and editor toolbar -->
                 
                 <div class="form-group">
                     <label class="form-label">Terms and Conditions</label>
@@ -1724,20 +1690,16 @@
                             <p>5. You retain the copyright to your story but grant us a license to publish it.</p>
                             <p>6. We may contact you via email regarding your submission.</p>
                             <p>7. Submission does not guarantee publication.</p>
-                            <p>8. All submissions will be reviewed within 7-10 business days.</p>
-                            <p>9. You will be notified via email when your story is published or if it requires changes.</p>
-                            <p>10. By checking the box below, you agree to all terms and conditions.</p>
                         </div>
                     </div>
                 </div>
                 
                 <div class="checkbox-group">
-                    <input type="checkbox" id="agreeTerms" onchange="toggleEmailButton()">
-                    <label for="agreeTerms">I have read and agree to the terms and conditions</label>
+                    <input type="checkbox" id="agreeTerms" required>
+                    <label for="agreeTerms">I agree to the terms and conditions</label>
                 </div>
                 
                 <div class="form-actions">
-                    <!-- REMOVED: Direct submit button -->
                     <button type="button" class="form-btn email" id="emailSubmitBtn" onclick="submitViaEmail()" disabled>
                         <i class="fas fa-envelope"></i> Submit via Email
                     </button>
@@ -1926,18 +1888,13 @@
         let lastScrollTop = 0;
         let isHeaderVisible = true;
 
-        // Local Storage Keys for Saved Stories
-        const STORAGE_KEYS = {
-            SAVED_STORIES: 'radio_saved_stories_v5'
-        };
-
         // Firebase Authentication State Listener
         auth.onAuthStateChanged((user) => {
             if (user) {
                 console.log("User logged in:", user.email);
                 updateUserProfile(user);
                 loadUserData(user.uid);
-                loadSavedStoriesFromStorage(); // Load from localStorage
+                loadSavedStoriesFromStorage();
                 setTimeout(() => {
                     loadFeed();
                 }, 1500);
@@ -2034,8 +1991,12 @@
                 }
             });
 
-            // REMOVED: Story form submission (replaced with email only)
-            
+            // Terms checkbox listener
+            document.getElementById('agreeTerms').addEventListener('change', function() {
+                const emailBtn = document.getElementById('emailSubmitBtn');
+                emailBtn.disabled = !this.checked;
+            });
+
             // Avatar upload preview
             document.getElementById('avatarInput').addEventListener('change', function(e) {
                 const file = e.target.files[0];
@@ -2129,31 +2090,6 @@
             });
         });
 
-        // ===== SAVED STORIES SYSTEM =====
-        function loadSavedStoriesFromStorage() {
-            try {
-                const saved = localStorage.getItem(STORAGE_KEYS.SAVED_STORIES);
-                if (saved) {
-                    const savedArray = JSON.parse(saved);
-                    savedStories = new Set(savedArray);
-                    console.log(`Loaded ${savedStories.size} saved stories from localStorage`);
-                } else {
-                    console.log("No saved stories found in localStorage");
-                }
-            } catch (error) {
-                console.error("Error loading saved stories:", error);
-            }
-        }
-
-        function saveSavedStoriesToStorage() {
-            try {
-                const savedArray = Array.from(savedStories);
-                localStorage.setItem(STORAGE_KEYS.SAVED_STORIES, JSON.stringify(savedArray));
-            } catch (error) {
-                console.error("Error saving stories:", error);
-            }
-        }
-
         // ===== FIREBASE FEED SYSTEM =====
         function loadFeed() {
             // Check cache first
@@ -2213,7 +2149,7 @@
                     viewers: 1245,
                     type: "podcast",
                     icon: "🎙️",
-                    likes: 42,
+                    saves: 42,
                     cardType: "podcast",
                     startTime: "45 min",
                     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
@@ -2229,7 +2165,7 @@
                     viewers: 2892,
                     type: "audio",
                     icon: "🔍",
-                    likes: 131,
+                    saves: 131,
                     cardType: "audio",
                     startTime: "32 min",
                     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
@@ -2245,7 +2181,7 @@
                     viewers: 1567,
                     type: "radio",
                     icon: "🔬",
-                    likes: 78,
+                    saves: 78,
                     cardType: "radio",
                     startTime: "28 min",
                     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
@@ -2261,76 +2197,12 @@
                     viewers: 2341,
                     type: "podcast",
                     icon: "📜",
-                    likes: 156,
+                    saves: 156,
                     cardType: "podcast",
                     startTime: "60 min",
                     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
                     author: "Literary Society",
                     duration: "60:00"
-                },
-                {
-                    id: "demo_5",
-                    title: "History Uncovered",
-                    description: "Forgotten stories from World War II. Episode: The Secret Resistance.",
-                    background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
-                    tags: ["history", "documentary", "new"],
-                    viewers: 1456,
-                    type: "audio",
-                    icon: "📜",
-                    likes: 89,
-                    cardType: "audio",
-                    startTime: "52 min",
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
-                    author: "Historical Society",
-                    duration: "52:30"
-                },
-                {
-                    id: "demo_6",
-                    title: "Meditation Guide",
-                    description: "Guided meditation for stress relief and mindfulness. Perfect for beginners.",
-                    background: "linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%)",
-                    tags: ["meditation", "wellness", "health"],
-                    viewers: 3890,
-                    type: "radio",
-                    icon: "🧘",
-                    likes: 273,
-                    cardType: "radio",
-                    startTime: "25 min",
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
-                    author: "Mindful Moments",
-                    duration: "25:15"
-                },
-                {
-                    id: "demo_7",
-                    title: "Tech Talk Daily",
-                    description: "Latest tech news and AI developments. Today: The Future of Quantum Computing.",
-                    background: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
-                    tags: ["tech", "ai", "trending"],
-                    viewers: 3321,
-                    type: "podcast",
-                    icon: "💻",
-                    likes: 124,
-                    cardType: "podcast",
-                    startTime: "38 min",
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
-                    author: "Tech Insider",
-                    duration: "38:45"
-                },
-                {
-                    id: "demo_8",
-                    title: "Jazz Classics",
-                    description: "Smooth jazz recordings from the 1950s-60s. Featuring Miles Davis and John Coltrane.",
-                    background: "linear-gradient(135deg, #30cfd0 0%, #330867 100%)",
-                    tags: ["music", "jazz", "classic"],
-                    viewers: 2789,
-                    type: "audio",
-                    icon: "🎷",
-                    likes: 188,
-                    cardType: "audio",
-                    startTime: "75 min",
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
-                    author: "Jazz Archive",
-                    duration: "75:20"
                 }
             ];
 
@@ -2431,14 +2303,14 @@
                     return `<span class="${className}">${tag.toUpperCase().replace('-', ' ')}</span>`;
                 }).join('');
                 
-                // Check if saved - FIXED: Use savedStories Set
+                // Check if saved
                 const isSaved = savedStories.has(story.id.toString());
                 const saveBtnClass = isSaved ? 'action-btn saved' : 'action-btn';
                 const saveIcon = isSaved ? 'fas fa-bookmark' : 'far fa-bookmark';
-                const saveCount = story.likes || story.saves || 0;
+                const saveCount = story.saves || 0;
                 
                 // Format viewers/plays count
-                const formattedViewers = formatNumber(story.plays || story.viewers || 0);
+                const formattedViewers = formatNumber(story.viewers || 0);
                 
                 // Get duration
                 const duration = story.duration || story.startTime || '00:00';
@@ -2480,7 +2352,7 @@
                         <div class="card-stats">
                             <div class="viewers-count">
                                 <i class="fas fa-headphones"></i>
-                                ${formattedViewers} ${story.plays ? 'plays' : 'listeners'}
+                                ${formattedViewers} listeners
                             </div>
                             <div class="card-actions">
                                 <button class="action-btn play-btn" onclick="playStory('${story.id}', this, event)">
@@ -2594,8 +2466,8 @@
                     // Start updating seek bar
                     audioUpdateInterval = setInterval(updateAudioProgress, 100);
                     
-                    // Update play count in Firebase if it's a Firebase story
-                    if (story.id && !story.id.startsWith('demo_')) { // Firebase IDs are not demo
+                    // Update play count in Firebase if it's not a demo story
+                    if (!story.id.startsWith('demo_')) {
                         updatePlayCount(story.id);
                     }
                 });
@@ -2736,6 +2608,14 @@
             }
         }
 
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "00:00";
+            
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
         async function updatePlayCount(storyId) {
             try {
                 const storyRef = db.ref('stories/' + storyId + '/plays');
@@ -2754,7 +2634,29 @@
             }
         }
 
-        // ===== SAVE SYSTEM - FIXED =====
+        // ===== SAVE SYSTEM =====
+        function loadSavedStoriesFromStorage() {
+            try {
+                const saved = localStorage.getItem('radio_saved_stories_v5');
+                if (saved) {
+                    const savedArray = JSON.parse(saved);
+                    savedStories = new Set(savedArray);
+                    console.log(`Loaded ${savedStories.size} saved stories from localStorage`);
+                }
+            } catch (error) {
+                console.error("Error loading saved stories:", error);
+            }
+        }
+
+        function saveSavedStoriesToStorage() {
+            try {
+                const savedArray = Array.from(savedStories);
+                localStorage.setItem('radio_saved_stories_v5', JSON.stringify(savedArray));
+            } catch (error) {
+                console.error("Error saving stories:", error);
+            }
+        }
+
         async function saveStory(storyId, button, event) {
             if (event) event.stopPropagation();
             
@@ -2778,6 +2680,12 @@
                     }
                     
                     showToast("Removed from saved", "info");
+                    
+                    // Update Firebase if it's not a demo story
+                    if (!storyId.startsWith('demo_')) {
+                        await updateSaveCountInFirebase(storyId, false);
+                        await removeFromUserSaves(currentUser.uid, storyId);
+                    }
                 } else {
                     // Save - show popup if needed (same as original)
                     if (!dontShowSavePopup && savePopupCount < 3) {
@@ -2795,38 +2703,64 @@
                     }
                     
                     showToast("Story saved to collection!", "success");
-                }
-                
-                // Update localStorage
-                saveSavedStoriesToStorage();
-                
-                // Update Firebase if it's a Firebase story (not demo)
-                if (!storyId.startsWith('demo_')) {
-                    const storyRef = db.ref('stories/' + storyId + '/likes');
-                    const userSaveRef = db.ref('user_saves/' + currentUser.uid + '/' + storyId);
                     
-                    if (isSaved) {
-                        await storyRef.transaction(current => (current || 1) - 1);
-                        await userSaveRef.remove();
-                    } else {
-                        await storyRef.transaction(current => (current || 0) + 1);
-                        await userSaveRef.set(true);
+                    // Update Firebase if it's not a demo story
+                    if (!storyId.startsWith('demo_')) {
+                        await updateSaveCountInFirebase(storyId, true);
+                        await addToUserSaves(currentUser.uid, storyId);
                     }
                 }
+                
+                // Update local storage
+                saveSavedStoriesToStorage();
                 
                 // Update cache
                 if (cachedStories) {
                     const storyIndex = cachedStories.findIndex(card => card.id.toString() === storyId.toString());
                     if (storyIndex !== -1) {
-                        cachedStories[storyIndex].likes = isSaved ? 
-                            Math.max(0, (cachedStories[storyIndex].likes || 1) - 1) : 
-                            (cachedStories[storyIndex].likes || 0) + 1;
+                        cachedStories[storyIndex].saves = isSaved ? 
+                            Math.max(0, (cachedStories[storyIndex].saves || 1) - 1) : 
+                            (cachedStories[storyIndex].saves || 0) + 1;
                         localStorage.setItem('radioStories', JSON.stringify(cachedStories));
                     }
                 }
             } catch (error) {
                 console.error("Error saving story:", error);
                 showToast("Failed to save story. Please try again.", "error");
+            }
+        }
+
+        async function updateSaveCountInFirebase(storyId, isSaved) {
+            try {
+                const storyRef = db.ref('stories/' + storyId + '/saves');
+                if (isSaved) {
+                    await storyRef.transaction(current => (current || 0) + 1);
+                } else {
+                    await storyRef.transaction(current => Math.max(0, (current || 1) - 1));
+                }
+            } catch (error) {
+                console.error("Error updating save count:", error);
+                throw error;
+            }
+        }
+
+        async function addToUserSaves(userId, storyId) {
+            try {
+                const userSaveRef = db.ref('user_saves/' + userId + '/' + storyId);
+                await userSaveRef.set(true);
+            } catch (error) {
+                console.error("Error adding to user saves:", error);
+                throw error;
+            }
+        }
+
+        async function removeFromUserSaves(userId, storyId) {
+            try {
+                const userSaveRef = db.ref('user_saves/' + userId + '/' + storyId);
+                await userSaveRef.remove();
+            } catch (error) {
+                console.error("Error removing from user saves:", error);
+                throw error;
             }
         }
 
@@ -2935,15 +2869,13 @@
             }
         }
 
-        // Story submission functions - UPDATED
+        // Story submission functions
         function openStoryModal() {
             const modal = document.getElementById('storyModal');
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
-            
-            // Reset form and disable email button
-            document.getElementById('storyTitle').value = '';
-            document.getElementById('agreeTerms').checked = false;
+            // Reset form
+            document.getElementById('storyForm').reset();
             document.getElementById('emailSubmitBtn').disabled = true;
         }
 
@@ -2953,43 +2885,19 @@
             document.body.style.overflow = 'auto';
         }
 
-        function toggleEmailButton() {
-            const agreeTerms = document.getElementById('agreeTerms').checked;
-            const storyTitle = document.getElementById('storyTitle').value.trim();
-            document.getElementById('emailSubmitBtn').disabled = !(agreeTerms && storyTitle.length > 0);
-        }
-
         function submitViaEmail() {
             const title = document.getElementById('storyTitle').value || 'My Story Submission';
-            const user = auth.currentUser;
-            const userEmail = user ? user.email : 'user@example.com';
-            const userName = user ? user.displayName || 'User' : 'User';
             
-            const emailBody = `
-Story Title: ${title}
-
-Submitted by: ${userName}
-Email: ${userEmail}
-
-Submission Date: ${new Date().toLocaleDateString()}
-
-Message:
-I would like to submit my story for consideration. I have read and agree to all terms and conditions.
-
----
-This submission was made via RADIO Podcast App
-            `;
+            const emailBody = `Title: ${title}%0D%0A%0D%0APlease share your story in the email body or as an attachment.%0D%0A%0D%0ASubmitted via RADIO Podcast App`;
+            const mailtoLink = `mailto:submitmystory@gmail.com?subject=Story Submission: ${encodeURIComponent(title)}&body=${emailBody}`;
             
-            const mailtoLink = `mailto:submitmystory@gmail.com?subject=Story Submission: ${encodeURIComponent(title)}&body=${encodeURIComponent(emailBody)}`;
+            window.location.href = mailtoLink;
             
-            window.open(mailtoLink, '_blank');
-            
-            showToast("Opening email client to submit your story", "info");
-            
-            // Close modal after a delay
+            // Show success message and close modal
+            showToast("Email client opened! Please send your story via email.", "success");
             setTimeout(() => {
                 closeStoryModal();
-            }, 1000);
+            }, 2000);
         }
 
         // Open profile modal
@@ -3062,6 +2970,12 @@ This submission was made via RADIO Podcast App
             }, 3000);
         }
 
+        // Update play/pause button in audio player
+        function updatePlayPauseButton(isPlaying) {
+            const icon = isPlaying ? 'fas fa-pause' : 'fas fa-play';
+            document.getElementById('playPauseBtn').innerHTML = `<i class="${icon}"></i>`;
+        }
+
         // Simulate live updates (same as original)
         function simulateLiveUpdates() {
             setInterval(() => {
@@ -3079,7 +2993,7 @@ This submission was made via RADIO Podcast App
                         
                         const change = Math.floor(Math.random() * 21) - 10;
                         const newCount = Math.max(100, current + change);
-                        el.innerHTML = `<i class="fas fa-headphones"></i> ${formatNumber(newCount)} ${text.includes('plays') ? 'plays' : 'listeners'}`;
+                        el.innerHTML = `<i class="fas fa-headphones"></i> ${formatNumber(newCount)} listeners`;
                     }
                 });
                 
@@ -3121,9 +3035,6 @@ This submission was made via RADIO Podcast App
                 }, 200);
             }
         });
-
-        // Also update the story title input to enable/disable email button
-        document.getElementById('storyTitle').addEventListener('input', toggleEmailButton);
     </script>
 </body>
 </html>

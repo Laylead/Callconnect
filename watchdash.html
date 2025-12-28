@@ -1625,6 +1625,21 @@
             opacity: 1;
             transform: translateX(-50%) translateY(0);
         }
+
+        /* ===== EMAIL BUTTON DISABLED STATE ===== */
+        .form-btn.email:disabled {
+            background: rgba(255, 255, 255, 0.07) !important;
+            color: rgba(255, 255, 255, 0.5) !important;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .form-btn.email:disabled:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
     </style>
 </head>
 <body>
@@ -1921,19 +1936,25 @@
         let currentPlayingCard = null;
         let savePopupCount = 0;
         let dontShowSavePopup = false;
-        let cachedStories = null;
-        let lastUpdateTime = null;
+        let cachedStories = [];
+        let lastUpdateTime = 0;
         let currentPlayingStory = null;
         let audioUpdateInterval = null;
         let isAudioPlayerOpen = false;
         let lastScrollTop = 0;
         let isHeaderVisible = true;
+        let isInitialLoadComplete = false;
+        let updateCheckInterval = null;
 
         // Local Storage Keys
         const STORAGE_KEYS = {
-            SAVED_STORIES: 'radio_saved_stories_v6',
-            SAVE_POPUP_COUNT: 'radio_save_popup_count_v6',
-            DONT_SHOW_POPUP: 'radio_dont_show_save_popup_v6'
+            SAVED_STORIES: 'radio_saved_stories_v7',
+            SAVE_POPUP_COUNT: 'radio_save_popup_count_v7',
+            DONT_SHOW_POPUP: 'radio_dont_show_save_popup_v7',
+            STORIES_CACHE: 'radio_stories_cache_v7',
+            LAST_UPDATE_TIME: 'radio_last_update_time_v7',
+            LAST_STORY_ID: 'radio_last_story_id_v7',
+            USER_INITIAL_LOAD: 'radio_user_initial_load_v7'
         };
 
         // Firebase Authentication State Listener
@@ -1942,255 +1963,209 @@
                 console.log("User logged in:", user.email);
                 updateUserProfile(user);
                 loadUserData(user.uid);
+                
+                // Check if this user has done initial load
+                const userInitialLoadKey = STORAGE_KEYS.USER_INITIAL_LOAD + '_' + user.uid;
+                const hasDoneInitialLoad = localStorage.getItem(userInitialLoadKey);
+                
+                if (!hasDoneInitialLoad) {
+                    // First time for this user, load stories from Firebase
+                    console.log("First time user, loading stories from Firebase...");
+                    loadInitialStoriesFromFirebase();
+                    localStorage.setItem(userInitialLoadKey, 'true');
+                } else {
+                    // User has done initial load before, use cached stories
+                    console.log("User has cached stories, loading from localStorage...");
+                    loadStoriesFromCache();
+                }
+                
                 // Load saved stories from localStorage
                 loadSavedStories();
-                setTimeout(() => {
-                    loadFeed();
-                }, 1500);
-                simulateLiveUpdates();
-                
-                // Load save popup preference from localStorage
-                const popupPref = localStorage.getItem(STORAGE_KEYS.DONT_SHOW_POPUP);
-                if (popupPref === 'true') {
-                    dontShowSavePopup = true;
-                }
-                
-                // Load save popup count from localStorage
-                const popupCount = localStorage.getItem(STORAGE_KEYS.SAVE_POPUP_COUNT);
-                if (popupCount) {
-                    savePopupCount = parseInt(popupCount);
-                }
                 
                 // Setup terms checkbox listener
                 setupTermsCheckbox();
+                
+                // Start periodic update check (every 30 minutes)
+                startUpdateCheckInterval();
+                
+                // Hide loading after a delay
+                setTimeout(() => {
+                    document.getElementById('loadingOverlay').classList.add('hidden');
+                }, 1500);
+                
             } else {
                 console.log("User not logged in, redirecting to index.html");
                 window.location.href = "index.html";
             }
         });
 
-        // Initialize app when DOM loads
-        document.addEventListener('DOMContentLoaded', function() {
-            // Profile form submission
-            document.getElementById('profileForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
+        // ===== LOCAL STORAGE CACHING SYSTEM =====
+        function loadStoriesFromCache() {
+            try {
+                const cache = localStorage.getItem(STORAGE_KEYS.STORIES_CACHE);
+                const lastUpdate = localStorage.getItem(STORAGE_KEYS.LAST_UPDATE_TIME);
                 
-                const name = document.getElementById('userName').value;
-                const email = document.getElementById('userEmail').value;
-                
-                // Get current user
-                const currentUser = auth.currentUser;
-                
-                if (!currentUser) {
-                    showToast("You must be logged in to update profile", "error");
-                    return;
-                }
-                
-                // Show loading
-                showToast("Updating profile...", "info");
-                
-                try {
-                    let photoURL = currentUser.photoURL;
+                if (cache) {
+                    cachedStories = JSON.parse(cache);
+                    lastUpdateTime = lastUpdate ? parseInt(lastUpdate) : 0;
                     
-                    // Handle avatar upload
-                    const avatarInput = document.getElementById('avatarInput');
-                    if (avatarInput.files && avatarInput.files[0]) {
-                        const file = avatarInput.files[0];
-                        showToast("Uploading image...", "info");
+                    if (cachedStories.length > 0) {
+                        console.log(`Loaded ${cachedStories.length} stories from cache`);
+                        renderFeed(cachedStories);
+                        isInitialLoadComplete = true;
                         
-                        // Create a reference to the file location
-                        const storageRef = storage.ref('profile_images/' + currentUser.uid + '/' + Date.now() + '_' + file.name);
-                        
-                        // Upload file
-                        await storageRef.put(file);
-                        
-                        // Get download URL
-                        photoURL = await storageRef.getDownloadURL();
-                        console.log("Image uploaded to:", photoURL);
+                        // Check for updates in background
+                        checkForStoryUpdates();
+                    } else {
+                        // No stories in cache, load from Firebase
+                        loadInitialStoriesFromFirebase();
                     }
-                    
-                    // Update Firebase user profile
-                    await currentUser.updateProfile({
-                        displayName: name,
-                        photoURL: photoURL
-                    });
-                    
-                    if (email !== currentUser.email) {
-                        await currentUser.updateEmail(email);
-                    }
-                    
-                    // Save to Firebase database
-                    await db.ref('users/' + currentUser.uid).set({
-                        displayName: name,
-                        email: email,
-                        photoURL: photoURL || null,
-                        updatedAt: Date.now()
-                    }, { merge: true });
-                    
-                    showToast("Profile updated successfully!", "success");
-                    
-                    // Update UI
-                    updateUserProfile(currentUser);
-                    
-                    // Close modal after delay
-                    setTimeout(() => {
-                        closeProfileModal();
-                    }, 1500);
-                    
-                } catch (error) {
-                    console.error("Profile update error:", error);
-                    showToast("Profile update failed: " + error.message, "error");
+                } else {
+                    // No cache found, load from Firebase
+                    loadInitialStoriesFromFirebase();
                 }
-            });
-
-            // Story form submission - REMOVED
-            // We're only using email submission now
-            
-            // Avatar upload preview
-            document.getElementById('avatarInput').addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        const avatarPreview = document.getElementById('avatarPreview');
-                        avatarPreview.innerHTML = `<img src="${event.target.result}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-            
-            // Close modals on outside click
-            document.getElementById('profileModal').addEventListener('click', function(e) {
-                if (e.target === this) closeProfileModal();
-            });
-            
-            document.getElementById('storyModal').addEventListener('click', function(e) {
-                if (e.target === this) closeStoryModal();
-            });
-            
-            document.getElementById('savePopup').addEventListener('click', function(e) {
-                if (e.target === this) closeSavePopup();
-            });
-            
-            document.getElementById('audioPlayerPopup').addEventListener('click', function(e) {
-                if (e.target === this) closeAudioPlayer();
-            });
-
-            // Keyboard shortcuts
-            document.addEventListener('keydown', function(e) {
-                if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-                    e.preventDefault();
-                    openStoryModal();
-                }
-                
-                if (e.key === 'Escape') {
-                    closeProfileModal();
-                    closeStoryModal();
-                    closeSavePopup();
-                    closeAudioPlayer();
-                }
-                
-                if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-                    e.preventDefault();
-                    openProfileModal();
-                }
-                
-                // Space bar to play/pause audio
-                if (e.key === ' ' && !e.target.matches('input, textarea')) {
-                    e.preventDefault();
-                    if (currentAudio) {
-                        togglePlayPause();
-                    }
-                }
-                
-                // Left arrow for rewind
-                if (e.key === 'ArrowLeft' && currentAudio) {
-                    e.preventDefault();
-                    skipBackward();
-                }
-                
-                // Right arrow for fast forward
-                if (e.key === 'ArrowRight' && currentAudio) {
-                    e.preventDefault();
-                    skipForward();
-                }
-            });
-
-            // Header hide/show on scroll
-            const verticalFeed = document.getElementById('verticalFeed');
-            verticalFeed.addEventListener('scroll', function() {
-                const scrollTop = verticalFeed.scrollTop;
-                
-                if (scrollTop > lastScrollTop && scrollTop > 100) {
-                    // Scrolling down - hide header
-                    if (isHeaderVisible) {
-                        document.getElementById('mainHeader').classList.add('hidden');
-                        isHeaderVisible = false;
-                    }
-                } else if (scrollTop < lastScrollTop) {
-                    // Scrolling up - show header
-                    if (!isHeaderVisible) {
-                        document.getElementById('mainHeader').classList.remove('hidden');
-                        isHeaderVisible = true;
-                    }
-                }
-                
-                lastScrollTop = scrollTop;
-            });
-        });
-
-        // ===== FIREBASE FEED SYSTEM =====
-        function loadFeed() {
-            // Check cache first
-            const cachedData = localStorage.getItem('radioStories');
-            const cacheTime = localStorage.getItem('radioStoriesTime');
-            
-            if (cachedData && cacheTime && (Date.now() - parseInt(cacheTime)) < 300000) { // 5 minutes cache
-                cachedStories = JSON.parse(cachedData);
-                lastUpdateTime = parseInt(cacheTime);
-                renderFeed(cachedStories);
-                return;
+            } catch (error) {
+                console.error("Error loading stories from cache:", error);
+                loadInitialStoriesFromFirebase();
             }
-            
-            // Load from Firebase
-            loadStoriesFromFirebase();
         }
 
-        async function loadStoriesFromFirebase() {
+        async function loadInitialStoriesFromFirebase() {
             try {
-                const snapshot = await db.ref('stories').orderByChild('createdAt').limitToLast(10).once('value');
+                showToast("Loading stories...", "info");
+                
+                // Fetch up to 100 stories from Firebase
+                const snapshot = await db.ref('stories')
+                    .orderByChild('createdAt')
+                    .limitToLast(100)
+                    .once('value');
+                
                 if (snapshot.exists()) {
                     const stories = [];
+                    let maxCreatedAt = 0;
+                    
                     snapshot.forEach(childSnapshot => {
                         const story = childSnapshot.val();
-                        story.id = childSnapshot.key; // Include the storyId
+                        story.id = childSnapshot.key;
+                        
+                        // Track the newest story for future updates
+                        if (story.createdAt > maxCreatedAt) {
+                            maxCreatedAt = story.createdAt;
+                        }
+                        
                         stories.unshift(story); // Newest first
                     });
                     
-                    // Cache the stories
-                    localStorage.setItem('radioStories', JSON.stringify(stories));
-                    localStorage.setItem('radioStoriesTime', Date.now().toString());
-                    
+                    // Save to cache
                     cachedStories = stories;
-                    lastUpdateTime = Date.now();
+                    lastUpdateTime = maxCreatedAt;
                     
+                    // Save to localStorage
+                    localStorage.setItem(STORAGE_KEYS.STORIES_CACHE, JSON.stringify(stories));
+                    localStorage.setItem(STORAGE_KEYS.LAST_UPDATE_TIME, maxCreatedAt.toString());
+                    
+                    // Save the ID of the last story for update checking
+                    if (stories.length > 0) {
+                        localStorage.setItem(STORAGE_KEYS.LAST_STORY_ID, stories[0].id);
+                    }
+                    
+                    console.log(`Loaded ${stories.length} stories from Firebase and cached locally`);
                     renderFeed(stories);
+                    isInitialLoadComplete = true;
+                    
+                    showToast("Stories loaded successfully!", "success");
+                    
                 } else {
-                    // No stories in Firebase, use demo data
+                    // No stories in Firebase, use demo stories
+                    console.log("No stories in Firebase, loading demo stories");
                     loadDemoStories();
                 }
             } catch (error) {
                 console.error("Error loading stories from Firebase:", error);
-                // Use demo data as fallback
-                loadDemoStories();
+                showToast("Failed to load stories, using cached data", "warning");
+                
+                // Try to load from cache as fallback
+                loadStoriesFromCache();
             }
         }
 
+        async function checkForStoryUpdates() {
+            if (!isInitialLoadComplete) return;
+            
+            try {
+                // Only fetch stories newer than our last update
+                const snapshot = await db.ref('stories')
+                    .orderByChild('createdAt')
+                    .startAt(lastUpdateTime + 1) // +1 to get only newer stories
+                    .once('value');
+                
+                if (snapshot.exists()) {
+                    const newStories = [];
+                    let newMaxCreatedAt = lastUpdateTime;
+                    
+                    snapshot.forEach(childSnapshot => {
+                        const story = childSnapshot.val();
+                        story.id = childSnapshot.key;
+                        
+                        // Check if we already have this story
+                        const existingIndex = cachedStories.findIndex(s => s.id === story.id);
+                        
+                        if (existingIndex === -1) {
+                            // New story
+                            newStories.unshift(story);
+                            
+                            if (story.createdAt > newMaxCreatedAt) {
+                                newMaxCreatedAt = story.createdAt;
+                            }
+                            
+                            console.log("New story found:", story.title);
+                        }
+                    });
+                    
+                    if (newStories.length > 0) {
+                        // Add new stories to cache
+                        cachedStories = [...newStories, ...cachedStories];
+                        
+                        // Limit to 100 stories max
+                        if (cachedStories.length > 100) {
+                            cachedStories = cachedStories.slice(0, 100);
+                        }
+                        
+                        // Update cache
+                        lastUpdateTime = newMaxCreatedAt;
+                        localStorage.setItem(STORAGE_KEYS.STORIES_CACHE, JSON.stringify(cachedStories));
+                        localStorage.setItem(STORAGE_KEYS.LAST_UPDATE_TIME, newMaxCreatedAt.toString());
+                        
+                        // Update UI
+                        renderFeed(cachedStories);
+                        
+                        showToast(`${newStories.length} new stories added!`, "success");
+                    }
+                }
+            } catch (error) {
+                console.error("Error checking for story updates:", error);
+                // Silently fail, we'll try again later
+            }
+        }
+
+        function startUpdateCheckInterval() {
+            // Check for updates every 30 minutes
+            if (updateCheckInterval) {
+                clearInterval(updateCheckInterval);
+            }
+            
+            updateCheckInterval = setInterval(() => {
+                if (isInitialLoadComplete) {
+                    checkForStoryUpdates();
+                }
+            }, 30 * 60 * 1000); // 30 minutes
+        }
+
+        // ===== ORIGINAL FUNCTIONS (UPDATED FOR CACHE) =====
         function loadDemoStories() {
-            // Use demo stories as fallback (same as original)
             const demoStories = [
                 {
-                    id: 1,
+                    id: "demo_1",
                     title: "Midnight Thoughts",
                     description: "A late-night reflection on life, dreams, and the universe. Recorded during a quiet winter night.",
                     background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -2203,10 +2178,12 @@
                     startTime: "45 min",
                     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
                     author: "Alex Johnson",
-                    duration: "45:12"
+                    duration: "45:12",
+                    createdAt: Date.now() - 86400000,
+                    plays: 1245
                 },
                 {
-                    id: 2,
+                    id: "demo_2",
                     title: "Urban Legends",
                     description: "True crime stories from the city that never sleeps. Episode 3: The Subway Mystery.",
                     background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
@@ -2219,10 +2196,12 @@
                     startTime: "32 min",
                     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
                     author: "True Crime Network",
-                    duration: "32:45"
+                    duration: "32:45",
+                    createdAt: Date.now() - 172800000,
+                    plays: 2892
                 },
                 {
-                    id: 3,
+                    id: "demo_3",
                     title: "Science Simplified",
                     description: "Quantum physics explained in simple terms. Today: The Double Slit Experiment.",
                     background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
@@ -2235,98 +2214,21 @@
                     startTime: "28 min",
                     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
                     author: "Dr. Sarah Chen",
-                    duration: "28:20"
-                },
-                {
-                    id: 4,
-                    title: "Poetry Hour",
-                    description: "Classic and contemporary poetry readings with musical accompaniment.",
-                    background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-                    tags: ["poetry", "arts", "live"],
-                    viewers: 2341,
-                    type: "podcast",
-                    icon: "📜",
-                    likes: 156,
-                    cardType: "podcast",
-                    startTime: "60 min",
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
-                    author: "Literary Society",
-                    duration: "60:00"
-                },
-                {
-                    id: 5,
-                    title: "History Uncovered",
-                    description: "Forgotten stories from World War II. Episode: The Secret Resistance.",
-                    background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
-                    tags: ["history", "documentary", "new"],
-                    viewers: 1456,
-                    type: "audio",
-                    icon: "📜",
-                    likes: 89,
-                    cardType: "audio",
-                    startTime: "52 min",
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
-                    author: "Historical Society",
-                    duration: "52:30"
-                },
-                {
-                    id: 6,
-                    title: "Meditation Guide",
-                    description: "Guided meditation for stress relief and mindfulness. Perfect for beginners.",
-                    background: "linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%)",
-                    tags: ["meditation", "wellness", "health"],
-                    viewers: 3890,
-                    type: "radio",
-                    icon: "🧘",
-                    likes: 273,
-                    cardType: "radio",
-                    startTime: "25 min",
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
-                    author: "Mindful Moments",
-                    duration: "25:15"
-                },
-                {
-                    id: 7,
-                    title: "Tech Talk Daily",
-                    description: "Latest tech news and AI developments. Today: The Future of Quantum Computing.",
-                    background: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
-                    tags: ["tech", "ai", "trending"],
-                    viewers: 3321,
-                    type: "podcast",
-                    icon: "💻",
-                    likes: 124,
-                    cardType: "podcast",
-                    startTime: "38 min",
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
-                    author: "Tech Insider",
-                    duration: "38:45"
-                },
-                {
-                    id: 8,
-                    title: "Jazz Classics",
-                    description: "Smooth jazz recordings from the 1950s-60s. Featuring Miles Davis and John Coltrane.",
-                    background: "linear-gradient(135deg, #30cfd0 0%, #330867 100%)",
-                    tags: ["music", "jazz", "classic"],
-                    viewers: 2789,
-                    type: "audio",
-                    icon: "🎷",
-                    likes: 188,
-                    cardType: "audio",
-                    startTime: "75 min",
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
-                    author: "Jazz Archive",
-                    duration: "75:20"
+                    duration: "28:20",
+                    createdAt: Date.now() - 259200000,
+                    plays: 1567
                 }
             ];
 
-            // Cache demo stories
-            localStorage.setItem('radioStories', JSON.stringify(demoStories));
-            localStorage.setItem('radioStoriesTime', Date.now().toString());
-            
             cachedStories = demoStories;
             lastUpdateTime = Date.now();
             
+            // Save to cache
+            localStorage.setItem(STORAGE_KEYS.STORIES_CACHE, JSON.stringify(demoStories));
+            localStorage.setItem(STORAGE_KEYS.LAST_UPDATE_TIME, lastUpdateTime.toString());
+            
             renderFeed(demoStories);
+            isInitialLoadComplete = true;
         }
 
         function renderFeed(stories) {
@@ -2338,7 +2240,6 @@
             scrollIndicator.innerHTML = '';
             
             if (stories.length === 0) {
-                // Show empty feed (original design didn't have empty state)
                 feedContainer.innerHTML = `
                     <div class="feed-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
                         <div style="text-align: center; z-index: 2;">
@@ -2348,15 +2249,10 @@
                         </div>
                     </div>
                 `;
-                
-                // Hide loading animation
-                setTimeout(() => {
-                    document.getElementById('loadingOverlay').classList.add('hidden');
-                }, 500);
                 return;
             }
             
-            // Create feed cards (exact same as original design)
+            // Create feed cards
             stories.forEach((story, index) => {
                 const feedCard = document.createElement('div');
                 feedCard.className = 'feed-card';
@@ -2367,7 +2263,6 @@
                 } else if (story.thumbnail) {
                     feedCard.style.backgroundImage = `url('${story.thumbnail}')`;
                 } else {
-                    // Generate gradient based on type
                     const gradients = {
                         podcast: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                         audio: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
@@ -2379,7 +2274,7 @@
                 feedCard.dataset.index = index;
                 feedCard.dataset.id = story.id;
                 
-                // Add play animation overlay (exact same as original)
+                // Add play animation overlay
                 const playAnimation = document.createElement('div');
                 playAnimation.className = 'play-animation';
                 playAnimation.innerHTML = `
@@ -2396,7 +2291,7 @@
                 `;
                 feedCard.appendChild(playAnimation);
                 
-                // Create tags (same as original)
+                // Create tags
                 const tags = story.tags || [];
                 if (story.type) {
                     tags.unshift(story.type);
@@ -2416,14 +2311,15 @@
                     return `<span class="${className}">${tag.toUpperCase().replace('-', ' ')}</span>`;
                 }).join('');
                 
-                // Check if saved using localStorage
+                // Check if saved
                 const isSaved = savedStories.has(story.id.toString());
                 const saveBtnClass = isSaved ? 'action-btn saved' : 'action-btn';
                 const saveIcon = isSaved ? 'fas fa-bookmark' : 'far fa-bookmark';
                 const saveCount = story.likes || story.saves || 0;
                 
                 // Format viewers/plays count
-                const formattedViewers = formatNumber(story.plays || story.viewers || 0);
+                const playsCount = story.plays || story.viewers || 0;
+                const formattedViewers = formatNumber(playsCount);
                 
                 // Get duration
                 const duration = story.duration || story.startTime || '00:00';
@@ -2442,7 +2338,7 @@
                     radio: 'Radio Show'
                 }[cardType] || 'Audio Story';
                 
-                // Build card HTML (exact same structure as original)
+                // Build card HTML
                 feedCard.innerHTML += `
                     <div class="card-type-indicator ${cardType}">
                         <i class="fas ${typeIcon}"></i>
@@ -2465,7 +2361,7 @@
                         <div class="card-stats">
                             <div class="viewers-count">
                                 <i class="fas fa-headphones"></i>
-                                ${formattedViewers} ${story.plays ? 'plays' : 'listeners'}
+                                ${formattedViewers} ${playsCount === 1 ? 'play' : 'plays'}
                             </div>
                             <div class="card-actions">
                                 <button class="action-btn play-btn" onclick="playStory('${story.id}', this, event)">
@@ -2485,18 +2381,13 @@
                 
                 feedContainer.appendChild(feedCard);
                 
-                // Add scroll indicator dot (same as original)
+                // Add scroll indicator dot
                 const dot = document.createElement('div');
                 dot.className = 'scroll-dot';
                 dot.dataset.index = index;
                 if (index === 0) dot.classList.add('active');
                 scrollIndicator.appendChild(dot);
             });
-            
-            // Hide loading animation
-            setTimeout(() => {
-                document.getElementById('loadingOverlay').classList.add('hidden');
-            }, 500);
             
             // Update scroll indicator on scroll
             feedContainer.addEventListener('scroll', updateScrollIndicator);
@@ -2506,19 +2397,6 @@
                 const swipeHint = document.getElementById('swipeHint');
                 if (swipeHint) swipeHint.style.opacity = '0';
             }, 3000);
-        }
-
-        function updateScrollIndicator() {
-            const feed = document.getElementById('verticalFeed');
-            const scrollPos = feed.scrollTop;
-            const cardHeight = window.innerHeight - 130;
-            const currentIndex = Math.round(scrollPos / cardHeight);
-            
-            document.querySelectorAll('.scroll-dot').forEach((dot, index) => {
-                dot.classList.toggle('active', index === currentIndex);
-            });
-            
-            currentFeedIndex = currentIndex;
         }
 
         // ===== AUDIO PLAYER SYSTEM =====
@@ -2567,7 +2445,7 @@
                 currentAudio = new Audio(audioUrl);
                 currentPlayingStory = story;
                 
-                // Set up audio events (same as original)
+                // Set up audio events
                 currentAudio.addEventListener('play', function() {
                     cardElement.classList.add('playing');
                     button.innerHTML = '<i class="fas fa-pause"></i>';
@@ -2579,10 +2457,8 @@
                     // Start updating seek bar
                     audioUpdateInterval = setInterval(updateAudioProgress, 100);
                     
-                    // Update play count in Firebase if it's a Firebase story
-                    if (story.id && story.id.length > 3) { // Firebase IDs are long strings
-                        updatePlayCount(story.id);
-                    }
+                    // Update play count
+                    updatePlayCount(storyId);
                 });
                 
                 currentAudio.addEventListener('pause', function() {
@@ -2623,6 +2499,150 @@
             }
         }
 
+        async function updatePlayCount(storyId) {
+            try {
+                // Update in Firebase
+                const storyRef = db.ref('stories/' + storyId + '/plays');
+                await storyRef.transaction(current => (current || 0) + 1);
+                
+                // Update in local cache
+                const storyIndex = cachedStories.findIndex(card => card.id === storyId);
+                if (storyIndex !== -1) {
+                    cachedStories[storyIndex].plays = (cachedStories[storyIndex].plays || 0) + 1;
+                    
+                    // Update localStorage cache
+                    localStorage.setItem(STORAGE_KEYS.STORIES_CACHE, JSON.stringify(cachedStories));
+                    
+                    // Update UI if the story is visible
+                    updateStoryPlayCountUI(storyId, cachedStories[storyIndex].plays);
+                }
+            } catch (error) {
+                console.error("Error updating play count:", error);
+                // Still update local cache even if Firebase fails
+                const storyIndex = cachedStories.findIndex(card => card.id === storyId);
+                if (storyIndex !== -1) {
+                    cachedStories[storyIndex].plays = (cachedStories[storyIndex].plays || 0) + 1;
+                    localStorage.setItem(STORAGE_KEYS.STORIES_CACHE, JSON.stringify(cachedStories));
+                    updateStoryPlayCountUI(storyId, cachedStories[storyIndex].plays);
+                }
+            }
+        }
+
+        function updateStoryPlayCountUI(storyId, newCount) {
+            const formattedCount = formatNumber(newCount);
+            const viewerElements = document.querySelectorAll(`[data-id="${storyId}"] .viewers-count`);
+            
+            viewerElements.forEach(el => {
+                el.innerHTML = `<i class="fas fa-headphones"></i> ${formattedCount} ${newCount === 1 ? 'play' : 'plays'}`;
+            });
+        }
+
+        // ===== SAVE SYSTEM =====
+        function loadSavedStories() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEYS.SAVED_STORIES);
+                if (saved) {
+                    const savedArray = JSON.parse(saved);
+                    savedStories = new Set(savedArray);
+                    console.log(`Loaded ${savedStories.size} saved stories from localStorage`);
+                }
+            } catch (error) {
+                console.error("Error loading saved stories:", error);
+            }
+        }
+
+        function saveStory(storyId, button, event) {
+            if (event) event.stopPropagation();
+            
+            const isSaved = savedStories.has(storyId.toString());
+            
+            try {
+                if (isSaved) {
+                    // Unsave
+                    savedStories.delete(storyId.toString());
+                    
+                    // Update button UI
+                    if (button) {
+                        button.classList.remove('saved');
+                        const currentSaves = parseInt(button.querySelector('.save-count').textContent) || 0;
+                        button.innerHTML = '<i class="far fa-bookmark"></i><span class="save-count">' + Math.max(0, currentSaves - 1) + '</span>';
+                    }
+                    
+                    showToast("Removed from saved", "info");
+                } else {
+                    // Save - show popup if needed
+                    if (!dontShowSavePopup && savePopupCount < 3) {
+                        showSavePopup();
+                        savePopupCount++;
+                        localStorage.setItem(STORAGE_KEYS.SAVE_POPUP_COUNT, savePopupCount.toString());
+                    }
+                    
+                    savedStories.add(storyId.toString());
+                    
+                    // Update button UI
+                    if (button) {
+                        button.classList.add('saved');
+                        const currentSaves = parseInt(button.querySelector('.save-count').textContent) || 0;
+                        button.innerHTML = '<i class="fas fa-bookmark"></i><span class="save-count">' + (currentSaves + 1) + '</span>';
+                    }
+                    
+                    showToast("Story saved to collection!", "success");
+                }
+                
+                // Save to localStorage
+                const savedArray = Array.from(savedStories);
+                localStorage.setItem(STORAGE_KEYS.SAVED_STORIES, JSON.stringify(savedArray));
+                
+            } catch (error) {
+                console.error("Error saving story:", error);
+                showToast("Failed to save story. Please try again.", "error");
+            }
+        }
+
+        // ===== EMAIL SUBMISSION SYSTEM =====
+        function setupTermsCheckbox() {
+            const agreeTerms = document.getElementById('agreeTerms');
+            const emailSubmitBtn = document.getElementById('emailSubmitBtn');
+            
+            if (agreeTerms && emailSubmitBtn) {
+                // Set initial state
+                emailSubmitBtn.disabled = true;
+                
+                // Add change listener
+                agreeTerms.addEventListener('change', function() {
+                    emailSubmitBtn.disabled = !this.checked;
+                });
+            }
+        }
+
+        function submitViaEmail() {
+            const title = document.getElementById('storyTitle').value || 'My Story Submission';
+            const content = document.getElementById('storyContent').value || '';
+            const agreeTerms = document.getElementById('agreeTerms').checked;
+            
+            if (!agreeTerms) {
+                showToast("You must agree to the terms and conditions", "error");
+                return;
+            }
+            
+            if (!title.trim() || !content.trim()) {
+                showToast("Please enter a title and story content", "error");
+                return;
+            }
+            
+            const emailBody = `Story Title: ${title}%0D%0A%0D%0AStory Content:%0D%0A${encodeURIComponent(content)}%0D%0A%0D%0ASubmitted via RADIO Podcast App%0D%0ADate: ${new Date().toLocaleDateString()}%0D%0ATime: ${new Date().toLocaleTimeString()}`;
+            const mailtoLink = `mailto:submitmystory@gmail.com?subject=RADIO Story Submission: ${encodeURIComponent(title)}&body=${emailBody}`;
+            
+            window.location.href = mailtoLink;
+            
+            // Close modal after a delay
+            setTimeout(() => {
+                closeStoryModal();
+                showToast("Email client opened for submission", "success");
+            }, 500);
+        }
+
+        // ===== OTHER FUNCTIONS (UNCHANGED) =====
         function openAudioPlayer(story) {
             document.getElementById('audioPlayerTitle').textContent = story.title || 'Untitled';
             document.getElementById('audioPlayerAuthor').textContent = story.author || 'Unknown Author';
@@ -2716,7 +2736,6 @@
                 document.getElementById('currentTime').textContent = formatTime(currentTime);
                 document.getElementById('seekBar').value = progressPercent;
                 
-                // Update the CSS variable for the progress bar gradient
                 document.getElementById('seekBar').style.setProperty('--progress', progressPercent + '%');
             }
         }
@@ -2729,88 +2748,59 @@
             return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
-        async function updatePlayCount(storyId) {
-            try {
-                const storyRef = db.ref('stories/' + storyId + '/plays');
-                await storyRef.transaction(current => (current || 0) + 1);
-                
-                // Update cache
-                if (cachedStories) {
-                    const storyIndex = cachedStories.findIndex(card => card.id === storyId);
-                    if (storyIndex !== -1) {
-                        cachedStories[storyIndex].plays = (cachedStories[storyIndex].plays || 0) + 1;
-                        localStorage.setItem('radioStories', JSON.stringify(cachedStories));
-                    }
-                }
-            } catch (error) {
-                console.error("Error updating play count:", error);
+        function updatePlayPauseButton(isPlaying) {
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            if (playPauseBtn) {
+                playPauseBtn.innerHTML = isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
             }
         }
 
-        // ===== SAVE SYSTEM (LOCAL STORAGE) =====
-        function loadSavedStories() {
-            try {
-                const saved = localStorage.getItem(STORAGE_KEYS.SAVED_STORIES);
-                if (saved) {
-                    const savedArray = JSON.parse(saved);
-                    savedStories = new Set(savedArray);
-                    console.log(`Loaded ${savedStories.size} saved stories from localStorage`);
-                } else {
-                    console.log("No saved stories found in localStorage");
-                }
-            } catch (error) {
-                console.error("Error loading saved stories:", error);
+        function updateScrollIndicator() {
+            const feed = document.getElementById('verticalFeed');
+            const scrollPos = feed.scrollTop;
+            const cardHeight = window.innerHeight - 130;
+            const currentIndex = Math.round(scrollPos / cardHeight);
+            
+            document.querySelectorAll('.scroll-dot').forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+            
+            currentFeedIndex = currentIndex;
+        }
+
+        function openProfileModal() {
+            const modal = document.getElementById('profileModal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeProfileModal() {
+            const modal = document.getElementById('profileModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function openStoryModal() {
+            const modal = document.getElementById('storyModal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Reset form
+            document.getElementById('storyTitle').value = '';
+            document.getElementById('storyContent').value = '';
+            document.getElementById('agreeTerms').checked = false;
+            
+            // Reset button state
+            const emailSubmitBtn = document.getElementById('emailSubmitBtn');
+            if (emailSubmitBtn) {
+                emailSubmitBtn.disabled = true;
             }
         }
 
-        function saveStory(storyId, button, event) {
-            if (event) event.stopPropagation();
-            
-            const isSaved = savedStories.has(storyId.toString());
-            
-            try {
-                if (isSaved) {
-                    // Unsave
-                    savedStories.delete(storyId.toString());
-                    
-                    // Update button UI
-                    if (button) {
-                        button.classList.remove('saved');
-                        const currentSaves = parseInt(button.querySelector('.save-count').textContent) || 0;
-                        button.innerHTML = '<i class="far fa-bookmark"></i><span class="save-count">' + Math.max(0, currentSaves - 1) + '</span>';
-                    }
-                    
-                    showToast("Removed from saved", "info");
-                } else {
-                    // Save - show popup if needed
-                    if (!dontShowSavePopup && savePopupCount < 3) {
-                        showSavePopup();
-                        savePopupCount++;
-                        localStorage.setItem(STORAGE_KEYS.SAVE_POPUP_COUNT, savePopupCount.toString());
-                    }
-                    
-                    savedStories.add(storyId.toString());
-                    
-                    // Update button UI
-                    if (button) {
-                        button.classList.add('saved');
-                        const currentSaves = parseInt(button.querySelector('.save-count').textContent) || 0;
-                        button.innerHTML = '<i class="fas fa-bookmark"></i><span class="save-count">' + (currentSaves + 1) + '</span>';
-                    }
-                    
-                    showToast("Story saved to collection!", "success");
-                }
-                
-                // Save to localStorage
-                const savedArray = Array.from(savedStories);
-                localStorage.setItem(STORAGE_KEYS.SAVED_STORIES, JSON.stringify(savedArray));
-                
-                console.log("Saved stories updated in localStorage:", savedArray);
-                
-            } catch (error) {
-                console.error("Error saving story:", error);
-                showToast("Failed to save story. Please try again.", "error");
-            }
+        function closeStoryModal() {
+            const modal = document.getElementById('storyModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
         }
 
         function showSavePopup() {
@@ -2822,7 +2812,6 @@
             const popup = document.getElementById('savePopup');
             popup.classList.remove('active');
             
-            // Check if user selected "Don't show again"
             const dontShowAgain = document.getElementById('dontShowAgain').checked;
             if (dontShowAgain) {
                 dontShowSavePopup = true;
@@ -2830,158 +2819,10 @@
             }
         }
 
-        // Load user data from Firebase
-        async function loadUserData(uid) {
-            try {
-                const snapshot = await db.ref('users/' + uid).once('value');
-                const userData = snapshot.val();
-                
-                if (userData) {
-                    document.getElementById('userName').value = userData.displayName || '';
-                    document.getElementById('userEmail').value = userData.email || '';
-                    
-                    if (userData.photoURL) {
-                        const avatarPreview = document.getElementById('avatarPreview');
-                        avatarPreview.innerHTML = `<img src="${userData.photoURL}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-                    }
-                }
-            } catch (error) {
-                console.error("Error loading user data:", error);
-            }
-        }
-
-        // Update user profile in UI
-        function updateUserProfile(user) {
-            const profileBtn = document.getElementById('profileBtn');
-            const profileInitials = document.getElementById('profileInitials');
-            const avatarPreview = document.getElementById('avatarPreview');
-            const avatarInitials = document.getElementById('avatarInitials');
-            
-            if (user) {
-                let initials = 'U';
-                if (user.displayName) {
-                    initials = user.displayName.charAt(0).toUpperCase();
-                } else if (user.email) {
-                    initials = user.email.charAt(0).toUpperCase();
-                }
-                
-                // Update profile button
-                if (user.photoURL) {
-                    profileBtn.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-                } else {
-                    profileInitials.textContent = initials;
-                }
-                
-                // Update profile modal avatar
-                if (avatarPreview) {
-                    if (user.photoURL) {
-                        avatarPreview.innerHTML = `<img src="${user.photoURL}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-                    } else {
-                        avatarInitials.textContent = initials;
-                    }
-                }
-                
-                // Update form fields
-                document.getElementById('userName').value = user.displayName || '';
-                document.getElementById('userEmail').value = user.email || '';
-            }
-        }
-
-        // Delete profile picture
-        async function deleteProfilePicture() {
-            const currentUser = auth.currentUser;
-            if (!currentUser) return;
-            
-            if (!confirm("Are you sure you want to remove your profile picture?")) return;
-            
-            try {
-                showToast("Removing profile picture...", "info");
-                
-                // Update Firebase user profile
-                await currentUser.updateProfile({
-                    photoURL: null
-                });
-                
-                // Update in database
-                await db.ref('users/' + currentUser.uid).update({
-                    photoURL: null,
-                    updatedAt: Date.now()
-                });
-                
-                // Update UI
-                updateUserProfile(currentUser);
-                showToast("Profile picture removed", "success");
-                
-            } catch (error) {
-                console.error("Error deleting profile picture:", error);
-                showToast("Failed to remove profile picture", "error");
-            }
-        }
-
-        // Story submission functions
-        function openStoryModal() {
-            const modal = document.getElementById('storyModal');
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-            
-            // Reset form
-            document.getElementById('storyTitle').value = '';
-            document.getElementById('storyContent').value = '';
-            document.getElementById('agreeTerms').checked = false;
-            
-            // Enable/disable email button based on terms agreement
-            setupTermsCheckbox();
-        }
-
-        function closeStoryModal() {
-            const modal = document.getElementById('storyModal');
-            modal.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
-
-        function setupTermsCheckbox() {
-            const agreeTerms = document.getElementById('agreeTerms');
-            const emailSubmitBtn = document.getElementById('emailSubmitBtn');
-            
-            if (agreeTerms && emailSubmitBtn) {
-                agreeTerms.addEventListener('change', function() {
-                    emailSubmitBtn.disabled = !this.checked;
-                });
-            }
-        }
-
-        function submitViaEmail() {
-            const title = document.getElementById('storyTitle').value || 'My Story Submission';
-            const content = document.getElementById('storyContent').value || '';
-            const agreeTerms = document.getElementById('agreeTerms').checked;
-            
-            if (!agreeTerms) {
-                showToast("You must agree to the terms and conditions", "error");
-                return;
-            }
-            
-            if (!title.trim() || !content.trim()) {
-                showToast("Please enter a title and story content", "error");
-                return;
-            }
-            
-            const emailBody = `Story Title: ${title}%0D%0A%0D%0AStory Content:%0D%0A${encodeURIComponent(content)}%0D%0A%0D%0ASubmitted via RADIO Podcast App%0D%0ADate: ${new Date().toLocaleDateString()}%0D%0ATime: ${new Date().toLocaleTimeString()}`;
-            const mailtoLink = `mailto:submitmystory@gmail.com?subject=RADIO Story Submission: ${encodeURIComponent(title)}&body=${emailBody}`;
-            
-            window.location.href = mailtoLink;
-            
-            // Close modal after a delay
-            setTimeout(() => {
-                closeStoryModal();
-                showToast("Email client opened for submission", "success");
-            }, 500);
-        }
-
         function formatText(command) {
             const textarea = document.getElementById('storyContent');
             textarea.focus();
             
-            // For basic text formatting (in a real app, you'd use a proper rich text editor)
             const start = textarea.selectionStart;
             const end = textarea.selectionEnd;
             const selectedText = textarea.value.substring(start, end);
@@ -3001,31 +2842,14 @@
             
             textarea.value = textarea.value.substring(0, start) + formattedText + textarea.value.substring(end);
             
-            // Restore cursor position
             textarea.selectionStart = start + formattedText.length;
             textarea.selectionEnd = start + formattedText.length;
         }
 
-        // Open profile modal
-        function openProfileModal() {
-            const modal = document.getElementById('profileModal');
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-
-        // Close profile modal
-        function closeProfileModal() {
-            const modal = document.getElementById('profileModal');
-            modal.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
-
-        // Show coming soon (for notifications)
         function showComingSoon(feature) {
             showToast(`${feature} feature coming soon!`, "info");
         }
 
-        // Story interactions
         function shareStory(storyId, event) {
             if (event) event.stopPropagation();
             
@@ -3053,7 +2877,6 @@
             return num.toString();
         }
 
-        // Show toast notification
         function showToast(message, type = 'info') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
@@ -3076,42 +2899,16 @@
             }, 3000);
         }
 
-        // Simulate live updates (same as original)
-        function simulateLiveUpdates() {
-            setInterval(() => {
-                // Update listener counts randomly (same as original)
-                document.querySelectorAll('.viewers-count').forEach(el => {
-                    const text = el.textContent;
-                    const match = text.match(/([\d.]+)([KM]?)/);
-                    if (match) {
-                        let current = parseFloat(match[1]);
-                        const suffix = match[2];
-                        
-                        // Convert back to number
-                        if (suffix === 'K') current *= 1000;
-                        if (suffix === 'M') current *= 1000000;
-                        
-                        const change = Math.floor(Math.random() * 21) - 10;
-                        const newCount = Math.max(100, current + change);
-                        el.innerHTML = `<i class="fas fa-headphones"></i> ${formatNumber(newCount)} ${text.includes('plays') ? 'plays' : 'listeners'}`;
-                    }
-                });
-                
-                // Check for new stories every 30 seconds
-                if (lastUpdateTime && (Date.now() - lastUpdateTime) > 30000) {
-                    loadFeed();
-                }
-            }, 8000);
-        }
-
-        // Sign out function
         async function signOut() {
             try {
-                // Stop audio if playing
                 if (currentAudio) {
                     currentAudio.pause();
                     currentAudio = null;
                     clearInterval(audioUpdateInterval);
+                }
+                
+                if (updateCheckInterval) {
+                    clearInterval(updateCheckInterval);
                 }
                 
                 await auth.signOut();
@@ -3122,6 +2919,237 @@
             } catch (error) {
                 console.error("Sign out error:", error);
                 showToast("Sign out failed: " + error.message, "error");
+            }
+        }
+
+        // Initialize app when DOM loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Profile form submission
+            document.getElementById('profileForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const name = document.getElementById('userName').value;
+                const email = document.getElementById('userEmail').value;
+                
+                const currentUser = auth.currentUser;
+                
+                if (!currentUser) {
+                    showToast("You must be logged in to update profile", "error");
+                    return;
+                }
+                
+                showToast("Updating profile...", "info");
+                
+                try {
+                    let photoURL = currentUser.photoURL;
+                    
+                    const avatarInput = document.getElementById('avatarInput');
+                    if (avatarInput.files && avatarInput.files[0]) {
+                        const file = avatarInput.files[0];
+                        showToast("Uploading image...", "info");
+                        
+                        const storageRef = storage.ref('profile_images/' + currentUser.uid + '/' + Date.now() + '_' + file.name);
+                        
+                        await storageRef.put(file);
+                        
+                        photoURL = await storageRef.getDownloadURL();
+                    }
+                    
+                    await currentUser.updateProfile({
+                        displayName: name,
+                        photoURL: photoURL
+                    });
+                    
+                    if (email !== currentUser.email) {
+                        await currentUser.updateEmail(email);
+                    }
+                    
+                    await db.ref('users/' + currentUser.uid).set({
+                        displayName: name,
+                        email: email,
+                        photoURL: photoURL || null,
+                        updatedAt: Date.now()
+                    }, { merge: true });
+                    
+                    showToast("Profile updated successfully!", "success");
+                    
+                    updateUserProfile(currentUser);
+                    
+                    setTimeout(() => {
+                        closeProfileModal();
+                    }, 1500);
+                    
+                } catch (error) {
+                    console.error("Profile update error:", error);
+                    showToast("Profile update failed: " + error.message, "error");
+                }
+            });
+
+            // Avatar upload preview
+            document.getElementById('avatarInput').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const avatarPreview = document.getElementById('avatarPreview');
+                        avatarPreview.innerHTML = `<img src="${event.target.result}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Close modals on outside click
+            document.getElementById('profileModal').addEventListener('click', function(e) {
+                if (e.target === this) closeProfileModal();
+            });
+            
+            document.getElementById('storyModal').addEventListener('click', function(e) {
+                if (e.target === this) closeStoryModal();
+            });
+            
+            document.getElementById('savePopup').addEventListener('click', function(e) {
+                if (e.target === this) closeSavePopup();
+            });
+            
+            document.getElementById('audioPlayerPopup').addEventListener('click', function(e) {
+                if (e.target === this) closeAudioPlayer();
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                    e.preventDefault();
+                    openStoryModal();
+                }
+                
+                if (e.key === 'Escape') {
+                    closeProfileModal();
+                    closeStoryModal();
+                    closeSavePopup();
+                    closeAudioPlayer();
+                }
+                
+                if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                    e.preventDefault();
+                    openProfileModal();
+                }
+                
+                if (e.key === ' ' && !e.target.matches('input, textarea')) {
+                    e.preventDefault();
+                    if (currentAudio) {
+                        togglePlayPause();
+                    }
+                }
+                
+                if (e.key === 'ArrowLeft' && currentAudio) {
+                    e.preventDefault();
+                    skipBackward();
+                }
+                
+                if (e.key === 'ArrowRight' && currentAudio) {
+                    e.preventDefault();
+                    skipForward();
+                }
+            });
+
+            // Header hide/show on scroll
+            const verticalFeed = document.getElementById('verticalFeed');
+            verticalFeed.addEventListener('scroll', function() {
+                const scrollTop = verticalFeed.scrollTop;
+                
+                if (scrollTop > lastScrollTop && scrollTop > 100) {
+                    if (isHeaderVisible) {
+                        document.getElementById('mainHeader').classList.add('hidden');
+                        isHeaderVisible = false;
+                    }
+                } else if (scrollTop < lastScrollTop) {
+                    if (!isHeaderVisible) {
+                        document.getElementById('mainHeader').classList.remove('hidden');
+                        isHeaderVisible = true;
+                    }
+                }
+                
+                lastScrollTop = scrollTop;
+            });
+        });
+
+        // Update user profile in UI
+        function updateUserProfile(user) {
+            const profileBtn = document.getElementById('profileBtn');
+            const profileInitials = document.getElementById('profileInitials');
+            const avatarPreview = document.getElementById('avatarPreview');
+            const avatarInitials = document.getElementById('avatarInitials');
+            
+            if (user) {
+                let initials = 'U';
+                if (user.displayName) {
+                    initials = user.displayName.charAt(0).toUpperCase();
+                } else if (user.email) {
+                    initials = user.email.charAt(0).toUpperCase();
+                }
+                
+                if (user.photoURL) {
+                    profileBtn.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                } else {
+                    profileInitials.textContent = initials;
+                }
+                
+                if (avatarPreview) {
+                    if (user.photoURL) {
+                        avatarPreview.innerHTML = `<img src="${user.photoURL}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                    } else {
+                        avatarInitials.textContent = initials;
+                    }
+                }
+                
+                document.getElementById('userName').value = user.displayName || '';
+                document.getElementById('userEmail').value = user.email || '';
+            }
+        }
+
+        async function deleteProfilePicture() {
+            const currentUser = auth.currentUser;
+            if (!currentUser) return;
+            
+            if (!confirm("Are you sure you want to remove your profile picture?")) return;
+            
+            try {
+                showToast("Removing profile picture...", "info");
+                
+                await currentUser.updateProfile({
+                    photoURL: null
+                });
+                
+                await db.ref('users/' + currentUser.uid).update({
+                    photoURL: null,
+                    updatedAt: Date.now()
+                });
+                
+                updateUserProfile(currentUser);
+                showToast("Profile picture removed", "success");
+                
+            } catch (error) {
+                console.error("Error deleting profile picture:", error);
+                showToast("Failed to remove profile picture", "error");
+            }
+        }
+
+        async function loadUserData(uid) {
+            try {
+                const snapshot = await db.ref('users/' + uid).once('value');
+                const userData = snapshot.val();
+                
+                if (userData) {
+                    document.getElementById('userName').value = userData.displayName || '';
+                    document.getElementById('userEmail').value = userData.email || '';
+                    
+                    if (userData.photoURL) {
+                        const avatarPreview = document.getElementById('avatarPreview');
+                        avatarPreview.innerHTML = `<img src="${userData.photoURL}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading user data:", error);
             }
         }
 

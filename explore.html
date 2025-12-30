@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Explore | RADIO Podcast Dashboard</title>
+    <title>Explore | Podvora Podcast Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -112,18 +112,18 @@
             visibility: hidden;
         }
 
-        .radio-loader {
+        .podvora-loader {
             text-align: center;
         }
 
-        .radio-icon {
+        .podvora-icon {
             width: 120px;
             height: 120px;
             position: relative;
             margin: 0 auto 30px;
         }
 
-        .radio-icon-inner {
+        .podvora-icon-inner {
             width: 100%;
             height: 100%;
             border-radius: 50%;
@@ -139,7 +139,7 @@
                         0 0 100px rgba(211, 0, 255, 0.3);
         }
 
-        .radio-icon-inner::before {
+        .podvora-icon-inner::before {
             content: '';
             position: absolute;
             top: -10px;
@@ -154,7 +154,7 @@
             animation: pulseRing 2s infinite ease-in-out;
         }
 
-        .radio-waves {
+        .podvora-waves {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -1851,12 +1851,12 @@
                 margin: 20px 0;
             }
             
-            .radio-icon {
+            .podvora-icon {
                 width: 100px;
                 height: 100px;
             }
             
-            .radio-icon-inner {
+            .podvora-icon-inner {
                 font-size: 40px;
             }
             
@@ -1949,12 +1949,12 @@
                 gap: 15px;
             }
             
-            .radio-icon {
+            .podvora-icon {
                 width: 80px;
                 height: 80px;
             }
             
-            .radio-icon-inner {
+            .podvora-icon-inner {
                 font-size: 32px;
             }
             
@@ -2039,18 +2039,18 @@
 <body>
     <!-- Loading Animation -->
     <div class="loading-overlay" id="loadingOverlay">
-        <div class="radio-loader">
-            <div class="radio-icon">
-                <div class="radio-icon-inner">
+        <div class="podvora-loader">
+            <div class="podvora-icon">
+                <div class="podvora-icon-inner">
                     <i class="fas fa-podcast"></i>
                 </div>
-                <div class="radio-waves">
+                <div class="podvora-waves">
                     <div class="wave"></div>
                     <div class="wave"></div>
                     <div class="wave"></div>
                 </div>
             </div>
-            <h3 class="loading-text">RADIO</h3>
+            <h3 class="loading-text">PODVORA</h3>
             <p class="loading-subtext">Loading amazing stories...</p>
         </div>
     </div>
@@ -2277,7 +2277,7 @@
         <!-- Header -->
         <header class="header" id="mainHeader">
             <div class="logo">
-                <span>RADIO</span>
+                <span>PODVORA</span>
             </div>
             <div class="header-right">
                 <button class="header-btn" id="notificationBtn" onclick="showToast('Notifications feature coming soon!', 'info')">
@@ -2405,10 +2405,11 @@
 
         // Local Storage Keys
         const STORAGE_KEYS = {
-            CACHED_STORIES: 'radio_explore_stories_v5',
-            CACHE_TIMESTAMP: 'radio_explore_cache_time_v5',
-            SAVED_STORIES: 'radio_saved_stories_v5',
-            FILTERS: 'radio_explore_filters_v5'
+            CACHED_STORIES: 'podvora_explore_stories_v6',
+            CACHE_TIMESTAMP: 'podvora_explore_cache_time_v6',
+            LAST_STORY_ID: 'podvora_last_story_id_v6',
+            SAVED_STORIES: 'podvora_saved_stories_v6',
+            FILTERS: 'podvora_explore_filters_v6'
         };
 
         // Filter Configuration
@@ -2713,35 +2714,28 @@
         async function loadStories() {
             showLoading(true);
             
-            // Check cache first
+            // Always load from local storage first
             const cachedData = getCachedStories();
             if (cachedData && cachedData.length > 0) {
                 currentStories = cachedData;
                 applyCurrentFilters();
                 showLoading(false);
                 
-                // Fetch new stories in background
-                fetchNewStoriesFromFirebase();
+                // Only fetch new stories when user opens app - find what's new
+                await checkForNewStories();
                 return;
             }
             
-            // Load from Firebase
-            await fetchStoriesFromFirebase();
+            // If no cache, load initial 100 stories from Firebase
+            await fetchInitialStoriesFromFirebase();
             showLoading(false);
         }
 
         function getCachedStories() {
             try {
                 const cached = localStorage.getItem(STORAGE_KEYS.CACHED_STORIES);
-                const timestamp = localStorage.getItem(STORAGE_KEYS.CACHE_TIMESTAMP);
-                
-                if (cached && timestamp) {
-                    const cacheAge = Date.now() - parseInt(timestamp);
-                    const maxAge = 5 * 60 * 1000; // 5 minutes
-                    
-                    if (cacheAge < maxAge) {
-                        return JSON.parse(cached);
-                    }
+                if (cached) {
+                    return JSON.parse(cached);
                 }
             } catch (error) {
                 console.error("Error reading cache:", error);
@@ -2751,16 +2745,27 @@
 
         function cacheStories(stories) {
             try {
-                localStorage.setItem(STORAGE_KEYS.CACHED_STORIES, JSON.stringify(stories));
+                // Always store exactly 100 stories max
+                const storiesToCache = stories.slice(0, 100);
+                localStorage.setItem(STORAGE_KEYS.CACHED_STORIES, JSON.stringify(storiesToCache));
+                
+                // Update the last story ID for future comparisons
+                if (storiesToCache.length > 0) {
+                    const newestStory = storiesToCache.reduce((newest, story) => 
+                        story.createdAt > newest.createdAt ? story : newest
+                    );
+                    localStorage.setItem(STORAGE_KEYS.LAST_STORY_ID, newestStory.id);
+                }
+                
                 localStorage.setItem(STORAGE_KEYS.CACHE_TIMESTAMP, Date.now().toString());
             } catch (error) {
                 console.error("Error caching stories:", error);
             }
         }
 
-        async function fetchStoriesFromFirebase() {
+        async function fetchInitialStoriesFromFirebase() {
             try {
-                // Fetch all stories from the 'stories' path
+                // Fetch initial 100 stories
                 const snapshot = await db.ref('stories').orderByChild('createdAt').limitToLast(100).once('value');
                 
                 if (snapshot.exists()) {
@@ -2768,58 +2773,111 @@
                     snapshot.forEach(childSnapshot => {
                         const story = childSnapshot.val();
                         story.id = childSnapshot.key;
-                        
-                        // Ensure required fields exist with proper values from Firebase
-                        story.title = story.title || 'Untitled Story';
-                        story.description = story.description || 'No description available';
-                        story.authorName = story.authorName || 'Anonymous';
-                        story.category = story.category || 'audio';
-                        story.duration = story.duration || 300; // 5 minutes default
-                        story.playCount = story.playCount || 0;
-                        story.likeCount = story.likeCount || 0;
-                        story.saveCount = story.saveCount || 0;
-                        story.createdAt = story.createdAt || Date.now();
-                        story.tags = story.tags || [];
-                        story.parts = story.parts || [];
-                        story.isFeatured = story.isFeatured || false;
-                        
-                        // Check for audio URL in different possible field names
-                        // Try multiple field names that might contain the audio URL
-                        story.audioUrl = story.audioUrl || story.audio || story.url || story.link || story.audioLink || '';
-                        
                         stories.unshift(story); // Newest first
                     });
                     
-                    currentStories = stories;
-                    cacheStories(stories);
+                    // Process stories
+                    const processedStories = stories.map(processStory);
                     
-                    // Apply current filters
+                    // Cache the stories
+                    cacheStories(processedStories);
+                    
+                    // Update current stories
+                    currentStories = processedStories;
                     applyCurrentFilters();
+                    updateFilterCounts(processedStories);
                     
-                    // Update filter counts
-                    updateFilterCounts(stories);
-                    
-                    if (stories.length === 0) {
-                        showToast("No stories found. Add stories to Firebase database.", "info");
-                    } else {
-                        console.log(`Loaded ${stories.length} stories from Firebase`);
-                        // Log the first story to see its structure
-                        if (stories.length > 0) {
-                            console.log("Sample story structure:", stories[0]);
-                            console.log("Audio URL in first story:", stories[0].audioUrl);
-                        }
-                    }
+                    console.log(`Loaded ${processedStories.length} initial stories from Firebase`);
                 } else {
                     showToast("No stories found in database. Add stories to Firebase.", "info");
                     currentStories = [];
                     applyCurrentFilters();
                 }
             } catch (error) {
-                console.error("Error fetching stories:", error);
+                console.error("Error fetching initial stories:", error);
                 showToast("Error loading stories. Please try again.", "error");
                 currentStories = [];
                 applyCurrentFilters();
             }
+        }
+
+        async function checkForNewStories() {
+            try {
+                const lastStoryId = localStorage.getItem(STORAGE_KEYS.LAST_STORY_ID);
+                if (!lastStoryId) return;
+                
+                // Get the timestamp of our last story
+                const lastStory = currentStories.find(s => s.id === lastStoryId);
+                if (!lastStory) return;
+                
+                // Fetch stories newer than our last story
+                const snapshot = await db.ref('stories')
+                    .orderByChild('createdAt')
+                    .startAt(lastStory.createdAt + 1) // Get stories newer than our newest
+                    .once('value');
+                
+                if (snapshot.exists()) {
+                    const newStories = [];
+                    snapshot.forEach(childSnapshot => {
+                        const story = childSnapshot.val();
+                        story.id = childSnapshot.key;
+                        // Don't include the story we already have
+                        if (story.id !== lastStoryId) {
+                            newStories.unshift(story);
+                        }
+                    });
+                    
+                    if (newStories.length > 0) {
+                        // Process new stories
+                        const processedNewStories = newStories.map(processStory);
+                        
+                        // Add new stories to cache (at the beginning)
+                        const currentCache = getCachedStories() || [];
+                        const updatedCache = [...processedNewStories, ...currentCache];
+                        
+                        // Keep only 100 stories total
+                        const finalCache = updatedCache.slice(0, 100);
+                        
+                        // Update cache
+                        cacheStories(finalCache);
+                        
+                        // Update current stories
+                        currentStories = finalCache;
+                        
+                        // Apply filters if no search/filter is active
+                        if (currentFilters.search === '' && currentFilters.category === 'all') {
+                            applyCurrentFilters();
+                            updateFilterCounts(finalCache);
+                            
+                            // Show notification for new stories
+                            showToast(`${newStories.length} new story${newStories.length > 1 ? 's' : ''} added`, "success");
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Error checking for new stories:", error);
+            }
+        }
+
+        function processStory(story) {
+            // Ensure required fields exist with proper values
+            story.title = story.title || 'Untitled Story';
+            story.description = story.description || 'No description available';
+            story.authorName = story.authorName || 'Anonymous';
+            story.category = story.category || 'audio';
+            story.duration = story.duration || 300;
+            story.playCount = story.playCount || 0;
+            story.likeCount = story.likeCount || 0;
+            story.saveCount = story.saveCount || 0;
+            story.createdAt = story.createdAt || Date.now();
+            story.tags = story.tags || [];
+            story.parts = story.parts || [];
+            story.isFeatured = story.isFeatured || false;
+            
+            // Check for audio URL in different possible field names
+            story.audioUrl = story.audioUrl || story.audio || story.url || story.link || story.audioLink || '';
+            
+            return story;
         }
         
         function updateFilterCounts(stories) {
@@ -2871,64 +2929,88 @@
             });
         }
 
-        async function fetchNewStoriesFromFirebase() {
+        async function fetchSingleStoryFromFirebase(storyId, isBrokenCard = false) {
             try {
-                const lastCachedTime = localStorage.getItem(STORAGE_KEYS.CACHE_TIMESTAMP);
-                if (!lastCachedTime) return;
-
-                const snapshot = await db.ref('stories')
-                    .orderByChild('createdAt')
-                    .startAt(parseInt(lastCachedTime) + 1)
-                    .once('value');
-
+                const snapshot = await db.ref('stories/' + storyId).once('value');
                 if (snapshot.exists()) {
-                    const newStories = [];
-                    snapshot.forEach(childSnapshot => {
-                        const story = childSnapshot.val();
-                        story.id = childSnapshot.key;
-                        
-                        // Ensure required fields exist
-                        story.title = story.title || 'Untitled Story';
-                        story.description = story.description || 'No description available';
-                        story.authorName = story.authorName || 'Anonymous';
-                        story.category = story.category || 'audio';
-                        story.duration = story.duration || 300;
-                        story.playCount = story.playCount || 0;
-                        story.likeCount = story.likeCount || 0;
-                        story.saveCount = story.saveCount || 0;
-                        story.createdAt = story.createdAt || Date.now();
-                        story.tags = story.tags || [];
-                        story.parts = story.parts || [];
-                        story.isFeatured = story.isFeatured || false;
-                        
-                        // Check for audio URL in different possible field names
-                        story.audioUrl = story.audioUrl || story.audio || story.url || story.link || story.audioLink || '';
-                        
-                        newStories.unshift(story);
-                    });
-
-                    if (newStories.length > 0) {
-                        // Add new stories to cache
-                        const cachedStories = JSON.parse(localStorage.getItem(STORAGE_KEYS.CACHED_STORIES) || '[]');
-                        const updatedStories = [...newStories, ...cachedStories];
-                        
-                        // Keep only 100 most recent stories
-                        updatedStories.splice(100);
-                        
-                        cacheStories(updatedStories);
-                        currentStories = updatedStories;
-                        
-                        // Update UI if no active filters
-                        if (currentFilters.search === '' && currentFilters.category === 'all') {
-                            applyCurrentFilters();
-                            updateFilterCounts(updatedStories);
-                            showToast(`${newStories.length} new story${newStories.length > 1 ? 's' : ''} loaded`, "success");
+                    const story = processStory(snapshot.val());
+                    story.id = storyId;
+                    
+                    // If this is a broken card, refresh the entire local storage
+                    if (isBrokenCard) {
+                        await refreshAllStoriesFromFirebase();
+                        return story; // The story will be in the refreshed cache
+                    }
+                    
+                    // Update cache with the single story
+                    const cachedStories = getCachedStories() || [];
+                    const index = cachedStories.findIndex(s => s.id === storyId);
+                    
+                    if (index !== -1) {
+                        cachedStories[index] = story;
+                    } else {
+                        // Add new story to cache
+                        cachedStories.unshift(story);
+                        // Keep only 100 stories
+                        if (cachedStories.length > 100) {
+                            cachedStories.pop();
                         }
                     }
+                    
+                    cacheStories(cachedStories);
+                    
+                    // Update current stories
+                    const currentIndex = currentStories.findIndex(s => s.id === storyId);
+                    if (currentIndex !== -1) {
+                        currentStories[currentIndex] = story;
+                    } else {
+                        currentStories.unshift(story);
+                        if (currentStories.length > 100) {
+                            currentStories.pop();
+                        }
+                    }
+                    
+                    return story;
                 }
             } catch (error) {
-                console.error("Error fetching new stories:", error);
+                console.error("Error fetching single story:", error);
             }
+            return null;
+        }
+
+        async function refreshAllStoriesFromFirebase() {
+            try {
+                showToast("Refreshing stories...", "info");
+                
+                // Fetch all 100 stories from Firebase
+                const snapshot = await db.ref('stories').orderByChild('createdAt').limitToLast(100).once('value');
+                
+                if (snapshot.exists()) {
+                    const stories = [];
+                    snapshot.forEach(childSnapshot => {
+                        const story = processStory(childSnapshot.val());
+                        story.id = childSnapshot.key;
+                        stories.unshift(story);
+                    });
+                    
+                    // Cache the stories
+                    cacheStories(stories);
+                    
+                    // Update current stories
+                    currentStories = stories;
+                    
+                    // Apply current filters
+                    applyCurrentFilters();
+                    updateFilterCounts(stories);
+                    
+                    showToast("Stories refreshed successfully", "success");
+                    return true;
+                }
+            } catch (error) {
+                console.error("Error refreshing stories:", error);
+                showToast("Error refreshing stories", "error");
+            }
+            return false;
         }
 
         function renderStories() {
@@ -3094,7 +3176,7 @@
                     </div>
                     
                     <div class="card-actions">
-                        <button class="card-action-btn play" onclick="playStory('${story.id}', event)" ${playBtnDisabled ? 'disabled style="opacity: 0.5;"' : ''}>
+                        <button class="card-action-btn play" onclick="playStory('${story.id}', event, ${!hasAudio})" ${playBtnDisabled ? 'disabled style="opacity: 0.5;"' : ''}>
                             <i class="fas fa-play"></i>
                             <span>${hasAudio ? 'Play' : 'No Audio'}</span>
                         </button>
@@ -3136,7 +3218,7 @@
         function setupAudioListeners() {
             // Create audio element
             currentAudio = new Audio();
-            currentAudio.crossOrigin = "anonymous"; // Allow CORS for external audio URLs
+            currentAudio.crossOrigin = "anonymous";
             
             currentAudio.addEventListener('play', function() {
                 isPlaying = true;
@@ -3172,24 +3254,28 @@
             });
         }
 
-        function playStory(storyId, event) {
+        async function playStory(storyId, event, isBrokenCard = false) {
             if (event) event.stopPropagation();
             
-            const story = currentStories.find(s => s.id === storyId);
-            if (!story) {
-                showToast("Story not found", "error");
+            if (isBrokenCard) {
+                // This story has no audio
+                showToast("Audio not available for this story", "error");
                 return;
+            }
+            
+            let story = currentStories.find(s => s.id === storyId);
+            if (!story) {
+                // Story not in cache - fetch from Firebase and refresh local storage
+                story = await fetchSingleStoryFromFirebase(storyId, true);
+                if (!story) {
+                    showToast("Story not found", "error");
+                    return;
+                }
             }
             
             // Check if audio URL exists
             if (!story.audioUrl) {
                 showToast("Audio not available for this story", "error");
-                return;
-            }
-            
-            // Validate the audio URL
-            if (!isValidAudioUrl(story.audioUrl)) {
-                showToast("Invalid audio URL format", "error");
                 return;
             }
             
@@ -3201,32 +3287,15 @@
                 clearInterval(audioUpdateInterval);
             }
             
-            // Load and play the audio URL from Firebase
-            console.log("Playing audio URL:", story.audioUrl);
+            // Load and play the audio
             currentAudio.src = story.audioUrl;
             
-            // Add preload and try to load the audio first
-            currentAudio.preload = 'auto';
-            currentAudio.load();
-            
             currentAudio.play().then(() => {
-                console.log("Audio playback started successfully");
+                // Update play count in Firebase (only write when needed)
+                updatePlayCountInFirebase(storyId);
             }).catch(error => {
                 console.error("Playback error:", error);
-                
-                // Try alternative approach for streams
-                if (story.audioUrl.includes('stream') || story.audioUrl.includes('radio')) {
-                    showToast("Streaming audio... This may take a moment", "info");
-                    // For streams, we might need to wait and retry
-                    setTimeout(() => {
-                        currentAudio.play().catch(e => {
-                            console.error("Retry playback error:", e);
-                            showToast("Cannot play this audio stream. Try another story.", "error");
-                        });
-                    }, 1000);
-                } else {
-                    showToast("Error playing audio. Please try again.", "error");
-                }
+                showToast("Error playing audio. Please try again.", "error");
             });
             
             // Update UI
@@ -3234,40 +3303,6 @@
             
             // Show floating player
             showFloatingPlayer();
-        }
-
-        function isValidAudioUrl(url) {
-            if (!url) return false;
-            
-            // Check if it's a valid URL
-            try {
-                new URL(url);
-            } catch (e) {
-                return false;
-            }
-            
-            // Accept common audio formats and streams
-            const audioExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac', '.webm'];
-            const streamKeywords = ['stream', 'radio', 'live', 'broadcast', 'm3u8', 'pls'];
-            
-            const urlLower = url.toLowerCase();
-            
-            // Check for audio extensions
-            if (audioExtensions.some(ext => urlLower.endsWith(ext))) {
-                return true;
-            }
-            
-            // Check for stream indicators
-            if (streamKeywords.some(keyword => urlLower.includes(keyword))) {
-                return true;
-            }
-            
-            // Check for common audio MIME types in URL
-            if (urlLower.includes('audio/') || urlLower.includes('.mp3?') || urlLower.includes('.m3u8')) {
-                return true;
-            }
-            
-            return true; // Accept all valid URLs for now
         }
 
         function updatePlayerUI(story) {
@@ -3322,7 +3357,6 @@
                     `;
                     
                     partItem.addEventListener('click', () => {
-                        // In a real app, this would load the specific part
                         document.querySelectorAll('.part-item').forEach(item => item.classList.remove('active'));
                         partItem.classList.add('active');
                         showToast(`Playing: ${part.title || `Part ${index + 1}`}`, "info");
@@ -3426,9 +3460,16 @@
         }
 
         // ===== UI CONTROLS =====
-        function openFullscreenStory(storyId) {
-            const story = currentStories.find(s => s.id === storyId);
-            if (!story) return;
+        async function openFullscreenStory(storyId) {
+            let story = currentStories.find(s => s.id === storyId);
+            if (!story) {
+                // Story not in cache - fetch from Firebase
+                story = await fetchSingleStoryFromFirebase(storyId, true);
+                if (!story) {
+                    showToast("Story not found", "error");
+                    return;
+                }
+            }
             
             currentStory = story;
             updatePlayerUI(story);
@@ -3451,7 +3492,7 @@
 
         function openFullscreenPlayer() {
             if (!currentStory) return;
-            closeFullscreenPlayer(); // Close if already open
+            closeFullscreenPlayer();
             setTimeout(() => {
                 openFullscreenStory(currentStory.id);
             }, 100);
@@ -3502,7 +3543,7 @@
             
             saveSavedStoriesToStorage();
             
-            // Update Firebase if user is logged in
+            // Update Firebase save count (only write when needed)
             updateSaveCountInFirebase(storyId, savedStories.has(storyId));
         }
 
@@ -3530,6 +3571,22 @@
                 }
             } catch (error) {
                 console.error("Error updating save count:", error);
+            }
+        }
+
+        async function updatePlayCountInFirebase(storyId) {
+            try {
+                const storyRef = db.ref('stories/' + storyId + '/playCount');
+                await storyRef.transaction(current => (current || 0) + 1);
+                
+                // Update cache
+                const storyIndex = currentStories.findIndex(s => s.id === storyId);
+                if (storyIndex !== -1) {
+                    currentStories[storyIndex].playCount = (currentStories[storyIndex].playCount || 0) + 1;
+                    cacheStories(currentStories);
+                }
+            } catch (error) {
+                console.error("Error updating play count:", error);
             }
         }
 
@@ -3586,7 +3643,6 @@
                 if (savedFilters) {
                     currentFilters = JSON.parse(savedFilters);
                     
-                    // Update UI
                     updateFilterUI();
                     
                     document.getElementById('searchInput').value = currentFilters.search || '';
@@ -3604,7 +3660,6 @@
             const searchTerm = document.getElementById('searchInput').value.trim();
             currentFilters.search = searchTerm;
             
-            // Show/hide clear button
             const clearBtn = document.getElementById('searchClear');
             if (searchTerm) {
                 clearBtn.classList.add('visible');
@@ -3612,7 +3667,6 @@
                 clearBtn.classList.remove('visible');
             }
             
-            // Debounce search
             clearTimeout(this.searchTimeout);
             this.searchTimeout = setTimeout(() => {
                 applyCurrentFilters();
@@ -3756,9 +3810,8 @@
                     currentY = e.clientY - initialY;
                 }
                 
-                // Constrain to viewport
                 const maxX = window.innerWidth - player.offsetWidth;
-                const maxY = window.innerHeight - player.offsetHeight - 70; // Account for bottom nav
+                const maxY = window.innerHeight - player.offsetHeight - 70;
                 
                 currentX = Math.max(10, Math.min(currentX, maxX - 10));
                 currentY = Math.max(10, Math.min(currentY, maxY - 10));
@@ -3778,8 +3831,8 @@
             }
         }
 
-        // Auto-refresh stories every 5 minutes
-        setInterval(fetchNewStoriesFromFirebase, 5 * 60 * 1000);
+        // No auto-refresh interval - only update when user interacts with broken cards
+        // or when app opens (checks for new stories)
     </script>
 </body>
 </html>

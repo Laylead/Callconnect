@@ -304,15 +304,14 @@
             animation: pulse 1.5s infinite;
         }
 
-        /* ===== VERTICAL FEED ===== */
+        /* ===== VERTICAL FEED - TIKTOK STYLE ===== */
         .vertical-feed {
             position: fixed;
             top: 60px;
             left: 0;
             right: 0;
             bottom: 70px;
-            overflow-y: scroll;
-            scroll-snap-type: y mandatory;
+            overflow-y: auto;
             scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
             padding: 0;
@@ -327,9 +326,7 @@
         .feed-card {
             height: calc(100vh - 130px);
             min-height: calc(100vh - 130px);
-            scroll-snap-align: start;
             position: relative;
-            overflow: hidden;
             border-radius: 0;
             margin: 0;
             display: flex;
@@ -340,7 +337,7 @@
             background-position: center;
             background-repeat: no-repeat;
             transition: transform 0.3s ease;
-            cursor: pointer;
+            overflow: hidden;
         }
 
         .feed-card::before {
@@ -350,7 +347,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, transparent 100%);
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 30%, rgba(0,0,0,0.4) 60%, transparent 100%);
             z-index: 1;
         }
 
@@ -360,10 +357,6 @@
             width: 100%;
             animation: fadeInUp 0.5s ease-out;
             margin-top: auto;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            min-height: 65%;
         }
 
         .card-tags {
@@ -470,7 +463,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
             margin-top: 20px;
         }
 
@@ -1333,10 +1325,6 @@
                 padding: 16px;
             }
             
-            .feed-card-content {
-                min-height: 60%;
-            }
-            
             .card-title {
                 font-size: 24px;
             }
@@ -1439,10 +1427,6 @@
         @media (max-width: 480px) {
             .feed-card {
                 padding: 14px;
-            }
-            
-            .feed-card-content {
-                min-height: 55%;
             }
             
             .card-title {
@@ -1925,7 +1909,6 @@
 
         // Variables
         let currentFeedIndex = 0;
-        let feedCards = [];
         let savedStories = new Set();
         let currentAudio = null;
         let currentPlayingCard = null;
@@ -1940,16 +1923,18 @@
         let isHeaderVisible = true;
         let isInitialLoadComplete = false;
         let updateCheckInterval = null;
+        let isScrolling = false;
+        let scrollTimeout = null;
 
         // Local Storage Keys
         const STORAGE_KEYS = {
-            SAVED_STORIES: 'podvora_saved_stories_v7',
-            SAVE_POPUP_COUNT: 'podvora_save_popup_count_v7',
-            DONT_SHOW_POPUP: 'podvora_dont_show_save_popup_v7',
-            STORIES_CACHE: 'podvora_stories_cache_v7',
-            LAST_UPDATE_TIME: 'podvora_last_update_time_v7',
-            LAST_STORY_ID: 'podvora_last_story_id_v7',
-            USER_INITIAL_LOAD: 'podvora_user_initial_load_v7'
+            SAVED_STORIES: 'podvora_saved_stories',
+            SAVE_POPUP_COUNT: 'podvora_save_popup_count',
+            DONT_SHOW_POPUP: 'podvora_dont_show_save_popup',
+            STORIES_CACHE: 'podvora_stories_cache',
+            LAST_UPDATE_TIME: 'podvora_last_update_time',
+            LAST_STORY_ID: 'podvora_last_story_id',
+            USER_INITIAL_LOAD: 'podvora_user_initial_load'
         };
 
         // Firebase Authentication State Listener
@@ -2071,8 +2056,8 @@
                     showToast("Stories loaded successfully!", "success");
                     
                 } else {
-                    // No stories in Firebase, use demo stories (temporary for testing)
-                    console.log("No stories in Firebase, using demo stories");
+                    // No stories in Firebase, show demo stories
+                    console.log("No stories in Firebase, showing demo stories");
                     loadDemoStories();
                 }
             } catch (error) {
@@ -2089,19 +2074,19 @@
                 {
                     id: "demo_1",
                     title: "Welcome to PODVORA",
-                    description: "Share your story with the world. Record your thoughts, experiences, and adventures.",
+                    description: "This is a demo story. Submit your own stories to share with the community!",
                     background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    tags: ["welcome", "audio", "podcast"],
+                    tags: ["welcome", "demo", "audio"],
                     viewers: 1,
                     type: "podcast",
                     icon: "🎙️",
-                    likes: 0,
+                    likes: 1,
                     cardType: "podcast",
-                    startTime: "00:00",
-                    audioUrl: "",
+                    startTime: "1 min",
+                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
                     author: "PODVORA Team",
-                    duration: "00:00",
-                    createdAt: Date.now() - 86400000,
+                    duration: "01:00",
+                    createdAt: Date.now(),
                     plays: 1
                 }
             ];
@@ -2189,7 +2174,7 @@
             }, 30 * 60 * 1000); // 30 minutes
         }
 
-        // ===== ORIGINAL FUNCTIONS (UPDATED FOR CACHE) =====
+        // ===== TIKTOK-STYLE SCROLLING =====
         function renderFeed(stories) {
             const feedContainer = document.getElementById('verticalFeed');
             const scrollIndicator = document.getElementById('scrollIndicator');
@@ -2203,7 +2188,7 @@
                     <div class="feed-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
                         <div style="text-align: center; z-index: 2;">
                             <i class="fas fa-podcast" style="font-size: 64px; margin-bottom: 20px; color: rgba(255,255,255,0.5);"></i>
-                            <h3 style="font-size: 24px; color: rgba(255,255,255,0.7);">No stories yet</h3>
+                            <h3 style="font-size: 24px; color: rgba(255,255,255,0.7);">No stories available</h3>
                             <p style="color: rgba(255,255,255,0.5); margin-top: 10px;">Be the first to share your story!</p>
                         </div>
                     </div>
@@ -2348,14 +2333,222 @@
                 scrollIndicator.appendChild(dot);
             });
             
-            // Update scroll indicator on scroll
-            feedContainer.addEventListener('scroll', updateScrollIndicator);
+            // Setup smooth scrolling
+            setupSmoothScrolling();
             
             // Hide swipe hint after first scroll
             setTimeout(() => {
                 const swipeHint = document.getElementById('swipeHint');
                 if (swipeHint) swipeHint.style.opacity = '0';
             }, 3000);
+        }
+
+        function setupSmoothScrolling() {
+            const feedContainer = document.getElementById('verticalFeed');
+            const cards = feedContainer.querySelectorAll('.feed-card');
+            
+            if (cards.length === 0) return;
+            
+            let startY = 0;
+            let startScrollTop = 0;
+            let isDragging = false;
+            let velocity = 0;
+            let lastY = 0;
+            let lastTime = 0;
+            let animationFrame = null;
+            
+            // Touch/mouse events for smooth scrolling
+            feedContainer.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+                startScrollTop = feedContainer.scrollTop;
+                isDragging = true;
+                velocity = 0;
+                lastY = startY;
+                lastTime = Date.now();
+                
+                if (animationFrame) {
+                    cancelAnimationFrame(animationFrame);
+                }
+            });
+            
+            feedContainer.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                
+                e.preventDefault();
+                const y = e.touches[0].clientY;
+                const deltaY = startY - y;
+                feedContainer.scrollTop = startScrollTop + deltaY;
+                
+                // Calculate velocity
+                const currentTime = Date.now();
+                const deltaTime = currentTime - lastTime;
+                if (deltaTime > 0) {
+                    velocity = (lastY - y) / deltaTime;
+                }
+                lastY = y;
+                lastTime = currentTime;
+            });
+            
+            feedContainer.addEventListener('touchend', () => {
+                if (!isDragging) return;
+                
+                isDragging = false;
+                
+                // Apply momentum
+                if (Math.abs(velocity) > 0.1) {
+                    applyMomentum(velocity);
+                } else {
+                    snapToNearestCard();
+                }
+            });
+            
+            // Mouse events for desktop
+            feedContainer.addEventListener('mousedown', (e) => {
+                startY = e.clientY;
+                startScrollTop = feedContainer.scrollTop;
+                isDragging = true;
+                velocity = 0;
+                lastY = startY;
+                lastTime = Date.now();
+                
+                if (animationFrame) {
+                    cancelAnimationFrame(animationFrame);
+                }
+            });
+            
+            feedContainer.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                e.preventDefault();
+                const y = e.clientY;
+                const deltaY = startY - y;
+                feedContainer.scrollTop = startScrollTop + deltaY;
+                
+                // Calculate velocity
+                const currentTime = Date.now();
+                const deltaTime = currentTime - lastTime;
+                if (deltaTime > 0) {
+                    velocity = (lastY - y) / deltaTime;
+                }
+                lastY = y;
+                lastTime = currentTime;
+            });
+            
+            feedContainer.addEventListener('mouseup', () => {
+                if (!isDragging) return;
+                
+                isDragging = false;
+                feedContainer.style.cursor = 'grab';
+                
+                // Apply momentum
+                if (Math.abs(velocity) > 0.1) {
+                    applyMomentum(velocity);
+                } else {
+                    snapToNearestCard();
+                }
+            });
+            
+            feedContainer.addEventListener('mouseleave', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    feedContainer.style.cursor = 'grab';
+                    snapToNearestCard();
+                }
+            });
+            
+            // Wheel event for mouse wheel scrolling
+            feedContainer.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                
+                const cardHeight = window.innerHeight - 130;
+                const delta = e.deltaY > 0 ? 1 : -1;
+                
+                feedContainer.scrollTop += delta * cardHeight;
+                snapToNearestCard();
+            });
+            
+            // Regular scroll event for scroll indicator
+            feedContainer.addEventListener('scroll', () => {
+                updateScrollIndicator();
+                
+                // Update header visibility
+                const scrollTop = feedContainer.scrollTop;
+                
+                if (scrollTop > lastScrollTop && scrollTop > 100) {
+                    if (isHeaderVisible) {
+                        document.getElementById('mainHeader').classList.add('hidden');
+                        isHeaderVisible = false;
+                    }
+                } else if (scrollTop < lastScrollTop) {
+                    if (!isHeaderVisible) {
+                        document.getElementById('mainHeader').classList.remove('hidden');
+                        isHeaderVisible = true;
+                    }
+                }
+                
+                lastScrollTop = scrollTop;
+            });
+            
+            function applyMomentum(initialVelocity) {
+                let v = initialVelocity * 1000; // Scale up velocity
+                let friction = 0.95;
+                let lastFrameTime = Date.now();
+                
+                function animate() {
+                    const currentTime = Date.now();
+                    const deltaTime = currentTime - lastFrameTime;
+                    lastFrameTime = currentTime;
+                    
+                    // Apply friction
+                    v *= Math.pow(friction, deltaTime / 16);
+                    
+                    // Stop if velocity is too small
+                    if (Math.abs(v) < 0.5) {
+                        snapToNearestCard();
+                        return;
+                    }
+                    
+                    // Apply velocity
+                    feedContainer.scrollTop += v * deltaTime / 16;
+                    
+                    // Continue animation
+                    animationFrame = requestAnimationFrame(animate);
+                }
+                
+                animationFrame = requestAnimationFrame(animate);
+            }
+            
+            function snapToNearestCard() {
+                const cardHeight = window.innerHeight - 130;
+                const currentScroll = feedContainer.scrollTop;
+                const currentIndex = Math.round(currentScroll / cardHeight);
+                
+                // Clamp index to valid range
+                const targetIndex = Math.max(0, Math.min(currentIndex, cards.length - 1));
+                const targetScroll = targetIndex * cardHeight;
+                
+                // Smooth scroll to target
+                feedContainer.scrollTo({
+                    top: targetScroll,
+                    behavior: 'smooth'
+                });
+                
+                // Update current index
+                currentFeedIndex = targetIndex;
+            }
+        }
+
+        function updateScrollIndicator() {
+            const feed = document.getElementById('verticalFeed');
+            const scrollPos = feed.scrollTop;
+            const cardHeight = window.innerHeight - 130;
+            const currentIndex = Math.round(scrollPos / cardHeight);
+            
+            document.querySelectorAll('.scroll-dot').forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+            
+            currentFeedIndex = currentIndex;
         }
 
         // ===== AUDIO PLAYER SYSTEM =====
@@ -2707,19 +2900,6 @@
             }
         }
 
-        function updateScrollIndicator() {
-            const feed = document.getElementById('verticalFeed');
-            const scrollPos = feed.scrollTop;
-            const cardHeight = window.innerHeight - 130;
-            const currentIndex = Math.round(scrollPos / cardHeight);
-            
-            document.querySelectorAll('.scroll-dot').forEach((dot, index) => {
-                dot.classList.toggle('active', index === currentIndex);
-            });
-            
-            currentFeedIndex = currentIndex;
-        }
-
         function openProfileModal() {
             const modal = document.getElementById('profileModal');
             modal.classList.add('active');
@@ -2973,26 +3153,30 @@
                     e.preventDefault();
                     skipForward();
                 }
-            });
-
-            // Header hide/show on scroll
-            const verticalFeed = document.getElementById('verticalFeed');
-            verticalFeed.addEventListener('scroll', function() {
-                const scrollTop = verticalFeed.scrollTop;
                 
-                if (scrollTop > lastScrollTop && scrollTop > 100) {
-                    if (isHeaderVisible) {
-                        document.getElementById('mainHeader').classList.add('hidden');
-                        isHeaderVisible = false;
-                    }
-                } else if (scrollTop < lastScrollTop) {
-                    if (!isHeaderVisible) {
-                        document.getElementById('mainHeader').classList.remove('hidden');
-                        isHeaderVisible = true;
-                    }
+                // Arrow key navigation between cards
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const feedContainer = document.getElementById('verticalFeed');
+                    const cardHeight = window.innerHeight - 130;
+                    const newScroll = Math.max(0, feedContainer.scrollTop - cardHeight);
+                    feedContainer.scrollTo({
+                        top: newScroll,
+                        behavior: 'smooth'
+                    });
                 }
                 
-                lastScrollTop = scrollTop;
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const feedContainer = document.getElementById('verticalFeed');
+                    const cardHeight = window.innerHeight - 130;
+                    const maxScroll = feedContainer.scrollHeight - feedContainer.clientHeight;
+                    const newScroll = Math.min(maxScroll, feedContainer.scrollTop + cardHeight);
+                    feedContainer.scrollTo({
+                        top: newScroll,
+                        behavior: 'smooth'
+                    });
+                }
             });
         });
 

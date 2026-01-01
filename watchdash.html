@@ -360,6 +360,10 @@
             width: 100%;
             animation: fadeInUp 0.5s ease-out;
             margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            min-height: 65%;
         }
 
         .card-tags {
@@ -1329,6 +1333,10 @@
                 padding: 16px;
             }
             
+            .feed-card-content {
+                min-height: 60%;
+            }
+            
             .card-title {
                 font-size: 24px;
             }
@@ -1431,6 +1439,10 @@
         @media (max-width: 480px) {
             .feed-card {
                 padding: 14px;
+            }
+            
+            .feed-card-content {
+                min-height: 55%;
             }
             
             .card-title {
@@ -2059,10 +2071,9 @@
                     showToast("Stories loaded successfully!", "success");
                     
                 } else {
-                    // No stories in Firebase
-                    cachedStories = [];
-                    renderFeed([]);
-                    showToast("No stories available yet.", "info");
+                    // No stories in Firebase, use demo stories (temporary for testing)
+                    console.log("No stories in Firebase, using demo stories");
+                    loadDemoStories();
                 }
             } catch (error) {
                 console.error("Error loading stories from Firebase:", error);
@@ -2071,6 +2082,39 @@
                 // Try to load from cache as fallback
                 loadStoriesFromCache();
             }
+        }
+
+        function loadDemoStories() {
+            const demoStories = [
+                {
+                    id: "demo_1",
+                    title: "Welcome to PODVORA",
+                    description: "Share your story with the world. Record your thoughts, experiences, and adventures.",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    tags: ["welcome", "audio", "podcast"],
+                    viewers: 1,
+                    type: "podcast",
+                    icon: "🎙️",
+                    likes: 0,
+                    cardType: "podcast",
+                    startTime: "00:00",
+                    audioUrl: "",
+                    author: "PODVORA Team",
+                    duration: "00:00",
+                    createdAt: Date.now() - 86400000,
+                    plays: 1
+                }
+            ];
+
+            cachedStories = demoStories;
+            lastUpdateTime = Date.now();
+            
+            // Save to cache
+            localStorage.setItem(STORAGE_KEYS.STORIES_CACHE, JSON.stringify(demoStories));
+            localStorage.setItem(STORAGE_KEYS.LAST_UPDATE_TIME, lastUpdateTime.toString());
+            
+            renderFeed(demoStories);
+            isInitialLoadComplete = true;
         }
 
         async function checkForStoryUpdates() {
@@ -2145,6 +2189,7 @@
             }, 30 * 60 * 1000); // 30 minutes
         }
 
+        // ===== ORIGINAL FUNCTIONS (UPDATED FOR CACHE) =====
         function renderFeed(stories) {
             const feedContainer = document.getElementById('verticalFeed');
             const scrollIndicator = document.getElementById('scrollIndicator');
@@ -2158,7 +2203,7 @@
                     <div class="feed-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
                         <div style="text-align: center; z-index: 2;">
                             <i class="fas fa-podcast" style="font-size: 64px; margin-bottom: 20px; color: rgba(255,255,255,0.5);"></i>
-                            <h3 style="font-size: 24px; color: rgba(255,255,255,0.7);">No stories available</h3>
+                            <h3 style="font-size: 24px; color: rgba(255,255,255,0.7);">No stories yet</h3>
                             <p style="color: rgba(255,255,255,0.5); margin-top: 10px;">Be the first to share your story!</p>
                         </div>
                     </div>

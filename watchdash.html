@@ -329,7 +329,7 @@
             min-height: calc(100vh - 130px);
             scroll-snap-align: start;
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             border-radius: 0;
             margin: 0;
             display: flex;
@@ -360,6 +360,7 @@
             width: 100%;
             animation: fadeInUp 0.5s ease-out;
             margin-top: auto;
+            padding-bottom: 20px;
         }
 
         .card-tags {
@@ -466,7 +467,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
+            margin-bottom: 0;
             margin-top: 20px;
         }
 
@@ -1947,21 +1948,6 @@
                 updateUserProfile(user);
                 loadUserData(user.uid);
                 
-                // Check if this user has done initial load
-                const userInitialLoadKey = STORAGE_KEYS.USER_INITIAL_LOAD + '_' + user.uid;
-                const hasDoneInitialLoad = localStorage.getItem(userInitialLoadKey);
-                
-                if (!hasDoneInitialLoad) {
-                    // First time for this user, load stories from Firebase
-                    console.log("First time user, loading stories from Firebase...");
-                    loadInitialStoriesFromFirebase();
-                    localStorage.setItem(userInitialLoadKey, 'true');
-                } else {
-                    // User has done initial load before, use cached stories
-                    console.log("User has cached stories, loading from localStorage...");
-                    loadStoriesFromCache();
-                }
-                
                 // Load saved stories from localStorage
                 loadSavedStories();
                 
@@ -2059,16 +2045,17 @@
                     showToast("Stories loaded successfully!", "success");
                     
                 } else {
-                    // No stories in Firebase, use demo stories
-                    console.log("No stories in Firebase, loading demo stories");
-                    loadDemoStories();
+                    // No stories in Firebase
+                    cachedStories = [];
+                    renderFeed([]);
+                    showToast("No stories available yet. Be the first to submit!", "info");
                 }
             } catch (error) {
                 console.error("Error loading stories from Firebase:", error);
-                showToast("Failed to load stories, using cached data", "warning");
+                showToast("Failed to load stories", "error");
                 
-                // Try to load from cache as fallback
-                loadStoriesFromCache();
+                cachedStories = [];
+                renderFeed([]);
             }
         }
 
@@ -2145,75 +2132,6 @@
         }
 
         // ===== ORIGINAL FUNCTIONS (UPDATED FOR CACHE) =====
-        function loadDemoStories() {
-            const demoStories = [
-                {
-                    id: "demo_1",
-                    title: "Midnight Thoughts",
-                    description: "A late-night reflection on life, dreams, and the universe. Recorded during a quiet winter night.",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    tags: ["audio", "reflection", "philosophy"],
-                    viewers: 1245,
-                    type: "podcast",
-                    icon: "🎙️",
-                    likes: 42,
-                    cardType: "podcast",
-                    startTime: "45 min",
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-                    author: "Alex Johnson",
-                    duration: "45:12",
-                    createdAt: Date.now() - 86400000,
-                    plays: 1245
-                },
-                {
-                    id: "demo_2",
-                    title: "Urban Legends",
-                    description: "True crime stories from the city that never sleeps. Episode 3: The Subway Mystery.",
-                    background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-                    tags: ["trending", "true-crime", "mystery"],
-                    viewers: 2892,
-                    type: "audio",
-                    icon: "🔍",
-                    likes: 131,
-                    cardType: "audio",
-                    startTime: "32 min",
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-                    author: "True Crime Network",
-                    duration: "32:45",
-                    createdAt: Date.now() - 172800000,
-                    plays: 2892
-                },
-                {
-                    id: "demo_3",
-                    title: "Science Simplified",
-                    description: "Quantum physics explained in simple terms. Today: The Double Slit Experiment.",
-                    background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-                    tags: ["science", "education", "trending"],
-                    viewers: 1567,
-                    type: "radio",
-                    icon: "🔬",
-                    likes: 78,
-                    cardType: "radio",
-                    startTime: "28 min",
-                    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-                    author: "Dr. Sarah Chen",
-                    duration: "28:20",
-                    createdAt: Date.now() - 259200000,
-                    plays: 1567
-                }
-            ];
-
-            cachedStories = demoStories;
-            lastUpdateTime = Date.now();
-            
-            // Save to cache
-            localStorage.setItem(STORAGE_KEYS.STORIES_CACHE, JSON.stringify(demoStories));
-            localStorage.setItem(STORAGE_KEYS.LAST_UPDATE_TIME, lastUpdateTime.toString());
-            
-            renderFeed(demoStories);
-            isInitialLoadComplete = true;
-        }
-
         function renderFeed(stories) {
             const feedContainer = document.getElementById('verticalFeed');
             const scrollIndicator = document.getElementById('scrollIndicator');

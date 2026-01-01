@@ -329,7 +329,7 @@
             min-height: calc(100vh - 130px);
             scroll-snap-align: start;
             position: relative;
-            overflow: visible;
+            overflow: hidden;
             border-radius: 0;
             margin: 0;
             display: flex;
@@ -360,7 +360,6 @@
             width: 100%;
             animation: fadeInUp 0.5s ease-out;
             margin-top: auto;
-            padding-bottom: 20px;
         }
 
         .card-tags {
@@ -467,7 +466,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0;
+            margin-bottom: 24px;
             margin-top: 20px;
         }
 
@@ -1948,6 +1947,21 @@
                 updateUserProfile(user);
                 loadUserData(user.uid);
                 
+                // Check if this user has done initial load
+                const userInitialLoadKey = STORAGE_KEYS.USER_INITIAL_LOAD + '_' + user.uid;
+                const hasDoneInitialLoad = localStorage.getItem(userInitialLoadKey);
+                
+                if (!hasDoneInitialLoad) {
+                    // First time for this user, load stories from Firebase
+                    console.log("First time user, loading stories from Firebase...");
+                    loadInitialStoriesFromFirebase();
+                    localStorage.setItem(userInitialLoadKey, 'true');
+                } else {
+                    // User has done initial load before, use cached stories
+                    console.log("User has cached stories, loading from localStorage...");
+                    loadStoriesFromCache();
+                }
+                
                 // Load saved stories from localStorage
                 loadSavedStories();
                 
@@ -2048,14 +2062,14 @@
                     // No stories in Firebase
                     cachedStories = [];
                     renderFeed([]);
-                    showToast("No stories available yet. Be the first to submit!", "info");
+                    showToast("No stories available yet.", "info");
                 }
             } catch (error) {
                 console.error("Error loading stories from Firebase:", error);
-                showToast("Failed to load stories", "error");
+                showToast("Failed to load stories, using cached data", "warning");
                 
-                cachedStories = [];
-                renderFeed([]);
+                // Try to load from cache as fallback
+                loadStoriesFromCache();
             }
         }
 
@@ -2131,7 +2145,6 @@
             }, 30 * 60 * 1000); // 30 minutes
         }
 
-        // ===== ORIGINAL FUNCTIONS (UPDATED FOR CACHE) =====
         function renderFeed(stories) {
             const feedContainer = document.getElementById('verticalFeed');
             const scrollIndicator = document.getElementById('scrollIndicator');
@@ -2145,7 +2158,7 @@
                     <div class="feed-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
                         <div style="text-align: center; z-index: 2;">
                             <i class="fas fa-podcast" style="font-size: 64px; margin-bottom: 20px; color: rgba(255,255,255,0.5);"></i>
-                            <h3 style="font-size: 24px; color: rgba(255,255,255,0.7);">No stories yet</h3>
+                            <h3 style="font-size: 24px; color: rgba(255,255,255,0.7);">No stories available</h3>
                             <p style="color: rgba(255,255,255,0.5); margin-top: 10px;">Be the first to share your story!</p>
                         </div>
                     </div>

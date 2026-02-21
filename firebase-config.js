@@ -9,4 +9,7 @@ const firebaseConfig = {
   databaseURL: "https://kheemz-fb9b6-default-rtdb.firebaseio.com"
 };
 
-window.firebaseConfig = firebaseConfig;
+// Initialize Firebase (will be used by other files)
+if (typeof firebase !== 'undefined') {
+  firebase.initializeApp(firebaseConfig);
+}

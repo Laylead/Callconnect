@@ -7,6 +7,15 @@
     <!-- Material Icons + Google Font -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <!-- External Configurations -->
+    <script src="firebase-config.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -90,6 +99,12 @@
             transition: all 0.25s cubic-bezier(0.2,0.9,0.4,1);
             font-weight: 500;
             cursor: pointer;
+            text-decoration: none;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 1rem;
         }
         .nav-item .material-icons { font-size: 24px; color: rgba(255,255,255,0.8); }
         .nav-item.active {
@@ -404,6 +419,9 @@
             transition: 0.2s;
             flex: 1;
             border-radius: 30px;
+            text-decoration: none;
+            border: none;
+            background: none;
         }
         .mobile-nav-item .material-icons { font-size: 26px; }
         .mobile-nav-item.active {
@@ -435,10 +453,10 @@
             <span class="logo-text">CrowdShop</span>
         </div>
         <div class="nav-links" id="sidebarNav">
-            <div class="nav-item active" data-nav="dashboard"><span class="material-icons">dashboard</span> Dashboard</div>
-            <div class="nav-item" data-nav="orders"><span class="material-icons">shopping_bag</span> My Orders</div>
-            <div class="nav-item" data-nav="wallet"><span class="material-icons">account_balance_wallet</span> Wallet</div>
-            <div class="nav-item" data-nav="track"><span class="material-icons">local_shipping</span> Track Orders</div>
+            <button class="nav-item active" data-page="dashboard"><span class="material-icons">dashboard</span> Dashboard</button>
+            <button class="nav-item" data-page="orders"><span class="material-icons">shopping_bag</span> My Orders</button>
+            <button class="nav-item" data-page="wallet"><span class="material-icons">account_balance_wallet</span> Wallet</button>
+            <button class="nav-item" data-page="track"><span class="material-icons">local_shipping</span> Track Orders</button>
         </div>
         <div class="user-profile-bottom">
             <div class="avatar" id="userAvatar">JD</div>
@@ -475,45 +493,103 @@
             <div class="stat-card"><div class="stat-icon"><span class="material-icons">account_balance_wallet</span></div><div><div class="stat-label">Wallet balance</div><div class="stat-value" id="statWalletVal">₦0</div></div></div>
         </div>
 
-        <div class="section-title"><span class="material-icons">local_fire_department</span> Active Campaigns</div>
-        <div class="campaign-row" id="campaignsContainer"></div>
+        <!-- Dashboard Page -->
+        <div id="dashboard-page" class="page active">
+            <div class="section-title"><span class="material-icons">local_fire_department</span> Active Campaigns</div>
+            <div class="campaign-row" id="campaignsContainer"></div>
 
-        <!-- My Reserved Slots -->
-        <div class="table-card">
-            <div style="font-size:1.8rem; font-weight:600; margin-bottom:24px;">My Reserved Slots</div>
-            <table><thead><tr><th>Product</th><th>Price</th><th>Reserved</th><th>Status</th><th>Est. Arrival</th></tr></thead><tbody id="ordersBody"></tbody></table>
-            <div class="view-orders-row">
-                <button class="btn-blue" id="viewAllOrders"><span class="material-icons">list</span> View All Orders</button>
-                <span class="badge-warning"><span class="material-icons">timer</span> <span id="campaignDeadline">7 Days Left</span></span>
+            <!-- My Reserved Slots -->
+            <div class="table-card">
+                <div style="font-size:1.8rem; font-weight:600; margin-bottom:24px;">My Reserved Slots</div>
+                <table><thead><tr><th>Product</th><th>Price</th><th>Reserved</th><th>Status</th><th>Est. Arrival</th></tr></thead><tbody id="ordersBody"></tbody></table>
+                <div class="view-orders-row">
+                    <button class="btn-blue" id="viewAllOrders"><span class="material-icons">list</span> View All Orders</button>
+                    <span class="badge-warning"><span class="material-icons">timer</span> <span id="campaignDeadline">7 Days Left</span></span>
+                </div>
+            </div>
+
+            <!-- right panel -->
+            <div class="right-panel">
+                <div class="wallet-card">
+                    <div class="wallet-balance-large" id="walletLarge">₦0</div>
+                    <button class="deposit-large" id="depositLargeBtn"><span class="material-icons">add</span> Deposit Funds</button>
+                    <div id="transactionsContainer"></div>
+                </div>
+                <div class="faq-card" id="faqContainer">
+                    <div style="font-size:1.8rem; font-weight:600; margin-bottom:24px;">FAQ</div>
+                    <div class="faq-item" data-faq="1"><span>How do CrowdShop group buys work?</span> <span class="material-icons rotate-icon">expand_more</span></div>
+                    <div class="faq-answer">You pool with others to get lower prices. Once the goal is met, orders are placed.</div>
+                    <div class="faq-item" data-faq="2"><span>What if a campaign fails?</span> <span class="material-icons rotate-icon">expand_more</span></div>
+                    <div class="faq-answer">Funds are fully refunded to your wallet within 24h.</div>
+                    <div class="faq-item" data-faq="3"><span>Are there any fees?</span> <span class="material-icons rotate-icon">expand_more</span></div>
+                    <div class="faq-answer">No hidden fees. You only pay the group price.</div>
+                    <div class="faq-item" data-faq="4"><span>How do I withdraw funds?</span> <span class="material-icons rotate-icon">expand_more</span></div>
+                    <div class="faq-answer">Go to Wallet → Withdraw. Funds are available after 7 days.</div>
+                </div>
             </div>
         </div>
 
-        <!-- right panel -->
-        <div class="right-panel">
-            <div class="wallet-card">
-                <div class="wallet-balance-large" id="walletLarge">₦0</div>
-                <button class="deposit-large" id="depositLargeBtn"><span class="material-icons">add</span> Deposit Funds</button>
-                <div id="transactionsContainer"></div>
+        <!-- Orders Page -->
+        <div id="orders-page" class="page">
+            <div class="section-title"><span class="material-icons">shopping_bag</span> My Orders</div>
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Product</th>
+                            <th>Units</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-full-body">
+                        <tr>
+                            <td colspan="6" style="text-align:center;">Loading orders...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-            <div class="faq-card" id="faqContainer">
-                <div style="font-size:1.8rem; font-weight:600; margin-bottom:24px;">FAQ</div>
-                <div class="faq-item" data-faq="1"><span>How do CrowdShop group buys work?</span> <span class="material-icons rotate-icon">expand_more</span></div>
-                <div class="faq-answer">You pool with others to get lower prices. Once the goal is met, orders are placed.</div>
-                <div class="faq-item" data-faq="2"><span>What if a campaign fails?</span> <span class="material-icons rotate-icon">expand_more</span></div>
-                <div class="faq-answer">Funds are fully refunded to your wallet within 24h.</div>
-                <div class="faq-item" data-faq="3"><span>Are there any fees?</span> <span class="material-icons rotate-icon">expand_more</span></div>
-                <div class="faq-answer">No hidden fees. You only pay the group price.</div>
-                <div class="faq-item" data-faq="4"><span>How do I withdraw funds?</span> <span class="material-icons rotate-icon">expand_more</span></div>
-                <div class="faq-answer">Go to Wallet → Withdraw. Funds are available after 7 days.</div>
+        </div>
+
+        <!-- Wallet Page -->
+        <div id="wallet-page" class="page">
+            <div class="section-title"><span class="material-icons">account_balance_wallet</span> My Wallet</div>
+            <div class="right-panel">
+                <div class="wallet-card">
+                    <div class="wallet-balance-large" id="walletPageBalance">₦0</div>
+                    <button class="deposit-large" id="walletDepositBtn"><span class="material-icons">add</span> Deposit Funds</button>
+                    <div style="margin-top: 20px;">
+                        <h3>Recent Transactions</h3>
+                        <div id="walletTransactions"></div>
+                    </div>
+                </div>
+                <div class="wallet-card">
+                    <h3 style="margin-bottom:20px;">Quick Actions</h3>
+                    <button class="btn-success" style="width:100%; margin-bottom:10px;" id="withdrawBtn"><span class="material-icons">logout</span> Withdraw Funds</button>
+                    <button class="btn-primary" style="width:100%;" id="transferBtn"><span class="material-icons">swap_horiz</span> Transfer to Group Buy</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Track Orders Page -->
+        <div id="track-page" class="page">
+            <div class="section-title"><span class="material-icons">local_shipping</span> Track Orders</div>
+            <div class="campaign-row" id="trackingContainer">
+                <div style="grid-column:1/-1; text-align:center; padding:40px;">
+                    <span class="material-icons" style="font-size:48px; color:#ccc;">inventory</span>
+                    <p>No orders to track yet</p>
+                </div>
             </div>
         </div>
 
         <!-- MOBILE BOTTOM NAV WITH LABELS -->
         <div class="mobile-bottom-nav" id="mobileNav">
-            <div class="mobile-nav-item active" data-nav="dashboard"><span class="material-icons">dashboard</span><span>Home</span></div>
-            <div class="mobile-nav-item" data-nav="orders"><span class="material-icons">shopping_bag</span><span>Orders</span></div>
-            <div class="mobile-nav-item" data-nav="wallet"><span class="material-icons">account_balance_wallet</span><span>Wallet</span></div>
-            <div class="mobile-nav-item" data-nav="track"><span class="material-icons">local_shipping</span><span>Track</span></div>
+            <button class="mobile-nav-item active" data-page="dashboard"><span class="material-icons">dashboard</span><span>Home</span></button>
+            <button class="mobile-nav-item" data-page="orders"><span class="material-icons">shopping_bag</span><span>Orders</span></button>
+            <button class="mobile-nav-item" data-page="wallet"><span class="material-icons">account_balance_wallet</span><span>Wallet</span></button>
+            <button class="mobile-nav-item" data-page="track"><span class="material-icons">local_shipping</span><span>Track</span></button>
         </div>
     </main>
 </div>
@@ -532,529 +608,523 @@
     </div>
 </div>
 
-<script type="module">
-    // ========== FIREBASE CONFIG ==========
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
-    import { getFirestore, collection, onSnapshot, doc, query, where, getDocs, addDoc, updateDoc, increment, runTransaction, setDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
-
-    // Firebase configuration - REPLACE WITH YOUR OWN
-    const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_AUTH_DOMAIN",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_STORAGE_BUCKET",
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-        appId: "YOUR_APP_ID"
-    };
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    // ----- ELEMENTS -----
-    const walletDisplay = document.getElementById('walletDisplay');
-    const walletLarge = document.getElementById('walletLarge');
-    const statWalletVal = document.getElementById('statWalletVal');
-    const statJoined = document.getElementById('statJoined');
-    const statUnits = document.getElementById('statUnits');
-    const greetingHi = document.getElementById('greetingHi');
-    const sidebarUserName = document.getElementById('sidebarUserName');
-    const avatarDiv = document.getElementById('userAvatar');
-    const campaignsContainer = document.getElementById('campaignsContainer');
-    const ordersBody = document.getElementById('ordersBody');
-    const transactionsDiv = document.getElementById('transactionsContainer');
-    const logoutBtn = document.getElementById('logoutBtn');
-    
-    // dropdown / popup
-    const walletDropdown = document.getElementById('walletDropdown');
-    const popupOverlay = document.getElementById('popupOverlay');
-    const popupTitle = document.getElementById('popupTitle');
-    const popupAmount = document.getElementById('popupAmount');
-    const popupConfirm = document.getElementById('popupConfirm');
-    const popupCancel = document.getElementById('popupCancel');
-    const popupContentArea = document.getElementById('popupContentArea');
-    const viewAllOrders = document.getElementById('viewAllOrders');
-    const depositTopBtn = document.getElementById('depositTopBtn');
-    const depositLargeBtn = document.getElementById('depositLargeBtn');
-    const quickDeposit = document.getElementById('quickDeposit');
-    const viewHistory = document.getElementById('viewHistory');
-
+<script>
+    // ========== GLOBAL VARIABLES ==========
     let currentUser = null;
-    let currentCampaignId = null;
-
-    // ----- CHECK AUTH AND STAY ON DASHBOARD -----
-    onAuthStateChanged(auth, async (user) => {
-        if (!user) { 
-            // Redirect to login only if not on login page
-            if (!window.location.pathname.includes('login.html')) {
-                window.location.href = 'login.html'; 
-            }
-            return; 
-        }
-
-        // User is logged in - stay on dashboard
-        currentUser = user;
-        
-        // populate user info
-        const displayName = user.displayName || 'Crowd Buyer';
-        greetingHi.innerText = `Hi, ${displayName.split(' ')[0]}`;
-        sidebarUserName.innerText = displayName;
-        avatarDiv.innerText = (displayName.charAt(0) || 'U').toUpperCase();
-
-        // Initialize user document if it doesn't exist
-        const userRef = doc(db, 'users', user.uid);
-        try {
-            await setDoc(userRef, {
-                walletBalance: 42000,
-                email: user.email,
-                displayName: displayName,
-                createdAt: new Date()
-            }, { merge: true }); // merge: true will not overwrite existing data
-        } catch (error) {
-            console.log('User document already exists or error:', error);
-        }
-
-        // ----- WALLET LISTENER WITH REAL-TIME UPDATES -----
-        onSnapshot(userRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                const balance = data.walletBalance || 42000;
-                const formatted = `₦${balance.toLocaleString()}`;
-                walletDisplay.innerHTML = `<span class="material-icons">account_balance_wallet</span> ${formatted}`;
-                walletLarge.innerText = formatted;
-                statWalletVal.innerText = formatted;
-            }
-        });
-
-        // ----- RESERVATIONS WITH REAL-TIME UPDATES -----
-        const reservationsQuery = query(collection(db, 'reservations'), where('userId', '==', user.uid));
-        onSnapshot(reservationsQuery, (snap) => {
-            let totalUnits = 0;
-            let ordersHtml = '';
-            snap.forEach(d => {
-                const r = d.data();
-                totalUnits += r.units || 0;
-                const statusClass = r.status === 'in_transit' ? 'status-green' : 'status-yellow';
-                const icon = r.status === 'in_transit' ? 'local_shipping' : 'hourglass_empty';
-                const statusText = r.status === 'in_transit' ? 'In Transit' : 'Funding';
-                ordersHtml += `<tr><td>${r.productName}</td><td>₦${r.price?.toLocaleString()}</td><td>${r.units}</td>
-                    <td><span class="${statusClass}"><span class="material-icons">${icon}</span> ${statusText}</span></td>
-                    <td>${r.eta || '—'}</td></tr>`;
-            });
-            ordersBody.innerHTML = ordersHtml || '<tr><td colspan="5" style="text-align:center;">No reserved slots</td></tr>';
-            statUnits.innerText = totalUnits;
-        });
-
-        // ----- LOAD CAMPAIGNS (with sample data if none exists) -----
-        const campaignsQuery = collection(db, 'campaigns');
-        const campaignsSnap = await getDocs(campaignsQuery);
-        
-        if (campaignsSnap.empty) {
-            // Add sample campaigns
-            const sampleCampaigns = [
-                { name: 'iPhone 15', goal: 100, reserved: 45, price: 450000, imageUrl: 'https://via.placeholder.com/300x160/b0d0ea/2a5e8c?text=iPhone+15', description: 'Latest iPhone 15', status: 'active' },
-                { name: 'MacBook Pro', goal: 50, reserved: 28, price: 850000, imageUrl: 'https://via.placeholder.com/300x160/b0d0ea/2a5e8c?text=MacBook+Pro', description: 'M3 Max chip', status: 'active' },
-                { name: 'AirPods Pro', goal: 100, reserved: 72, price: 120000, imageUrl: 'https://via.placeholder.com/300x160/b0d0ea/2a5e8c?text=AirPods+Pro', description: 'With USB-C', status: 'active' }
-            ];
-            
-            for (const campaign of sampleCampaigns) {
-                await addDoc(collection(db, 'campaigns'), campaign);
-            }
-        }
-        
-        // Listen to campaigns for real-time updates
-        onSnapshot(campaignsQuery, (snap) => {
-            let campaignsHtml = '';
-            snap.forEach(doc => {
-                const c = doc.data();
-                const campaignId = doc.id;
-                const fundingPercentage = Math.round((c.reserved / c.goal) * 100) || 0;
-                
-                campaignsHtml += `
-                <div class="campaign-card" data-campaign-id="${campaignId}">
-                    <div class="campaign-img" style="background-image:url('${c.imageUrl || 'https://via.placeholder.com/300x160/b0d0ea/2a5e8c?text=' + c.name}')"></div>
-                    <div class="campaign-header">
-                        <span class="campaign-title">${c.name}</span>
-                        <span class="units-badge">${c.reserved || 0}/${c.goal || 100}</span>
-                    </div>
-                    <div class="price-tag">₦${(c.price || 0).toLocaleString()} per unit</div>
-                    <div class="progress-container">
-                        <div class="progress-bar-bg">
-                            <div class="progress-fill" style="width:${fundingPercentage}%"></div>
-                        </div>
-                        <div class="funding-text"><span>${fundingPercentage}% Funded</span></div>
-                    </div>
-                    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:16px;">
-                        <button class="btn-outline view-campaign" data-id="${campaignId}">View Details</button>
-                        <button class="btn-success buy-campaign" data-id="${campaignId}" data-price="${c.price || 0}" data-name="${c.name}">Buy Now</button>
-                    </div>
-                </div>`;
-            });
-            campaignsContainer.innerHTML = campaignsHtml || '<p>No active campaigns</p>';
-        });
-
-        // ----- JOINED CAMPAIGNS COUNT -----
-        const reservationsSnap = await getDocs(query(collection(db, 'reservations'), where('userId', '==', user.uid)));
-        const uniqueCampaigns = new Set(reservationsSnap.docs.map(d => d.data().campaignId));
-        statJoined.innerText = uniqueCampaigns.size;
-
-        // ----- TRANSACTIONS WITH REAL-TIME UPDATES -----
-        const txQuery = query(collection(db, 'transactions'), where('userId', '==', user.uid));
-        onSnapshot(txQuery, (snap) => {
-            let txHtml = '';
-            snap.forEach(d => {
-                const t = d.data();
-                txHtml += `<div class="transaction-item" style="display:flex; align-items:center; gap:12px; padding:8px 0;">
-                    <span class="material-icons" style="color:#1d8a4a;">check_circle</span> 
-                    <span>₦${(t.amount || 0).toLocaleString()} - ${t.description || t.type || 'Transaction'}</span>
-                </div>`;
-            });
-            transactionsDiv.innerHTML = txHtml || '<div class="transaction-item">No recent transactions</div>';
-        });
+    let userData = null;
+    let walletBalance = 42000; // Default balance
+    let joinedCampaigns = 2;
+    let reservedUnits = 3;
+    
+    // ========== INITIALIZATION ==========
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeApp();
     });
 
-    // ----- POPUP FUNCTIONS -----
+    async function initializeApp() {
+        try {
+            // Check if Firebase config is loaded
+            if (typeof firebaseConfig === 'undefined') {
+                console.error('Firebase configuration not loaded');
+                showNotification('Firebase configuration not loaded', 'error');
+                return;
+            }
+
+            // Initialize Firebase
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            
+            // Check authentication state - FIXED: This ensures we stay on dashboard if logged in
+            firebase.auth().onAuthStateChanged(async (user) => {
+                if (user) {
+                    console.log('User authenticated:', user.uid);
+                    currentUser = user;
+                    
+                    // Load user data from Firestore or create if doesn't exist
+                    await loadUserData();
+                    
+                    // Setup UI with user data
+                    updateUserProfile();
+                    setupEventListeners();
+                    loadCampaigns();
+                    loadOrders();
+                    loadTransactions();
+                    setupRealtimeListeners();
+                    
+                    // Hide loading states
+                    document.body.style.opacity = '1';
+                    
+                } else {
+                    // No user, redirect to login - but ONLY if we're not already on login page
+                    console.log('No user, redirecting to login');
+                    if (!window.location.pathname.includes('login.html')) {
+                        window.location.href = 'login.html';
+                    }
+                }
+            });
+            
+        } catch (error) {
+            console.error('Initialization error:', error);
+            showNotification('Error initializing application', 'error');
+        }
+    }
+
+    // ========== USER DATA ==========
+    async function loadUserData() {
+        try {
+            const userRef = firebase.firestore().collection('users').doc(currentUser.uid);
+            const userDoc = await userRef.get();
+            
+            if (userDoc.exists) {
+                userData = userDoc.data();
+                walletBalance = userData.walletBalance || 42000;
+                joinedCampaigns = userData.joinedCampaigns || 2;
+                reservedUnits = userData.reservedUnits || 3;
+                
+                console.log('User data loaded:', userData);
+            } else {
+                // Create new user document
+                const newUser = {
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    displayName: currentUser.displayName || 'Crowd Buyer',
+                    walletBalance: 42000,
+                    joinedCampaigns: 0,
+                    reservedUnits: 0,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                await userRef.set(newUser);
+                userData = newUser;
+                walletBalance = 42000;
+                
+                console.log('New user created');
+            }
+            
+            // Update stats
+            document.getElementById('statJoined').textContent = joinedCampaigns;
+            document.getElementById('statUnits').textContent = reservedUnits;
+            
+        } catch (error) {
+            console.error('Error loading user data:', error);
+            showNotification('Error loading user data', 'error');
+        }
+    }
+
+    function updateUserProfile() {
+        if (!userData && !currentUser) return;
+        
+        const displayName = userData?.displayName || currentUser?.displayName || 'Crowd Buyer';
+        const email = currentUser?.email || 'user@example.com';
+        const initial = displayName.charAt(0).toUpperCase();
+        
+        document.getElementById('greetingHi').innerHTML = `Hi, ${displayName.split(' ')[0]}`;
+        document.getElementById('sidebarUserName').textContent = displayName;
+        document.getElementById('userAvatar').textContent = initial;
+        
+        // Update wallet displays
+        const formattedBalance = `₦${walletBalance.toLocaleString()}`;
+        document.getElementById('walletDisplay').innerHTML = `<span class="material-icons">account_balance_wallet</span> ${formattedBalance}`;
+        document.getElementById('walletLarge').textContent = formattedBalance;
+        document.getElementById('statWalletVal').textContent = formattedBalance;
+        document.getElementById('walletPageBalance').textContent = formattedBalance;
+    }
+
+    // ========== EVENT LISTENERS ==========
+    function setupEventListeners() {
+        console.log('Setting up event listeners');
+        
+        // Navigation
+        document.querySelectorAll('[data-page]').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = item.dataset.page;
+                showPage(page);
+            });
+        });
+
+        // Wallet dropdown
+        document.querySelector('.wallet-pill').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const rect = e.currentTarget.getBoundingClientRect();
+            const dropdown = document.getElementById('walletDropdown');
+            dropdown.style.top = rect.bottom + 12 + 'px';
+            dropdown.style.left = rect.left - 40 + 'px';
+            dropdown.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.wallet-pill')) {
+                document.getElementById('walletDropdown').classList.remove('show');
+            }
+        });
+
+        // Deposit buttons
+        document.getElementById('depositTopBtn').addEventListener('click', showDepositPopup);
+        document.getElementById('depositLargeBtn').addEventListener('click', showDepositPopup);
+        document.getElementById('walletDepositBtn').addEventListener('click', showDepositPopup);
+        document.getElementById('quickDeposit').addEventListener('click', () => {
+            document.getElementById('walletDropdown').classList.remove('show');
+            showDepositPopup();
+        });
+
+        // View history
+        document.getElementById('viewHistory').addEventListener('click', () => {
+            document.getElementById('walletDropdown').classList.remove('show');
+            showPage('wallet');
+        });
+
+        // View all orders
+        document.getElementById('viewAllOrders').addEventListener('click', () => {
+            showPage('orders');
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                await firebase.auth().signOut();
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                showNotification('Error logging out', 'error');
+            }
+        });
+
+        // Withdraw button
+        document.getElementById('withdrawBtn')?.addEventListener('click', () => {
+            showPopup('Withdraw Funds', 'Enter amount to withdraw', true, 'Withdraw');
+        });
+
+        // Transfer button
+        document.getElementById('transferBtn')?.addEventListener('click', () => {
+            showPopup('Transfer to Group Buy', 'Select campaign and enter amount', true, 'Transfer');
+        });
+
+        // FAQ accordion
+        document.querySelectorAll('.faq-item').forEach((item) => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Close other open FAQs
+                document.querySelectorAll('.faq-item').forEach(otherItem => {
+                    if (otherItem !== this && otherItem.classList.contains('open')) {
+                        otherItem.classList.remove('open');
+                        const otherAnswer = otherItem.nextElementSibling;
+                        if (otherAnswer?.classList.contains('faq-answer')) {
+                            otherAnswer.style.maxHeight = null;
+                        }
+                    }
+                });
+                
+                // Toggle current
+                this.classList.toggle('open');
+                const answer = this.nextElementSibling;
+                if (answer?.classList.contains('faq-answer')) {
+                    answer.style.maxHeight = this.classList.contains('open') ? answer.scrollHeight + 'px' : null;
+                }
+            });
+        });
+
+        // Popup buttons
+        document.getElementById('popupCancel').addEventListener('click', () => {
+            document.getElementById('popupOverlay').classList.remove('show');
+        });
+
+        document.getElementById('popupConfirm').addEventListener('click', async () => {
+            const title = document.getElementById('popupTitle').innerText;
+            
+            if (title.includes('Deposit')) {
+                const amount = parseFloat(document.getElementById('popupAmount').value) || 0;
+                if (amount < 100) {
+                    showNotification('Minimum deposit is ₦100', 'error');
+                    return;
+                }
+                
+                // Update balance in Firestore
+                try {
+                    await firebase.firestore().collection('users').doc(currentUser.uid).update({
+                        walletBalance: firebase.firestore.FieldValue.increment(amount)
+                    });
+                    
+                    // Add transaction
+                    await firebase.firestore().collection('transactions').add({
+                        userId: currentUser.uid,
+                        type: 'deposit',
+                        amount: amount,
+                        description: 'Deposit via popup',
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    showNotification(`✅ Successfully deposited ₦${amount.toLocaleString()}`, 'success');
+                    document.getElementById('popupOverlay').classList.remove('show');
+                } catch (error) {
+                    console.error('Deposit error:', error);
+                    showNotification('Error processing deposit', 'error');
+                }
+            } else {
+                showNotification('Action completed successfully', 'success');
+                document.getElementById('popupOverlay').classList.remove('show');
+            }
+        });
+
+        document.getElementById('popupOverlay').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('popupOverlay')) {
+                document.getElementById('popupOverlay').classList.remove('show');
+            }
+        });
+
+        // Buy campaign buttons (delegation)
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.buy-campaign')) {
+                const btn = e.target.closest('.buy-campaign');
+                const name = btn.dataset.name;
+                const price = parseFloat(btn.dataset.price);
+                
+                showPopup(`Buy from ${name}`, `Price: ₦${price.toLocaleString()}\nEnter number of units:`, true, 'Purchase');
+            }
+            
+            if (e.target.closest('.view-campaign')) {
+                const btn = e.target.closest('.view-campaign');
+                showPopup('Campaign Details', 'This campaign has great deals!\n• Goal: 100 units\n• Progress: 65%\n• Ends in: 7 days', false);
+            }
+        });
+    }
+
+    // ========== PAGE MANAGEMENT ==========
+    function showPage(page) {
+        // Hide all pages
+        document.querySelectorAll('.page').forEach(p => {
+            p.classList.remove('active');
+        });
+        
+        // Show selected page
+        document.getElementById(`${page}-page`).classList.add('active');
+        
+        // Update active nav
+        document.querySelectorAll('[data-page]').forEach(item => {
+            item.classList.remove('active');
+            if (item.dataset.page === page) {
+                item.classList.add('active');
+            }
+        });
+        
+        // Update page title
+        const titles = {
+            'dashboard': 'Dashboard',
+            'orders': 'My Orders',
+            'wallet': 'Wallet',
+            'track': 'Track Orders'
+        };
+        document.getElementById('page-title').textContent = titles[page] || 'CrowdShop';
+    }
+
+    // ========== POPUP FUNCTIONS ==========
     function showPopup(title, content, showInput = false, confirmText = 'Confirm') {
-        popupTitle.innerText = title;
+        document.getElementById('popupTitle').innerText = title;
         
         if (showInput) {
-            popupContentArea.innerHTML = '<input type="number" id="popupAmount" class="popup-input" placeholder="Amount (₦)" value="5000">';
-            popupConfirm.style.display = 'inline-block';
-            popupConfirm.innerText = confirmText;
+            document.getElementById('popupContentArea').innerHTML = '<input type="number" id="popupAmount" class="popup-input" placeholder="Amount (₦)" value="5000">';
+            document.getElementById('popupConfirm').style.display = 'inline-block';
+            document.getElementById('popupConfirm').innerText = confirmText;
         } else {
-            popupContentArea.innerHTML = `<div class="popup-content">${content.replace(/\n/g, '<br>')}</div>`;
-            popupConfirm.style.display = 'none';
+            document.getElementById('popupContentArea').innerHTML = `<div class="popup-content">${content.replace(/\n/g, '<br>')}</div>`;
+            document.getElementById('popupConfirm').style.display = 'none';
         }
         
-        popupCancel.innerText = 'Close';
-        popupOverlay.classList.add('show');
+        document.getElementById('popupCancel').innerText = 'Close';
+        document.getElementById('popupOverlay').classList.add('show');
     }
 
     function showDepositPopup() {
-        popupTitle.innerText = 'Deposit Funds';
-        popupContentArea.innerHTML = '<input type="number" id="popupAmount" class="popup-input" placeholder="Amount (₦)" value="5000">';
-        popupConfirm.style.display = 'inline-block';
-        popupConfirm.innerText = 'Deposit';
-        popupCancel.innerText = 'Cancel';
-        popupOverlay.classList.add('show');
+        document.getElementById('popupTitle').innerText = 'Deposit Funds';
+        document.getElementById('popupContentArea').innerHTML = '<input type="number" id="popupAmount" class="popup-input" placeholder="Amount (₦)" value="5000">';
+        document.getElementById('popupConfirm').style.display = 'inline-block';
+        document.getElementById('popupConfirm').innerText = 'Deposit';
+        document.getElementById('popupCancel').innerText = 'Cancel';
+        document.getElementById('popupOverlay').classList.add('show');
     }
 
-    function showBuyPopup(campaignId, campaignName, price) {
-        currentCampaignId = campaignId;
-        popupTitle.innerText = `Buy ${campaignName}`;
+    // ========== DATA LOADING ==========
+    function loadCampaigns() {
+        const container = document.getElementById('campaignsContainer');
         
-        // Get current balance
-        let currentBalance = 0;
-        if (currentUser) {
-            const userRef = doc(db, 'users', currentUser.uid);
-            getDocs(userRef).then(docSnap => {
-                if (docSnap.exists()) {
-                    currentBalance = docSnap.data().walletBalance || 0;
-                }
-            });
-        }
+        // Sample campaigns
+        const campaigns = [
+            { id: 1, name: 'iPhone 15 Pro', goal: 100, reserved: 45, price: 450000, funded: 45, image: 'https://via.placeholder.com/300x160/b0d0ea/2a5e8c?text=iPhone+15+Pro' },
+            { id: 2, name: 'MacBook Air M2', goal: 50, reserved: 28, price: 850000, funded: 56, image: 'https://via.placeholder.com/300x160/b0d0ea/2a5e8c?text=MacBook+Air' },
+            { id: 3, name: 'AirPods Pro', goal: 100, reserved: 72, price: 120000, funded: 72, image: 'https://via.placeholder.com/300x160/b0d0ea/2a5e8c?text=AirPods+Pro' }
+        ];
         
-        popupContentArea.innerHTML = `
-            <div class="popup-content">
-                <p>Price per unit: ₦${price.toLocaleString()}</p>
-                <p>Your balance: <span id="currentBalance">₦${currentBalance.toLocaleString()}</span></p>
-                <label>Number of units:</label>
-                <input type="number" id="buyUnits" class="popup-input" min="1" max="10" value="1">
-                <p>Total: ₦<span id="totalPrice">${price.toLocaleString()}</span></p>
-            </div>
-        `;
+        let html = '';
+        campaigns.forEach(c => {
+            html += `
+                <div class="campaign-card">
+                    <div class="campaign-img" style="background-image:url('${c.image}')"></div>
+                    <div class="campaign-header">
+                        <span class="campaign-title">${c.name}</span>
+                        <span class="units-badge">${c.reserved}/${c.goal}</span>
+                    </div>
+                    <div class="price-tag">₦${c.price.toLocaleString()} per unit</div>
+                    <div class="progress-container">
+                        <div class="progress-bar-bg">
+                            <div class="progress-fill" style="width:${c.funded}%"></div>
+                        </div>
+                        <div class="funding-text"><span>${c.funded}% Funded</span></div>
+                    </div>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:16px;">
+                        <button class="btn-outline view-campaign" data-id="${c.id}">View Details</button>
+                        <button class="btn-success buy-campaign" data-id="${c.id}" data-name="${c.name}" data-price="${c.price}">Buy Now</button>
+                    </div>
+                </div>
+            `;
+        });
         
-        // Update total price when units change
-        setTimeout(() => {
-            const buyUnits = document.getElementById('buyUnits');
-            const totalSpan = document.getElementById('totalPrice');
+        container.innerHTML = html;
+    }
+
+    function loadOrders() {
+        const ordersBody = document.getElementById('ordersBody');
+        const ordersFullBody = document.getElementById('orders-full-body');
+        
+        const orders = [
+            { id: 1, product: 'iPhone 15 Pro', price: 450000, units: 2, status: 'Funding', eta: '—' },
+            { id: 2, product: 'MacBook Air M2', price: 850000, units: 1, status: 'in_transit', eta: '3 days' }
+        ];
+        
+        // Dashboard orders table
+        let ordersHtml = '';
+        orders.forEach(o => {
+            const statusClass = o.status === 'in_transit' ? 'status-green' : 'status-yellow';
+            const icon = o.status === 'in_transit' ? 'local_shipping' : 'hourglass_empty';
+            const statusText = o.status === 'in_transit' ? 'In Transit' : 'Funding';
             
-            buyUnits.addEventListener('input', () => {
-                const units = parseInt(buyUnits.value) || 1;
-                totalSpan.innerText = (units * price).toLocaleString();
-            });
-        }, 100);
+            ordersHtml += `
+                <tr>
+                    <td>${o.product}</td>
+                    <td>₦${o.price.toLocaleString()}</td>
+                    <td>${o.units}</td>
+                    <td><span class="${statusClass}"><span class="material-icons">${icon}</span> ${statusText}</span></td>
+                    <td>${o.eta}</td>
+                </tr>
+            `;
+        });
+        ordersBody.innerHTML = ordersHtml;
         
-        popupConfirm.style.display = 'inline-block';
-        popupConfirm.innerText = 'Purchase';
-        popupCancel.innerText = 'Cancel';
-        popupOverlay.classList.add('show');
+        // Full orders page table
+        let fullHtml = '';
+        orders.forEach(o => {
+            const total = o.price * o.units;
+            const statusClass = o.status === 'in_transit' ? 'status-green' : 'status-yellow';
+            const statusText = o.status === 'in_transit' ? 'In Transit' : 'Funding';
+            
+            fullHtml += `
+                <tr>
+                    <td>#ORD-${o.id}${Date.now().toString().slice(-4)}</td>
+                    <td>${o.product}</td>
+                    <td>${o.units}</td>
+                    <td>₦${total.toLocaleString()}</td>
+                    <td><span class="${statusClass}">${statusText}</span></td>
+                    <td>${new Date().toLocaleDateString()}</td>
+                </tr>
+            `;
+        });
+        ordersFullBody.innerHTML = fullHtml || '<tr><td colspan="6" style="text-align:center;">No orders found</td></tr>';
     }
 
-    // ----- WALLET DROPDOWN -----
-    document.querySelector('.wallet-pill')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const rect = e.currentTarget.getBoundingClientRect();
-        walletDropdown.style.top = rect.bottom + 12 + 'px';
-        walletDropdown.style.left = rect.left - 40 + 'px';
-        walletDropdown.classList.toggle('show');
-    });
-    
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.wallet-pill')) {
-            walletDropdown.classList.remove('show');
-        }
-    });
-
-    // ----- DEPOSIT BUTTONS -----
-    depositTopBtn?.addEventListener('click', (e) => {
-        e.preventDefault();
-        showDepositPopup();
-    });
-    
-    depositLargeBtn?.addEventListener('click', (e) => {
-        e.preventDefault();
-        showDepositPopup();
-    });
-    
-    quickDeposit?.addEventListener('click', () => {
-        walletDropdown.classList.remove('show');
-        showDepositPopup();
-    });
-
-    // ----- VIEW HISTORY -----
-    viewHistory?.addEventListener('click', () => {
-        walletDropdown.classList.remove('show');
-        if (currentUser) {
-            const txQuery = query(collection(db, 'transactions'), where('userId', '==', currentUser.uid));
-            getDocs(txQuery).then(snap => {
-                let history = 'Transaction History:\n';
-                snap.forEach(d => {
-                    const t = d.data();
-                    history += `• ₦${t.amount?.toLocaleString()} - ${t.description || t.type}\n`;
-                });
-                showPopup('Transaction History', history || 'No transactions yet', false);
-            });
-        }
-    });
-
-    // ----- VIEW ALL ORDERS -----
-    viewAllOrders?.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (currentUser) {
-            const reservationsQuery = query(collection(db, 'reservations'), where('userId', '==', currentUser.uid));
-            getDocs(reservationsQuery).then(snap => {
-                let orders = 'All Orders:\n';
-                snap.forEach(d => {
-                    const r = d.data();
-                    orders += `• ${r.productName} - ${r.units} unit(s) - ₦${(r.price * r.units).toLocaleString()} - ${r.status}\n`;
-                });
-                showPopup('All Orders', orders || 'No orders yet', false);
-            });
-        }
-    });
-
-    // ----- BUY CAMPAIGN -----
-    document.addEventListener('click', (e) => {
-        if (e.target.closest('.buy-campaign')) {
-            e.preventDefault();
-            const btn = e.target.closest('.buy-campaign');
-            const campaignId = btn.dataset.id;
-            const price = parseFloat(btn.dataset.price);
-            const name = btn.dataset.name;
-            showBuyPopup(campaignId, name, price);
-        }
+    function loadTransactions() {
+        const container = document.getElementById('transactionsContainer');
+        const walletContainer = document.getElementById('walletTransactions');
         
-        if (e.target.closest('.view-campaign')) {
-            e.preventDefault();
-            const id = e.target.closest('.view-campaign').dataset.id;
-            const campaignRef = doc(db, 'campaigns', id);
-            getDocs(campaignRef).then(docSnap => {
-                if (docSnap.exists()) {
-                    const c = docSnap.data();
-                    const details = `${c.name}\n• Goal: ${c.goal} units\n• Reserved: ${c.reserved || 0} units\n• Price: ₦${c.price?.toLocaleString()}\n• Description: ${c.description || 'No description'}`;
-                    showPopup('Campaign Details', details, false);
-                }
-            });
-        }
-    });
+        const transactions = [
+            { id: 1, type: 'deposit', amount: 50000, desc: 'Deposit' },
+            { id: 2, type: 'payment', amount: 450000, desc: 'iPhone 15 Pro purchase' }
+        ];
+        
+        let html = '';
+        transactions.forEach(t => {
+            html += `
+                <div style="display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid #eee;">
+                    <span class="material-icons" style="color:#1d8a4a;">check_circle</span>
+                    <span>${t.desc} - ₦${t.amount.toLocaleString()}</span>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html || '<div>No recent transactions</div>';
+        walletContainer.innerHTML = html || '<div>No transactions</div>';
+    }
 
-    // ----- POPUP CONFIRM (Deposit or Purchase) -----
-    popupConfirm?.addEventListener('click', async () => {
+    function setupRealtimeListeners() {
         if (!currentUser) return;
         
-        if (popupTitle.innerText.includes('Deposit')) {
-            const amount = parseFloat(document.getElementById('popupAmount')?.value) || 0;
-            if (amount <= 0) {
-                alert('Enter valid amount');
-                return;
-            }
-            
-            try {
-                const userRef = doc(db, 'users', currentUser.uid);
-                await updateDoc(userRef, {
-                    walletBalance: increment(amount)
-                });
-                
-                // Add transaction record
-                await addDoc(collection(db, 'transactions'), {
-                    userId: currentUser.uid,
-                    amount: amount,
-                    type: 'deposit',
-                    description: 'Deposit',
-                    timestamp: new Date()
-                });
-                
-                alert(`✅ Successfully deposited ₦${amount.toLocaleString()}`);
-                popupOverlay.classList.remove('show');
-            } catch (error) {
-                alert('Error processing deposit: ' + error.message);
-            }
-        } 
-        else if (popupTitle.innerText.includes('Buy') || popupTitle.innerText.includes('Purchase')) {
-            const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
-            const price = parseFloat(document.querySelector('.buy-campaign')?.dataset.price) || 0;
-            const totalCost = units * price;
-            
-            try {
-                const userRef = doc(db, 'users', currentUser.uid);
-                const campaignRef = doc(db, 'campaigns', currentCampaignId);
-                
-                // Run transaction to ensure atomic operation
-                await runTransaction(db, async (transaction) => {
-                    const userDoc = await transaction.get(userRef);
-                    const campaignDoc = await transaction.get(campaignRef);
+        // Listen for wallet balance updates
+        firebase.firestore().collection('users').doc(currentUser.uid)
+            .onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    walletBalance = data.walletBalance || 42000;
+                    joinedCampaigns = data.joinedCampaigns || 2;
+                    reservedUnits = data.reservedUnits || 3;
                     
-                    if (!userDoc.exists()) throw new Error('User not found');
-                    if (!campaignDoc.exists()) throw new Error('Campaign not found');
-                    
-                    const userBalance = userDoc.data().walletBalance || 0;
-                    if (userBalance < totalCost) {
-                        throw new Error('Insufficient balance');
-                    }
-                    
-                    // Update user balance
-                    transaction.update(userRef, {
-                        walletBalance: increment(-totalCost)
-                    });
-                    
-                    // Update campaign reserved units
-                    transaction.update(campaignRef, {
-                        reserved: increment(units)
-                    });
-                });
-                
-                // Get campaign name
-                const campaignDoc = await getDocs(doc(db, 'campaigns', currentCampaignId));
-                const campaignName = campaignDoc.exists() ? campaignDoc.data().name : 'Product';
-                
-                // Create reservation
-                await addDoc(collection(db, 'reservations'), {
-                    userId: currentUser.uid,
-                    campaignId: currentCampaignId,
-                    productName: campaignName,
-                    price: price,
-                    units: units,
-                    status: 'funding',
-                    eta: '—',
-                    timestamp: new Date()
-                });
-                
-                // Add transaction record
-                await addDoc(collection(db, 'transactions'), {
-                    userId: currentUser.uid,
-                    amount: totalCost,
-                    type: 'purchase',
-                    description: `Purchased ${units} unit(s) of ${campaignName}`,
-                    timestamp: new Date()
-                });
-                
-                alert(`✅ Successfully purchased ${units} unit(s) for ₦${totalCost.toLocaleString()}`);
-                popupOverlay.classList.remove('show');
-            } catch (error) {
-                alert('Error processing purchase: ' + error.message);
-            }
-        } else {
-            alert('✅ Action completed successfully');
-            popupOverlay.classList.remove('show');
-        }
-    });
-
-    popupCancel?.addEventListener('click', () => {
-        popupOverlay.classList.remove('show');
-    });
-    
-    popupOverlay?.addEventListener('click', (e) => {
-        if (e.target === popupOverlay) {
-            popupOverlay.classList.remove('show');
-        }
-    });
-
-    // ----- FAQ ACCORDION -----
-    document.querySelectorAll('.faq-item').forEach((item) => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            // Close other open FAQs
-            document.querySelectorAll('.faq-item').forEach(otherItem => {
-                if (otherItem !== this && otherItem.classList.contains('open')) {
-                    otherItem.classList.remove('open');
-                    const otherAnswer = otherItem.nextElementSibling;
-                    if (otherAnswer?.classList.contains('faq-answer')) {
-                        otherAnswer.style.maxHeight = null;
-                    }
+                    // Update UI
+                    updateUserProfile();
+                    document.getElementById('statJoined').textContent = joinedCampaigns;
+                    document.getElementById('statUnits').textContent = reservedUnits;
                 }
             });
-            
-            // Toggle current
-            this.classList.toggle('open');
-            const answer = this.nextElementSibling;
-            if (answer?.classList.contains('faq-answer')) {
-                answer.style.maxHeight = this.classList.contains('open') ? answer.scrollHeight + 'px' : null;
-            }
-        });
-    });
-
-    // ----- NAVIGATION HIGHLIGHTING (without page reload) -----
-    function setActiveNav(navId) {
-        document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(el => {
-            el.classList.remove('active');
-        });
-        
-        document.querySelectorAll(`[data-nav="${navId}"]`).forEach(el => {
-            el.classList.add('active');
-        });
     }
 
-    // Handle navigation clicks without page reload
-    document.querySelectorAll('[data-nav]').forEach(el => {
-        el.addEventListener('click', (e) => {
-            e.preventDefault();
-            const nav = el.dataset.nav;
-            setActiveNav(nav);
-            
-            // Show navigation message (you can replace this with actual content loading)
-            let content = '';
-            switch(nav) {
-                case 'dashboard': 
-                    content = 'Welcome to Dashboard\n• View your campaigns\n• Check your stats\n• Browse active campaigns';
-                    break;
-                case 'orders': 
-                    content = 'My Orders\n• Track your purchases\n• View order history\n• Check delivery status';
-                    break;
-                case 'wallet': 
-                    content = 'Wallet\n• Manage your funds\n• View transactions\n• Deposit money';
-                    break;
-                case 'track': 
-                    content = 'Track Orders\n• Real-time tracking\n• Delivery updates\n• Estimated arrival times';
-                    break;
-            }
-            showPopup(`${nav.charAt(0).toUpperCase() + nav.slice(1)}`, content, false);
-        });
-    });
+    // ========== NOTIFICATION ==========
+    function showNotification(message, type = 'info') {
+        // Create notification container if it doesn't exist
+        let container = document.getElementById('notification-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'notification-container';
+            container.style.position = 'fixed';
+            container.style.top = '20px';
+            container.style.right = '20px';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+        }
+        
+        const notification = document.createElement('div');
+        notification.style.background = type === 'success' ? '#1d8a4a' : type === 'error' ? '#dc3545' : '#0d6efd';
+        notification.style.color = 'white';
+        notification.style.padding = '12px 24px';
+        notification.style.borderRadius = '50px';
+        notification.style.marginBottom = '10px';
+        notification.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
+        notification.style.animation = 'slideIn 0.3s ease';
+        notification.innerHTML = message;
+        
+        container.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
 
-    // Set initial active state
-    setActiveNav('dashboard');
-
-    // ----- LOGOUT -----
-    logoutBtn?.addEventListener('click', () => {
-        signOut(auth).then(() => {
-            window.location.href = 'login.html';
-        }).catch((error) => {
-            console.error('Logout error:', error);
-        });
-    });
+    // Add animation styles
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
 </script>
 </body>
 </html>

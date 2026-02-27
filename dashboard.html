@@ -90,7 +90,6 @@
             transition: all 0.25s cubic-bezier(0.2,0.9,0.4,1);
             font-weight: 500;
             cursor: pointer;
-            text-decoration: none;
         }
         .nav-item .material-icons { font-size: 24px; color: rgba(255,255,255,0.8); }
         .nav-item.active {
@@ -405,7 +404,6 @@
             transition: 0.2s;
             flex: 1;
             border-radius: 30px;
-            text-decoration: none;
         }
         .mobile-nav-item .material-icons { font-size: 26px; }
         .mobile-nav-item.active {
@@ -437,10 +435,10 @@
             <span class="logo-text">CrowdShop</span>
         </div>
         <div class="nav-links" id="sidebarNav">
-            <a href="dashboard.html" class="nav-item active" data-nav="dashboard"><span class="material-icons">dashboard</span> Dashboard</a>
-            <a href="orders.html" class="nav-item" data-nav="orders"><span class="material-icons">shopping_bag</span> My Orders</a>
-            <a href="wallet.html" class="nav-item" data-nav="wallet"><span class="material-icons">account_balance_wallet</span> Wallet</a>
-            <a href="track.html" class="nav-item" data-nav="track"><span class="material-icons">local_shipping</span> Track Orders</a>
+            <div class="nav-item active" data-nav="dashboard"><span class="material-icons">dashboard</span> Dashboard</div>
+            <div class="nav-item" data-nav="orders"><span class="material-icons">shopping_bag</span> My Orders</div>
+            <div class="nav-item" data-nav="wallet"><span class="material-icons">account_balance_wallet</span> Wallet</div>
+            <div class="nav-item" data-nav="track"><span class="material-icons">local_shipping</span> Track Orders</div>
         </div>
         <div class="user-profile-bottom">
             <div class="avatar" id="userAvatar">JD</div>
@@ -512,10 +510,10 @@
 
         <!-- MOBILE BOTTOM NAV WITH LABELS -->
         <div class="mobile-bottom-nav" id="mobileNav">
-            <a href="dashboard.html" class="mobile-nav-item active" data-nav="dashboard"><span class="material-icons">dashboard</span><span>Home</span></a>
-            <a href="orders.html" class="mobile-nav-item" data-nav="orders"><span class="material-icons">shopping_bag</span><span>Orders</span></a>
-            <a href="wallet.html" class="mobile-nav-item" data-nav="wallet"><span class="material-icons">account_balance_wallet</span><span>Wallet</span></a>
-            <a href="track.html" class="mobile-nav-item" data-nav="track"><span class="material-icons">local_shipping</span><span>Track</span></a>
+            <div class="mobile-nav-item active" data-nav="dashboard"><span class="material-icons">dashboard</span><span>Home</span></div>
+            <div class="mobile-nav-item" data-nav="orders"><span class="material-icons">shopping_bag</span><span>Orders</span></div>
+            <div class="mobile-nav-item" data-nav="wallet"><span class="material-icons">account_balance_wallet</span><span>Wallet</span></div>
+            <div class="mobile-nav-item" data-nav="track"><span class="material-icons">local_shipping</span><span>Track</span></div>
         </div>
     </main>
 </div>
@@ -535,12 +533,12 @@
 </div>
 
 <script type="module">
-    // ========== EXTERNAL FIREBASE CONFIG ==========
+    // ========== FIREBASE CONFIG ==========
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
-    import { getFirestore, collection, onSnapshot, doc, query, where, getDocs, addDoc, updateDoc, increment, runTransaction } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+    import { getFirestore, collection, onSnapshot, doc, query, where, getDocs, addDoc, updateDoc, increment, runTransaction, setDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
-    // Firebase configuration
+    // Firebase configuration - REPLACE WITH YOUR OWN
     const firebaseConfig = {
         apiKey: "YOUR_API_KEY",
         authDomain: "YOUR_AUTH_DOMAIN",
@@ -585,15 +583,18 @@
 
     let currentUser = null;
     let currentCampaignId = null;
-    let selectedUnits = 1;
 
-    // ----- AUTH GUARD -----
+    // ----- CHECK AUTH AND STAY ON DASHBOARD -----
     onAuthStateChanged(auth, async (user) => {
         if (!user) { 
-            window.location.href = 'login.html'; 
+            // Redirect to login only if not on login page
+            if (!window.location.pathname.includes('login.html')) {
+                window.location.href = 'login.html'; 
+            }
             return; 
         }
 
+        // User is logged in - stay on dashboard
         currentUser = user;
         
         // populate user info
@@ -602,18 +603,20 @@
         sidebarUserName.innerText = displayName;
         avatarDiv.innerText = (displayName.charAt(0) || 'U').toUpperCase();
 
-        // Set active nav based on current page
-        const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
-        document.querySelectorAll('[data-nav]').forEach(el => {
-            if (el.getAttribute('href') === currentPage) {
-                el.classList.add('active');
-            } else {
-                el.classList.remove('active');
-            }
-        });
+        // Initialize user document if it doesn't exist
+        const userRef = doc(db, 'users', user.uid);
+        try {
+            await setDoc(userRef, {
+                walletBalance: 42000,
+                email: user.email,
+                displayName: displayName,
+                createdAt: new Date()
+            }, { merge: true }); // merge: true will not overwrite existing data
+        } catch (error) {
+            console.log('User document already exists or error:', error);
+        }
 
         // ----- WALLET LISTENER WITH REAL-TIME UPDATES -----
-        const userRef = doc(db, 'users', user.uid);
         onSnapshot(userRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
@@ -622,14 +625,6 @@
                 walletDisplay.innerHTML = `<span class="material-icons">account_balance_wallet</span> ${formatted}`;
                 walletLarge.innerText = formatted;
                 statWalletVal.innerText = formatted;
-            } else {
-                // Create user document if it doesn't exist
-                updateDoc(userRef, { walletBalance: 42000, email: user.email }).catch(() => {
-                    // If document doesn't exist, create it
-                    import('https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js').then(({ setDoc }) => {
-                        setDoc(userRef, { walletBalance: 42000, email: user.email, createdAt: new Date() });
-                    });
-                });
             }
         });
 
@@ -652,8 +647,24 @@
             statUnits.innerText = totalUnits;
         });
 
-        // ----- CAMPAIGNS WITH REAL-TIME UPDATES -----
+        // ----- LOAD CAMPAIGNS (with sample data if none exists) -----
         const campaignsQuery = collection(db, 'campaigns');
+        const campaignsSnap = await getDocs(campaignsQuery);
+        
+        if (campaignsSnap.empty) {
+            // Add sample campaigns
+            const sampleCampaigns = [
+                { name: 'iPhone 15', goal: 100, reserved: 45, price: 450000, imageUrl: 'https://via.placeholder.com/300x160/b0d0ea/2a5e8c?text=iPhone+15', description: 'Latest iPhone 15', status: 'active' },
+                { name: 'MacBook Pro', goal: 50, reserved: 28, price: 850000, imageUrl: 'https://via.placeholder.com/300x160/b0d0ea/2a5e8c?text=MacBook+Pro', description: 'M3 Max chip', status: 'active' },
+                { name: 'AirPods Pro', goal: 100, reserved: 72, price: 120000, imageUrl: 'https://via.placeholder.com/300x160/b0d0ea/2a5e8c?text=AirPods+Pro', description: 'With USB-C', status: 'active' }
+            ];
+            
+            for (const campaign of sampleCampaigns) {
+                await addDoc(collection(db, 'campaigns'), campaign);
+            }
+        }
+        
+        // Listen to campaigns for real-time updates
         onSnapshot(campaignsQuery, (snap) => {
             let campaignsHtml = '';
             snap.forEach(doc => {
@@ -733,10 +744,22 @@
     function showBuyPopup(campaignId, campaignName, price) {
         currentCampaignId = campaignId;
         popupTitle.innerText = `Buy ${campaignName}`;
+        
+        // Get current balance
+        let currentBalance = 0;
+        if (currentUser) {
+            const userRef = doc(db, 'users', currentUser.uid);
+            getDocs(userRef).then(docSnap => {
+                if (docSnap.exists()) {
+                    currentBalance = docSnap.data().walletBalance || 0;
+                }
+            });
+        }
+        
         popupContentArea.innerHTML = `
             <div class="popup-content">
                 <p>Price per unit: ₦${price.toLocaleString()}</p>
-                <p>Your balance: <span id="currentBalance">₦0</span></p>
+                <p>Your balance: <span id="currentBalance">₦${currentBalance.toLocaleString()}</span></p>
                 <label>Number of units:</label>
                 <input type="number" id="buyUnits" class="popup-input" min="1" max="10" value="1">
                 <p>Total: ₦<span id="totalPrice">${price.toLocaleString()}</span></p>
@@ -747,17 +770,6 @@
         setTimeout(() => {
             const buyUnits = document.getElementById('buyUnits');
             const totalSpan = document.getElementById('totalPrice');
-            const balanceSpan = document.getElementById('currentBalance');
-            
-            // Get current balance
-            if (currentUser) {
-                const userRef = doc(db, 'users', currentUser.uid);
-                getDocs(userRef).then(docSnap => {
-                    if (docSnap.exists()) {
-                        balanceSpan.innerText = `₦${docSnap.data().walletBalance?.toLocaleString() || 0}`;
-                    }
-                });
-            }
             
             buyUnits.addEventListener('input', () => {
                 const units = parseInt(buyUnits.value) || 1;
@@ -924,11 +936,15 @@
                     });
                 });
                 
+                // Get campaign name
+                const campaignDoc = await getDocs(doc(db, 'campaigns', currentCampaignId));
+                const campaignName = campaignDoc.exists() ? campaignDoc.data().name : 'Product';
+                
                 // Create reservation
                 await addDoc(collection(db, 'reservations'), {
                     userId: currentUser.uid,
                     campaignId: currentCampaignId,
-                    productName: popupTitle.innerText.replace('Buy ', ''),
+                    productName: campaignName,
                     price: price,
                     units: units,
                     status: 'funding',
@@ -941,7 +957,7 @@
                     userId: currentUser.uid,
                     amount: totalCost,
                     type: 'purchase',
-                    description: `Purchased ${units} unit(s)`,
+                    description: `Purchased ${units} unit(s) of ${campaignName}`,
                     timestamp: new Date()
                 });
                 
@@ -989,6 +1005,47 @@
             }
         });
     });
+
+    // ----- NAVIGATION HIGHLIGHTING (without page reload) -----
+    function setActiveNav(navId) {
+        document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(el => {
+            el.classList.remove('active');
+        });
+        
+        document.querySelectorAll(`[data-nav="${navId}"]`).forEach(el => {
+            el.classList.add('active');
+        });
+    }
+
+    // Handle navigation clicks without page reload
+    document.querySelectorAll('[data-nav]').forEach(el => {
+        el.addEventListener('click', (e) => {
+            e.preventDefault();
+            const nav = el.dataset.nav;
+            setActiveNav(nav);
+            
+            // Show navigation message (you can replace this with actual content loading)
+            let content = '';
+            switch(nav) {
+                case 'dashboard': 
+                    content = 'Welcome to Dashboard\n• View your campaigns\n• Check your stats\n• Browse active campaigns';
+                    break;
+                case 'orders': 
+                    content = 'My Orders\n• Track your purchases\n• View order history\n• Check delivery status';
+                    break;
+                case 'wallet': 
+                    content = 'Wallet\n• Manage your funds\n• View transactions\n• Deposit money';
+                    break;
+                case 'track': 
+                    content = 'Track Orders\n• Real-time tracking\n• Delivery updates\n• Estimated arrival times';
+                    break;
+            }
+            showPopup(`${nav.charAt(0).toUpperCase() + nav.slice(1)}`, content, false);
+        });
+    });
+
+    // Set initial active state
+    setActiveNav('dashboard');
 
     // ----- LOGOUT -----
     logoutBtn?.addEventListener('click', () => {

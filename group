@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>CrowdShop · group buying</title>
+    <!-- Material Icons + Google Font -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- External Config (firebase-config.js) must exist -->
+    <script src="firebase-config.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: #f5f7fb;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .app {
+            display: flex;
+            width: 100%;
+            max-width: 1440px;
+            min-height: 100vh;
+            background: white;
+            box-shadow: 0 0 40px rgba(0,0,0,0.05);
+        }
+
+        /* ---------- SIDEBAR ---------- */
+        .sidebar {
+            width: 280px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            padding: 32px 0 28px;
+            border-right: 1px solid rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 24px 32px;
+            border-bottom: 1px solid #f0f0f0;
+            margin-bottom: 24px;
+        }
+        .logo-icon {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            border-radius: 14px;
+            padding: 8px;
+        }
+        .logo-icon .material-icons { font-size: 28px; color: white; }
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-links {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 0 16px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 20px;
+            border-radius: 14px;
+            color: #64748b;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 1rem;
+        }
+        .nav-item .material-icons { font-size: 22px; color: #94a3b8; }
+        .nav-item.active {
+            background: #f1f5f9;
+            color: #1e293b;
+            font-weight: 600;
+        }
+        .nav-item.active .material-icons { color: #2563eb; }
+        .nav-item:hover {
+            background: #f8fafc;
+            transform: translateX(4px);
+        }
+
+        .user-profile-bottom {
+            margin-top: auto;
+            padding: 24px 20px 12px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .avatar {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            width: 48px;
+            height: 48px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+            box-shadow: 0 4px 10px rgba(37,99,235,0.2);
+        }
+        .user-name { color: #1e293b; font-weight: 600; font-size: 0.95rem; }
+        .logout-link {
+            color: #ef4444;
+            font-size: 0.85rem;
+            display: flex;
+
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 4px;
+            opacity: 0.8;
+        }
+        .logout-link:hover { opacity: 1; }
+
+        /* ---------- MAIN CONTENT ---------- */
+        .main-content {
+            flex: 1;
+            background: #ffffff;
+            padding: 24px 32px 32px;
+            overflow-y: auto;
+            height: 100vh;
+        }
+
+        /* top bar */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .greeting h1 { 
+            font-size: 1.8rem; 
+            font-weight: 700; 
+            color: #0f172a;
+            letter-spacing: -0.02em;
+        }
+        .greeting .sub {
+            color: #64748b;
+            font-size: 0.95rem;
+            margin-top: 4px;
+        }
+        .wallet-block { 
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .wallet-pill {
+            background: #f1f5f9;
+            border-radius: 100px;
+            padding: 12px 24px;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #e2e8f0;
+            font-size: 1rem;
+        }
+        .wallet-pill:hover {
+            background: #e2e8f0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .wallet-pill .material-icons { color: #2563eb; }
+        .deposit-btn {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 100px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 20px -5px rgba(37,99,235,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .deposit-btn:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px -5px rgba(37,99,235,0.4);
+        }
+        .login-btn {
+            background: white;
+            border: 2px solid #2563eb;
+            color: #2563eb;
+            padding: 12px 28px;
+            border-radius: 100px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .login-btn:hover {
+            background: #2563eb;
+            color: white;
+        }
+
+        /* wallet dropdown */
+        .wallet-dropdown {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: white;
+            border-radius: 24px;
+            padding: 8px;
+            min-width: 280px;
+            box-shadow: 0 20px 35px -8px rgba(0,0,0,0.15);
+            opacity: 0;
+            transform: scale(0.95) translateY(-10px);
+            transition: all 0.25s cubic-bezier(0.2,0,0,1);
+            pointer-events: none;
+            z-index: 100;
+        }
+        .wallet-dropdown.show {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: all;
+        }
+        .dropdown-header {
+            padding: 16px 16px 8px;
+            font-weight: 600;
+            color: #1e293b;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .dropdown-item {
+            padding: 14px 18px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            transition: 0.15s;
+            color: #334155;
+            font-weight: 500;
+        }
+        .dropdown-item .material-icons { color: #2563eb; }
+        .dropdown-item:hover { background: #f1f5f9; }
+
+        /* stats row */
+        .stats-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+        .stat-pill {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 100px;
+            padding: 8px 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #1e293b;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        .stat-pill .material-icons { color: #2563eb; }
+        .stat-pill span:last-child { font-weight: 700; color: #0f172a; margin-left: 4px; }
+
+        /* section header */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 32px 0 20px;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* campaign grid (2-3 columns, responsive) */
+        .campaign-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        .campaign-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 28px;
+            padding: 20px;
+            transition: all 0.25s cubic-bezier(0.2,0,0,1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+        .campaign-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 30px -10px rgba(0,0,0,0.1);
+            border-color: #cbd5e1;
+        }
+        .campaign-img {
+            width: 100%;
+            height: 180px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 20px;
+            margin-bottom: 16px;
+            background-color: #f1f5f9;
+        }
+        .campaign-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .campaign-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .units-badge {
+            background: #f1f5f9;
+            padding: 4px 12px;
+            border-radius: 40px;
+            color: #2563eb;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .price-tag {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 8px 0;
+            color: #2563eb;
+        }
+        .progress-container {
+            margin: 12px 0 16px;
+        }
+        .progress-bar-bg {
+            background: #e2e8f0;
+            height: 8px;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 8px;
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            width: 0%;
+            border-radius: 20px;
+            transition: width 0.5s ease;
+        }
+        .card-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid #e2e8f0;
+            color: #1e293b;
+            padding: 10px 16px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .btn-outline:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+        .btn-primary {
+            background: #f1f5f9;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 40px;
+            font-weight: 600;
+            color: #1e293b;
+            cursor: pointer;
+            transition: 0.2s;
+            flex: 1;
+        }
+        .btn-primary:hover { background: #e2e8f0; }
+        .btn-success {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            box-shadow: 0 8px 16px -8px #2563eb80;
+        }
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -8px #2563eb;
+        }
+
+        /* product detail modal (animated) */
+        .detail-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center; z-index: 2000;
+            opacity: 0; visibility: hidden; transition: 0.3s;
+        }
+        .detail-overlay.show { opacity: 1; visibility: visible; }
+        .detail-card {
+            background: white;
+            border-radius: 40px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 32px;
+            box-shadow: 0 50px 70px -20px rgba(0,0,0,0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.2,0.9,0.3,1.2);
+        }
+        .detail-overlay.show .detail-card { transform: scale(1); }
+        .detail-images {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        .detail-images img {
+            height: 140px;
+            width: auto;
+            border-radius: 20px;
+            border: 2px solid #e2e8f0;
+        }
+        .detail-title { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+        .detail-price { font-size: 1.5rem; color: #2563eb; font-weight: 700; margin-bottom: 16px; }
+        .detail-section {
+            background: #f8fafc;
+            border-radius: 24px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .detail-section h3 { margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+        /* popup (deposit/buy) */
+        .popup-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center; z-index: 1500;
+            opacity: 0; visibility: hidden; transition: 0.25s;
+        }
+        .popup-overlay.show { opacity: 1; visibility: visible; }
+        .popup-card {
+            background: white;
+            border-radius: 40px;
+            padding: 32px;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 50px 70px -20px rgba(0,0,0,0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.2,0.9,0.3,1.2);
+        }
+        .popup-overlay.show .popup-card { transform: scale(1); }
+        .popup-title { font-size: 1.8rem; font-weight: 700; color: #0f172a; margin-bottom: 20px; }
+        .popup-input, .popup-select {
+            width: 100%; padding: 16px 20px; border-radius: 60px; border: 2px solid #e2e8f0;
+            font-size: 1rem; margin-bottom: 16px;
+        }
+        .deposit-option {
+            border: 2px solid #e2e8f0;
+            border-radius: 30px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .deposit-option.selected {
+            border-color: #2563eb;
+            background: #f1f5f9;
+        }
+        .popup-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
+        .popup-btn {
+            padding: 14px 28px; border-radius: 60px; font-weight: 600; border: none; cursor: pointer;
+        }
+        .popup-btn-primary { background: #2563eb; color: white; }
+        .popup-btn-outline { background: transparent; border: 2px solid #e2e8f0; color: #1e293b; }
+
+        /* mobile bottom nav */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid #e2e8f0;
+            z-index: 100;
+            padding: 8px 16px;
+            justify-content: space-around;
+            border-radius: 30px 30px 0 0;
+        }
+        .mobile-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 0;
+            color: #64748b;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        .mobile-nav-item .material-icons { font-size: 24px; }
+        .mobile-nav-item.active { color: #2563eb; background: #f1f5f9; border-radius: 20px; }
+
+        @media (max-width: 800px) {
+            .sidebar { display: none; }
+            .mobile-bottom-nav { display: flex; }
+            .main-content { padding: 20px 20px 90px; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <!-- DESKTOP SIDEBAR -->
+    <aside class="sidebar">
+        <div class="logo-area">
+            <span class="logo-icon"><span class="material-icons">groups</span></span>
+            <span class="logo-text">CrowdShop</span>
+        </div>
+        <div class="nav-links">
+            <button class="nav-item active" data-page="dashboard"><span class="material-icons">dashboard</span> Dashboard</button>
+            <button class="nav-item" data-page="orders"><span class="material-icons">shopping_bag</span> My Orders</button>
+            <button class="nav-item" data-page="wallet"><span class="material-icons">account_balance_wallet</span> Wallet</button>
+            <button class="nav-item" data-page="track"><span class="material-icons">local_shipping</span> Track Orders</button>
+        </div>
+        <div class="user-profile-bottom">
+            <div class="avatar" id="userAvatar">G</div>
+            <div>
+                <div class="user-name" id="sidebarUserName">Guest</div>
+                <div class="logout-link" id="logoutBtn" style="display:none;"><span class="material-icons">logout</span> Logout</div>
+                <div class="login-btn" id="loginBtn" style="padding:6px 16px; font-size:0.9rem;"><span class="material-icons">login</span> Login</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <div class="top-bar">
+            <div class="greeting">
+                <h1 id="greetingHi">Hi, Guest</h1>
+                <div class="sub">group buying marketplace</div>
+            </div>
+            <div class="wallet-block">
+                <span class="wallet-pill" id="walletDisplay">
+                    <span class="material-icons">account_balance_wallet</span> ₦0
+                </span>
+                <button class="deposit-btn" id="depositTopBtn"><span class="material-icons">add</span> Deposit</button>
+                <!-- wallet dropdown -->
+                <div class="wallet-dropdown" id="walletDropdown">
+                    <div class="dropdown-header">Wallet • <span id="dropdownBalance">₦0</span></div>
+                    <div class="dropdown-item" id="quickDeposit"><span class="material-icons">bolt</span> Quick deposit</div>
+                    <div class="dropdown-item" id="statJoinedDropdown"><span class="material-icons">campaign</span> Joined: <span id="dropdownJoined">0</span></div>
+                    <div class="dropdown-item" id="statUnitsDropdown"><span class="material-icons">inventory</span> Reserved: <span id="dropdownUnits">0</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- stats row -->
+        <div class="stats-row">
+            <div class="stat-pill"><span class="material-icons">campaign</span> Joined: <span id="statJoined">0</span></div>
+            <div class="stat-pill"><span class="material-icons">inventory</span> Reserved: <span id="statUnits">0</span></div>
+            <div class="stat-pill"><span class="material-icons">account_balance_wallet</span> Bal: <span id="statWalletVal">₦0</span></div>
+        </div>
+
+        <!-- active campaigns grid -->
+        <div class="section-header">
+            <h2 class="section-title"><span class="material-icons">local_fire_department</span> Active campaigns</h2>
+        </div>
+        <div class="campaign-grid" id="campaignsContainer"></div>
+
+        <!-- MOBILE BOTTOM NAV -->
+        <div class="mobile-bottom-nav">
+            <button class="mobile-nav-item active" data-page="dashboard"><span class="material-icons">dashboard</span><span>Home</span></button>
+            <button class="mobile-nav-item" data-page="orders"><span class="material-icons">shopping_bag</span><span>Orders</span></button>
+            <button class="mobile-nav-item" data-page="wallet"><span class="material-icons">account_balance_wallet</span><span>Wallet</span></button>
+            <button class="mobile-nav-item" data-page="track"><span class="material-icons">local_shipping</span><span>Track</span></button>
+        </div>
+    </main>
+</div>
+
+<!-- PRODUCT DETAIL MODAL (high quality) -->
+<div class="detail-overlay" id="detailOverlay">
+    <div class="detail-card" id="detailCard">
+        <!-- dynamic content -->
+    </div>
+</div>
+
+<!-- DEPOSIT / BUY POPUP -->
+<div class="popup-overlay" id="popupOverlay">
+    <div class="popup-card" id="popupCard">
+        <div class="popup-title" id="popupTitle">Deposit</div>
+        <div id="popupContent"></div>
+        <div class="popup-actions">
+            <button class="popup-btn popup-btn-outline" id="popupCancel">Cancel</button>
+            <button class="popup-btn popup-btn-primary" id="popupConfirm">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ========== GLOBAL STATE ==========
+    let currentUser = null;
+    let userData = null;
+    let walletBalance = 124900; // demo balance
+    let joinedCampaigns = 3;
+    let reservedUnits = 5;
+    let isGuest = true;
+
+    // product database with images and details
+    const products = [
+        { id: 1, name: 'iPhone 15 Pro', price: 450000, goal: 100, reserved: 45, funded: 45, images: ['https://placehold.co/600x400/2563eb/white?text=iPhone15+1', 'https://placehold.co/600x400/1e4b8b/white?text=iPhone15+2'], description: 'A16 Bionic, 48MP camera, titanium design.', shipping: 'Ships within 2 weeks after group goal met.', howPool: 'Group reaches 100 units to unlock special price.' },
+        { id: 2, name: 'MacBook Air M2', price: 850000, goal: 50, reserved: 28, funded: 56, images: ['https://placehold.co/600x400/7c3aed/white?text=MacBook+1', 'https://placehold.co/600x400/5b21b6/white?text=MacBook+2'], description: 'M2 chip, 13.6" Liquid Retina, 18h battery.', shipping: 'Free express shipping when goal met.', howPool: 'Pool price 15% below retail.' },
+        { id: 3, name: 'AirPods Max', price: 180000, goal: 75, reserved: 42, funded: 56, images: ['https://placehold.co/600x400/db2777/white?text=AirPods+1', 'https://placehold.co/600x400/9d174d/white?text=AirPods+2'], description: 'High-fidelity audio, computational audio.', shipping: '7-10 days after campaign ends.', howPool: 'Collaborative bulk purchase.' },
+        { id: 4, name: 'iPad Pro 11"', price: 620000, goal: 60, reserved: 33, funded: 55, images: ['https://placehold.co/600x400/ea580c/white?text=iPad+1', 'https://placehold.co/600x400/c2410c/white?text=iPad+2'], description: 'M2 chip, 120Hz ProMotion, Thunderbolt.', shipping: 'Shipped from local warehouse.', howPool: 'We combine orders to get wholesale price.' },
+        { id: 5, name: 'PS5 Digital', price: 280000, goal: 30, reserved: 21, funded: 70, images: ['https://placehold.co/600x400/16a34a/white?text=PS5+1', 'https://placehold.co/600x400/0f7b3a/white?text=PS5+2'], description: '4K gaming, ultra-fast SSD.', shipping: 'Immediate shipping after group success.', howPool: 'Group discount from Sony distributor.' }
+    ];
+
+    // ========== INIT ==========
+    document.addEventListener('DOMContentLoaded', () => {
+        // try Firebase but fallback to demo
+        if (typeof firebaseConfig !== 'undefined' && firebase.apps.length===0) firebase.initializeApp(firebaseConfig);
+        checkAuth();
+        renderCampaigns();
+        attachEvents();
+        updateUI();
+    });
+
+    function checkAuth() {
+        if (firebase.auth) {
+            firebase.auth().onAuthStateChanged(user => {
+                if (user) {
+                    currentUser = user;
+                    isGuest = false;
+                    document.getElementById('loginBtn').style.display = 'none';
+                    document.getElementById('logoutBtn').style.display = 'flex';
+                    document.getElementById('sidebarUserName').innerText = user.displayName || 'User';
+                    document.getElementById('userAvatar').innerText = (user.displayName?.[0] || 'U').toUpperCase();
+                    document.getElementById('greetingHi').innerText = `Hi, ${user.displayName?.split(' ')[0] || 'User'}`;
+                    loadUserData();
+                } else {
+                    isGuest = true;
+                    document.getElementById('loginBtn').style.display = 'flex';
+                    document.getElementById('logoutBtn').style.display = 'none';
+                    document.getElementById('sidebarUserName').innerText = 'Guest';
+                    document.getElementById('userAvatar').innerText = 'G';
+                    document.getElementById('greetingHi').innerText = 'Hi, Guest';
+                    // demo data for guest
+                    walletBalance = 124900; joinedCampaigns = 3; reservedUnits = 5;
+                    updateUI();
+                }
+            });
+        } else {
+            // no firebase, just demo
+            isGuest = true;
+        }
+    }
+
+    async function loadUserData() {
+        if (!currentUser) return;
+        try {
+            const doc = await firebase.firestore().collection('users').doc(currentUser.uid).get();
+            if (doc.exists) {
+                userData = doc.data();
+                walletBalance = userData.walletBalance || 124900;
+                joinedCampaigns = userData.joinedCampaigns || 3;
+                reservedUnits = userData.reservedUnits || 5;
+            } else {
+                // create
+                await firebase.firestore().collection('users').doc(currentUser.uid).set({
+                    walletBalance: 124900,
+                    joinedCampaigns: 3,
+                    reservedUnits: 5
+                });
+            }
+            updateUI();
+        } catch (e) { console.warn(e); }
+    }
+
+    function updateUI() {
+        const fmt = `₦${walletBalance.toLocaleString()}`;
+        document.getElementById('walletDisplay').innerHTML = `<span class="material-icons">account_balance_wallet</span> ${fmt}`;
+        document.getElementById('dropdownBalance').innerText = fmt;
+        document.getElementById('statWalletVal').innerText = fmt;
+        document.getElementById('statJoined').innerText = joinedCampaigns;
+        document.getElementById('statUnits').innerText = reservedUnits;
+        document.getElementById('dropdownJoined').innerText = joinedCampaigns;
+        document.getElementById('dropdownUnits').innerText = reservedUnits;
+    }
+
+    function renderCampaigns() {
+        const container = document.getElementById('campaignsContainer');
+        let html = '';
+        products.forEach(p => {
+            html += `<div class="campaign-card" data-id="${p.id}">
+                <div class="campaign-img" style="background-image:url('${p.images[0]}')"></div>
+                <div class="campaign-header">
+                    <span class="campaign-title">${p.name}</span>
+                    <span class="units-badge">${p.reserved}/${p.goal}</span>
+                </div>
+                <div class="price-tag">₦${p.price.toLocaleString()}</div>
+                <div class="progress-container">
+                    <div class="progress-bar-bg"><div class="progress-fill" style="width:${p.funded}%"></div></div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-outline view-detail" data-id="${p.id}"><span class="material-icons">visibility</span> View</button>
+                    <button class="btn-success buy-now" data-id="${p.id}"><span class="material-icons">shopping_cart</span> Buy</button>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    // ========== DETAIL MODAL (animated, high quality) ==========
+    function showDetail(productId) {
+        const prod = products.find(p => p.id == productId);
+        if (!prod) return;
+        const detailCard = document.getElementById('detailCard');
+        let imagesHtml = '';
+        prod.images.forEach(url => { imagesHtml += `<img src="${url}" alt="">`; });
+        detailCard.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h2 class="detail-title">${prod.name}</h2>
+                <span class="material-icons" id="closeDetail" style="font-size:32px; cursor:pointer;">close</span>
+            </div>
+            <div class="detail-images">${imagesHtml}</div>
+            <div class="detail-price">₦${prod.price.toLocaleString()}</div>
+            <div class="detail-section">
+                <h3><span class="material-icons">info</span> Description</h3>
+                <p>${prod.description}</p>
+            </div>
+            <div class="detail-section">
+                <h3><span class="material-icons">groups</span> How the pool works</h3>
+                <p>${prod.howPool} When the group reaches ${prod.goal} units, everyone gets the special price. If not reached within 30 days, funds are refunded.</p>
+            </div>
+            <div class="detail-section">
+                <h3><span class="material-icons">local_shipping</span> Shipping & handling</h3>
+                <p>${prod.shipping} Tracking will be provided once shipped.</p>
+            </div>
+            <div style="display:flex; gap:12px; margin-top:24px;">
+                <button class="btn-outline" style="flex:1;" id="closeDetailBtn">Close</button>
+                <button class="btn-success" style="flex:1;" id="detailBuyBtn">Buy now</button>
+            </div>
+        `;
+        document.getElementById('detailOverlay').classList.add('show');
+        document.getElementById('closeDetail').addEventListener('click', closeDetail);
+        document.getElementById('closeDetailBtn').addEventListener('click', closeDetail);
+        document.getElementById('detailBuyBtn').addEventListener('click', () => {
+            closeDetail();
+            openBuyPopup(productId);
+        });
+    }
+    function closeDetail() { document.getElementById('detailOverlay').classList.remove('show'); }
+
+    // ========== BUY POPUP (shipping form + units) ==========
+    function openBuyPopup(productId) {
+        if (isGuest) { alert('Please login to purchase'); window.location.href='login.html'; return; }
+        const prod = products.find(p => p.id == productId);
+        document.getElementById('popupTitle').innerText = `Buy ${prod.name}`;
+        document.getElementById('popupContent').innerHTML = `
+            <p style="margin-bottom:16px;">Price per unit: ₦${prod.price.toLocaleString()} | Available: ${prod.goal-prod.reserved}</p>
+            <input type="number" id="buyUnits" class="popup-input" min="1" max="${prod.goal-prod.reserved}" value="1" placeholder="Number of units">
+            <input type="text" id="fullName" class="popup-input" placeholder="Full name" required>
+            <input type="text" id="address" class="popup-input" placeholder="Shipping address" required>
+            <input type="text" id="phone" class="popup-input" placeholder="Phone number" required>
+            <p id="totalDisplay" style="font-weight:600;">Total: ₦${prod.price.toLocaleString()}</p>
+        `;
+        document.getElementById('popupOverlay').classList.add('show');
+        const unitsInput = document.getElementById('buyUnits');
+        unitsInput.addEventListener('input', () => {
+            const units = parseInt(unitsInput.value) || 1;
+            document.getElementById('totalDisplay').innerText = `Total: ₦${(prod.price * units).toLocaleString()}`;
+        });
+        document.getElementById('popupConfirm').onclick = () => {
+            const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
+            const name = document.getElementById('fullName')?.value;
+            const addr = document.getElementById('address')?.value;
+            const phone = document.getElementById('phone')?.value;
+            if (!name || !addr || !phone) { alert('Please fill all fields'); return; }
+            const total = prod.price * units;
+            if (walletBalance < total) { alert('Insufficient balance'); return; }
+            walletBalance -= total;
+            reservedUnits += units;
+            joinedCampaigns += 1;
+            prod.reserved += units; // update local
+            prod.funded = Math.round((prod.reserved/prod.goal)*100);
+            updateUI();
+            renderCampaigns(); // refresh progress
+            alert(`✅ Purchase successful! ${units} x ${prod.name} will be shipped to ${addr}`);
+            document.getElementById('popupOverlay').classList.remove('show');
+            if (firebase.auth && currentUser) {
+                firebase.firestore().collection('users').doc(currentUser.uid).update({
+                    walletBalance: walletBalance,
+                    joinedCampaigns: joinedCampaigns,
+                    reservedUnits: reservedUnits
+                }).catch(console.warn);
+            }
+        };
+    }
+
+    // ========== DEPOSIT POPUP (giftcard / normal) ==========
+    function openDepositPopup() {
+        document.getElementById('popupTitle').innerText = 'Deposit funds';
+        document.getElementById('popupContent').innerHTML = `
+            <div class="deposit-option" id="optionNormal" data-type="normal">
+                <span class="material-icons">account_balance</span> <strong>Normal deposit</strong> (card, transfer)
+            </div>
+            <div class="deposit-option" id="optionGift" data-type="gift">
+                <span class="material-icons">card_giftcard</span> <strong>Giftcard deposit</strong> (redeem code)
+            </div>
+            <div id="depositInputArea"></div>
+        `;
+        document.getElementById('popupOverlay').classList.add('show');
+        let selectedType = 'normal';
+        document.getElementById('optionNormal').classList.add('selected');
+        document.getElementById('optionNormal').addEventListener('click', () => {
+            document.querySelectorAll('.deposit-option').forEach(el => el.classList.remove('selected'));
+            document.getElementById('optionNormal').classList.add('selected');
+            selectedType = 'normal';
+            document.getElementById('depositInputArea').innerHTML = `<input type="number" id="depositAmount" class="popup-input" placeholder="Amount (₦)" min="100" value="5000">`;
+        });
+        document.getElementById('optionGift').addEventListener('click', () => {
+            document.querySelectorAll('.deposit-option').forEach(el => el.classList.remove('selected'));
+            document.getElementById('optionGift').classList.add('selected');
+            selectedType = 'gift';
+            document.getElementById('depositInputArea').innerHTML = `<input type="text" id="giftCode" class="popup-input" placeholder="Giftcard code (e.g., CROWD-XXXX)">`;
+        });
+        // default normal
+        document.getElementById('depositInputArea').innerHTML = `<input type="number" id="depositAmount" class="popup-input" placeholder="Amount (₦)" min="100" value="5000">`;
+
+        document.getElementById('popupConfirm').onclick = () => {
+            if (selectedType === 'normal') {
+                const amount = parseFloat(document.getElementById('depositAmount')?.value);
+                if (amount > 0) {
+                    walletBalance += amount;
+                    alert(`✅ Deposited ₦${amount.toLocaleString()}`);
+                    document.getElementById('popupOverlay').classList.remove('show');
+                    updateUI();
+                } else alert('Enter amount');
+            } else {
+                const code = document.getElementById('giftCode')?.value;
+                if (code && code.length > 5) {
+                    // mock redeem: giftcard adds 20000
+                    walletBalance += 20000;
+                    alert(`🎁 Giftcard redeemed! ₦20,000 added.`);
+                    document.getElementById('popupOverlay').classList.remove('show');
+                    updateUI();
+                } else alert('Enter valid giftcard code');
+            }
+        };
+    }
+
+    // ========== EVENT LISTENERS ==========
+    function attachEvents() {
+        // wallet dropdown
+        document.querySelector('.wallet-pill').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('walletDropdown').classList.toggle('show');
+        });
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.wallet-pill')) document.getElementById('walletDropdown').classList.remove('show');
+        });
+
+        document.getElementById('depositTopBtn').addEventListener('click', openDepositPopup);
+        document.getElementById('quickDeposit').addEventListener('click', () => {
+            document.getElementById('walletDropdown').classList.remove('show');
+            openDepositPopup();
+        });
+
+        // login button
+        document.getElementById('loginBtn').addEventListener('click', () => window.location.href = 'login.html');
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            if (firebase.auth) await firebase.auth().signOut();
+            window.location.reload();
+        });
+
+        // view and buy clicks (delegation)
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.view-detail')) {
+                const id = e.target.closest('.view-detail').dataset.id;
+                showDetail(id);
+            }
+            if (e.target.closest('.buy-now')) {
+                const id = e.target.closest('.buy-now').dataset.id;
+                if (isGuest) { alert('Please login to purchase'); window.location.href='login.html'; return; }
+                openBuyPopup(id);
+            }
+        });
+
+        // navigation to other pages (demo)
+        document.querySelectorAll('[data-page]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const page = btn.dataset.page;
+                if (page === 'dashboard') {
+                    document.querySelectorAll('[data-page]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                } else {
+                    window.location.href = `${page}.html`; // external page
+                }
+            });
+        });
+
+        document.getElementById('popupCancel').addEventListener('click', () => {
+            document.getElementById('popupOverlay').classList.remove('show');
+        });
+        document.getElementById('popupOverlay').addEventListener('click', (e) => {
+            if (e.target.classList.contains('popup-overlay')) document.getElementById('popupOverlay').classList.remove('show');
+        });
+    }
+</script>
+</body>
+</html>

@@ -1090,7 +1090,7 @@
             });
         } else {
             // Demo mode
-            showLoggedOutUI(); // show login button initially
+            showLoggedOutUI();
             attachEvents();
             loadCampaigns();
         }
@@ -1113,6 +1113,7 @@
                     walletBalance: 24900,
                     joinedCampaigns: 2,
                     reservedUnits: 4,
+                    pin: null // No PIN set initially
                 };
                 await userRef.set(newUser);
                 userData = newUser;
@@ -1130,7 +1131,6 @@
         document.getElementById('loginBtn').style.display = 'flex';
         document.getElementById('walletDisplay').style.display = 'none';
         document.getElementById('depositTopBtn').style.display = 'none';
-        // set default demo user for preview
         document.getElementById('greetingHi').innerText = 'Hi, Guest';
         document.getElementById('sidebarUserName').innerText = 'Guest';
         document.getElementById('userAvatar').innerText = 'G';
@@ -1267,7 +1267,7 @@
         document.getElementById('campaignsContainer').innerHTML = html;
     }
 
-    // ========== PRODUCT DETAIL VIEW (animated popup) ==========
+    // ========== PRODUCT DETAIL VIEW ==========
     window.showProductDetail = function(productId) {
         const product = campaigns.find(c => c.id === productId);
         if (!product) return;
@@ -1346,9 +1346,147 @@
             
             <div class="popup-actions">
                 <button class="popup-btn popup-btn-outline" onclick="showProductDetail(${productId})">Back</button>
-                <button class="popup-btn popup-btn-primary" onclick="showPinEntry(${productId})">Continue to payment</button>
+                <button class="popup-btn popup-btn-primary" onclick="checkPinAndProceed(${productId})">Continue to payment</button>
             </div>
         `;
+    };
+
+    window.checkPinAndProceed = async function(productId) {
+        const product = campaigns.find(c => c.id === productId);
+        const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
+        const total = product.price * units;
+
+        if (!currentUser) {
+            alert('Please login to purchase');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        if (walletBalance < total) {
+            alert('Insufficient balance. Please deposit funds.');
+            closePopup();
+            showDepositPopup();
+            return;
+        }
+
+        // Validate shipping fields
+        const name = document.getElementById('fullName')?.value;
+        const address = document.getElementById('address')?.value;
+        const phone = document.getElementById('phone')?.value;
+        const city = document.getElementById('city')?.value;
+
+        if (!name || !address || !phone || !city) {
+            alert('Please fill all required shipping fields');
+            return;
+        }
+
+        // Check if user has PIN set
+        if (userData && userData.pin) {
+            showPinEntry(productId);
+        } else {
+            showCreatePin(productId);
+        }
+    };
+
+    window.showCreatePin = function(productId) {
+        const product = campaigns.find(c => c.id === productId);
+        const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
+        const total = product.price * units;
+        
+        const popup = document.getElementById('popupCard');
+        popup.innerHTML = `
+            <div class="popup-title">
+                <span class="material-icons">lock</span> Create Security PIN
+            </div>
+            <div style="margin-bottom:24px; text-align:center;">
+                <p style="font-size:1.2rem; font-weight:600; color:#0f172a;">Total: ₦${total.toLocaleString()}</p>
+                <p style="color:#64748b;">Create a 4-digit PIN for future transactions</p>
+            </div>
+            
+            <div class="pin-container">
+                <div class="pin-digit"><input type="number" id="pin1" maxlength="1" oninput="moveToNext(this, 2)" autofocus></div>
+                <div class="pin-digit"><input type="number" id="pin2" maxlength="1" oninput="moveToNext(this, 3)"></div>
+                <div class="pin-digit"><input type="number" id="pin3" maxlength="1" oninput="moveToNext(this, 4)"></div>
+                <div class="pin-digit"><input type="number" id="pin4" maxlength="1" oninput="moveToNext(this, null)"></div>
+            </div>
+            
+            <div style="margin:24px 0;">
+                <p style="color:#64748b; font-size:0.9rem;">Remember this PIN - you'll need it for all purchases</p>
+            </div>
+            
+            <div class="popup-actions">
+                <button class="popup-btn popup-btn-outline" onclick="showBuyForm(${productId})">Back</button>
+                <button class="popup-btn popup-btn-primary" onclick="savePinAndProceed(${productId})" id="savePinBtn" style="opacity:0.5; pointer-events:none;">Enter 4-digit PIN</button>
+            </div>
+        `;
+        
+        document.querySelectorAll('.pin-digit input').forEach((input, index) => {
+            input.addEventListener('keyup', (e) => {
+                if (e.key === 'Backspace' && index > 0) {
+                    const prevInput = document.querySelectorAll('.pin-digit input')[index - 1];
+                    prevInput.focus();
+                }
+                checkCreatePinComplete();
+            });
+            input.addEventListener('input', checkCreatePinComplete);
+        });
+    };
+
+    function checkCreatePinComplete() {
+        const pin1 = document.getElementById('pin1')?.value;
+        const pin2 = document.getElementById('pin2')?.value;
+        const pin3 = document.getElementById('pin3')?.value;
+        const pin4 = document.getElementById('pin4')?.value;
+        
+        const pinComplete = pin1 && pin2 && pin3 && pin4 && 
+                           pin1.length === 1 && pin2.length === 1 && 
+                           pin3.length === 1 && pin4.length === 1;
+        
+        const saveBtn = document.getElementById('savePinBtn');
+        if (saveBtn) {
+            if (pinComplete) {
+                saveBtn.style.opacity = '1';
+                saveBtn.style.pointerEvents = 'auto';
+                saveBtn.innerText = 'Save PIN & Continue';
+            } else {
+                saveBtn.style.opacity = '0.5';
+                saveBtn.style.pointerEvents = 'none';
+                saveBtn.innerText = 'Enter 4-digit PIN';
+            }
+        }
+    }
+
+    window.savePinAndProceed = async function(productId) {
+        const pin1 = document.getElementById('pin1')?.value;
+        const pin2 = document.getElementById('pin2')?.value;
+        const pin3 = document.getElementById('pin3')?.value;
+        const pin4 = document.getElementById('pin4')?.value;
+        const newPin = `${pin1}${pin2}${pin3}${pin4}`;
+        
+        if (newPin.length !== 4) {
+            alert('Please enter a 4-digit PIN');
+            return;
+        }
+        
+        // Save PIN to Firebase
+        if (firebase.firestore && currentUser) {
+            try {
+                await firebase.firestore().collection('users').doc(currentUser.uid).update({
+                    pin: newPin
+                });
+                userData.pin = newPin;
+                
+                // Proceed to PIN entry for this transaction
+                showPinEntry(productId);
+            } catch (e) {
+                console.warn('Error saving PIN', e);
+                alert('Error saving PIN. Please try again.');
+            }
+        } else {
+            // Demo mode - just proceed
+            userData = { pin: newPin };
+            showPinEntry(productId);
+        }
     };
 
     window.showPinEntry = function(productId) {
@@ -1385,11 +1523,10 @@
             
             <div class="popup-actions">
                 <button class="popup-btn popup-btn-outline" onclick="showBuyForm(${productId})">Back</button>
-                <button class="popup-btn popup-btn-primary" onclick="verifyPinAndPay(${productId})" id="confirmPinBtn" style="opacity:0.5; pointer-events:none;">Confirm PIN first</button>
+                <button class="popup-btn popup-btn-primary" onclick="verifyPinAndPay(${productId})" id="confirmPinBtn" style="opacity:0.5; pointer-events:none;">Enter PIN first</button>
             </div>
         `;
         
-        // Add event listeners for PIN inputs
         document.querySelectorAll('.pin-digit input').forEach((input, index) => {
             input.addEventListener('keyup', (e) => {
                 if (e.key === 'Backspace' && index > 0) {
@@ -1401,7 +1538,6 @@
             input.addEventListener('input', checkPinComplete);
         });
         
-        // Initialize swipe functionality
         setTimeout(() => {
             initSwipe();
         }, 100);
@@ -1465,17 +1601,14 @@
             const containerRect = container.getBoundingClientRect();
             let newX = clientX - containerRect.left - thumbWidth/2;
             
-            // Constrain within bounds
             newX = Math.max(4, Math.min(newX, maxSwipe));
             
             thumb.style.left = newX + 'px';
             
-            // Update track width based on swipe progress
             const progress = (newX - 4) / (maxSwipe - 4);
             const trackWidth = progress * 100;
             track.style.transform = `translateX(-${100 - trackWidth}%)`;
             
-            // If swiped far enough, trigger payment
             if (newX >= maxSwipe - 10) {
                 endSwipe(true);
             }
@@ -1509,7 +1642,6 @@
             if (completed) {
                 verifyPinAndPay(currentProduct?.id);
             } else {
-                // Reset position
                 thumb.style.left = '4px';
                 track.style.transform = 'translateX(-100%)';
             }
@@ -1523,19 +1655,25 @@
         const pin4 = document.getElementById('pin4')?.value;
         const enteredPin = `${pin1}${pin2}${pin3}${pin4}`;
         
-        // Demo PIN verification (in production, this would be validated against stored PIN)
         if (enteredPin.length !== 4) {
             alert('Please enter a 4-digit PIN');
             return;
         }
         
-        // For demo, accept any 4-digit PIN that's not all zeros
-        if (enteredPin === '0000') {
-            alert('Invalid PIN. Please try again.');
-            return;
+        // Verify PIN against stored PIN
+        if (userData && userData.pin) {
+            if (enteredPin !== userData.pin) {
+                alert('Incorrect PIN. Please try again.');
+                return;
+            }
+        } else {
+            // For demo without Firebase, accept any non-zero PIN
+            if (enteredPin === '0000') {
+                alert('Invalid PIN. Please try again.');
+                return;
+            }
         }
         
-        // Proceed with payment
         completePurchase(productId);
     };
 
@@ -1543,30 +1681,6 @@
         const product = campaigns.find(c => c.id === productId);
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
         const total = product.price * units;
-
-        if (!currentUser) {
-            alert('Please login to purchase');
-            window.location.href = 'login.html';
-            return;
-        }
-
-        if (walletBalance < total) {
-            alert('Insufficient balance. Please deposit funds.');
-            closePopup();
-            showDepositPopup();
-            return;
-        }
-
-        // Validate shipping fields
-        const name = document.getElementById('fullName')?.value;
-        const address = document.getElementById('address')?.value;
-        const phone = document.getElementById('phone')?.value;
-        const city = document.getElementById('city')?.value;
-
-        if (!name || !address || !phone || !city) {
-            alert('Please fill all required shipping fields');
-            return;
-        }
 
         // Update balances
         walletBalance -= total;
@@ -1581,14 +1695,20 @@
                     joinedCampaigns: firebase.firestore.FieldValue.increment(1),
                     reservedUnits: firebase.firestore.FieldValue.increment(units)
                 });
-                // Record order
+                
                 await firebase.firestore().collection('orders').add({
                     userId: currentUser.uid,
                     productId: productId,
                     productName: product.name,
                     units: units,
                     total: total,
-                    shipping: { name, address, phone, city, notes: document.getElementById('notes')?.value },
+                    shipping: { 
+                        name: document.getElementById('fullName')?.value,
+                        address: document.getElementById('address')?.value,
+                        phone: document.getElementById('phone')?.value,
+                        city: document.getElementById('city')?.value,
+                        notes: document.getElementById('notes')?.value 
+                    },
                     status: 'pending',
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -1596,8 +1716,6 @@
         }
 
         updateUI();
-        
-        // Show animated confirmation
         showConfirmation(total);
     };
 
@@ -1615,7 +1733,7 @@
             </div>
         `;
         
-        // Play sound effect (using Web Audio API for browser compatibility)
+        // Play sound effect
         try {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
@@ -1632,7 +1750,6 @@
             oscillator.start();
             oscillator.stop(audioContext.currentTime + 0.2);
             
-            // Second note for pleasant effect
             setTimeout(() => {
                 const oscillator2 = audioContext.createOscillator();
                 const gainNode2 = audioContext.createGain();
@@ -1651,10 +1768,10 @@
             console.log('Sound not supported');
         }
         
-        loadCampaigns(); // refresh progress
+        loadCampaigns();
     };
 
-    // ========== DEPOSIT POPUP (2 options) ==========
+    // ========== DEPOSIT POPUP ==========
     function showDepositPopup() {
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
@@ -1718,8 +1835,7 @@
         } else {
             const code = document.getElementById('giftcardCode')?.value;
             if (code && code.trim() !== '') {
-                // Mock gift card redemption
-                const amount = 10000; // fixed demo amount
+                const amount = 10000;
                 walletBalance += amount;
                 if (firebase.firestore && currentUser) {
                     firebase.firestore().collection('users').doc(currentUser.uid).update({
@@ -1737,34 +1853,31 @@
 
     // ========== EVENT LISTENERS ==========
     function attachEvents() {
-        // wallet pill dropdown
         document.querySelector('.wallet-pill')?.addEventListener('click', (e) => {
             e.stopPropagation();
             document.getElementById('walletDropdown').classList.toggle('show');
         });
+        
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.wallet-pill')) 
                 document.getElementById('walletDropdown').classList.remove('show');
         });
 
-        // deposit button
         document.getElementById('depositTopBtn')?.addEventListener('click', showDepositPopup);
+        
         document.getElementById('quickDeposit')?.addEventListener('click', () => {
             document.getElementById('walletDropdown').classList.remove('show');
             showDepositPopup();
         });
 
-        // login button
         document.getElementById('loginBtn')?.addEventListener('click', () => {
             window.location.href = 'login.html';
         });
 
-        // view history -> wallet.html
         document.getElementById('viewHistoryDropdown')?.addEventListener('click', () => {
             window.location.href = 'wallet.html';
         });
 
-        // navigation to pages
         document.querySelectorAll('[data-page]').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const page = btn.dataset.page;
@@ -1779,12 +1892,10 @@
             });
         });
 
-        // view all campaigns -> discover.html
         document.getElementById('viewAllCampaignsLink')?.addEventListener('click', () => {
             window.location.href = 'discover.html';
         });
 
-        // request campaign button
         document.getElementById('requestCampaignBtn')?.addEventListener('click', () => {
             const popup = document.getElementById('popupCard');
             popup.innerHTML = `
@@ -1802,7 +1913,6 @@
             document.getElementById('popupOverlay').classList.add('show');
         });
 
-        // logout
         document.getElementById('logoutBtn')?.addEventListener('click', async () => {
             if (firebase.auth) {
                 await firebase.auth().signOut();
@@ -1810,7 +1920,6 @@
             window.location.href = 'login.html';
         });
 
-        // view and buy buttons (delegation)
         document.addEventListener('click', (e) => {
             if (e.target.closest('.view-campaign')) {
                 const id = parseInt(e.target.closest('.view-campaign').dataset.id);

@@ -658,6 +658,165 @@
             background: #f1f5f9;
         }
 
+        /* PIN input styles */
+        .pin-container {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin: 24px 0;
+        }
+        .pin-digit {
+            width: 60px;
+            height: 70px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            line-height: 70px;
+            color: #0f172a;
+            transition: all 0.2s;
+        }
+        .pin-digit.filled {
+            border-color: #2563eb;
+            background: #f1f5f9;
+        }
+        .pin-digit input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            outline: none;
+        }
+        .pin-digit input::-webkit-outer-spin-button,
+        .pin-digit input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .pin-digit input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* Swipe button */
+        .swipe-container {
+            margin: 24px 0 16px;
+            position: relative;
+            width: 100%;
+            height: 64px;
+            background: #f1f5f9;
+            border-radius: 40px;
+            overflow: hidden;
+            user-select: none;
+            touch-action: none;
+        }
+        .swipe-track {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            border-radius: 40px;
+            transform: translateX(-100%);
+            transition: transform 0.1s ease;
+            pointer-events: none;
+        }
+        .swipe-thumb {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 56px;
+            height: 56px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: grab;
+            touch-action: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+        .swipe-thumb:active {
+            cursor: grabbing;
+        }
+        .swipe-thumb .material-icons {
+            color: #2563eb;
+            font-size: 28px;
+        }
+        .swipe-text {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-weight: 600;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .swipe-text span {
+            margin-left: 40px;
+        }
+
+        /* Animated checkmark */
+        .checkmark-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .checkmark-svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 24px;
+        }
+        .checkmark-circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 2;
+            stroke-miterlimit: 10;
+            stroke: #2563eb;
+            fill: none;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+        .checkmark-check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            stroke-width: 3;
+            stroke: #2563eb;
+            fill: none;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.4s forwards;
+        }
+        @keyframes stroke {
+            100% { stroke-dashoffset: 0; }
+        }
+        .checkmark-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-top: 16px;
+            opacity: 0;
+            animation: fadeIn 0.5s ease 0.6s forwards;
+        }
+        .checkmark-subtext {
+            color: #64748b;
+            margin-top: 8px;
+            opacity: 0;
+            animation: fadeIn 0.5s ease 0.8s forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         /* deposit options */
         .deposit-options {
             display: flex;
@@ -844,11 +1003,10 @@
             </div>
         </div>
 
-        <!-- minimal stats row -->
+        <!-- minimal stats row - removed the balance pill at the bottom as requested -->
         <div class="stats-row">
             <div class="stat-pill"><span class="material-icons">campaign</span> Joined: <span id="statJoined">0</span></div>
             <div class="stat-pill"><span class="material-icons">inventory</span> Reserved: <span id="statUnits">0</span></div>
-            <div class="stat-pill" id="walletStatPill"><span class="material-icons">account_balance_wallet</span> Bal: <span id="statWalletVal">₦0</span></div>
         </div>
 
         <!-- DASHBOARD PAGE -->
@@ -903,6 +1061,11 @@
     let joinedCampaigns = 2;
     let reservedUnits = 4;
     let campaigns = [];
+    let currentProduct = null;
+    let swipeStartX = 0;
+    let swipeCurrentX = 0;
+    let isSwiping = false;
+    let swipeThreshold = 250;
 
     // ========== FIREBASE AUTH ==========
     document.addEventListener('DOMContentLoaded', () => {
@@ -971,7 +1134,6 @@
         document.getElementById('greetingHi').innerText = 'Hi, Guest';
         document.getElementById('sidebarUserName').innerText = 'Guest';
         document.getElementById('userAvatar').innerText = 'G';
-        document.getElementById('statWalletVal').innerText = '₦24,900';
         document.getElementById('statJoined').innerText = '2';
         document.getElementById('statUnits').innerText = '4';
     }
@@ -986,7 +1148,6 @@
         const fmt = `₦${walletBalance.toLocaleString()}`;
         document.getElementById('walletDisplay').innerHTML = `<span class="material-icons">account_balance_wallet</span> ${fmt}`;
         document.getElementById('dropdownBalance').innerText = fmt;
-        document.getElementById('statWalletVal').innerText = fmt;
         document.getElementById('statJoined').innerText = joinedCampaigns;
         document.getElementById('statUnits').innerText = reservedUnits;
         document.getElementById('dropdownJoined').innerText = joinedCampaigns;
@@ -1110,6 +1271,7 @@
     window.showProductDetail = function(productId) {
         const product = campaigns.find(c => c.id === productId);
         if (!product) return;
+        currentProduct = product;
 
         const popup = document.getElementById('popupCard');
         let thumbsHtml = '';
@@ -1165,6 +1327,7 @@
 
     window.showBuyForm = function(productId) {
         const product = campaigns.find(c => c.id === productId);
+        currentProduct = product;
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
             <div class="popup-title">
@@ -1183,9 +1346,197 @@
             
             <div class="popup-actions">
                 <button class="popup-btn popup-btn-outline" onclick="showProductDetail(${productId})">Back</button>
-                <button class="popup-btn popup-btn-primary" onclick="completePurchase(${productId})">Complete purchase</button>
+                <button class="popup-btn popup-btn-primary" onclick="showPinEntry(${productId})">Continue to payment</button>
             </div>
         `;
+    };
+
+    window.showPinEntry = function(productId) {
+        const product = campaigns.find(c => c.id === productId);
+        const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
+        const total = product.price * units;
+        
+        const popup = document.getElementById('popupCard');
+        popup.innerHTML = `
+            <div class="popup-title">
+                <span class="material-icons">lock</span> Enter PIN
+            </div>
+            <div style="margin-bottom:24px; text-align:center;">
+                <p style="font-size:1.2rem; font-weight:600; color:#0f172a;">Total: ₦${total.toLocaleString()}</p>
+                <p style="color:#64748b;">Enter your 4-digit PIN to authorize payment</p>
+            </div>
+            
+            <div class="pin-container">
+                <div class="pin-digit"><input type="number" id="pin1" maxlength="1" oninput="moveToNext(this, 2)" autofocus></div>
+                <div class="pin-digit"><input type="number" id="pin2" maxlength="1" oninput="moveToNext(this, 3)"></div>
+                <div class="pin-digit"><input type="number" id="pin3" maxlength="1" oninput="moveToNext(this, 4)"></div>
+                <div class="pin-digit"><input type="number" id="pin4" maxlength="1" oninput="moveToNext(this, null)"></div>
+            </div>
+            
+            <div style="margin:24px 0;">
+                <div class="swipe-container" id="swipeContainer">
+                    <div class="swipe-track" id="swipeTrack"></div>
+                    <div class="swipe-thumb" id="swipeThumb" onmousedown="startSwipe(event)" ontouchstart="startSwipe(event)">
+                        <span class="material-icons">chevron_right</span>
+                    </div>
+                    <div class="swipe-text"><span>Swipe to confirm payment</span></div>
+                </div>
+            </div>
+            
+            <div class="popup-actions">
+                <button class="popup-btn popup-btn-outline" onclick="showBuyForm(${productId})">Back</button>
+                <button class="popup-btn popup-btn-primary" onclick="verifyPinAndPay(${productId})" id="confirmPinBtn" style="opacity:0.5; pointer-events:none;">Confirm PIN first</button>
+            </div>
+        `;
+        
+        // Add event listeners for PIN inputs
+        document.querySelectorAll('.pin-digit input').forEach((input, index) => {
+            input.addEventListener('keyup', (e) => {
+                if (e.key === 'Backspace' && index > 0) {
+                    const prevInput = document.querySelectorAll('.pin-digit input')[index - 1];
+                    prevInput.focus();
+                }
+                checkPinComplete();
+            });
+            input.addEventListener('input', checkPinComplete);
+        });
+        
+        // Initialize swipe functionality
+        setTimeout(() => {
+            initSwipe();
+        }, 100);
+    };
+
+    function moveToNext(current, nextId) {
+        if (current.value.length === 1) {
+            if (nextId) {
+                document.getElementById(`pin${nextId}`).focus();
+            }
+        }
+        checkPinComplete();
+    }
+
+    function checkPinComplete() {
+        const pin1 = document.getElementById('pin1')?.value;
+        const pin2 = document.getElementById('pin2')?.value;
+        const pin3 = document.getElementById('pin3')?.value;
+        const pin4 = document.getElementById('pin4')?.value;
+        
+        const pinComplete = pin1 && pin2 && pin3 && pin4 && 
+                           pin1.length === 1 && pin2.length === 1 && 
+                           pin3.length === 1 && pin4.length === 1;
+        
+        const confirmBtn = document.getElementById('confirmPinBtn');
+        if (confirmBtn) {
+            if (pinComplete) {
+                confirmBtn.style.opacity = '1';
+                confirmBtn.style.pointerEvents = 'auto';
+                confirmBtn.innerText = 'Confirm & Pay';
+            } else {
+                confirmBtn.style.opacity = '0.5';
+                confirmBtn.style.pointerEvents = 'none';
+                confirmBtn.innerText = 'Enter 4-digit PIN';
+            }
+        }
+    }
+
+    function initSwipe() {
+        const thumb = document.getElementById('swipeThumb');
+        const track = document.getElementById('swipeTrack');
+        const container = document.getElementById('swipeContainer');
+        
+        if (!thumb || !track || !container) return;
+        
+        const containerWidth = container.offsetWidth;
+        const thumbWidth = 56;
+        const maxSwipe = containerWidth - thumbWidth - 8;
+        
+        const onMove = (e) => {
+            if (!isSwiping) return;
+            e.preventDefault();
+            
+            let clientX;
+            if (e.type === 'mousemove') {
+                clientX = e.clientX;
+            } else {
+                clientX = e.touches[0].clientX;
+            }
+            
+            const containerRect = container.getBoundingClientRect();
+            let newX = clientX - containerRect.left - thumbWidth/2;
+            
+            // Constrain within bounds
+            newX = Math.max(4, Math.min(newX, maxSwipe));
+            
+            thumb.style.left = newX + 'px';
+            
+            // Update track width based on swipe progress
+            const progress = (newX - 4) / (maxSwipe - 4);
+            const trackWidth = progress * 100;
+            track.style.transform = `translateX(-${100 - trackWidth}%)`;
+            
+            // If swiped far enough, trigger payment
+            if (newX >= maxSwipe - 10) {
+                endSwipe(true);
+            }
+        };
+        
+        const onUp = () => {
+            if (isSwiping) {
+                endSwipe(false);
+            }
+        };
+        
+        window.startSwipe = function(e) {
+            e.preventDefault();
+            isSwiping = true;
+            swipeStartX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+            
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('touchmove', onMove);
+            document.addEventListener('mouseup', onUp);
+            document.addEventListener('touchend', onUp);
+        };
+        
+        function endSwipe(completed) {
+            isSwiping = false;
+            
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            document.removeEventListener('touchend', onUp);
+            
+            if (completed) {
+                verifyPinAndPay(currentProduct?.id);
+            } else {
+                // Reset position
+                thumb.style.left = '4px';
+                track.style.transform = 'translateX(-100%)';
+            }
+        }
+    }
+
+    window.verifyPinAndPay = async function(productId) {
+        const pin1 = document.getElementById('pin1')?.value;
+        const pin2 = document.getElementById('pin2')?.value;
+        const pin3 = document.getElementById('pin3')?.value;
+        const pin4 = document.getElementById('pin4')?.value;
+        const enteredPin = `${pin1}${pin2}${pin3}${pin4}`;
+        
+        // Demo PIN verification (in production, this would be validated against stored PIN)
+        if (enteredPin.length !== 4) {
+            alert('Please enter a 4-digit PIN');
+            return;
+        }
+        
+        // For demo, accept any 4-digit PIN that's not all zeros
+        if (enteredPin === '0000') {
+            alert('Invalid PIN. Please try again.');
+            return;
+        }
+        
+        // Proceed with payment
+        completePurchase(productId);
     };
 
     window.completePurchase = async function(productId) {
@@ -1245,8 +1596,61 @@
         }
 
         updateUI();
-        alert(`✅ Purchase successful! ₦${total.toLocaleString()} deducted. Your order will be processed.`);
-        closePopup();
+        
+        // Show animated confirmation
+        showConfirmation(total);
+    };
+
+    window.showConfirmation = function(amount) {
+        const popup = document.getElementById('popupCard');
+        popup.innerHTML = `
+            <div class="checkmark-container">
+                <svg class="checkmark-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                    <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>
+                <div class="checkmark-text">Payment Successful!</div>
+                <div class="checkmark-subtext">₦${amount.toLocaleString()} • Order confirmed</div>
+                <button class="popup-btn popup-btn-primary" onclick="closePopup()" style="margin-top:24px;">Done</button>
+            </div>
+        `;
+        
+        // Play sound effect (using Web Audio API for browser compatibility)
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.2);
+            
+            // Second note for pleasant effect
+            setTimeout(() => {
+                const oscillator2 = audioContext.createOscillator();
+                const gainNode2 = audioContext.createGain();
+                oscillator2.type = 'sine';
+                oscillator2.frequency.setValueAtTime(1174.66, audioContext.currentTime);
+                gainNode2.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator2.connect(gainNode2);
+                gainNode2.connect(audioContext.destination);
+                
+                oscillator2.start();
+                oscillator2.stop(audioContext.currentTime + 0.3);
+            }, 150);
+        } catch (e) {
+            console.log('Sound not supported');
+        }
+        
         loadCampaigns(); // refresh progress
     };
 
@@ -1437,6 +1841,7 @@
 
     window.closePopup = function() {
         document.getElementById('popupOverlay').classList.remove('show');
+        isSwiping = false;
     };
 </script>
 </body>

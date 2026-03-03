@@ -120,12 +120,7 @@
             display: flex;
             align-items: center;
             gap: 14px;
-            cursor: pointer;
-            transition: 0.2s;
             position: relative;
-        }
-        .user-profile-bottom:hover {
-            background: #f8fafc;
         }
         .avatar {
             background: linear-gradient(135deg, #2563eb, #7c3aed);
@@ -139,41 +134,66 @@
             font-weight: 600;
             font-size: 18px;
             box-shadow: 0 4px 10px rgba(37,99,235,0.2);
+            cursor: pointer;
         }
-        .user-name { color: #1e293b; font-weight: 600; font-size: 0.95rem; }
-        .logout-link {
-            color: #ef4444;
-            font-size: 0.85rem;
+        .user-name { 
+            color: #1e293b; 
+            font-weight: 600; 
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+        
+        /* User dropdown menu */
+        .user-dropdown {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            background: white;
+            border-radius: 16px;
+            padding: 8px;
+            min-width: 200px;
+            box-shadow: 0 20px 35px -8px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+            opacity: 0;
+            transform: scale(0.95) translateY(10px);
+            transition: all 0.25s cubic-bezier(0.2,0,0,1);
+            pointer-events: none;
+            z-index: 100;
+        }
+        .user-dropdown.show {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: all;
+        }
+        .dropdown-item {
+            padding: 12px 16px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 12px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: 0.15s;
+            color: #334155;
+            font-weight: 500;
+        }
+        .dropdown-item .material-icons {
+            color: #2563eb;
+            font-size: 20px;
+        }
+        .dropdown-item.logout-item {
+            color: #ef4444;
+            border-top: 1px solid #f1f5f9;
             margin-top: 4px;
-            opacity: 0.8;
         }
-        .logout-link:hover { opacity: 1; }
-        
-        .mobile-logout {
-            display: none;
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            background: #ef4444;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 40px;
-            font-weight: 600;
-            box-shadow: 0 4px 12px rgba(239,68,68,0.3);
-            z-index: 1000;
-            cursor: pointer;
-            border: none;
-            align-items: center;
-            gap: 8px;
+        .dropdown-item.logout-item .material-icons {
+            color: #ef4444;
         }
-        .mobile-logout:hover {
-            background: #dc2626;
-            transform: translateY(-2px);
+        .dropdown-item:hover {
+            background: #f1f5f9;
+        }
+        .user-email {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 2px;
         }
 
         /* ---------- MAIN CONTENT ---------- */
@@ -963,10 +983,34 @@
         .page { display: none; }
         .page.active { display: block; }
 
+        /* Shipping cost styles */
+        .shipping-info {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+        }
+        .shipping-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .shipping-row.total {
+            border-top: 1px solid #e2e8f0;
+            margin-top: 8px;
+            padding-top: 8px;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .shipping-cost {
+            color: #2563eb;
+            font-weight: 600;
+        }
+
         @media (max-width: 800px) {
             .sidebar { display: none; }
             .mobile-bottom-nav { display: flex; }
-            .mobile-logout { display: flex; }
             .main-content { padding: 20px 20px 90px; }
             .top-bar { flex-direction: column; align-items: flex-start; gap: 16px; }
             .wallet-block { width: 100%; justify-content: space-between; }
@@ -995,11 +1039,30 @@
             <button class="nav-item" data-page="track"><span class="material-icons">local_shipping</span> Track Orders</button>
             <button class="nav-item" data-page="discover"><span class="material-icons">explore</span> Discover</button>
         </div>
-        <div class="user-profile-bottom" id="profileLogout">
-            <div class="avatar" id="userAvatar">JD</div>
+        <div class="user-profile-bottom">
+            <div class="avatar" id="userAvatar" onclick="toggleUserDropdown()">JD</div>
             <div>
-                <div class="user-name" id="sidebarUserName">Loading...</div>
-                <div class="logout-link" id="logoutBtn"><span class="material-icons">logout</span> Logout</div>
+                <div class="user-name" id="sidebarUserName" onclick="toggleUserDropdown()">Loading...</div>
+                <div class="user-email" id="userEmail"></div>
+            </div>
+            
+            <!-- User dropdown menu -->
+            <div class="user-dropdown" id="userDropdown">
+                <div class="dropdown-item" onclick="window.location.href='profile.html'">
+                    <span class="material-icons">person</span>
+                    <div>
+                        <div style="font-weight:500;">My Profile</div>
+                        <div class="user-email" id="dropdownUserEmail"></div>
+                    </div>
+                </div>
+                <div class="dropdown-item" onclick="window.location.href='settings.html'">
+                    <span class="material-icons">settings</span>
+                    <span>Settings</span>
+                </div>
+                <div class="dropdown-item logout-item" onclick="handleLogout()">
+                    <span class="material-icons">logout</span>
+                    <span>Logout</span>
+                </div>
             </div>
         </div>
     </aside>
@@ -1032,7 +1095,7 @@
             </div>
         </div>
 
-        <!-- minimal stats row - removed the balance pill at the bottom as requested -->
+        <!-- minimal stats row -->
         <div class="stats-row">
             <div class="stat-pill"><span class="material-icons">campaign</span> Joined: <span id="statJoined">0</span></div>
             <div class="stat-pill"><span class="material-icons">inventory</span> Reserved: <span id="statUnits">0</span></div>
@@ -1052,7 +1115,7 @@
             <div class="request-banner">
                 <div>
                     <h3>Request a group buy</h3>
-                    <p>Send product link + name, we’ll start a campaign</p>
+                    <p>Send product link + name, we'll start a campaign</p>
                 </div>
                 <button class="request-btn" id="requestCampaignBtn"><span class="material-icons">send</span> Request now</button>
             </div>
@@ -1075,11 +1138,6 @@
     </main>
 </div>
 
-<!-- Mobile Logout Button -->
-<button class="mobile-logout" id="mobileLogoutBtn" style="display: none;">
-    <span class="material-icons">logout</span> Logout
-</button>
-
 <!-- GLOBAL POPUP MODAL (dynamic) -->
 <div class="popup-overlay" id="popupOverlay">
     <div class="popup-card" id="popupCard">
@@ -1091,43 +1149,39 @@
     // ========== GLOBALS ==========
     let currentUser = null;
     let userData = null;
-    let walletBalance = 24900;
-    let joinedCampaigns = 2;
-    let reservedUnits = 4;
+    let walletBalance = 0;
+    let joinedCampaigns = 0;
+    let reservedUnits = 0;
     let campaigns = [];
     let currentProduct = null;
     let swipeStartX = 0;
     let swipeCurrentX = 0;
     let isSwiping = false;
-    let swipeThreshold = 250;
-    const SHIPPING_COST = 2500; // Fixed shipping cost
+    const SHIPPING_COST = 2500; // Fixed shipping cost in Naira
 
     // ========== FIREBASE AUTH ==========
     document.addEventListener('DOMContentLoaded', () => {
-        // Check Firebase config
         if (typeof firebaseConfig !== 'undefined' && firebase.apps.length === 0) {
             firebase.initializeApp(firebaseConfig);
         }
 
-        // Check auth state
         if (firebase.auth) {
             firebase.auth().onAuthStateChanged(async (user) => {
                 if (user) {
                     currentUser = user;
                     await loadUserData();
-                    showLoggedInUI();
                     await loadCampaignsFromFirebase();
+                    showLoggedInUI();
                 } else {
                     showLoggedOutUI();
-                    loadCampaignsFromFirebase();
+                    loadCampaigns(); // Load demo campaigns
                 }
                 updateUI();
                 attachEvents();
             });
         } else {
-            // Demo mode
             showLoggedOutUI();
-            loadCampaignsFromFirebase();
+            loadCampaigns();
             attachEvents();
         }
     });
@@ -1140,88 +1194,57 @@
             if (doc.exists) {
                 userData = doc.data();
                 walletBalance = userData.walletBalance || 24900;
-                joinedCampaigns = userData.joinedCampaigns || 2;
-                reservedUnits = userData.reservedUnits || 4;
+                joinedCampaigns = userData.joinedCampaigns || 0;
+                reservedUnits = userData.reservedUnits || 0;
             } else {
-                // create default
                 const newUser = {
                     displayName: currentUser.displayName || 'User',
                     email: currentUser.email,
                     walletBalance: 24900,
-                    joinedCampaigns: 2,
-                    reservedUnits: 4,
-                    pin: null // No PIN set initially
+                    joinedCampaigns: 0,
+                    reservedUnits: 0,
+                    pin: null,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 await userRef.set(newUser);
                 userData = newUser;
+                walletBalance = 24900;
             }
-        } catch (e) { console.warn('Firestore error, using demo', e); }
-    }
-
-    function showLoggedInUI() {
-        document.getElementById('loginBtn').style.display = 'none';
-        document.getElementById('walletDisplay').style.display = 'flex';
-        document.getElementById('depositTopBtn').style.display = 'flex';
-        document.getElementById('mobileLogoutBtn').style.display = 'flex';
-    }
-
-    function showLoggedOutUI() {
-        document.getElementById('loginBtn').style.display = 'flex';
-        document.getElementById('walletDisplay').style.display = 'none';
-        document.getElementById('depositTopBtn').style.display = 'none';
-        document.getElementById('mobileLogoutBtn').style.display = 'none';
-        document.getElementById('greetingHi').innerText = 'Hi, Guest';
-        document.getElementById('sidebarUserName').innerText = 'Guest';
-        document.getElementById('userAvatar').innerText = 'G';
-        document.getElementById('statJoined').innerText = '2';
-        document.getElementById('statUnits').innerText = '4';
-    }
-
-    function updateUI() {
-        if (!currentUser) return;
-        const name = userData?.displayName || currentUser?.displayName || 'User';
-        document.getElementById('greetingHi').innerText = `Hi, ${name.split(' ')[0]}`;
-        document.getElementById('sidebarUserName').innerText = name;
-        document.getElementById('userAvatar').innerText = name.charAt(0).toUpperCase();
-
-        const fmt = `₦${walletBalance.toLocaleString()}`;
-        document.getElementById('walletDisplay').innerHTML = `<span class="material-icons">account_balance_wallet</span> ${fmt}`;
-        document.getElementById('dropdownBalance').innerText = fmt;
-        document.getElementById('statJoined').innerText = joinedCampaigns;
-        document.getElementById('statUnits').innerText = reservedUnits;
-        document.getElementById('dropdownJoined').innerText = joinedCampaigns;
-        document.getElementById('dropdownUnits').innerText = reservedUnits;
-    }
-
-    // ========== CAMPAIGNS DATA FROM FIREBASE ==========
-    async function loadCampaignsFromFirebase() {
-        if (firebase.firestore) {
-            try {
-                const campaignsRef = firebase.firestore().collection('campaigns');
-                const snapshot = await campaignsRef.get();
-                
-                if (!snapshot.empty) {
-                    campaigns = [];
-                    snapshot.forEach(doc => {
-                        campaigns.push({ id: doc.id, ...doc.data() });
-                    });
-                } else {
-                    // Initialize with default campaigns
-                    await initializeDefaultCampaigns();
-                }
-            } catch (e) {
-                console.warn('Error loading campaigns, using defaults', e);
-                initializeDefaultCampaigns();
-            }
-        } else {
-            initializeDefaultCampaigns();
+        } catch (e) { 
+            console.warn('Firestore error, using demo', e);
         }
     }
 
-    async function initializeDefaultCampaigns() {
-        campaigns = [
+    async function loadCampaignsFromFirebase() {
+        if (!firebase.firestore) return;
+        try {
+            const campaignsRef = firebase.firestore().collection('campaigns');
+            const snapshot = await campaignsRef.get();
+            
+            if (!snapshot.empty) {
+                campaigns = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+            } else {
+                // Create default campaigns
+                const defaultCampaigns = getDefaultCampaigns();
+                for (const campaign of defaultCampaigns) {
+                    await campaignsRef.add(campaign);
+                }
+                campaigns = defaultCampaigns;
+            }
+        } catch (e) {
+            console.warn('Error loading campaigns', e);
+            campaigns = getDefaultCampaigns();
+        }
+        renderCampaigns();
+    }
+
+    function getDefaultCampaigns() {
+        return [
             { 
-                id: 'camp1', 
+                id: '1', 
                 name: 'iPhone 15 Pro', 
                 goal: 100, 
                 reserved: 45, 
@@ -1238,7 +1261,7 @@
                 shipping: 'Ships within 7 days after group buy completes'
             },
             { 
-                id: 'camp2', 
+                id: '2', 
                 name: 'MacBook Air M2', 
                 goal: 50, 
                 reserved: 28, 
@@ -1255,7 +1278,7 @@
                 shipping: 'Estimated delivery 10-14 days'
             },
             { 
-                id: 'camp3', 
+                id: '3', 
                 name: 'AirPods Max', 
                 goal: 75, 
                 reserved: 42, 
@@ -1270,64 +1293,18 @@
                 description: 'High-fidelity audio, Active Noise Cancellation, and computational audio.',
                 specs: 'Over-ear, H1 chip, 20hr battery, 5 colors',
                 shipping: 'Ships in 5-7 business days'
-            },
-            { 
-                id: 'camp4', 
-                name: 'iPad Pro 11"', 
-                goal: 60, 
-                reserved: 33, 
-                price: 620000, 
-                funded: 55, 
-                img: 'https://placehold.co/300x160/ea580c/white?text=iPad+Pro',
-                images: [
-                    'https://placehold.co/600x400/ea580c/white?text=iPad+Front',
-                    'https://placehold.co/600x400/f97316/white?text=iPad+Back',
-                    'https://placehold.co/600x400/c2410c/white?text=With+Pencil'
-                ],
-                description: 'M2 chip, LiDAR scanner, and Thunderbolt for pro workflows.',
-                specs: '11" Liquid Retina, M2, 128GB-2TB, Face ID',
-                shipping: '1-2 weeks for delivery'
-            },
-            { 
-                id: 'camp5', 
-                name: 'PS5 Digital', 
-                goal: 30, 
-                reserved: 21, 
-                price: 280000, 
-                funded: 70, 
-                img: 'https://placehold.co/300x160/16a34a/white?text=PS5',
-                images: [
-                    'https://placehold.co/600x400/16a34a/white?text=Console',
-                    'https://placehold.co/600x400/22c55e/white?text=Controller',
-                    'https://placehold.co/600x400/15803d/white?text=Ports'
-                ],
-                description: 'Lightning-fast SSD, haptic feedback, and immersive 3D audio.',
-                specs: '825GB SSD, 4K/120fps, Ray Tracing',
-                shipping: 'Ships within 3 days'
-            },
-        ];
-
-        // Save to Firebase if available
-        if (firebase.firestore) {
-            try {
-                const batch = firebase.firestore().batch();
-                campaigns.forEach(camp => {
-                    const ref = firebase.firestore().collection('campaigns').doc(camp.id);
-                    batch.set(ref, camp);
-                });
-                await batch.commit();
-            } catch (e) {
-                console.warn('Error saving default campaigns', e);
             }
-        }
+        ];
+    }
 
+    function loadCampaigns() {
+        campaigns = getDefaultCampaigns();
         renderCampaigns();
     }
 
     function renderCampaigns() {
         let html = '';
         campaigns.forEach(c => {
-            const funded = Math.round((c.reserved / c.goal) * 100);
             html += `
                 <div class="campaign-card" data-id="${c.id}">
                     <div class="campaign-img" style="background-image:url('${c.img}')" onclick="showProductDetail('${c.id}')"></div>
@@ -1337,7 +1314,7 @@
                     </div>
                     <div class="price-tag">₦${c.price.toLocaleString()}</div>
                     <div class="progress-container">
-                        <div class="progress-bar-bg"><div class="progress-fill" style="width:${funded}%"></div></div>
+                        <div class="progress-bar-bg"><div class="progress-fill" style="width:${(c.reserved/c.goal*100)}%"></div></div>
                     </div>
                     <div class="card-actions">
                         <button class="btn-outline view-campaign" data-id="${c.id}"><span class="material-icons">visibility</span> View</button>
@@ -1348,6 +1325,77 @@
         });
         document.getElementById('campaignsContainer').innerHTML = html;
     }
+
+    function showLoggedInUI() {
+        document.getElementById('loginBtn').style.display = 'none';
+        document.getElementById('walletDisplay').style.display = 'flex';
+        document.getElementById('depositTopBtn').style.display = 'flex';
+    }
+
+    function showLoggedOutUI() {
+        document.getElementById('loginBtn').style.display = 'flex';
+        document.getElementById('walletDisplay').style.display = 'none';
+        document.getElementById('depositTopBtn').style.display = 'none';
+        document.getElementById('greetingHi').innerText = 'Hi, Guest';
+        document.getElementById('sidebarUserName').innerText = 'Guest';
+        document.getElementById('userAvatar').innerText = 'G';
+        document.getElementById('userEmail').innerText = '';
+        document.getElementById('dropdownUserEmail').innerText = '';
+        document.getElementById('statJoined').innerText = '0';
+        document.getElementById('statUnits').innerText = '0';
+    }
+
+    function updateUI() {
+        if (!currentUser) return;
+        
+        const name = userData?.displayName || currentUser?.displayName || 'User';
+        const email = currentUser?.email || '';
+        
+        document.getElementById('greetingHi').innerText = `Hi, ${name.split(' ')[0]}`;
+        document.getElementById('sidebarUserName').innerText = name;
+        document.getElementById('userAvatar').innerText = name.charAt(0).toUpperCase();
+        document.getElementById('userEmail').innerText = email;
+        document.getElementById('dropdownUserEmail').innerText = email;
+
+        const fmt = `₦${walletBalance.toLocaleString()}`;
+        document.getElementById('walletDisplay').innerHTML = `<span class="material-icons">account_balance_wallet</span> ${fmt}`;
+        document.getElementById('dropdownBalance').innerText = fmt;
+        document.getElementById('statJoined').innerText = joinedCampaigns;
+        document.getElementById('statUnits').innerText = reservedUnits;
+        document.getElementById('dropdownJoined').innerText = joinedCampaigns;
+        document.getElementById('dropdownUnits').innerText = reservedUnits;
+    }
+
+    // ========== USER DROPDOWN ==========
+    window.toggleUserDropdown = function() {
+        const dropdown = document.getElementById('userDropdown');
+        dropdown.classList.toggle('show');
+        
+        // Close when clicking outside
+        if (dropdown.classList.contains('show')) {
+            setTimeout(() => {
+                document.addEventListener('click', closeUserDropdown);
+            }, 100);
+        }
+    };
+
+    function closeUserDropdown(e) {
+        const dropdown = document.getElementById('userDropdown');
+        const avatar = document.querySelector('.avatar');
+        const userName = document.querySelector('.user-name');
+        
+        if (!dropdown.contains(e.target) && !avatar.contains(e.target) && !userName.contains(e.target)) {
+            dropdown.classList.remove('show');
+            document.removeEventListener('click', closeUserDropdown);
+        }
+    }
+
+    window.handleLogout = async function() {
+        if (firebase.auth) {
+            await firebase.auth().signOut();
+        }
+        window.location.href = 'login.html';
+    };
 
     // ========== PRODUCT DETAIL VIEW ==========
     window.showProductDetail = function(productId) {
@@ -1409,33 +1457,46 @@
 
     window.showBuyForm = function(productId) {
         const product = campaigns.find(c => c.id === productId);
+        if (!product) return;
         currentProduct = product;
-        const available = product.goal - product.reserved;
+        
+        const units = 1;
+        const subtotal = product.price * units;
+        const shipping = SHIPPING_COST;
+        const total = subtotal + shipping;
+        
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
             <div class="popup-title">
-                <span class="material-icons">shopping_cart</span> Buy ${product.name}
+                <span class="material-icons">shopping_cart</span> Complete Purchase
             </div>
-            <div style="margin-bottom:16px;">
-                <p>Price per unit: ₦${product.price.toLocaleString()}</p>
-                <p>Shipping: ₦${SHIPPING_COST.toLocaleString()} (fixed)</p>
-                <p>Available: ${available} units left</p>
+            <div class="shipping-info">
+                <div class="shipping-row">
+                    <span>Product (${product.name})</span>
+                    <span>₦${product.price.toLocaleString()}</span>
+                </div>
+                <div class="shipping-row">
+                    <span>Quantity</span>
+                    <span>
+                        <button onclick="updateQuantity(-1)" style="background:none; border:none; cursor:pointer; padding:0 8px;">−</button>
+                        <span id="quantityDisplay">1</span>
+                        <button onclick="updateQuantity(1)" style="background:none; border:none; cursor:pointer; padding:0 8px;">+</button>
+                    </span>
+                </div>
+                <div class="shipping-row">
+                    <span>Subtotal</span>
+                    <span id="subtotalDisplay">₦${product.price.toLocaleString()}</span>
+                </div>
+                <div class="shipping-row">
+                    <span>Shipping</span>
+                    <span class="shipping-cost">₦${SHIPPING_COST.toLocaleString()}</span>
+                </div>
+                <div class="shipping-row total">
+                    <span>Total</span>
+                    <span id="totalDisplay">₦${total.toLocaleString()}</span>
+                </div>
             </div>
-            <input type="number" id="buyUnits" class="popup-input" min="1" max="${available}" value="1" placeholder="Number of units" onchange="updateTotal()">
-            <div style="background:#f1f5f9; padding:16px; border-radius:16px; margin-bottom:16px;">
-                <p style="display:flex; justify-content:space-between;">
-                    <span>Subtotal:</span>
-                    <span id="subtotal">₦${product.price.toLocaleString()}</span>
-                </p>
-                <p style="display:flex; justify-content:space-between;">
-                    <span>Shipping:</span>
-                    <span>₦${SHIPPING_COST.toLocaleString()}</span>
-                </p>
-                <p style="display:flex; justify-content:space-between; font-weight:700; margin-top:8px; padding-top:8px; border-top:1px solid #e2e8f0;">
-                    <span>Total:</span>
-                    <span id="totalAmount">₦${(product.price + SHIPPING_COST).toLocaleString()}</span>
-                </p>
-            </div>
+            
             <input type="text" id="fullName" class="popup-input" placeholder="Full name *" required>
             <input type="text" id="address" class="popup-input" placeholder="Shipping address *" required>
             <input type="text" id="phone" class="popup-input" placeholder="Phone number *" required>
@@ -1443,23 +1504,37 @@
             <textarea id="notes" class="popup-textarea" placeholder="Additional notes (optional)"></textarea>
             
             <div class="popup-actions">
-                <button class="popup-btn popup-btn-outline" onclick="showProductDetail('${product.id}')">Back</button>
-                <button class="popup-btn popup-btn-primary" onclick="checkPinAndProceed('${product.id}')">Continue to payment</button>
+                <button class="popup-btn popup-btn-outline" onclick="showProductDetail('${productId}')">Back</button>
+                <button class="popup-btn popup-btn-primary" onclick="checkPinAndProceed('${productId}')">Continue to payment</button>
             </div>
         `;
+        
+        // Store current quantity
+        window.currentQuantity = 1;
     };
 
-    window.updateTotal = function() {
-        const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
-        const subtotal = currentProduct.price * units;
+    window.updateQuantity = function(change) {
+        const product = currentProduct;
+        if (!product) return;
+        
+        const newQuantity = window.currentQuantity + change;
+        if (newQuantity < 1 || newQuantity > (product.goal - product.reserved)) return;
+        
+        window.currentQuantity = newQuantity;
+        document.getElementById('quantityDisplay').textContent = newQuantity;
+        
+        const subtotal = product.price * newQuantity;
         const total = subtotal + SHIPPING_COST;
-        document.getElementById('subtotal').innerText = `₦${subtotal.toLocaleString()}`;
-        document.getElementById('totalAmount').innerText = `₦${total.toLocaleString()}`;
+        
+        document.getElementById('subtotalDisplay').textContent = `₦${subtotal.toLocaleString()}`;
+        document.getElementById('totalDisplay').textContent = `₦${total.toLocaleString()}`;
     };
 
     window.checkPinAndProceed = async function(productId) {
         const product = campaigns.find(c => c.id === productId);
-        const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
+        if (!product) return;
+        
+        const units = window.currentQuantity || 1;
         const subtotal = product.price * units;
         const total = subtotal + SHIPPING_COST;
 
@@ -1470,7 +1545,7 @@
         }
 
         if (walletBalance < total) {
-            alert('Insufficient balance. Please deposit funds.');
+            alert(`Insufficient balance. You need ₦${(total - walletBalance).toLocaleString()} more.`);
             closePopup();
             showDepositPopup();
             return;
@@ -1495,7 +1570,7 @@
         }
     };
 
-    window.showCreatePin = function(productId, units, total) {        
+    window.showCreatePin = function(productId, units, total) {
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
             <div class="popup-title">
@@ -1571,7 +1646,6 @@
             return;
         }
         
-        // Save PIN to Firebase
         if (firebase.firestore && currentUser) {
             try {
                 await firebase.firestore().collection('users').doc(currentUser.uid).update({
@@ -1584,13 +1658,12 @@
                 alert('Error saving PIN. Please try again.');
             }
         } else {
-            // Demo mode - just proceed
             userData = { pin: newPin };
             showPinEntry(productId, units, total);
         }
     };
 
-    window.showPinEntry = function(productId, units, total) {        
+    window.showPinEntry = function(productId, units, total) {
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
             <div class="popup-title">
@@ -1720,7 +1793,6 @@
         window.startSwipe = function(e) {
             e.preventDefault();
             isSwiping = true;
-            swipeStartX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
             
             document.addEventListener('mousemove', onMove);
             document.addEventListener('touchmove', onMove);
@@ -1728,7 +1800,7 @@
             document.addEventListener('touchend', onUp);
         };
         
-        function endSwipe(completed, prodId, qty, amt) {
+        function endSwipe(completed, productId, units, total) {
             isSwiping = false;
             
             document.removeEventListener('mousemove', onMove);
@@ -1737,7 +1809,7 @@
             document.removeEventListener('touchend', onUp);
             
             if (completed) {
-                verifyPinAndPay(prodId, qty, amt);
+                verifyPinAndPay(productId, units, total);
             } else {
                 thumb.style.left = '4px';
                 track.style.transform = 'translateX(-100%)';
@@ -1757,25 +1829,23 @@
             return;
         }
         
-        // Verify PIN against stored PIN
         if (userData && userData.pin) {
             if (enteredPin !== userData.pin) {
                 alert('Incorrect PIN. Please try again.');
                 return;
             }
-        } else {
-            // For demo without Firebase, accept any non-zero PIN
-            if (enteredPin === '0000') {
-                alert('Invalid PIN. Please try again.');
-                return;
-            }
+        } else if (enteredPin === '0000') {
+            alert('Invalid PIN. Please try again.');
+            return;
         }
         
-        completePurchase(productId, units, total);
+        await completePurchase(productId, units, total);
     };
 
     window.completePurchase = async function(productId, units, total) {
         const product = campaigns.find(c => c.id === productId);
+        if (!product) return;
+        
         const subtotal = product.price * units;
 
         // Update local data
@@ -1783,7 +1853,6 @@
         reservedUnits += units;
         joinedCampaigns += 1;
         product.reserved += units;
-        product.funded = Math.round((product.reserved / product.goal) * 100);
 
         if (firebase.firestore && currentUser) {
             try {
@@ -1795,21 +1864,21 @@
                 });
                 
                 // Update campaign reserved count
-                await firebase.firestore().collection('campaigns').doc(productId).update({
+                const campaignRef = firebase.firestore().collection('campaigns').doc(productId);
+                await campaignRef.update({
                     reserved: firebase.firestore.FieldValue.increment(units)
                 });
                 
                 // Create order
                 await firebase.firestore().collection('orders').add({
                     userId: currentUser.uid,
-                    userEmail: currentUser.email,
                     productId: productId,
                     productName: product.name,
                     units: units,
                     subtotal: subtotal,
-                    shippingCost: SHIPPING_COST,
+                    shipping: SHIPPING_COST,
                     total: total,
-                    shipping: { 
+                    shippingDetails: { 
                         name: document.getElementById('fullName')?.value,
                         address: document.getElementById('address')?.value,
                         phone: document.getElementById('phone')?.value,
@@ -1820,7 +1889,7 @@
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
             } catch (e) { 
-                console.warn('Firestore error', e); 
+                console.warn('Firestore error', e);
             }
         }
 
@@ -1846,6 +1915,8 @@
         // Play sound effect
         try {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // First note
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
             
@@ -1860,6 +1931,7 @@
             oscillator.start();
             oscillator.stop(audioContext.currentTime + 0.2);
             
+            // Second note
             setTimeout(() => {
                 const oscillator2 = audioContext.createOscillator();
                 const gainNode2 = audioContext.createGain();
@@ -1967,8 +2039,9 @@
         });
         
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.wallet-pill')) 
+            if (!e.target.closest('.wallet-pill')) {
                 document.getElementById('walletDropdown').classList.remove('show');
+            }
         });
 
         document.getElementById('depositTopBtn')?.addEventListener('click', showDepositPopup);
@@ -2020,20 +2093,6 @@
             `;
             document.getElementById('popupOverlay').classList.add('show');
         });
-
-        // Logout handlers
-        const logoutHandler = async () => {
-            if (firebase.auth) {
-                await firebase.auth().signOut();
-                window.location.reload();
-            } else {
-                window.location.href = 'login.html';
-            }
-        };
-
-        document.getElementById('logoutBtn')?.addEventListener('click', logoutHandler);
-        document.getElementById('mobileLogoutBtn')?.addEventListener('click', logoutHandler);
-        document.getElementById('profileLogout')?.addEventListener('click', logoutHandler);
 
         document.addEventListener('click', (e) => {
             if (e.target.closest('.view-campaign')) {

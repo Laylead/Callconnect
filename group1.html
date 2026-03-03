@@ -543,6 +543,29 @@
             transform: translateY(-2px);
             box-shadow: 0 12px 20px -8px #2563eb;
         }
+        .btn-success:disabled, .btn-success.completed {
+            background: #94a3b8;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-success.completed:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* completed campaign badge */
+        .completed-badge {
+            background: #10b981;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
 
         /* request banner */
         .request-banner {
@@ -1024,6 +1047,18 @@
             font-weight: 700;
             color: #2563eb;
         }
+        .campaign-completed-badge {
+            background: #10b981;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 8px;
+        }
 
         /* Missing features indicators */
         .feature-badge {
@@ -1067,7 +1102,7 @@
             <button class="nav-item" data-page="discover"><span class="material-icons">explore</span> Discover</button>
         </div>
         <div class="user-profile-bottom">
-            <div class="avatar" id="userAvatar">JD</div>
+            <div class="avatar" id="userAvatar">BS</div>
             <div class="user-info" id="userInfo">
                 <div class="user-name" id="sidebarUserName">
                     Loading... <span class="material-icons">arrow_drop_down</span>
@@ -1097,13 +1132,13 @@
                 <button class="login-btn" id="loginBtn" style="display: none;"><span class="material-icons">login</span> Login</button>
                 
                 <span class="wallet-pill" id="walletDisplay" style="display: none;">
-                    <span class="material-icons">account_balance_wallet</span> ₦0
+                    <span class="material-icons">account_balance_wallet</span> ₱0
                 </span>
                 <button class="deposit-btn" id="depositTopBtn" style="display: none;"><span class="material-icons">add</span> Deposit</button>
                 
                 <!-- wallet dropdown -->
                 <div class="wallet-dropdown" id="walletDropdown">
-                    <div class="dropdown-header">Wallet • <span id="dropdownBalance">₦0</span></div>
+                    <div class="dropdown-header">Wallet • <span id="dropdownBalance">₱0</span></div>
                     <div class="dropdown-item" id="quickDeposit"><span class="material-icons">bolt</span> Quick deposit</div>
                     <div class="dropdown-item" id="statJoinedDropdown"><span class="material-icons">campaign</span> Joined: <span id="dropdownJoined">0</span></div>
                     <div class="dropdown-item" id="statUnitsDropdown"><span class="material-icons">inventory</span> Reserved: <span id="dropdownUnits">0</span></div>
@@ -1285,7 +1320,7 @@
         document.getElementById('sidebarUserName').innerHTML = `${name} <span class="material-icons">arrow_drop_down</span>`;
         document.getElementById('userAvatar').innerText = name.charAt(0).toUpperCase();
 
-        const fmt = `₦${walletBalance.toLocaleString()}`;
+        const fmt = `₱${walletBalance.toLocaleString()}`;
         document.getElementById('walletDisplay').innerHTML = `<span class="material-icons">account_balance_wallet</span> ${fmt}`;
         document.getElementById('dropdownBalance').innerText = fmt;
         document.getElementById('statJoined').innerText = joinedCampaigns;
@@ -1339,6 +1374,7 @@
                 shipping: 'Ships within 7 days after group buy completes',
                 shippingCost: 2500,
                 active: true,
+                completed: false,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             },
             { 
@@ -1358,6 +1394,7 @@
                 shipping: 'Estimated delivery 10-14 days',
                 shippingCost: 3500,
                 active: true,
+                completed: false,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             },
             { 
@@ -1377,6 +1414,7 @@
                 shipping: 'Ships in 5-7 business days',
                 shippingCost: 2000,
                 active: true,
+                completed: false,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             },
             { 
@@ -1396,6 +1434,7 @@
                 shipping: '1-2 weeks for delivery',
                 shippingCost: 3000,
                 active: true,
+                completed: false,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             },
             { 
@@ -1415,6 +1454,7 @@
                 shipping: 'Ships within 3 days',
                 shippingCost: 5000,
                 active: true,
+                completed: false,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             },
         ];
@@ -1456,7 +1496,8 @@
                 description: 'Latest iPhone with A17 Pro chip, titanium design, and advanced camera system.',
                 specs: '6.1" Super Retina XDR, A17 Pro, 48MP Main, 12MP Telephoto',
                 shipping: 'Ships within 7 days after group buy completes',
-                shippingCost: 2500
+                shippingCost: 2500,
+                completed: false
             },
             { 
                 id: 2, 
@@ -1474,7 +1515,8 @@
                 description: 'Supercharged by M2 chip, 18-hour battery life, and stunning Liquid Retina display.',
                 specs: '13.6" Liquid Retina, M2 (8-core), 8GB RAM, 256GB SSD',
                 shipping: 'Estimated delivery 10-14 days',
-                shippingCost: 3500
+                shippingCost: 3500,
+                completed: false
             },
             { 
                 id: 3, 
@@ -1492,7 +1534,8 @@
                 description: 'High-fidelity audio, Active Noise Cancellation, and computational audio.',
                 specs: 'Over-ear, H1 chip, 20hr battery, 5 colors',
                 shipping: 'Ships in 5-7 business days',
-                shippingCost: 2000
+                shippingCost: 2000,
+                completed: false
             },
             { 
                 id: 4, 
@@ -1510,7 +1553,8 @@
                 description: 'M2 chip, LiDAR scanner, and Thunderbolt for pro workflows.',
                 specs: '11" Liquid Retina, M2, 128GB-2TB, Face ID',
                 shipping: '1-2 weeks for delivery',
-                shippingCost: 3000
+                shippingCost: 3000,
+                completed: false
             },
             { 
                 id: 5, 
@@ -1528,7 +1572,8 @@
                 description: 'Lightning-fast SSD, haptic feedback, and immersive 3D audio.',
                 specs: '825GB SSD, 4K/120fps, Ray Tracing',
                 shipping: 'Ships within 3 days',
-                shippingCost: 5000
+                shippingCost: 5000,
+                completed: false
             },
         ];
         renderCampaigns();
@@ -1539,20 +1584,31 @@
         campaigns.forEach(c => {
             const available = c.goal - c.reserved;
             const progressPercent = (c.reserved / c.goal * 100).toFixed(1);
+            const isCompleted = c.reserved >= c.goal;
+            
+            // Update completed status
+            c.completed = isCompleted;
+            
             html += `
                 <div class="campaign-card" data-id="${c.id}">
                     <div class="campaign-img" style="background-image:url('${c.img}')" onclick="showProductDetail('${c.id}')"></div>
                     <div class="campaign-header">
                         <span class="campaign-title">${c.name}</span>
-                        <span class="units-badge">${c.reserved}/${c.goal}</span>
+                        ${isCompleted ? 
+                            '<span class="campaign-completed-badge"><span class="material-icons" style="font-size:16px;">check_circle</span> Completed</span>' : 
+                            `<span class="units-badge">${c.reserved}/${c.goal}</span>`
+                        }
                     </div>
-                    <div class="price-tag">₦${c.price.toLocaleString()}</div>
+                    <div class="price-tag">₱${c.price.toLocaleString()}</div>
                     <div class="progress-container">
                         <div class="progress-bar-bg"><div class="progress-fill" style="width:${progressPercent}%"></div></div>
                     </div>
                     <div class="card-actions">
                         <button class="btn-outline view-campaign" data-id="${c.id}"><span class="material-icons">visibility</span> View</button>
-                        <button class="btn-success buy-campaign" data-id="${c.id}"><span class="material-icons">shopping_cart</span> Buy</button>
+                        ${isCompleted ? 
+                            '<button class="btn-success completed" disabled><span class="material-icons">check_circle</span> Completed</button>' : 
+                            `<button class="btn-success buy-campaign" data-id="${c.id}"><span class="material-icons">shopping_cart</span> Buy</button>`
+                        }
                     </div>
                 </div>
             `;
@@ -1565,6 +1621,8 @@
         const product = campaigns.find(c => c.id == productId);
         if (!product) return;
         currentProduct = product;
+        
+        const isCompleted = product.reserved >= product.goal;
 
         const popup = document.getElementById('popupCard');
         let thumbsHtml = '';
@@ -1575,6 +1633,7 @@
         popup.innerHTML = `
             <div class="popup-title">
                 <span class="material-icons">info</span> ${product.name}
+                ${isCompleted ? '<span class="campaign-completed-badge"><span class="material-icons" style="font-size:16px;">check_circle</span> Completed</span>' : ''}
             </div>
             <div class="product-detail-grid">
                 <div class="product-gallery">
@@ -1584,11 +1643,11 @@
                     </div>
                 </div>
                 <div class="product-info-detailed">
-                    <div class="product-price-big">₦${product.price.toLocaleString()}</div>
+                    <div class="product-price-big">₱${product.price.toLocaleString()}</div>
                     <div class="product-meta">
                         <span><span class="material-icons">inventory</span> Goal: ${product.goal} units</span>
                         <span><span class="material-icons">group</span> Reserved: ${product.reserved}</span>
-                        <span><span class="material-icons">local_shipping</span> Shipping: ₦${(product.shippingCost || SHIPPING_COST).toLocaleString()}</span>
+                        <span><span class="material-icons">local_shipping</span> Shipping: ₱${(product.shippingCost || SHIPPING_COST).toLocaleString()}</span>
                     </div>
                     <div class="product-description">
                         <p>${product.description}</p>
@@ -1607,7 +1666,10 @@
             </div>
             <div class="popup-actions">
                 <button class="popup-btn popup-btn-outline" onclick="closePopup()">Close</button>
-                <button class="popup-btn popup-btn-primary" onclick="showBuyForm('${product.id}')">Buy now</button>
+                ${!isCompleted ? 
+                    `<button class="popup-btn popup-btn-primary" onclick="showBuyForm('${product.id}')">Buy now</button>` : 
+                    ''
+                }
             </div>
         `;
         document.getElementById('popupOverlay').classList.add('show');
@@ -1622,6 +1684,14 @@
     window.showBuyForm = function(productId) {
         const product = campaigns.find(c => c.id == productId);
         currentProduct = product;
+        
+        // Check if campaign is already completed
+        if (product.reserved >= product.goal) {
+            alert('This campaign is already completed and awaiting shipping. No more units available.');
+            closePopup();
+            return;
+        }
+        
         const units = 1;
         const available = product.goal - product.reserved;
         const subtotal = product.price * units;
@@ -1639,17 +1709,17 @@
             </div>
             
             <div style="margin-bottom:16px;">
-                <p>Price per unit: ₦${product.price.toLocaleString()}</p>
+                <p>Price per unit: ₱${product.price.toLocaleString()}</p>
             </div>
             
             <div class="shipping-cost">
                 <span class="label">Shipping cost:</span>
-                <span class="value" id="shippingCost">₦${shipping.toLocaleString()}</span>
+                <span class="value" id="shippingCost">₱${shipping.toLocaleString()}</span>
             </div>
             
             <div class="total-amount" id="totalAmount">
                 <span class="label">Total amount:</span>
-                <span class="value" id="totalValue">₦${total.toLocaleString()}</span>
+                <span class="value" id="totalValue">₱${total.toLocaleString()}</span>
             </div>
             
             <input type="number" id="buyUnits" class="popup-input" min="1" max="${available}" value="1" placeholder="Number of units" oninput="updateTotal('${product.id}')">
@@ -1685,7 +1755,7 @@
         
         const totalElement = document.getElementById('totalValue');
         if (totalElement) {
-            totalElement.innerText = `₦${total.toLocaleString()}`;
+            totalElement.innerText = `₱${total.toLocaleString()}`;
         }
         
         // Update available units display
@@ -1697,6 +1767,14 @@
 
     window.checkPinAndProceed = async function(productId) {
         const product = campaigns.find(c => c.id == productId);
+        
+        // Final check if campaign is completed
+        if (product.reserved >= product.goal) {
+            alert('This campaign is already completed. No more units available.');
+            closePopup();
+            return;
+        }
+        
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
         const available = product.goal - product.reserved;
         
@@ -1744,6 +1822,14 @@
 
     window.showCreatePin = function(productId) {
         const product = campaigns.find(c => c.id == productId);
+        
+        // Check if campaign is completed
+        if (product.reserved >= product.goal) {
+            alert('This campaign is already completed. No more units available.');
+            closePopup();
+            return;
+        }
+        
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
         const available = product.goal - product.reserved;
         
@@ -1763,7 +1849,7 @@
                 <span class="material-icons">lock</span> Create Security PIN
             </div>
             <div style="margin-bottom:24px; text-align:center;">
-                <p style="font-size:1.2rem; font-weight:600; color:#0f172a;">Total: ₦${total.toLocaleString()}</p>
+                <p style="font-size:1.2rem; font-weight:600; color:#0f172a;">Total: ₱${total.toLocaleString()}</p>
                 <p style="color:#64748b;">Create a 4-digit PIN for future transactions</p>
             </div>
             
@@ -1852,6 +1938,14 @@
 
     window.showPinEntry = function(productId) {
         const product = campaigns.find(c => c.id == productId);
+        
+        // Check if campaign is completed
+        if (product.reserved >= product.goal) {
+            alert('This campaign is already completed. No more units available.');
+            closePopup();
+            return;
+        }
+        
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
         const available = product.goal - product.reserved;
         
@@ -1871,7 +1965,7 @@
                 <span class="material-icons">lock</span> Enter PIN
             </div>
             <div style="margin-bottom:24px; text-align:center;">
-                <p style="font-size:1.2rem; font-weight:600; color:#0f172a;">Total: ₦${total.toLocaleString()}</p>
+                <p style="font-size:1.2rem; font-weight:600; color:#0f172a;">Total: ₱${total.toLocaleString()}</p>
                 <p style="color:#64748b;">Enter your 4-digit PIN to authorize payment</p>
             </div>
             
@@ -2026,6 +2120,15 @@
     }
 
     window.verifyPinAndPay = async function(productId) {
+        const product = campaigns.find(c => c.id == productId);
+        
+        // Final check if campaign is completed
+        if (product.reserved >= product.goal) {
+            alert('This campaign is already completed. No more units available.');
+            closePopup();
+            return;
+        }
+        
         const pin1 = document.getElementById('pin1')?.value;
         const pin2 = document.getElementById('pin2')?.value;
         const pin3 = document.getElementById('pin3')?.value;
@@ -2065,6 +2168,14 @@
 
     window.completePurchase = async function(productId) {
         const product = campaigns.find(c => c.id == productId);
+        
+        // Final check if campaign is completed
+        if (product.reserved >= product.goal) {
+            alert('This campaign is already completed. No more units available.');
+            closePopup();
+            return;
+        }
+        
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
         const available = product.goal - product.reserved;
         
@@ -2085,6 +2196,12 @@
         joinedCampaigns += 1;
         product.reserved += units;
         product.funded = (product.reserved / product.goal * 100).toFixed(1);
+        
+        // Check if campaign is now completed
+        const isNowCompleted = product.reserved >= product.goal;
+        if (isNowCompleted) {
+            product.completed = true;
+        }
 
         if (firebase.firestore && currentUser) {
             try {
@@ -2102,15 +2219,25 @@
                 const campaignQuery = await firebase.firestore().collection('campaigns').where('name', '==', product.name).get();
                 if (!campaignQuery.empty) {
                     const campaignDoc = campaignQuery.docs[0];
-                    batch.update(campaignDoc.ref, {
+                    const updateData = {
                         reserved: firebase.firestore.FieldValue.increment(units)
-                    });
+                    };
+                    
+                    // If campaign is now completed, mark it as completed
+                    if (isNowCompleted) {
+                        updateData.completed = true;
+                    }
+                    
+                    batch.update(campaignDoc.ref, updateData);
                     
                     // Update local campaign with Firestore ID
                     const campaignIndex = campaigns.findIndex(c => c.id == productId);
                     if (campaignIndex !== -1) {
                         campaigns[campaignIndex].reserved += units;
                         campaigns[campaignIndex].funded = (campaigns[campaignIndex].reserved / campaigns[campaignIndex].goal * 100).toFixed(1);
+                        if (isNowCompleted) {
+                            campaigns[campaignIndex].completed = true;
+                        }
                     }
                 }
                 
@@ -2131,7 +2258,7 @@
                         city: document.getElementById('city')?.value,
                         notes: document.getElementById('notes')?.value 
                     },
-                    status: 'pending',
+                    status: isNowCompleted ? 'processing' : 'pending',
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
@@ -2159,14 +2286,19 @@
 
         updateUI();
         renderCampaigns(); // Update the UI with new availability
-        showConfirmation(total, product.reserved, product.goal);
+        showConfirmation(total, product.reserved, product.goal, isNowCompleted);
         
         // Show updated availability in console for verification
         console.log(`Updated availability: ${product.reserved}/${product.goal} units reserved`);
+        if (isNowCompleted) {
+            console.log(`Campaign ${product.name} is now COMPLETED!`);
+        }
     };
 
-    window.showConfirmation = function(amount, reserved, goal) {
+    window.showConfirmation = function(amount, reserved, goal, isCompleted) {
         const popup = document.getElementById('popupCard');
+        const completedMessage = isCompleted ? '🎉 Campaign fully funded! Awaiting shipping.' : '';
+        
         popup.innerHTML = `
             <div class="checkmark-container">
                 <svg class="checkmark-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
@@ -2174,8 +2306,9 @@
                     <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
                 </svg>
                 <div class="checkmark-text">Payment Successful!</div>
-                <div class="checkmark-subtext">₦${amount.toLocaleString()} • Order confirmed</div>
+                <div class="checkmark-subtext">₱${amount.toLocaleString()} • Order confirmed</div>
                 <div class="checkmark-subtext" style="font-size:0.9rem;">Updated: ${reserved}/${goal} units reserved</div>
+                ${isCompleted ? '<div class="checkmark-subtext" style="color:#10b981; font-weight:600; margin-top:8px;">' + completedMessage + '</div>' : ''}
                 <button class="popup-btn popup-btn-primary" onclick="closePopup()" style="margin-top:24px;">Done</button>
             </div>
         `;
@@ -2234,7 +2367,7 @@
                 </div>
             </div>
             <div id="depositNormal">
-                <input type="number" id="depositAmount" class="popup-input" placeholder="Amount (₦)" min="100" value="5000">
+                <input type="number" id="depositAmount" class="popup-input" placeholder="Amount (₱)" min="100" value="5000">
             </div>
             <div id="depositGiftcard" style="display:none;">
                 <input type="text" id="giftcardCode" class="popup-input" placeholder="Enter gift card code">
@@ -2295,10 +2428,10 @@
                 }
                 
                 updateUI();
-                alert(`✅ Deposited ₦${amount.toLocaleString()}`);
+                alert(`✅ Deposited ₱${amount.toLocaleString()}`);
                 closePopup();
             } else {
-                alert('Enter valid amount (min ₦100)');
+                alert('Enter valid amount (min ₱100)');
             }
         } else {
             const code = document.getElementById('giftcardCode')?.value;
@@ -2334,7 +2467,7 @@
                 }
                 
                 updateUI();
-                alert(`✅ Gift card redeemed! ₦${amount.toLocaleString()} added.`);
+                alert(`✅ Gift card redeemed! ₱${amount.toLocaleString()} added.`);
                 closePopup();
             } else {
                 alert('Please enter a gift card code');

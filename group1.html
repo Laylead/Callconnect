@@ -1012,6 +1012,16 @@
             font-size: 1.2rem;
         }
 
+        /* Missing features indicators */
+        .feature-badge {
+            background: #10b981;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-left: 8px;
+        }
+
         @media (max-width: 800px) {
             .sidebar { display: none; }
             .mobile-bottom-nav { display: flex; }
@@ -1153,6 +1163,8 @@
     let isSwiping = false;
     let swipeThreshold = 250;
     const SHIPPING_COST = 2500; // Fixed shipping cost
+    let orders = []; // Track user orders
+    let transactionHistory = []; // Track all transactions
 
     // ========== FIREBASE AUTH ==========
     document.addEventListener('DOMContentLoaded', () => {
@@ -1167,6 +1179,8 @@
                 if (user) {
                     currentUser = user;
                     await loadUserData();
+                    await loadUserOrders();
+                    await loadUserTransactions();
                     showLoggedInUI();
                 } else {
                     showLoggedOutUI();
@@ -1208,6 +1222,30 @@
                 userData = newUser;
             }
         } catch (e) { console.warn('Firestore error, using demo', e); }
+    }
+
+    async function loadUserOrders() {
+        if (!currentUser || !firebase.firestore) return;
+        try {
+            const ordersRef = firebase.firestore().collection('orders').where('userId', '==', currentUser.uid);
+            const snapshot = await ordersRef.get();
+            orders = [];
+            snapshot.forEach(doc => {
+                orders.push({ id: doc.id, ...doc.data() });
+            });
+        } catch (e) { console.warn('Error loading orders', e); }
+    }
+
+    async function loadUserTransactions() {
+        if (!currentUser || !firebase.firestore) return;
+        try {
+            const transactionsRef = firebase.firestore().collection('transactions').where('userId', '==', currentUser.uid);
+            const snapshot = await transactionsRef.get();
+            transactionHistory = [];
+            snapshot.forEach(doc => {
+                transactionHistory.push({ id: doc.id, ...doc.data() });
+            });
+        } catch (e) { console.warn('Error loading transactions', e); }
     }
 
     function showLoggedInUI() {
@@ -1287,7 +1325,8 @@
                 specs: '6.1" Super Retina XDR, A17 Pro, 48MP Main, 12MP Telephoto',
                 shipping: 'Ships within 7 days after group buy completes',
                 shippingCost: 2500,
-                active: true
+                active: true,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             },
             { 
                 name: 'MacBook Air M2', 
@@ -1305,7 +1344,8 @@
                 specs: '13.6" Liquid Retina, M2 (8-core), 8GB RAM, 256GB SSD',
                 shipping: 'Estimated delivery 10-14 days',
                 shippingCost: 3500,
-                active: true
+                active: true,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             },
             { 
                 name: 'AirPods Max', 
@@ -1323,7 +1363,8 @@
                 specs: 'Over-ear, H1 chip, 20hr battery, 5 colors',
                 shipping: 'Ships in 5-7 business days',
                 shippingCost: 2000,
-                active: true
+                active: true,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             },
             { 
                 name: 'iPad Pro 11"', 
@@ -1341,7 +1382,8 @@
                 specs: '11" Liquid Retina, M2, 128GB-2TB, Face ID',
                 shipping: '1-2 weeks for delivery',
                 shippingCost: 3000,
-                active: true
+                active: true,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             },
             { 
                 name: 'PS5 Digital', 
@@ -1359,7 +1401,8 @@
                 specs: '825GB SSD, 4K/120fps, Ray Tracing',
                 shipping: 'Ships within 3 days',
                 shippingCost: 5000,
-                active: true
+                active: true,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             },
         ];
 
@@ -1370,7 +1413,13 @@
                 batch.set(docRef, campaign);
             });
             await batch.commit();
-            campaigns = defaultCampaigns.map((c, index) => ({ id: `campaign_${index}`, ...c }));
+            
+            // Reload campaigns after initialization
+            const snapshot = await firebase.firestore().collection('campaigns').get();
+            campaigns = [];
+            snapshot.forEach(doc => {
+                campaigns.push({ id: doc.id, ...doc.data() });
+            });
         } else {
             campaigns = defaultCampaigns.map((c, index) => ({ id: index + 1, ...c }));
         }
@@ -1476,6 +1525,7 @@
         let html = '';
         campaigns.forEach(c => {
             const available = c.goal - c.reserved;
+            const progressPercent = (c.reserved / c.goal * 100).toFixed(1);
             html += `
                 <div class="campaign-card" data-id="${c.id}">
                     <div class="campaign-img" style="background-image:url('${c.img}')" onclick="showProductDetail('${c.id}')"></div>
@@ -1485,7 +1535,7 @@
                     </div>
                     <div class="price-tag">₦${c.price.toLocaleString()}</div>
                     <div class="progress-container">
-                        <div class="progress-bar-bg"><div class="progress-fill" style="width:${(c.reserved/c.goal*100).toFixed(1)}%"></div></div>
+                        <div class="progress-bar-bg"><div class="progress-fill" style="width:${progressPercent}%"></div></div>
                     </div>
                     <div class="card-actions">
                         <button class="btn-outline view-campaign" data-id="${c.id}"><span class="material-icons">visibility</span> View</button>
@@ -1956,8 +2006,11 @@
 
         if (firebase.firestore && currentUser) {
             try {
+                const batch = firebase.firestore().batch();
+                
                 // Update user wallet and stats
-                await firebase.firestore().collection('users').doc(currentUser.uid).update({
+                const userRef = firebase.firestore().collection('users').doc(currentUser.uid);
+                batch.update(userRef, {
                     walletBalance: firebase.firestore.FieldValue.increment(-total),
                     joinedCampaigns: firebase.firestore.FieldValue.increment(1),
                     reservedUnits: firebase.firestore.FieldValue.increment(units)
@@ -1967,13 +2020,21 @@
                 const campaignQuery = await firebase.firestore().collection('campaigns').where('name', '==', product.name).get();
                 if (!campaignQuery.empty) {
                     const campaignDoc = campaignQuery.docs[0];
-                    await campaignDoc.ref.update({
+                    batch.update(campaignDoc.ref, {
                         reserved: firebase.firestore.FieldValue.increment(units)
                     });
+                    
+                    // Update local campaign with Firestore ID
+                    const campaignIndex = campaigns.findIndex(c => c.id == productId);
+                    if (campaignIndex !== -1) {
+                        campaigns[campaignIndex].reserved += units;
+                        campaigns[campaignIndex].funded = (campaigns[campaignIndex].reserved / campaigns[campaignIndex].goal * 100).toFixed(1);
+                    }
                 }
                 
                 // Create order
-                await firebase.firestore().collection('orders').add({
+                const orderRef = firebase.firestore().collection('orders').doc();
+                batch.set(orderRef, {
                     userId: currentUser.uid,
                     productId: productId,
                     productName: product.name,
@@ -1991,6 +2052,24 @@
                     status: 'pending',
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
+                
+                // Create transaction record
+                const transactionRef = firebase.firestore().collection('transactions').doc();
+                batch.set(transactionRef, {
+                    userId: currentUser.uid,
+                    type: 'purchase',
+                    amount: total,
+                    description: `Purchase of ${units} x ${product.name}`,
+                    status: 'completed',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                await batch.commit();
+                
+                // Reload orders and transactions
+                await loadUserOrders();
+                await loadUserTransactions();
+                
             } catch (e) { 
                 console.warn('Firestore error', e); 
             }
@@ -1999,6 +2078,9 @@
         updateUI();
         renderCampaigns(); // Update the UI with new availability
         showConfirmation(total);
+        
+        // Show updated availability in console for verification
+        console.log(`Updated availability: ${product.reserved}/${product.goal} units reserved`);
     };
 
     window.showConfirmation = function(amount) {
@@ -2011,6 +2093,7 @@
                 </svg>
                 <div class="checkmark-text">Payment Successful!</div>
                 <div class="checkmark-subtext">₦${amount.toLocaleString()} • Order confirmed</div>
+                <div class="checkmark-subtext" style="font-size:0.9rem;">Updated: ${currentProduct.reserved}/${currentProduct.goal} units reserved</div>
                 <button class="popup-btn popup-btn-primary" onclick="closePopup()" style="margin-top:24px;">Done</button>
             </div>
         `;
@@ -2095,17 +2178,40 @@
         }
     };
 
-    window.processDeposit = function() {
+    window.processDeposit = async function() {
         const activeOption = document.querySelector('.deposit-option.active span:last-child').innerText;
         if (activeOption === 'Normal deposit') {
             const amount = parseFloat(document.getElementById('depositAmount')?.value);
             if (amount && amount >= 100) {
                 walletBalance += amount;
+                
                 if (firebase.firestore && currentUser) {
-                    firebase.firestore().collection('users').doc(currentUser.uid).update({
-                        walletBalance: firebase.firestore.FieldValue.increment(amount)
-                    });
+                    try {
+                        const batch = firebase.firestore().batch();
+                        
+                        const userRef = firebase.firestore().collection('users').doc(currentUser.uid);
+                        batch.update(userRef, {
+                            walletBalance: firebase.firestore.FieldValue.increment(amount)
+                        });
+                        
+                        const transactionRef = firebase.firestore().collection('transactions').doc();
+                        batch.set(transactionRef, {
+                            userId: currentUser.uid,
+                            type: 'deposit',
+                            amount: amount,
+                            description: 'Normal deposit',
+                            status: 'completed',
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        await batch.commit();
+                        await loadUserTransactions();
+                        
+                    } catch (e) {
+                        console.warn('Firestore error', e);
+                    }
                 }
+                
                 updateUI();
                 alert(`✅ Deposited ₦${amount.toLocaleString()}`);
                 closePopup();
@@ -2117,11 +2223,34 @@
             if (code && code.trim() !== '') {
                 const amount = 10000;
                 walletBalance += amount;
+                
                 if (firebase.firestore && currentUser) {
-                    firebase.firestore().collection('users').doc(currentUser.uid).update({
-                        walletBalance: firebase.firestore.FieldValue.increment(amount)
-                    });
+                    try {
+                        const batch = firebase.firestore().batch();
+                        
+                        const userRef = firebase.firestore().collection('users').doc(currentUser.uid);
+                        batch.update(userRef, {
+                            walletBalance: firebase.firestore.FieldValue.increment(amount)
+                        });
+                        
+                        const transactionRef = firebase.firestore().collection('transactions').doc();
+                        batch.set(transactionRef, {
+                            userId: currentUser.uid,
+                            type: 'giftcard',
+                            amount: amount,
+                            description: `Gift card redeemed: ${code}`,
+                            status: 'completed',
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        await batch.commit();
+                        await loadUserTransactions();
+                        
+                    } catch (e) {
+                        console.warn('Firestore error', e);
+                    }
                 }
+                
                 updateUI();
                 alert(`✅ Gift card redeemed! ₦${amount.toLocaleString()} added.`);
                 closePopup();
@@ -2231,10 +2360,24 @@
         });
     }
 
-    window.submitRequest = function() {
+    window.submitRequest = async function() {
         const link = document.getElementById('productLink')?.value;
         const name = document.getElementById('productName')?.value;
         if (link && name) {
+            if (firebase.firestore && currentUser) {
+                try {
+                    await firebase.firestore().collection('requests').add({
+                        userId: currentUser.uid,
+                        productLink: link,
+                        productName: name,
+                        notes: document.getElementById('requestNotes')?.value,
+                        status: 'pending',
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } catch (e) {
+                    console.warn('Firestore error', e);
+                }
+            }
             alert(`✅ Campaign requested for ${name}. We'll review and start a group buy!`);
             closePopup();
         } else {

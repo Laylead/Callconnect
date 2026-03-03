@@ -1011,6 +1011,19 @@
             color: #2563eb;
             font-size: 1.2rem;
         }
+        .units-left-badge {
+            background: #f1f5f9;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            color: #475569;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .units-left-badge span {
+            font-weight: 700;
+            color: #2563eb;
+        }
 
         /* Missing features indicators */
         .feature-badge {
@@ -1119,7 +1132,7 @@
             <div class="request-banner">
                 <div>
                     <h3>Request a group buy</h3>
-                    <p>Send product link + name, we’ll start a campaign</p>
+                    <p>Send product link + name, we'll start a campaign</p>
                 </div>
                 <button class="request-btn" id="requestCampaignBtn"><span class="material-icons">send</span> Request now</button>
             </div>
@@ -1610,6 +1623,7 @@
         const product = campaigns.find(c => c.id == productId);
         currentProduct = product;
         const units = 1;
+        const available = product.goal - product.reserved;
         const subtotal = product.price * units;
         const shipping = product.shippingCost || SHIPPING_COST;
         const total = subtotal + shipping;
@@ -1619,22 +1633,26 @@
             <div class="popup-title">
                 <span class="material-icons">shopping_cart</span> Buy ${product.name}
             </div>
+            
+            <div class="units-left-badge">
+                <span class="material-icons">inventory</span> Available: <span id="availableUnits">${available}</span> units left
+            </div>
+            
             <div style="margin-bottom:16px;">
                 <p>Price per unit: ₦${product.price.toLocaleString()}</p>
-                <p>Available: ${product.goal - product.reserved} units left</p>
             </div>
             
             <div class="shipping-cost">
                 <span class="label">Shipping cost:</span>
-                <span class="value">₦${shipping.toLocaleString()}</span>
+                <span class="value" id="shippingCost">₦${shipping.toLocaleString()}</span>
             </div>
             
-            <div class="total-amount">
+            <div class="total-amount" id="totalAmount">
                 <span class="label">Total amount:</span>
-                <span class="value">₦${total.toLocaleString()}</span>
+                <span class="value" id="totalValue">₦${total.toLocaleString()}</span>
             </div>
             
-            <input type="number" id="buyUnits" class="popup-input" min="1" max="${product.goal - product.reserved}" value="1" placeholder="Number of units" onchange="updateTotal('${product.id}')">
+            <input type="number" id="buyUnits" class="popup-input" min="1" max="${available}" value="1" placeholder="Number of units" oninput="updateTotal('${product.id}')">
             
             <input type="text" id="fullName" class="popup-input" placeholder="Full name *" required>
             <input type="text" id="address" class="popup-input" placeholder="Shipping address *" required>
@@ -1652,19 +1670,42 @@
     window.updateTotal = function(productId) {
         const product = campaigns.find(c => c.id == productId);
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
+        const available = product.goal - product.reserved;
+        
+        // Validate units against available
+        if (units > available) {
+            document.getElementById('buyUnits').value = available;
+            alert(`Only ${available} units available`);
+            return;
+        }
+        
         const subtotal = product.price * units;
         const shipping = product.shippingCost || SHIPPING_COST;
         const total = subtotal + shipping;
         
-        const totalElement = document.querySelector('.total-amount .value');
+        const totalElement = document.getElementById('totalValue');
         if (totalElement) {
             totalElement.innerText = `₦${total.toLocaleString()}`;
+        }
+        
+        // Update available units display
+        const availableElement = document.getElementById('availableUnits');
+        if (availableElement) {
+            availableElement.innerText = available;
         }
     };
 
     window.checkPinAndProceed = async function(productId) {
         const product = campaigns.find(c => c.id == productId);
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
+        const available = product.goal - product.reserved;
+        
+        // Double-check availability
+        if (units > available) {
+            alert(`Only ${available} units available`);
+            return;
+        }
+        
         const subtotal = product.price * units;
         const shipping = product.shippingCost || SHIPPING_COST;
         const total = subtotal + shipping;
@@ -1704,6 +1745,14 @@
     window.showCreatePin = function(productId) {
         const product = campaigns.find(c => c.id == productId);
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
+        const available = product.goal - product.reserved;
+        
+        // Double-check availability
+        if (units > available) {
+            alert(`Only ${available} units available`);
+            return;
+        }
+        
         const subtotal = product.price * units;
         const shipping = product.shippingCost || SHIPPING_COST;
         const total = subtotal + shipping;
@@ -1804,6 +1853,14 @@
     window.showPinEntry = function(productId) {
         const product = campaigns.find(c => c.id == productId);
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
+        const available = product.goal - product.reserved;
+        
+        // Double-check availability
+        if (units > available) {
+            alert(`Only ${available} units available`);
+            return;
+        }
+        
         const subtotal = product.price * units;
         const shipping = product.shippingCost || SHIPPING_COST;
         const total = subtotal + shipping;
@@ -1837,7 +1894,7 @@
             
             <div class="popup-actions">
                 <button class="popup-btn popup-btn-outline" onclick="showBuyForm('${product.id}')">Back</button>
-                <button class="popup-btn popup-btn-primary" onclick="verifyPinAndPay('${product.id}')" id="confirmPinBtn" style="opacity:0.5; pointer-events:none;">Enter PIN first</button>
+                <!-- Removed Confirm & Pay button - only swipe to confirm -->
             </div>
         `;
         
@@ -1863,7 +1920,6 @@
                 document.getElementById(`pin${nextId}`).focus();
             }
         }
-        checkPinComplete();
     }
 
     function checkPinComplete() {
@@ -1876,18 +1932,17 @@
                            pin1.length === 1 && pin2.length === 1 && 
                            pin3.length === 1 && pin4.length === 1;
         
-        const confirmBtn = document.getElementById('confirmPinBtn');
-        if (confirmBtn) {
-            if (pinComplete) {
-                confirmBtn.style.opacity = '1';
-                confirmBtn.style.pointerEvents = 'auto';
-                confirmBtn.innerText = 'Confirm & Pay';
+        // Update visual feedback for PIN fields
+        document.querySelectorAll('.pin-digit').forEach((digit, index) => {
+            const input = digit.querySelector('input');
+            if (input && input.value.length === 1) {
+                digit.classList.add('filled');
             } else {
-                confirmBtn.style.opacity = '0.5';
-                confirmBtn.style.pointerEvents = 'none';
-                confirmBtn.innerText = 'Enter 4-digit PIN';
+                digit.classList.remove('filled');
             }
-        }
+        });
+        
+        return pinComplete;
     }
 
     function initSwipe() {
@@ -1954,7 +2009,15 @@
             document.removeEventListener('touchend', onUp);
             
             if (completed) {
-                verifyPinAndPay(currentProduct?.id);
+                // Check PIN before completing
+                const pinComplete = checkPinComplete();
+                if (pinComplete) {
+                    verifyPinAndPay(currentProduct?.id);
+                } else {
+                    alert('Please enter your 4-digit PIN first');
+                    thumb.style.left = '4px';
+                    track.style.transform = 'translateX(-100%)';
+                }
             } else {
                 thumb.style.left = '4px';
                 track.style.transform = 'translateX(-100%)';
@@ -1978,11 +2041,21 @@
         if (userData && userData.pin) {
             if (enteredPin !== userData.pin) {
                 alert('Incorrect PIN. Please try again.');
+                // Reset swipe
+                const thumb = document.getElementById('swipeThumb');
+                const track = document.getElementById('swipeTrack');
+                if (thumb) thumb.style.left = '4px';
+                if (track) track.style.transform = 'translateX(-100%)';
                 return;
             }
         } else {
             if (enteredPin === '0000') {
                 alert('Invalid PIN. Please try again.');
+                // Reset swipe
+                const thumb = document.getElementById('swipeThumb');
+                const track = document.getElementById('swipeTrack');
+                if (thumb) thumb.style.left = '4px';
+                if (track) track.style.transform = 'translateX(-100%)';
                 return;
             }
         }
@@ -1993,6 +2066,15 @@
     window.completePurchase = async function(productId) {
         const product = campaigns.find(c => c.id == productId);
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
+        const available = product.goal - product.reserved;
+        
+        // Final availability check
+        if (units > available) {
+            alert(`Sorry, only ${available} units are now available. Please adjust your order.`);
+            closePopup();
+            return;
+        }
+        
         const subtotal = product.price * units;
         const shipping = product.shippingCost || SHIPPING_COST;
         const total = subtotal + shipping;
@@ -2077,13 +2159,13 @@
 
         updateUI();
         renderCampaigns(); // Update the UI with new availability
-        showConfirmation(total);
+        showConfirmation(total, product.reserved, product.goal);
         
         // Show updated availability in console for verification
         console.log(`Updated availability: ${product.reserved}/${product.goal} units reserved`);
     };
 
-    window.showConfirmation = function(amount) {
+    window.showConfirmation = function(amount, reserved, goal) {
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
             <div class="checkmark-container">
@@ -2093,7 +2175,7 @@
                 </svg>
                 <div class="checkmark-text">Payment Successful!</div>
                 <div class="checkmark-subtext">₦${amount.toLocaleString()} • Order confirmed</div>
-                <div class="checkmark-subtext" style="font-size:0.9rem;">Updated: ${currentProduct.reserved}/${currentProduct.goal} units reserved</div>
+                <div class="checkmark-subtext" style="font-size:0.9rem;">Updated: ${reserved}/${goal} units reserved</div>
                 <button class="popup-btn popup-btn-primary" onclick="closePopup()" style="margin-top:24px;">Done</button>
             </div>
         `;

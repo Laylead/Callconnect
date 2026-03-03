@@ -120,7 +120,6 @@
             display: flex;
             align-items: center;
             gap: 14px;
-            position: relative;
         }
         .avatar {
             background: linear-gradient(135deg, #2563eb, #7c3aed);
@@ -134,54 +133,20 @@
             font-weight: 600;
             font-size: 18px;
             box-shadow: 0 4px 10px rgba(37,99,235,0.2);
-            cursor: pointer;
         }
-        .user-name { 
-            color: #1e293b; 
-            font-weight: 600; 
-            font-size: 0.95rem;
-            cursor: pointer;
-        }
-        
-        /* Logout popup */
-        .logout-popup {
-            position: absolute;
-            bottom: 80px;
-            left: 20px;
-            background: white;
-            border-radius: 16px;
-            padding: 8px;
-            min-width: 160px;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05);
-            opacity: 0;
-            transform: scale(0.95) translateY(10px);
-            transition: all 0.2s cubic-bezier(0.2,0,0,1);
-            pointer-events: none;
-            z-index: 100;
-        }
-        .logout-popup.show {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-            pointer-events: all;
-        }
-        .logout-popup-item {
-            padding: 12px 16px;
-            border-radius: 12px;
+        .user-name { color: #1e293b; font-weight: 600; font-size: 0.95rem; }
+        .logout-link {
+            color: #ef4444;
+            font-size: 0.85rem;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 4px;
             cursor: pointer;
-            transition: 0.15s;
-            color: #ef4444;
-            font-weight: 500;
+            transition: 0.2s;
+            margin-top: 4px;
+            opacity: 0.8;
         }
-        .logout-popup-item:hover {
-            background: #fef2f2;
-        }
-        .logout-popup-item .material-icons {
-            color: #ef4444;
-            font-size: 20px;
-        }
+        .logout-link:hover { opacity: 1; }
 
         /* ---------- MAIN CONTENT ---------- */
         .main-content {
@@ -967,28 +932,6 @@
             color: #475569;
         }
 
-        /* shipping summary */
-        .shipping-summary {
-            background: #f8fafc;
-            border-radius: 20px;
-            padding: 16px;
-            margin: 16px 0;
-        }
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            color: #475569;
-        }
-        .summary-row.total {
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 2px dashed #e2e8f0;
-            font-weight: 700;
-            color: #0f172a;
-            font-size: 1.2rem;
-        }
-
         .page { display: none; }
         .page.active { display: block; }
 
@@ -1024,17 +967,10 @@
             <button class="nav-item" data-page="discover"><span class="material-icons">explore</span> Discover</button>
         </div>
         <div class="user-profile-bottom">
-            <div class="avatar" id="userAvatar" onclick="toggleLogoutPopup()">JD</div>
+            <div class="avatar" id="userAvatar">JD</div>
             <div>
-                <div class="user-name" id="sidebarUserName" onclick="toggleLogoutPopup()">Loading...</div>
-            </div>
-            
-            <!-- Logout popup -->
-            <div class="logout-popup" id="logoutPopup">
-                <div class="logout-popup-item" id="logoutBtn">
-                    <span class="material-icons">logout</span>
-                    <span>Sign out</span>
-                </div>
+                <div class="user-name" id="sidebarUserName">Loading...</div>
+                <div class="logout-link" id="logoutBtn"><span class="material-icons">logout</span> Logout</div>
             </div>
         </div>
     </aside>
@@ -1129,7 +1065,7 @@
     let swipeStartX = 0;
     let swipeCurrentX = 0;
     let isSwiping = false;
-    const SHIPPING_COST = 2500; // Fixed shipping cost
+    let swipeThreshold = 250;
 
     // ========== FIREBASE AUTH ==========
     document.addEventListener('DOMContentLoaded', () => {
@@ -1150,13 +1086,13 @@
                 }
                 updateUI();
                 attachEvents();
-                loadCampaignsFromFirebase();
+                loadCampaigns();
             });
         } else {
             // Demo mode
             showLoggedOutUI();
             attachEvents();
-            loadCampaignsFromFirebase();
+            loadCampaigns();
         }
     });
 
@@ -1174,7 +1110,6 @@
                 // create default
                 const newUser = {
                     displayName: currentUser.displayName || 'User',
-                    email: currentUser.email,
                     walletBalance: 24900,
                     joinedCampaigns: 2,
                     reservedUnits: 4,
@@ -1219,36 +1154,11 @@
         document.getElementById('dropdownUnits').innerText = reservedUnits;
     }
 
-    // ========== CAMPAIGNS DATA FROM FIREBASE ==========
-    async function loadCampaignsFromFirebase() {
-        if (firebase.firestore) {
-            try {
-                const campaignsRef = firebase.firestore().collection('campaigns');
-                const snapshot = await campaignsRef.get();
-                
-                if (!snapshot.empty) {
-                    campaigns = [];
-                    snapshot.forEach(doc => {
-                        campaigns.push({ id: doc.id, ...doc.data() });
-                    });
-                    renderCampaigns();
-                } else {
-                    // Initialize with default campaigns if none exist
-                    await initializeDefaultCampaigns();
-                }
-            } catch (e) {
-                console.warn('Error loading campaigns', e);
-                initializeDefaultCampaigns();
-            }
-        } else {
-            initializeDefaultCampaigns();
-        }
-    }
-
-    async function initializeDefaultCampaigns() {
+    // ========== CAMPAIGNS DATA ==========
+    function loadCampaigns() {
         campaigns = [
             { 
-                id: '1', 
+                id: 1, 
                 name: 'iPhone 15 Pro', 
                 goal: 100, 
                 reserved: 45, 
@@ -1265,7 +1175,7 @@
                 shipping: 'Ships within 7 days after group buy completes'
             },
             { 
-                id: '2', 
+                id: 2, 
                 name: 'MacBook Air M2', 
                 goal: 50, 
                 reserved: 28, 
@@ -1282,7 +1192,7 @@
                 shipping: 'Estimated delivery 10-14 days'
             },
             { 
-                id: '3', 
+                id: 3, 
                 name: 'AirPods Max', 
                 goal: 75, 
                 reserved: 42, 
@@ -1299,7 +1209,7 @@
                 shipping: 'Ships in 5-7 business days'
             },
             { 
-                id: '4', 
+                id: 4, 
                 name: 'iPad Pro 11"', 
                 goal: 60, 
                 reserved: 33, 
@@ -1316,7 +1226,7 @@
                 shipping: '1-2 weeks for delivery'
             },
             { 
-                id: '5', 
+                id: 5, 
                 name: 'PS5 Digital', 
                 goal: 30, 
                 reserved: 21, 
@@ -1334,30 +1244,11 @@
             },
         ];
 
-        // Save to Firebase if available
-        if (firebase.firestore) {
-            try {
-                const batch = firebase.firestore().batch();
-                campaigns.forEach(campaign => {
-                    const ref = firebase.firestore().collection('campaigns').doc(campaign.id);
-                    batch.set(ref, campaign);
-                });
-                await batch.commit();
-            } catch (e) {
-                console.warn('Error saving default campaigns', e);
-            }
-        }
-
-        renderCampaigns();
-    }
-
-    function renderCampaigns() {
         let html = '';
         campaigns.forEach(c => {
-            const available = c.goal - c.reserved;
             html += `
                 <div class="campaign-card" data-id="${c.id}">
-                    <div class="campaign-img" style="background-image:url('${c.img}')" onclick="showProductDetail('${c.id}')"></div>
+                    <div class="campaign-img" style="background-image:url('${c.img}')" onclick="showProductDetail(${c.id})"></div>
                     <div class="campaign-header">
                         <span class="campaign-title">${c.name}</span>
                         <span class="units-badge">${c.reserved}/${c.goal}</span>
@@ -1375,22 +1266,6 @@
         });
         document.getElementById('campaignsContainer').innerHTML = html;
     }
-
-    // ========== LOGOUT POPUP ==========
-    window.toggleLogoutPopup = function() {
-        const popup = document.getElementById('logoutPopup');
-        popup.classList.toggle('show');
-        
-        // Close when clicking outside
-        setTimeout(() => {
-            document.addEventListener('click', function closePopup(e) {
-                if (!e.target.closest('.user-profile-bottom') && !e.target.closest('.avatar') && !e.target.closest('.user-name')) {
-                    popup.classList.remove('show');
-                    document.removeEventListener('click', closePopup);
-                }
-            });
-        }, 100);
-    };
 
     // ========== PRODUCT DETAIL VIEW ==========
     window.showProductDetail = function(productId) {
@@ -1438,7 +1313,7 @@
             </div>
             <div class="popup-actions">
                 <button class="popup-btn popup-btn-outline" onclick="closePopup()">Close</button>
-                <button class="popup-btn popup-btn-primary" onclick="showBuyForm('${product.id}')">Buy now</button>
+                <button class="popup-btn popup-btn-primary" onclick="showBuyForm(${product.id})">Buy now</button>
             </div>
         `;
         document.getElementById('popupOverlay').classList.add('show');
@@ -1453,8 +1328,6 @@
     window.showBuyForm = function(productId) {
         const product = campaigns.find(c => c.id === productId);
         currentProduct = product;
-        const available = product.goal - product.reserved;
-        
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
             <div class="popup-title">
@@ -1462,26 +1335,9 @@
             </div>
             <div style="margin-bottom:16px;">
                 <p>Price per unit: ₦${product.price.toLocaleString()}</p>
-                <p>Available: ${available} units left</p>
-                <p style="color:#2563eb; font-weight:500;">Shipping: ₦${SHIPPING_COST.toLocaleString()}</p>
+                <p>Available: ${product.goal - product.reserved} units left</p>
             </div>
-            <input type="number" id="buyUnits" class="popup-input" min="1" max="${available}" value="1" placeholder="Number of units" onchange="updateOrderTotal(${product.price})">
-            
-            <div class="shipping-summary" id="orderSummary">
-                <div class="summary-row">
-                    <span>Subtotal:</span>
-                    <span>₦${product.price.toLocaleString()}</span>
-                </div>
-                <div class="summary-row">
-                    <span>Shipping:</span>
-                    <span>₦${SHIPPING_COST.toLocaleString()}</span>
-                </div>
-                <div class="summary-row total">
-                    <span>Total:</span>
-                    <span>₦${(product.price + SHIPPING_COST).toLocaleString()}</span>
-                </div>
-            </div>
-            
+            <input type="number" id="buyUnits" class="popup-input" min="1" max="${product.goal - product.reserved}" value="1" placeholder="Number of units">
             <input type="text" id="fullName" class="popup-input" placeholder="Full name *" required>
             <input type="text" id="address" class="popup-input" placeholder="Shipping address *" required>
             <input type="text" id="phone" class="popup-input" placeholder="Phone number *" required>
@@ -1489,41 +1345,16 @@
             <textarea id="notes" class="popup-textarea" placeholder="Additional notes (optional)"></textarea>
             
             <div class="popup-actions">
-                <button class="popup-btn popup-btn-outline" onclick="showProductDetail('${productId}')">Back</button>
-                <button class="popup-btn popup-btn-primary" onclick="checkPinAndProceed('${productId}')">Continue to payment</button>
+                <button class="popup-btn popup-btn-outline" onclick="showProductDetail(${productId})">Back</button>
+                <button class="popup-btn popup-btn-primary" onclick="checkPinAndProceed(${productId})">Continue to payment</button>
             </div>
         `;
-    };
-
-    window.updateOrderTotal = function(price) {
-        const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
-        const subtotal = price * units;
-        const total = subtotal + SHIPPING_COST;
-        
-        const summary = document.getElementById('orderSummary');
-        if (summary) {
-            summary.innerHTML = `
-                <div class="summary-row">
-                    <span>Subtotal (${units} unit${units > 1 ? 's' : ''}):</span>
-                    <span>₦${subtotal.toLocaleString()}</span>
-                </div>
-                <div class="summary-row">
-                    <span>Shipping:</span>
-                    <span>₦${SHIPPING_COST.toLocaleString()}</span>
-                </div>
-                <div class="summary-row total">
-                    <span>Total:</span>
-                    <span>₦${total.toLocaleString()}</span>
-                </div>
-            `;
-        }
     };
 
     window.checkPinAndProceed = async function(productId) {
         const product = campaigns.find(c => c.id === productId);
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
-        const subtotal = product.price * units;
-        const total = subtotal + SHIPPING_COST;
+        const total = product.price * units;
 
         if (!currentUser) {
             alert('Please login to purchase');
@@ -1560,8 +1391,7 @@
     window.showCreatePin = function(productId) {
         const product = campaigns.find(c => c.id === productId);
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
-        const subtotal = product.price * units;
-        const total = subtotal + SHIPPING_COST;
+        const total = product.price * units;
         
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
@@ -1574,10 +1404,10 @@
             </div>
             
             <div class="pin-container">
-                <div class="pin-digit"><input type="password" id="pin1" maxlength="1" oninput="moveToNext(this, 2)" autofocus></div>
-                <div class="pin-digit"><input type="password" id="pin2" maxlength="1" oninput="moveToNext(this, 3)"></div>
-                <div class="pin-digit"><input type="password" id="pin3" maxlength="1" oninput="moveToNext(this, 4)"></div>
-                <div class="pin-digit"><input type="password" id="pin4" maxlength="1" oninput="moveToNext(this, null)"></div>
+                <div class="pin-digit"><input type="number" id="pin1" maxlength="1" oninput="moveToNext(this, 2)" autofocus></div>
+                <div class="pin-digit"><input type="number" id="pin2" maxlength="1" oninput="moveToNext(this, 3)"></div>
+                <div class="pin-digit"><input type="number" id="pin3" maxlength="1" oninput="moveToNext(this, 4)"></div>
+                <div class="pin-digit"><input type="number" id="pin4" maxlength="1" oninput="moveToNext(this, null)"></div>
             </div>
             
             <div style="margin:24px 0;">
@@ -1585,8 +1415,8 @@
             </div>
             
             <div class="popup-actions">
-                <button class="popup-btn popup-btn-outline" onclick="showBuyForm('${productId}')">Back</button>
-                <button class="popup-btn popup-btn-primary" onclick="savePinAndProceed('${productId}')" id="savePinBtn" style="opacity:0.5; pointer-events:none;">Enter 4-digit PIN</button>
+                <button class="popup-btn popup-btn-outline" onclick="showBuyForm(${productId})">Back</button>
+                <button class="popup-btn popup-btn-primary" onclick="savePinAndProceed(${productId})" id="savePinBtn" style="opacity:0.5; pointer-events:none;">Enter 4-digit PIN</button>
             </div>
         `;
         
@@ -1662,8 +1492,7 @@
     window.showPinEntry = function(productId) {
         const product = campaigns.find(c => c.id === productId);
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
-        const subtotal = product.price * units;
-        const total = subtotal + SHIPPING_COST;
+        const total = product.price * units;
         
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
@@ -1676,10 +1505,10 @@
             </div>
             
             <div class="pin-container">
-                <div class="pin-digit"><input type="password" id="pin1" maxlength="1" oninput="moveToNext(this, 2)" autofocus></div>
-                <div class="pin-digit"><input type="password" id="pin2" maxlength="1" oninput="moveToNext(this, 3)"></div>
-                <div class="pin-digit"><input type="password" id="pin3" maxlength="1" oninput="moveToNext(this, 4)"></div>
-                <div class="pin-digit"><input type="password" id="pin4" maxlength="1" oninput="moveToNext(this, null)"></div>
+                <div class="pin-digit"><input type="number" id="pin1" maxlength="1" oninput="moveToNext(this, 2)" autofocus></div>
+                <div class="pin-digit"><input type="number" id="pin2" maxlength="1" oninput="moveToNext(this, 3)"></div>
+                <div class="pin-digit"><input type="number" id="pin3" maxlength="1" oninput="moveToNext(this, 4)"></div>
+                <div class="pin-digit"><input type="number" id="pin4" maxlength="1" oninput="moveToNext(this, null)"></div>
             </div>
             
             <div style="margin:24px 0;">
@@ -1693,8 +1522,8 @@
             </div>
             
             <div class="popup-actions">
-                <button class="popup-btn popup-btn-outline" onclick="showBuyForm('${productId}')">Back</button>
-                <button class="popup-btn popup-btn-primary" onclick="verifyPinAndPay('${productId}')" id="confirmPinBtn" style="opacity:0.5; pointer-events:none;">Enter PIN first</button>
+                <button class="popup-btn popup-btn-outline" onclick="showBuyForm(${productId})">Back</button>
+                <button class="popup-btn popup-btn-primary" onclick="verifyPinAndPay(${productId})" id="confirmPinBtn" style="opacity:0.5; pointer-events:none;">Enter PIN first</button>
             </div>
         `;
         
@@ -1845,54 +1674,35 @@
             }
         }
         
-        await completePurchase(productId);
+        completePurchase(productId);
     };
 
     window.completePurchase = async function(productId) {
         const product = campaigns.find(c => c.id === productId);
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
-        const subtotal = product.price * units;
-        const total = subtotal + SHIPPING_COST;
+        const total = product.price * units;
 
-        // Update local data
+        // Update balances
         walletBalance -= total;
         reservedUnits += units;
         joinedCampaigns += 1;
-        
-        // Update campaign data
-        const campaignIndex = campaigns.findIndex(c => c.id === productId);
-        if (campaignIndex !== -1) {
-            campaigns[campaignIndex].reserved += units;
-            campaigns[campaignIndex].funded = Math.round((campaigns[campaignIndex].reserved / campaigns[campaignIndex].goal) * 100);
-        }
+        product.reserved += units;
 
-        // Save to Firebase
         if (firebase.firestore && currentUser) {
             try {
-                // Update user data
                 await firebase.firestore().collection('users').doc(currentUser.uid).update({
                     walletBalance: firebase.firestore.FieldValue.increment(-total),
                     joinedCampaigns: firebase.firestore.FieldValue.increment(1),
                     reservedUnits: firebase.firestore.FieldValue.increment(units)
                 });
                 
-                // Update campaign data
-                await firebase.firestore().collection('campaigns').doc(productId).update({
-                    reserved: firebase.firestore.FieldValue.increment(units),
-                    funded: Math.round(((product.reserved + units) / product.goal) * 100)
-                });
-                
-                // Record order
                 await firebase.firestore().collection('orders').add({
                     userId: currentUser.uid,
-                    userEmail: currentUser.email,
                     productId: productId,
                     productName: product.name,
                     units: units,
-                    subtotal: subtotal,
-                    shipping: SHIPPING_COST,
                     total: total,
-                    shippingDetails: { 
+                    shipping: { 
                         name: document.getElementById('fullName')?.value,
                         address: document.getElementById('address')?.value,
                         phone: document.getElementById('phone')?.value,
@@ -1906,7 +1716,6 @@
         }
 
         updateUI();
-        renderCampaigns(); // Refresh the display
         showConfirmation(total);
     };
 
@@ -1958,6 +1767,8 @@
         } catch (e) {
             console.log('Sound not supported');
         }
+        
+        loadCampaigns();
     };
 
     // ========== DEPOSIT POPUP ==========
@@ -2103,7 +1914,6 @@
         });
 
         document.getElementById('logoutBtn')?.addEventListener('click', async () => {
-            document.getElementById('logoutPopup').classList.remove('show');
             if (firebase.auth) {
                 await firebase.auth().signOut();
             }
@@ -2112,11 +1922,11 @@
 
         document.addEventListener('click', (e) => {
             if (e.target.closest('.view-campaign')) {
-                const id = e.target.closest('.view-campaign').dataset.id;
+                const id = parseInt(e.target.closest('.view-campaign').dataset.id);
                 showProductDetail(id);
             }
             if (e.target.closest('.buy-campaign')) {
-                const id = e.target.closest('.buy-campaign').dataset.id;
+                const id = parseInt(e.target.closest('.buy-campaign').dataset.id);
                 if (!currentUser) {
                     alert('Please login to purchase');
                     window.location.href = 'login.html';

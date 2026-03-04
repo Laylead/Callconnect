@@ -192,57 +192,6 @@
             color: #ef4444;
         }
 
-        /* Session timeout warning */
-        .session-timeout-warning {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #fef9c3;
-            border-left: 4px solid #eab308;
-            border-radius: 12px;
-            padding: 16px 24px;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            animation: slideIn 0.3s ease;
-        }
-        .session-timeout-warning .material-icons {
-            color: #eab308;
-            font-size: 28px;
-        }
-        .session-timeout-warning .content {
-            flex: 1;
-        }
-        .session-timeout-warning .title {
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 4px;
-        }
-        .session-timeout-warning .message {
-            color: #64748b;
-            font-size: 0.9rem;
-        }
-        .session-timeout-warning .stay-logged-in {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .session-timeout-warning .stay-logged-in:hover {
-            background: #1d4ed8;
-            transform: translateY(-2px);
-        }
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
         /* ---------- MAIN CONTENT ---------- */
         .main-content {
             flex: 1;
@@ -1061,17 +1010,38 @@
             gap: 4px;
         }
 
-        /* Shipping per unit indicator */
-        .shipping-per-unit {
-            font-size: 0.85rem;
-            color: #64748b;
-            margin-top: 4px;
+        /* Session timeout indicator */
+        .session-timeout {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 40px;
+            padding: 12px 20px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 12px;
+            z-index: 1000;
+            font-size: 0.9rem;
+            border: 1px solid #e2e8f0;
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
         }
-        .shipping-per-unit .material-icons {
-            font-size: 16px;
+        .session-timeout.show {
+            transform: translateX(0);
+        }
+        .session-timeout .material-icons {
+            color: #f59e0b;
+        }
+        .session-timeout button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
         }
 
         @media (max-width: 800px) {
@@ -1194,21 +1164,18 @@
     </main>
 </div>
 
+<!-- Session Timeout Notification -->
+<div class="session-timeout" id="sessionTimeout">
+    <span class="material-icons">timer</span>
+    <span>Session expiring soon</span>
+    <button onclick="extendSession()">Stay logged in</button>
+</div>
+
 <!-- GLOBAL POPUP MODAL (dynamic) -->
 <div class="popup-overlay" id="popupOverlay">
     <div class="popup-card" id="popupCard">
         <!-- content injected via js -->
     </div>
-</div>
-
-<!-- Session timeout warning (hidden by default) -->
-<div id="sessionTimeoutWarning" class="session-timeout-warning" style="display: none;">
-    <span class="material-icons">timer</span>
-    <div class="content">
-        <div class="title">Session about to expire</div>
-        <div class="message" id="timeoutMessage">You'll be logged out in <span id="timeoutSeconds">60</span> seconds due to inactivity</div>
-    </div>
-    <button class="stay-logged-in" id="stayLoggedInBtn">Stay logged in</button>
 </div>
 
 <script>
@@ -1224,91 +1191,52 @@
     const SHIPPING_COST = 2500; // Shipping cost per unit
     let orders = [];
     let transactionHistory = [];
+    
+    // Session timeout variables
+    let sessionTimeoutTimer;
+    let sessionWarningTimer;
+    const SESSION_DURATION = 15 * 60 * 1000; // 15 minutes in milliseconds
+    const WARNING_BEFORE = 2 * 60 * 1000; // Warn 2 minutes before
 
-    // ========== SESSION TIMEOUT MANAGEMENT ==========
-    let inactivityTimer;
-    let warningTimer;
-    let countdownTimer;
-    let timeLeft = 60;
-    const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes
-    const WARNING_BEFORE = 60 * 1000; // Show warning 1 minute before
-
-    function resetInactivityTimer() {
+    // ========== SESSION MANAGEMENT ==========
+    function resetSessionTimer() {
         if (!currentUser) return;
         
         // Clear existing timers
-        if (inactivityTimer) clearTimeout(inactivityTimer);
-        if (warningTimer) clearTimeout(warningTimer);
-        if (countdownTimer) clearInterval(countdownTimer);
+        if (sessionTimeoutTimer) clearTimeout(sessionTimeoutTimer);
+        if (sessionWarningTimer) clearTimeout(sessionWarningTimer);
         
         // Hide warning if visible
-        document.getElementById('sessionTimeoutWarning').style.display = 'none';
+        document.getElementById('sessionTimeout').classList.remove('show');
         
-        // Set timer to show warning
-        warningTimer = setTimeout(() => {
-            showSessionWarning();
-        }, INACTIVITY_LIMIT - WARNING_BEFORE);
+        // Set warning timer
+        sessionWarningTimer = setTimeout(() => {
+            document.getElementById('sessionTimeout').classList.add('show');
+        }, SESSION_DURATION - WARNING_BEFORE);
         
-        // Set timer to auto logout
-        inactivityTimer = setTimeout(() => {
+        // Set logout timer
+        sessionTimeoutTimer = setTimeout(() => {
             autoLogout();
-        }, INACTIVITY_LIMIT);
+        }, SESSION_DURATION);
     }
-
-    function showSessionWarning() {
-        if (!currentUser) return;
-        
-        timeLeft = 60;
-        document.getElementById('timeoutSeconds').textContent = timeLeft;
-        document.getElementById('sessionTimeoutWarning').style.display = 'flex';
-        
-        // Start countdown
-        countdownTimer = setInterval(() => {
-            timeLeft--;
-            document.getElementById('timeoutSeconds').textContent = timeLeft;
-            
-            if (timeLeft <= 0) {
-                clearInterval(countdownTimer);
-                autoLogout();
-            }
-        }, 1000);
-    }
-
+    
+    window.extendSession = function() {
+        resetSessionTimer();
+    };
+    
     function autoLogout() {
-        // Clear all timers
-        if (inactivityTimer) clearTimeout(inactivityTimer);
-        if (warningTimer) clearTimeout(warningTimer);
-        if (countdownTimer) clearInterval(countdownTimer);
-        
-        // Hide warning
-        document.getElementById('sessionTimeoutWarning').style.display = 'none';
-        
-        // Logout user
-        if (firebase.auth && currentUser) {
-            firebase.auth().signOut().then(() => {
-                alert('You have been logged out due to inactivity.');
-                window.location.href = 'login.html';
-            });
+        if (currentUser && firebase.auth) {
+            firebase.auth().signOut();
+            alert('Your session has expired. Please login again.');
+            window.location.href = 'login.html';
         }
     }
-
-    // Track user activity
-    ['mousedown', 'keydown', 'touchstart', 'mousemove'].forEach(event => {
+    
+    // Reset timer on user activity
+    ['click', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(event => {
         document.addEventListener(event, () => {
-            resetInactivityTimer();
-        }, { passive: true });
-    });
-
-    // Stay logged in button
-    document.getElementById('stayLoggedInBtn').addEventListener('click', () => {
-        // Hide warning
-        document.getElementById('sessionTimeoutWarning').style.display = 'none';
-        
-        // Clear countdown
-        if (countdownTimer) clearInterval(countdownTimer);
-        
-        // Reset timers
-        resetInactivityTimer();
+            resetSessionTimer();
+        });
     });
 
     // ========== FIREBASE AUTH ==========
@@ -1327,15 +1255,13 @@
                     await loadUserOrders();
                     await loadUserTransactions();
                     showLoggedInUI();
+                    resetSessionTimer(); // Start session timer
                     
                     // Set avatar with first letter of email/name
                     const displayName = userData?.displayName || user.displayName || user.email || 'User';
                     const firstLetter = displayName.charAt(0).toUpperCase();
                     document.getElementById('userAvatar').innerText = firstLetter;
                     document.getElementById('sidebarUserName').innerHTML = `${displayName} <span class="material-icons">arrow_drop_down</span>`;
-                    
-                    // Start inactivity timer
-                    resetInactivityTimer();
                 } else {
                     showLoggedOutUI();
                     
@@ -1343,10 +1269,9 @@
                     document.getElementById('userAvatar').innerText = 'G';
                     document.getElementById('sidebarUserName').innerHTML = 'Guest <span class="material-icons">arrow_drop_down</span>';
                     
-                    // Clear timers
-                    if (inactivityTimer) clearTimeout(inactivityTimer);
-                    if (warningTimer) clearTimeout(warningTimer);
-                    if (countdownTimer) clearInterval(countdownTimer);
+                    // Clear session timers
+                    if (sessionTimeoutTimer) clearTimeout(sessionTimeoutTimer);
+                    if (sessionWarningTimer) clearTimeout(sessionWarningTimer);
                 }
                 updateUI();
                 attachEvents();
@@ -1720,7 +1645,6 @@
         document.getElementById('campaignsContainer').innerHTML = html;
     }
 
-    // FIXED: Separate handler for buy button clicks
     window.handleBuyClick = function(productId) {
         const product = campaigns.find(c => c.id == productId);
         
@@ -1831,22 +1755,19 @@
                 <span class="material-icons">inventory</span> Available: <span id="availableUnits">${available}</span> units left
             </div>
             
-            <div style="margin-bottom:8px;">
+            <div style="margin-bottom:16px;">
                 <p>Price per unit: ₦${product.price.toLocaleString()}</p>
-                <p class="shipping-per-unit">
-                    <span class="material-icons">local_shipping</span> 
-                    Shipping per unit: ₦${shippingPerUnit.toLocaleString()}
-                </p>
+                <p>Shipping per unit: ₦${shippingPerUnit.toLocaleString()}</p>
             </div>
             
             <input type="number" id="buyUnits" class="popup-input" min="1" max="${available}" value="1" placeholder="Number of units" onchange="updateTotal('${product.id}')" onkeyup="updateTotal('${product.id}')">
             
             <div class="shipping-cost">
-                <span class="label">Total shipping (₦${shippingPerUnit.toLocaleString()} × <span id="shippingUnits">1</span>):</span>
-                <span class="value" id="shippingTotal">₦${shippingPerUnit.toLocaleString()}</span>
+                <span class="label">Total shipping (${shippingPerUnit.toLocaleString()} × <span id="shippingUnits">1</span>):</span>
+                <span class="value" id="totalShipping">₦${shippingPerUnit.toLocaleString()}</span>
             </div>
             
-            <div class="total-amount">
+            <div class="total-amount" id="totalAmount">
                 <span class="label">Total amount (price + shipping):</span>
                 <span class="value" id="totalValue">₦${(product.price + shippingPerUnit).toLocaleString()}</span>
             </div>
@@ -1884,21 +1805,27 @@
         }
         
         const validUnits = parseInt(unitsInput.value) || 1;
+        const pricePerUnit = product.price;
         const shippingPerUnit = product.shippingCost || SHIPPING_COST;
-        const subtotal = product.price * validUnits;
+        
+        const subtotal = pricePerUnit * validUnits;
         const totalShipping = shippingPerUnit * validUnits;
         const total = subtotal + totalShipping;
         
-        // Update UI
-        const shippingUnitsSpan = document.getElementById('shippingUnits');
-        if (shippingUnitsSpan) shippingUnitsSpan.textContent = validUnits;
-        
-        const shippingTotalSpan = document.getElementById('shippingTotal');
-        if (shippingTotalSpan) shippingTotalSpan.textContent = `₦${totalShipping.toLocaleString()}`;
-        
+        // Update displays
         const totalElement = document.getElementById('totalValue');
         if (totalElement) {
-            totalElement.textContent = `₦${total.toLocaleString()}`;
+            totalElement.innerText = `₦${total.toLocaleString()}`;
+        }
+        
+        const totalShippingElement = document.getElementById('totalShipping');
+        if (totalShippingElement) {
+            totalShippingElement.innerText = `₦${totalShipping.toLocaleString()}`;
+        }
+        
+        const shippingUnitsElement = document.getElementById('shippingUnits');
+        if (shippingUnitsElement) {
+            shippingUnitsElement.innerText = validUnits;
         }
     };
 
@@ -1922,8 +1849,10 @@
             return;
         }
         
+        const pricePerUnit = product.price;
         const shippingPerUnit = product.shippingCost || SHIPPING_COST;
-        const subtotal = product.price * units;
+        
+        const subtotal = pricePerUnit * units;
         const totalShipping = shippingPerUnit * units;
         const total = subtotal + totalShipping;
 
@@ -1953,27 +1882,14 @@
 
         // Check if user has PIN set
         if (userData && userData.pin) {
-            showPinEntry(productId);
+            showPinEntry(productId, units, total);
         } else {
-            showCreatePin(productId);
+            showCreatePin(productId, units, total);
         }
     };
 
-    window.showCreatePin = function(productId) {
+    window.showCreatePin = function(productId, units, total) {
         const product = campaigns.find(c => c.id == productId);
-        
-        // Check if campaign is already completed
-        if (product.reserved >= product.goal) {
-            alert('This campaign is already completed and awaiting shipping.');
-            closePopup();
-            return;
-        }
-        
-        const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
-        const shippingPerUnit = product.shippingCost || SHIPPING_COST;
-        const subtotal = product.price * units;
-        const totalShipping = shippingPerUnit * units;
-        const total = subtotal + totalShipping;
         
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
@@ -1982,6 +1898,7 @@
             </div>
             <div style="margin-bottom:24px; text-align:center;">
                 <p style="font-size:1.2rem; font-weight:600; color:#0f172a;">Total: ₦${total.toLocaleString()}</p>
+                <p style="color:#64748b;">for ${units} unit${units > 1 ? 's' : ''}</p>
                 <p style="color:#64748b;">Create a 4-digit PIN for future transactions</p>
             </div>
             
@@ -1998,7 +1915,7 @@
             
             <div class="popup-actions">
                 <button class="popup-btn popup-btn-outline" onclick="showBuyForm('${product.id}')">Back</button>
-                <button class="popup-btn popup-btn-primary" onclick="savePinAndProceed('${product.id}')" id="savePinBtn">Save PIN & Continue</button>
+                <button class="popup-btn popup-btn-primary" onclick="savePinAndProceed('${product.id}', ${units}, ${total})" id="savePinBtn">Save PIN & Continue</button>
             </div>
         `;
         
@@ -2012,7 +1929,7 @@
         });
     };
 
-    window.savePinAndProceed = async function(productId) {
+    window.savePinAndProceed = async function(productId, units, total) {
         const pin1 = document.getElementById('pin1')?.value;
         const pin2 = document.getElementById('pin2')?.value;
         const pin3 = document.getElementById('pin3')?.value;
@@ -2031,32 +1948,19 @@
                     pin: newPin
                 });
                 userData.pin = newPin;
-                showPinEntry(productId);
+                showPinEntry(productId, units, total);
             } catch (e) {
                 console.warn('Error saving PIN', e);
                 alert('Error saving PIN. Please try again.');
             }
         } else {
             userData = { pin: newPin };
-            showPinEntry(productId);
+            showPinEntry(productId, units, total);
         }
     };
 
-    window.showPinEntry = function(productId) {
+    window.showPinEntry = function(productId, units, total) {
         const product = campaigns.find(c => c.id == productId);
-        
-        // Check if campaign is already completed
-        if (product.reserved >= product.goal) {
-            alert('This campaign is already completed and awaiting shipping.');
-            closePopup();
-            return;
-        }
-        
-        const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
-        const shippingPerUnit = product.shippingCost || SHIPPING_COST;
-        const subtotal = product.price * units;
-        const totalShipping = shippingPerUnit * units;
-        const total = subtotal + totalShipping;
         
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
@@ -2065,6 +1969,7 @@
             </div>
             <div style="margin-bottom:24px; text-align:center;">
                 <p style="font-size:1.2rem; font-weight:600; color:#0f172a;">Total: ₦${total.toLocaleString()}</p>
+                <p style="color:#64748b;">for ${units} unit${units > 1 ? 's' : ''}</p>
                 <p style="color:#64748b;">Enter your 4-digit PIN to authorize payment</p>
             </div>
             
@@ -2081,7 +1986,7 @@
                     <div class="swipe-thumb" id="swipeThumb" onmousedown="startSwipe(event)" ontouchstart="startSwipe(event)">
                         <span class="material-icons">chevron_right</span>
                     </div>
-                    <div class="swipe-text"><span>Swipe to confirm payment</span></div>
+                    <div class="swipe-text"><span>Swipe to confirm payment of ₦${total.toLocaleString()}</span></div>
                 </div>
             </div>
             
@@ -2113,7 +2018,7 @@
         });
         
         setTimeout(() => {
-            initSwipe(productId);
+            initSwipe(productId, units, total);
         }, 100);
     };
 
@@ -2126,7 +2031,7 @@
         }
     }
 
-    function initSwipe(productId) {
+    function initSwipe(productId, units, total) {
         const thumb = document.getElementById('swipeThumb');
         const track = document.getElementById('swipeTrack');
         const container = document.getElementById('swipeContainer');
@@ -2190,7 +2095,7 @@
                                    pin3.length === 1 && pin4.length === 1;
                 
                 if (pinComplete) {
-                    verifyPinAndPay(productId);
+                    verifyPinAndPay(productId, units, total);
                 } else {
                     alert('Please enter your 4-digit PIN first');
                     thumb.style.left = '4px';
@@ -2213,7 +2118,7 @@
         };
     }
 
-    window.verifyPinAndPay = async function(productId) {
+    window.verifyPinAndPay = async function(productId, units, total) {
         const product = campaigns.find(c => c.id == productId);
         
         // Final check if campaign is already completed
@@ -2247,13 +2152,11 @@
             }
         }
         
-        completePurchase(productId);
+        completePurchase(productId, units, total);
     };
 
-    window.completePurchase = async function(productId) {
+    window.completePurchase = async function(productId, units, total) {
         const product = campaigns.find(c => c.id == productId);
-        const unitsInput = document.getElementById('buyUnits');
-        const units = parseInt(unitsInput?.value) || 1;
         const available = product.goal - product.reserved;
         
         // Final availability check
@@ -2263,10 +2166,11 @@
             return;
         }
         
+        const pricePerUnit = product.price;
         const shippingPerUnit = product.shippingCost || SHIPPING_COST;
-        const subtotal = product.price * units;
+        
+        const subtotal = pricePerUnit * units;
         const totalShipping = shippingPerUnit * units;
-        const total = subtotal + totalShipping;
 
         // Update local data
         walletBalance -= total;
@@ -2302,8 +2206,10 @@
                     productId: productId,
                     productName: product.name,
                     units: units,
+                    pricePerUnit: pricePerUnit,
+                    shippingPerUnit: shippingPerUnit,
                     subtotal: subtotal,
-                    shipping: totalShipping,
+                    totalShipping: totalShipping,
                     total: total,
                     shippingDetails: { 
                         name: document.getElementById('fullName')?.value,
@@ -2322,7 +2228,7 @@
                     userId: currentUser.uid,
                     type: 'purchase',
                     amount: total,
-                    description: `Purchase of ${units} x ${product.name} (includes shipping)`,
+                    description: `Purchase of ${units} × ${product.name} (₦${pricePerUnit.toLocaleString()} + ₦${shippingPerUnit.toLocaleString()} shipping each)`,
                     status: 'completed',
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -2340,10 +2246,10 @@
 
         updateUI();
         renderCampaigns(); // Update the UI with new availability
-        showConfirmation(total, product.reserved, product.goal, isCompleted);
+        showConfirmation(total, units, product.reserved, product.goal, isCompleted, pricePerUnit, shippingPerUnit);
     };
 
-    window.showConfirmation = function(amount, reserved, goal, isCompleted) {
+    window.showConfirmation = function(total, units, reserved, goal, isCompleted, pricePerUnit, shippingPerUnit) {
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
             <div class="checkmark-container">
@@ -2352,7 +2258,8 @@
                     <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
                 </svg>
                 <div class="checkmark-text">Payment Successful!</div>
-                <div class="checkmark-subtext">₦${amount.toLocaleString()} • Order confirmed</div>
+                <div class="checkmark-subtext">₦${total.toLocaleString()} • ${units} unit${units > 1 ? 's' : ''}</div>
+                <div class="checkmark-subtext" style="font-size:0.9rem;">Breakdown: ₦${pricePerUnit.toLocaleString()} × ${units} + ₦${shippingPerUnit.toLocaleString()} × ${units} shipping</div>
                 <div class="checkmark-subtext" style="font-size:0.9rem;">Updated: ${reserved}/${goal} units reserved</div>
                 ${isCompleted ? '<div class="checkmark-subtext" style="color:#10b981; margin-top:8px;">🎉 Campaign completed! Awaiting shipping.</div>' : ''}
                 <button class="popup-btn popup-btn-primary" onclick="closePopup()" style="margin-top:24px;">Done</button>

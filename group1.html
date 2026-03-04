@@ -13,21 +13,10 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
-    <!-- External Configurations (place your firebase config here) -->
-    <script>
-        // firebase-config.js equivalent – external configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDemo",
-            authDomain: "demo.firebaseapp.com",
-            projectId: "demo",
-            storageBucket: "demo.appspot.com",
-            messagingSenderId: "123456",
-            appId: "1:123456:web:abc"
-        };
-    </script>
+    <!-- External Configurations -->
+    <script src="firebase-config.js"></script>
     
     <style>
-        /* ----- EXACT SAME DESIGN – only additions for completeness ----- */
         * {
             margin: 0;
             padding: 0;
@@ -149,6 +138,7 @@
         .user-info {
             flex: 1;
             cursor: pointer;
+            position: relative;
         }
         .user-name { 
             color: #1e293b; 
@@ -166,8 +156,8 @@
         /* Logout popup */
         .logout-popup {
             position: absolute;
-            bottom: 80px;
-            left: 20px;
+            bottom: 100%;
+            left: 0;
             background: white;
             border-radius: 16px;
             padding: 8px;
@@ -433,9 +423,23 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.02);
         }
         .campaign-card.completed {
-            opacity: 0.8;
+            opacity: 0.9;
             background: #f8fafc;
             border-color: #10b981;
+            position: relative;
+        }
+        .campaign-card.completed::before {
+            content: "✓ CAMPAIGN COMPLETED";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #10b981;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 20px;
+            z-index: 2;
         }
         .campaign-card:hover {
             transform: translateY(-6px);
@@ -555,7 +559,7 @@
             gap: 4px;
             box-shadow: 0 8px 16px -8px #2563eb80;
         }
-        .btn-success:hover {
+        .btn-success:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 12px 20px -8px #2563eb;
         }
@@ -710,10 +714,14 @@
             background: #2563eb; 
             color: white; 
         }
-        .popup-btn-primary:hover {
+        .popup-btn-primary:hover:not(:disabled) {
             background: #1d4ed8;
             transform: translateY(-2px);
             box-shadow: 0 8px 16px -4px #2563eb80;
+        }
+        .popup-btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         .popup-btn-outline { 
             background: transparent; 
@@ -1107,7 +1115,7 @@
                 </div>
             </div>
             
-            <!-- Logout Popup (fixed: click username opens this) -->
+            <!-- Logout Popup -->
             <div class="logout-popup" id="logoutPopup">
                 <div class="logout-popup-item" id="logoutBtn">
                     <span class="material-icons">logout</span>
@@ -1145,7 +1153,7 @@
             </div>
         </div>
 
-        <!-- minimal stats row -->
+        <!-- minimal stats row - removed the balance pill at the bottom as requested -->
         <div class="stats-row">
             <div class="stat-pill"><span class="material-icons">campaign</span> Joined: <span id="statJoined">0</span></div>
             <div class="stat-pill"><span class="material-icons">inventory</span> Reserved: <span id="statUnits">0</span></div>
@@ -1208,7 +1216,7 @@
     let swipeCurrentX = 0;
     let isSwiping = false;
     let swipeThreshold = 250;
-    const SHIPPING_COST = 2500; // Fixed shipping cost (per product if not overridden)
+    const SHIPPING_COST = 2500; // Fixed shipping cost
     let orders = []; // Track user orders
     let transactionHistory = []; // Track all transactions
 
@@ -1595,7 +1603,7 @@
                     <div class="campaign-header">
                         <span class="campaign-title">${c.name}</span>
                         ${isCompleted ? 
-                            '<span class="campaign-completed-badge"><span class="material-icons" style="font-size:14px;">check_circle</span> Completed / Awaiting shipping</span>' : 
+                            '<span class="campaign-completed-badge"><span class="material-icons" style="font-size:14px;">check_circle</span> Awaiting Shipping</span>' : 
                             `<span class="units-badge">${c.reserved}/${c.goal}</span>`
                         }
                     </div>
@@ -1607,7 +1615,7 @@
                         <button class="btn-outline view-campaign" data-id="${c.id}"><span class="material-icons">visibility</span> View</button>
                         ${!isCompleted ? 
                             `<button class="btn-success buy-campaign" data-id="${c.id}"><span class="material-icons">shopping_cart</span> Buy</button>` : 
-                            `<button class="btn-success" disabled><span class="material-icons">check_circle</span> Awaiting Shipping</button>`
+                            `<button class="btn-success" disabled><span class="material-icons">check_circle</span> Completed</button>`
                         }
                     </div>
                 </div>
@@ -1678,6 +1686,7 @@
         thumb.classList.add('active');
     };
 
+    // FIXED: Buy button now properly loads the order form
     window.showBuyForm = function(productId) {
         const product = campaigns.find(c => c.id == productId);
         
@@ -1689,13 +1698,16 @@
         }
         
         currentProduct = product;
+        const units = 1;
         const available = product.goal - product.reserved;
+        const subtotal = product.price * units;
         const shipping = product.shippingCost || SHIPPING_COST;
+        const total = subtotal + shipping;
         
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
             <div class="popup-title">
-                <span class="material-icons">shopping_cart</span> Buy ${product.name}
+                <span class="material-icons">shopping_cart</span> Complete Your Order
             </div>
             
             <div class="units-left-badge">
@@ -1703,17 +1715,18 @@
             </div>
             
             <div style="margin-bottom:16px;">
+                <p><strong>${product.name}</strong></p>
                 <p>Price per unit: ₦${product.price.toLocaleString()}</p>
             </div>
             
             <div class="shipping-cost">
-                <span class="label">Shipping cost (per order):</span>
+                <span class="label">Shipping cost:</span>
                 <span class="value" id="shippingCost">₦${shipping.toLocaleString()}</span>
             </div>
             
             <div class="total-amount" id="totalAmount">
-                <span class="label">Total amount:</span>
-                <span class="value" id="totalValue">₦${(product.price * 1 + shipping).toLocaleString()}</span>
+                <span class="label">Total amount (including shipping):</span>
+                <span class="value" id="totalValue">₦${total.toLocaleString()}</span>
             </div>
             
             <input type="number" id="buyUnits" class="popup-input" min="1" max="${available}" value="1" placeholder="Number of units" oninput="updateTotal('${product.id}')">
@@ -2159,6 +2172,7 @@
         completePurchase(productId);
     };
 
+    // FIXED: Now correctly debits total cash for all units including shipping
     window.completePurchase = async function(productId) {
         const product = campaigns.find(c => c.id == productId);
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
@@ -2175,7 +2189,7 @@
         const shipping = product.shippingCost || SHIPPING_COST;
         const total = subtotal + shipping;
 
-        // Update local data
+        // Update local data - debit total cash including shipping
         walletBalance -= total;
         reservedUnits += units;
         joinedCampaigns += 1;
@@ -2189,7 +2203,7 @@
             try {
                 const batch = firebase.firestore().batch();
                 
-                // Update user wallet and stats
+                // Update user wallet and stats - debit full total
                 const userRef = firebase.firestore().collection('users').doc(currentUser.uid);
                 batch.update(userRef, {
                     walletBalance: firebase.firestore.FieldValue.increment(-total),
@@ -2213,7 +2227,7 @@
                     }
                 }
                 
-                // Create order
+                // Create order with status based on completion
                 const orderRef = firebase.firestore().collection('orders').doc();
                 batch.set(orderRef, {
                     userId: currentUser.uid,
@@ -2240,7 +2254,7 @@
                     userId: currentUser.uid,
                     type: 'purchase',
                     amount: total,
-                    description: `Purchase of ${units} x ${product.name}`,
+                    description: `Purchase of ${units} x ${product.name} + shipping`,
                     status: 'completed',
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -2279,6 +2293,41 @@
                 <button class="popup-btn popup-btn-primary" onclick="closePopup()" style="margin-top:24px;">Done</button>
             </div>
         `;
+        
+        // Play sound effect
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.2);
+            
+            setTimeout(() => {
+                const oscillator2 = audioContext.createOscillator();
+                const gainNode2 = audioContext.createGain();
+                oscillator2.type = 'sine';
+                oscillator2.frequency.setValueAtTime(1174.66, audioContext.currentTime);
+                gainNode2.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator2.connect(gainNode2);
+                gainNode2.connect(audioContext.destination);
+                
+                oscillator2.start();
+                oscillator2.stop(audioContext.currentTime + 0.3);
+            }, 150);
+        } catch (e) {
+            console.log('Sound not supported');
+        }
     };
 
     // ========== DEPOSIT POPUP ==========
@@ -2490,7 +2539,7 @@
             window.location.href = 'login.html';
         });
 
-        // FIXED: Robust event delegation for view and buy buttons (Buy button now loads form)
+        // FIXED: Event delegation for view and buy buttons to ensure they work
         document.addEventListener('click', (e) => {
             if (e.target.closest('.view-campaign')) {
                 const id = e.target.closest('.view-campaign').dataset.id;
@@ -2511,7 +2560,7 @@
                     window.location.href = 'login.html';
                     return;
                 }
-                showBuyForm(id);  // THIS LOADS THE FORM (FIXED)
+                showBuyForm(id);
             }
         });
     }

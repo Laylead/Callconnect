@@ -491,30 +491,11 @@
             gap: 12px;
             margin-top: 12px;
         }
-        .btn-outline {
-            background: transparent;
-            border: 1.5px solid #e2e8f0;
-            color: #1e293b;
-            padding: 10px 16px;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-        }
-        .btn-outline:hover {
-            background: #f1f5f9;
-            border-color: #94a3b8;
-        }
         .btn-primary {
             background: linear-gradient(135deg, #2563eb, #7c3aed);
             color: white;
             border: none;
-            padding: 10px 16px;
+            padding: 12px 20px;
             border-radius: 40px;
             font-weight: 600;
             cursor: pointer;
@@ -523,7 +504,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 8px;
             box-shadow: 0 8px 16px -8px #2563eb80;
         }
         .btn-primary:hover {
@@ -535,6 +516,24 @@
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+        }
+        .btn-secondary {
+            background: #f1f5f9;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            color: #1e293b;
+            cursor: pointer;
+            transition: 0.2s;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
         }
 
         /* request banner */
@@ -1071,14 +1070,14 @@
             <button class="nav-item" data-page="discover"><span class="material-icons">explore</span> Discover</button>
         </div>
         <div class="user-profile-bottom">
-            <div class="avatar" id="userAvatar">👤</div>
+            <div class="avatar" id="userAvatar">JD</div>
             <div class="user-info" id="userInfo">
                 <div class="user-name" id="sidebarUserName">
                     Loading... <span class="material-icons">arrow_drop_down</span>
                 </div>
             </div>
             
-            <!-- Logout Popup - appears when clicking username -->
+            <!-- Logout Popup -->
             <div class="logout-popup" id="logoutPopup">
                 <div class="logout-popup-item" id="logoutBtn">
                     <span class="material-icons">logout</span>
@@ -1116,7 +1115,7 @@
             </div>
         </div>
 
-        <!-- minimal stats row -->
+        <!-- minimal stats row - removed the balance pill at the bottom as requested -->
         <div class="stats-row">
             <div class="stat-pill"><span class="material-icons">campaign</span> Joined: <span id="statJoined">0</span></div>
             <div class="stat-pill"><span class="material-icons">inventory</span> Reserved: <span id="statUnits">0</span></div>
@@ -1142,7 +1141,7 @@
             </div>
         </div>
 
-        <!-- other pages -->
+        <!-- other pages (redirect to .html) -->
         <div id="orders-page" class="page"></div>
         <div id="wallet-page" class="page"></div>
         <div id="track-page" class="page"></div>
@@ -1180,8 +1179,8 @@
     let isSwiping = false;
     let swipeThreshold = 250;
     const SHIPPING_COST = 2500; // Fixed shipping cost
-    let orders = [];
-    let transactionHistory = [];
+    let orders = []; // Track user orders
+    let transactionHistory = []; // Track all transactions
 
     // ========== FIREBASE AUTH ==========
     document.addEventListener('DOMContentLoaded', () => {
@@ -1199,8 +1198,16 @@
                     await loadUserOrders();
                     await loadUserTransactions();
                     showLoggedInUI();
+                    
+                    // Set avatar with first letter of email/name
+                    const displayName = userData?.displayName || user.displayName || user.email || 'User';
+                    const firstLetter = displayName.charAt(0).toUpperCase();
+                    document.getElementById('userAvatar').innerText = firstLetter;
                 } else {
                     showLoggedOutUI();
+                    
+                    // Set guest avatar
+                    document.getElementById('userAvatar').innerText = 'G';
                 }
                 updateUI();
                 attachEvents();
@@ -1276,24 +1283,16 @@
         document.getElementById('walletDisplay').style.display = 'none';
         document.getElementById('depositTopBtn').style.display = 'none';
         document.getElementById('greetingHi').innerText = 'Hi, Guest';
-        
-        // Set avatar with first letter of "Guest"
-        document.getElementById('userAvatar').innerText = 'G';
         document.getElementById('sidebarUserName').innerHTML = 'Guest <span class="material-icons">arrow_drop_down</span>';
-        
         document.getElementById('statJoined').innerText = '2';
         document.getElementById('statUnits').innerText = '4';
     }
 
     function updateUI() {
         if (!currentUser) return;
-        
-        const name = userData?.displayName || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User';
-        const firstLetter = name.charAt(0).toUpperCase();
-        
+        const name = userData?.displayName || currentUser?.displayName || 'User';
         document.getElementById('greetingHi').innerText = `Hi, ${name.split(' ')[0]}`;
         document.getElementById('sidebarUserName').innerHTML = `${name} <span class="material-icons">arrow_drop_down</span>`;
-        document.getElementById('userAvatar').innerText = firstLetter;
 
         const fmt = `₦${walletBalance.toLocaleString()}`;
         document.getElementById('walletDisplay').innerHTML = `<span class="material-icons">account_balance_wallet</span> ${fmt}`;
@@ -1312,6 +1311,7 @@
                 const snapshot = await campaignsRef.get();
                 
                 if (snapshot.empty) {
+                    // Initialize with default campaigns
                     await initializeCampaigns();
                 } else {
                     campaigns = [];
@@ -1321,10 +1321,10 @@
                 }
             } catch (e) {
                 console.warn('Error loading campaigns', e);
-                loadCampaigns();
+                loadCampaigns(); // Fallback to demo data
             }
         } else {
-            loadCampaigns();
+            loadCampaigns(); // Demo mode
         }
         renderCampaigns();
     }
@@ -1441,6 +1441,7 @@
             });
             await batch.commit();
             
+            // Reload campaigns after initialization
             const snapshot = await firebase.firestore().collection('campaigns').get();
             campaigns = [];
             snapshot.forEach(doc => {
@@ -1570,7 +1571,7 @@
                     <div class="campaign-header">
                         <span class="campaign-title">${c.name}</span>
                         ${isCompleted ? 
-                            '<span class="campaign-completed-badge"><span class="material-icons" style="font-size:14px;">check_circle</span> Awaiting Shipping</span>' : 
+                            '<span class="campaign-completed-badge"><span class="material-icons" style="font-size:14px;">check_circle</span> Completed</span>' : 
                             `<span class="units-badge">${c.reserved}/${c.goal}</span>`
                         }
                     </div>
@@ -1579,14 +1580,11 @@
                         <div class="progress-bar-bg"><div class="progress-fill" style="width:${progressPercent}%"></div></div>
                     </div>
                     <div class="card-actions">
-                        <!-- SINGLE BUTTON: View when logged out, Buy/View when logged in -->
-                        ${!currentUser ? 
-                            `<button class="btn-primary view-campaign-btn" data-id="${c.id}"><span class="material-icons">visibility</span> View</button>` : 
-                            (isCompleted ? 
-                                `<button class="btn-primary" disabled><span class="material-icons">check_circle</span> Completed</button>` :
-                                `<button class="btn-primary buy-campaign-btn" data-id="${c.id}"><span class="material-icons">shopping_cart</span> Buy</button>`
-                            )
-                        }
+                        <!-- Single button that serves both view and buy functions -->
+                        <button class="btn-primary buy-campaign" data-id="${c.id}" ${isCompleted ? 'disabled' : ''}>
+                            <span class="material-icons">${isCompleted ? 'check_circle' : 'shopping_cart'}</span>
+                            ${isCompleted ? 'Awaiting Shipping' : 'Buy Now'}
+                        </button>
                     </div>
                 </div>
             `;
@@ -1641,20 +1639,13 @@
             </div>
             <div class="popup-actions">
                 <button class="popup-btn popup-btn-outline" onclick="closePopup()">Close</button>
-                ${product.reserved < product.goal && currentUser ? 
+                ${product.reserved < product.goal ? 
                     `<button class="popup-btn popup-btn-primary" onclick="showBuyForm('${product.id}')">Buy now</button>` : 
-                    product.reserved >= product.goal ?
-                    `<button class="popup-btn popup-btn-primary" disabled style="opacity:0.5;">Campaign Completed</button>` :
-                    `<button class="popup-btn popup-btn-primary" onclick="showLoginPrompt()">Login to Buy</button>`
+                    `<button class="popup-btn popup-btn-primary" disabled style="opacity:0.5;">Campaign Completed</button>`
                 }
             </div>
         `;
         document.getElementById('popupOverlay').classList.add('show');
-    };
-
-    window.showLoginPrompt = function() {
-        alert('Please login to purchase');
-        window.location.href = 'login.html';
     };
 
     window.changeMainImage = function(thumb, url) {
@@ -1740,6 +1731,7 @@
             totalElement.innerText = `₦${total.toLocaleString()}`;
         }
         
+        // Update available units display
         const availableElement = document.getElementById('availableUnits');
         if (availableElement) {
             availableElement.innerText = available;
@@ -1776,7 +1768,7 @@
         }
 
         if (walletBalance < total) {
-            alert(`Insufficient balance. Need ₦${(total - walletBalance).toLocaleString()} more.`);
+            alert('Insufficient balance. Please deposit funds.');
             closePopup();
             showDepositPopup();
             return;
@@ -1969,6 +1961,7 @@
             
             <div class="popup-actions">
                 <button class="popup-btn popup-btn-outline" onclick="showBuyForm('${product.id}')">Back</button>
+                <!-- Removed Confirm & Pay button - only swipe to confirm -->
             </div>
         `;
         
@@ -2162,7 +2155,7 @@
         const shipping = product.shippingCost || SHIPPING_COST;
         const total = subtotal + shipping;
 
-        // Update local data - DEBIT TOTAL CASH CORRECTLY
+        // Update local data
         walletBalance -= total;
         reservedUnits += units;
         joinedCampaigns += 1;
@@ -2247,8 +2240,7 @@
         renderCampaigns(); // Update the UI with new availability
         showConfirmation(total, product.reserved, product.goal, isCompleted);
         
-        // Debug log to verify correct charging
-        console.log(`Purchase complete: ${units} units, subtotal ₦${subtotal}, shipping ₦${shipping}, total ₦${total}`);
+        // Show updated availability in console for verification
         console.log(`Updated availability: ${product.reserved}/${product.goal} units reserved`);
     };
 
@@ -2432,11 +2424,10 @@
 
     // ========== EVENT LISTENERS ==========
     function attachEvents() {
-        // FIXED: User info click for logout popup - clicking username opens logout popup
+        // User info click for logout popup - clicking username opens logout popup
         document.getElementById('userInfo')?.addEventListener('click', (e) => {
             e.stopPropagation();
-            const popup = document.getElementById('logoutPopup');
-            popup.classList.toggle('show');
+            document.getElementById('logoutPopup').classList.toggle('show');
         });
 
         // Close logout popup when clicking outside
@@ -2514,17 +2505,10 @@
             window.location.href = 'login.html';
         });
 
-        // FIXED: Event delegation for view and buy buttons - now using proper classes
+        // FIXED: Event delegation for buy button (single button now)
         document.addEventListener('click', (e) => {
-            // Handle view button (for logged out users)
-            if (e.target.closest('.view-campaign-btn')) {
-                const id = e.target.closest('.view-campaign-btn').dataset.id;
-                showProductDetail(id);
-            }
-            
-            // Handle buy button (for logged in users)
-            if (e.target.closest('.buy-campaign-btn')) {
-                const id = e.target.closest('.buy-campaign-btn').dataset.id;
+            if (e.target.closest('.buy-campaign')) {
+                const id = e.target.closest('.buy-campaign').dataset.id;
                 const product = campaigns.find(c => c.id == id);
                 
                 // Check if campaign is completed

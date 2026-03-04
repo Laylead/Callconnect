@@ -138,7 +138,6 @@
         .user-info {
             flex: 1;
             cursor: pointer;
-            position: relative;
         }
         .user-name { 
             color: #1e293b; 
@@ -156,8 +155,8 @@
         /* Logout popup */
         .logout-popup {
             position: absolute;
-            bottom: 100%;
-            left: 0;
+            bottom: 80px;
+            left: 20px;
             background: white;
             border-radius: 16px;
             padding: 8px;
@@ -423,23 +422,9 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.02);
         }
         .campaign-card.completed {
-            opacity: 0.9;
+            opacity: 0.8;
             background: #f8fafc;
             border-color: #10b981;
-            position: relative;
-        }
-        .campaign-card.completed::before {
-            content: "✓ CAMPAIGN COMPLETED";
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #10b981;
-            color: white;
-            font-size: 0.7rem;
-            font-weight: 600;
-            padding: 4px 8px;
-            border-radius: 20px;
-            z-index: 2;
         }
         .campaign-card:hover {
             transform: translateY(-6px);
@@ -526,24 +511,6 @@
             border-color: #94a3b8;
         }
         .btn-primary {
-            background: #f1f5f9;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 40px;
-            font-weight: 600;
-            color: #1e293b;
-            cursor: pointer;
-            transition: 0.2s;
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-        }
-        .btn-primary:hover {
-            background: #e2e8f0;
-        }
-        .btn-success {
             background: linear-gradient(135deg, #2563eb, #7c3aed);
             color: white;
             border: none;
@@ -559,11 +526,11 @@
             gap: 4px;
             box-shadow: 0 8px 16px -8px #2563eb80;
         }
-        .btn-success:hover:not(:disabled) {
+        .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 12px 20px -8px #2563eb;
         }
-        .btn-success:disabled {
+        .btn-primary:disabled {
             opacity: 0.5;
             cursor: not-allowed;
             transform: none;
@@ -714,14 +681,10 @@
             background: #2563eb; 
             color: white; 
         }
-        .popup-btn-primary:hover:not(:disabled) {
+        .popup-btn-primary:hover {
             background: #1d4ed8;
             transform: translateY(-2px);
             box-shadow: 0 8px 16px -4px #2563eb80;
-        }
-        .popup-btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
         }
         .popup-btn-outline { 
             background: transparent; 
@@ -1108,14 +1071,14 @@
             <button class="nav-item" data-page="discover"><span class="material-icons">explore</span> Discover</button>
         </div>
         <div class="user-profile-bottom">
-            <div class="avatar" id="userAvatar">JD</div>
+            <div class="avatar" id="userAvatar">👤</div>
             <div class="user-info" id="userInfo">
                 <div class="user-name" id="sidebarUserName">
                     Loading... <span class="material-icons">arrow_drop_down</span>
                 </div>
             </div>
             
-            <!-- Logout Popup -->
+            <!-- Logout Popup - appears when clicking username -->
             <div class="logout-popup" id="logoutPopup">
                 <div class="logout-popup-item" id="logoutBtn">
                     <span class="material-icons">logout</span>
@@ -1153,7 +1116,7 @@
             </div>
         </div>
 
-        <!-- minimal stats row - removed the balance pill at the bottom as requested -->
+        <!-- minimal stats row -->
         <div class="stats-row">
             <div class="stat-pill"><span class="material-icons">campaign</span> Joined: <span id="statJoined">0</span></div>
             <div class="stat-pill"><span class="material-icons">inventory</span> Reserved: <span id="statUnits">0</span></div>
@@ -1179,7 +1142,7 @@
             </div>
         </div>
 
-        <!-- other pages (redirect to .html) -->
+        <!-- other pages -->
         <div id="orders-page" class="page"></div>
         <div id="wallet-page" class="page"></div>
         <div id="track-page" class="page"></div>
@@ -1217,8 +1180,8 @@
     let isSwiping = false;
     let swipeThreshold = 250;
     const SHIPPING_COST = 2500; // Fixed shipping cost
-    let orders = []; // Track user orders
-    let transactionHistory = []; // Track all transactions
+    let orders = [];
+    let transactionHistory = [];
 
     // ========== FIREBASE AUTH ==========
     document.addEventListener('DOMContentLoaded', () => {
@@ -1313,18 +1276,24 @@
         document.getElementById('walletDisplay').style.display = 'none';
         document.getElementById('depositTopBtn').style.display = 'none';
         document.getElementById('greetingHi').innerText = 'Hi, Guest';
-        document.getElementById('sidebarUserName').innerHTML = 'Guest <span class="material-icons">arrow_drop_down</span>';
+        
+        // Set avatar with first letter of "Guest"
         document.getElementById('userAvatar').innerText = 'G';
+        document.getElementById('sidebarUserName').innerHTML = 'Guest <span class="material-icons">arrow_drop_down</span>';
+        
         document.getElementById('statJoined').innerText = '2';
         document.getElementById('statUnits').innerText = '4';
     }
 
     function updateUI() {
         if (!currentUser) return;
-        const name = userData?.displayName || currentUser?.displayName || 'User';
+        
+        const name = userData?.displayName || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User';
+        const firstLetter = name.charAt(0).toUpperCase();
+        
         document.getElementById('greetingHi').innerText = `Hi, ${name.split(' ')[0]}`;
         document.getElementById('sidebarUserName').innerHTML = `${name} <span class="material-icons">arrow_drop_down</span>`;
-        document.getElementById('userAvatar').innerText = name.charAt(0).toUpperCase();
+        document.getElementById('userAvatar').innerText = firstLetter;
 
         const fmt = `₦${walletBalance.toLocaleString()}`;
         document.getElementById('walletDisplay').innerHTML = `<span class="material-icons">account_balance_wallet</span> ${fmt}`;
@@ -1343,7 +1312,6 @@
                 const snapshot = await campaignsRef.get();
                 
                 if (snapshot.empty) {
-                    // Initialize with default campaigns
                     await initializeCampaigns();
                 } else {
                     campaigns = [];
@@ -1353,10 +1321,10 @@
                 }
             } catch (e) {
                 console.warn('Error loading campaigns', e);
-                loadCampaigns(); // Fallback to demo data
+                loadCampaigns();
             }
         } else {
-            loadCampaigns(); // Demo mode
+            loadCampaigns();
         }
         renderCampaigns();
     }
@@ -1473,7 +1441,6 @@
             });
             await batch.commit();
             
-            // Reload campaigns after initialization
             const snapshot = await firebase.firestore().collection('campaigns').get();
             campaigns = [];
             snapshot.forEach(doc => {
@@ -1612,10 +1579,13 @@
                         <div class="progress-bar-bg"><div class="progress-fill" style="width:${progressPercent}%"></div></div>
                     </div>
                     <div class="card-actions">
-                        <button class="btn-outline view-campaign" data-id="${c.id}"><span class="material-icons">visibility</span> View</button>
-                        ${!isCompleted ? 
-                            `<button class="btn-success buy-campaign" data-id="${c.id}"><span class="material-icons">shopping_cart</span> Buy</button>` : 
-                            `<button class="btn-success" disabled><span class="material-icons">check_circle</span> Completed</button>`
+                        <!-- SINGLE BUTTON: View when logged out, Buy/View when logged in -->
+                        ${!currentUser ? 
+                            `<button class="btn-primary view-campaign-btn" data-id="${c.id}"><span class="material-icons">visibility</span> View</button>` : 
+                            (isCompleted ? 
+                                `<button class="btn-primary" disabled><span class="material-icons">check_circle</span> Completed</button>` :
+                                `<button class="btn-primary buy-campaign-btn" data-id="${c.id}"><span class="material-icons">shopping_cart</span> Buy</button>`
+                            )
                         }
                     </div>
                 </div>
@@ -1671,13 +1641,20 @@
             </div>
             <div class="popup-actions">
                 <button class="popup-btn popup-btn-outline" onclick="closePopup()">Close</button>
-                ${product.reserved < product.goal ? 
+                ${product.reserved < product.goal && currentUser ? 
                     `<button class="popup-btn popup-btn-primary" onclick="showBuyForm('${product.id}')">Buy now</button>` : 
-                    `<button class="popup-btn popup-btn-primary" disabled style="opacity:0.5;">Campaign Completed</button>`
+                    product.reserved >= product.goal ?
+                    `<button class="popup-btn popup-btn-primary" disabled style="opacity:0.5;">Campaign Completed</button>` :
+                    `<button class="popup-btn popup-btn-primary" onclick="showLoginPrompt()">Login to Buy</button>`
                 }
             </div>
         `;
         document.getElementById('popupOverlay').classList.add('show');
+    };
+
+    window.showLoginPrompt = function() {
+        alert('Please login to purchase');
+        window.location.href = 'login.html';
     };
 
     window.changeMainImage = function(thumb, url) {
@@ -1686,7 +1663,6 @@
         thumb.classList.add('active');
     };
 
-    // FIXED: Buy button now properly loads the order form
     window.showBuyForm = function(productId) {
         const product = campaigns.find(c => c.id == productId);
         
@@ -1707,7 +1683,7 @@
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
             <div class="popup-title">
-                <span class="material-icons">shopping_cart</span> Complete Your Order
+                <span class="material-icons">shopping_cart</span> Buy ${product.name}
             </div>
             
             <div class="units-left-badge">
@@ -1715,7 +1691,6 @@
             </div>
             
             <div style="margin-bottom:16px;">
-                <p><strong>${product.name}</strong></p>
                 <p>Price per unit: ₦${product.price.toLocaleString()}</p>
             </div>
             
@@ -1725,7 +1700,7 @@
             </div>
             
             <div class="total-amount" id="totalAmount">
-                <span class="label">Total amount (including shipping):</span>
+                <span class="label">Total amount:</span>
                 <span class="value" id="totalValue">₦${total.toLocaleString()}</span>
             </div>
             
@@ -1765,7 +1740,6 @@
             totalElement.innerText = `₦${total.toLocaleString()}`;
         }
         
-        // Update available units display
         const availableElement = document.getElementById('availableUnits');
         if (availableElement) {
             availableElement.innerText = available;
@@ -1802,7 +1776,7 @@
         }
 
         if (walletBalance < total) {
-            alert('Insufficient balance. Please deposit funds.');
+            alert(`Insufficient balance. Need ₦${(total - walletBalance).toLocaleString()} more.`);
             closePopup();
             showDepositPopup();
             return;
@@ -2172,7 +2146,6 @@
         completePurchase(productId);
     };
 
-    // FIXED: Now correctly debits total cash for all units including shipping
     window.completePurchase = async function(productId) {
         const product = campaigns.find(c => c.id == productId);
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
@@ -2189,7 +2162,7 @@
         const shipping = product.shippingCost || SHIPPING_COST;
         const total = subtotal + shipping;
 
-        // Update local data - debit total cash including shipping
+        // Update local data - DEBIT TOTAL CASH CORRECTLY
         walletBalance -= total;
         reservedUnits += units;
         joinedCampaigns += 1;
@@ -2203,7 +2176,7 @@
             try {
                 const batch = firebase.firestore().batch();
                 
-                // Update user wallet and stats - debit full total
+                // Update user wallet and stats
                 const userRef = firebase.firestore().collection('users').doc(currentUser.uid);
                 batch.update(userRef, {
                     walletBalance: firebase.firestore.FieldValue.increment(-total),
@@ -2227,7 +2200,7 @@
                     }
                 }
                 
-                // Create order with status based on completion
+                // Create order
                 const orderRef = firebase.firestore().collection('orders').doc();
                 batch.set(orderRef, {
                     userId: currentUser.uid,
@@ -2254,7 +2227,7 @@
                     userId: currentUser.uid,
                     type: 'purchase',
                     amount: total,
-                    description: `Purchase of ${units} x ${product.name} + shipping`,
+                    description: `Purchase of ${units} x ${product.name}`,
                     status: 'completed',
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -2274,7 +2247,8 @@
         renderCampaigns(); // Update the UI with new availability
         showConfirmation(total, product.reserved, product.goal, isCompleted);
         
-        // Show updated availability in console for verification
+        // Debug log to verify correct charging
+        console.log(`Purchase complete: ${units} units, subtotal ₦${subtotal}, shipping ₦${shipping}, total ₦${total}`);
         console.log(`Updated availability: ${product.reserved}/${product.goal} units reserved`);
     };
 
@@ -2461,7 +2435,8 @@
         // FIXED: User info click for logout popup - clicking username opens logout popup
         document.getElementById('userInfo')?.addEventListener('click', (e) => {
             e.stopPropagation();
-            document.getElementById('logoutPopup').classList.toggle('show');
+            const popup = document.getElementById('logoutPopup');
+            popup.classList.toggle('show');
         });
 
         // Close logout popup when clicking outside
@@ -2539,14 +2514,17 @@
             window.location.href = 'login.html';
         });
 
-        // FIXED: Event delegation for view and buy buttons to ensure they work
+        // FIXED: Event delegation for view and buy buttons - now using proper classes
         document.addEventListener('click', (e) => {
-            if (e.target.closest('.view-campaign')) {
-                const id = e.target.closest('.view-campaign').dataset.id;
+            // Handle view button (for logged out users)
+            if (e.target.closest('.view-campaign-btn')) {
+                const id = e.target.closest('.view-campaign-btn').dataset.id;
                 showProductDetail(id);
             }
-            if (e.target.closest('.buy-campaign')) {
-                const id = e.target.closest('.buy-campaign').dataset.id;
+            
+            // Handle buy button (for logged in users)
+            if (e.target.closest('.buy-campaign-btn')) {
+                const id = e.target.closest('.buy-campaign-btn').dataset.id;
                 const product = campaigns.find(c => c.id == id);
                 
                 // Check if campaign is completed

@@ -192,6 +192,57 @@
             color: #ef4444;
         }
 
+        /* Session timeout warning */
+        .session-timeout-warning {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #fef9c3;
+            border-left: 4px solid #eab308;
+            border-radius: 12px;
+            padding: 16px 24px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            animation: slideIn 0.3s ease;
+        }
+        .session-timeout-warning .material-icons {
+            color: #eab308;
+            font-size: 28px;
+        }
+        .session-timeout-warning .content {
+            flex: 1;
+        }
+        .session-timeout-warning .title {
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        .session-timeout-warning .message {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        .session-timeout-warning .stay-logged-in {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .session-timeout-warning .stay-logged-in:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
         /* ---------- MAIN CONTENT ---------- */
         .main-content {
             flex: 1;
@@ -1010,6 +1061,19 @@
             gap: 4px;
         }
 
+        /* Shipping per unit indicator */
+        .shipping-per-unit {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .shipping-per-unit .material-icons {
+            font-size: 16px;
+        }
+
         @media (max-width: 800px) {
             .sidebar { display: none; }
             .mobile-bottom-nav { display: flex; }
@@ -1137,6 +1201,16 @@
     </div>
 </div>
 
+<!-- Session timeout warning (hidden by default) -->
+<div id="sessionTimeoutWarning" class="session-timeout-warning" style="display: none;">
+    <span class="material-icons">timer</span>
+    <div class="content">
+        <div class="title">Session about to expire</div>
+        <div class="message" id="timeoutMessage">You'll be logged out in <span id="timeoutSeconds">60</span> seconds due to inactivity</div>
+    </div>
+    <button class="stay-logged-in" id="stayLoggedInBtn">Stay logged in</button>
+</div>
+
 <script>
     // ========== GLOBALS ==========
     let currentUser = null;
@@ -1147,9 +1221,95 @@
     let campaigns = [];
     let currentProduct = null;
     let isSwiping = false;
-    const SHIPPING_COST = 2500; // Fixed shipping cost
+    const SHIPPING_COST = 2500; // Shipping cost per unit
     let orders = [];
     let transactionHistory = [];
+
+    // ========== SESSION TIMEOUT MANAGEMENT ==========
+    let inactivityTimer;
+    let warningTimer;
+    let countdownTimer;
+    let timeLeft = 60;
+    const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes
+    const WARNING_BEFORE = 60 * 1000; // Show warning 1 minute before
+
+    function resetInactivityTimer() {
+        if (!currentUser) return;
+        
+        // Clear existing timers
+        if (inactivityTimer) clearTimeout(inactivityTimer);
+        if (warningTimer) clearTimeout(warningTimer);
+        if (countdownTimer) clearInterval(countdownTimer);
+        
+        // Hide warning if visible
+        document.getElementById('sessionTimeoutWarning').style.display = 'none';
+        
+        // Set timer to show warning
+        warningTimer = setTimeout(() => {
+            showSessionWarning();
+        }, INACTIVITY_LIMIT - WARNING_BEFORE);
+        
+        // Set timer to auto logout
+        inactivityTimer = setTimeout(() => {
+            autoLogout();
+        }, INACTIVITY_LIMIT);
+    }
+
+    function showSessionWarning() {
+        if (!currentUser) return;
+        
+        timeLeft = 60;
+        document.getElementById('timeoutSeconds').textContent = timeLeft;
+        document.getElementById('sessionTimeoutWarning').style.display = 'flex';
+        
+        // Start countdown
+        countdownTimer = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timeoutSeconds').textContent = timeLeft;
+            
+            if (timeLeft <= 0) {
+                clearInterval(countdownTimer);
+                autoLogout();
+            }
+        }, 1000);
+    }
+
+    function autoLogout() {
+        // Clear all timers
+        if (inactivityTimer) clearTimeout(inactivityTimer);
+        if (warningTimer) clearTimeout(warningTimer);
+        if (countdownTimer) clearInterval(countdownTimer);
+        
+        // Hide warning
+        document.getElementById('sessionTimeoutWarning').style.display = 'none';
+        
+        // Logout user
+        if (firebase.auth && currentUser) {
+            firebase.auth().signOut().then(() => {
+                alert('You have been logged out due to inactivity.');
+                window.location.href = 'login.html';
+            });
+        }
+    }
+
+    // Track user activity
+    ['mousedown', 'keydown', 'touchstart', 'mousemove'].forEach(event => {
+        document.addEventListener(event, () => {
+            resetInactivityTimer();
+        }, { passive: true });
+    });
+
+    // Stay logged in button
+    document.getElementById('stayLoggedInBtn').addEventListener('click', () => {
+        // Hide warning
+        document.getElementById('sessionTimeoutWarning').style.display = 'none';
+        
+        // Clear countdown
+        if (countdownTimer) clearInterval(countdownTimer);
+        
+        // Reset timers
+        resetInactivityTimer();
+    });
 
     // ========== FIREBASE AUTH ==========
     document.addEventListener('DOMContentLoaded', () => {
@@ -1173,12 +1333,20 @@
                     const firstLetter = displayName.charAt(0).toUpperCase();
                     document.getElementById('userAvatar').innerText = firstLetter;
                     document.getElementById('sidebarUserName').innerHTML = `${displayName} <span class="material-icons">arrow_drop_down</span>`;
+                    
+                    // Start inactivity timer
+                    resetInactivityTimer();
                 } else {
                     showLoggedOutUI();
                     
                     // Set guest avatar
                     document.getElementById('userAvatar').innerText = 'G';
                     document.getElementById('sidebarUserName').innerHTML = 'Guest <span class="material-icons">arrow_drop_down</span>';
+                    
+                    // Clear timers
+                    if (inactivityTimer) clearTimeout(inactivityTimer);
+                    if (warningTimer) clearTimeout(warningTimer);
+                    if (countdownTimer) clearInterval(countdownTimer);
                 }
                 updateUI();
                 attachEvents();
@@ -1602,7 +1770,7 @@
                     <div class="product-meta">
                         <span><span class="material-icons">inventory</span> Goal: ${product.goal} units</span>
                         <span><span class="material-icons">group</span> Reserved: ${product.reserved}</span>
-                        <span><span class="material-icons">local_shipping</span> Shipping: ₦${(product.shippingCost || SHIPPING_COST).toLocaleString()}</span>
+                        <span><span class="material-icons">local_shipping</span> Shipping: ₦${(product.shippingCost || SHIPPING_COST).toLocaleString()}/unit</span>
                     </div>
                     <div class="product-description">
                         <p>${product.description}</p>
@@ -1651,6 +1819,7 @@
         
         currentProduct = product;
         const available = product.goal - product.reserved;
+        const shippingPerUnit = product.shippingCost || SHIPPING_COST;
         
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
@@ -1662,20 +1831,24 @@
                 <span class="material-icons">inventory</span> Available: <span id="availableUnits">${available}</span> units left
             </div>
             
-            <div style="margin-bottom:16px;">
+            <div style="margin-bottom:8px;">
                 <p>Price per unit: ₦${product.price.toLocaleString()}</p>
+                <p class="shipping-per-unit">
+                    <span class="material-icons">local_shipping</span> 
+                    Shipping per unit: ₦${shippingPerUnit.toLocaleString()}
+                </p>
             </div>
             
             <input type="number" id="buyUnits" class="popup-input" min="1" max="${available}" value="1" placeholder="Number of units" onchange="updateTotal('${product.id}')" onkeyup="updateTotal('${product.id}')">
             
             <div class="shipping-cost">
-                <span class="label">Shipping cost:</span>
-                <span class="value" id="shippingCost">₦${(product.shippingCost || SHIPPING_COST).toLocaleString()}</span>
+                <span class="label">Total shipping (₦${shippingPerUnit.toLocaleString()} × <span id="shippingUnits">1</span>):</span>
+                <span class="value" id="shippingTotal">₦${shippingPerUnit.toLocaleString()}</span>
             </div>
             
-            <div class="total-amount" id="totalAmount">
-                <span class="label">Total amount:</span>
-                <span class="value" id="totalValue">₦${(product.price + (product.shippingCost || SHIPPING_COST)).toLocaleString()}</span>
+            <div class="total-amount">
+                <span class="label">Total amount (price + shipping):</span>
+                <span class="value" id="totalValue">₦${(product.price + shippingPerUnit).toLocaleString()}</span>
             </div>
             
             <input type="text" id="fullName" class="popup-input" placeholder="Full name *" required>
@@ -1711,13 +1884,21 @@
         }
         
         const validUnits = parseInt(unitsInput.value) || 1;
+        const shippingPerUnit = product.shippingCost || SHIPPING_COST;
         const subtotal = product.price * validUnits;
-        const shipping = product.shippingCost || SHIPPING_COST;
-        const total = subtotal + shipping;
+        const totalShipping = shippingPerUnit * validUnits;
+        const total = subtotal + totalShipping;
+        
+        // Update UI
+        const shippingUnitsSpan = document.getElementById('shippingUnits');
+        if (shippingUnitsSpan) shippingUnitsSpan.textContent = validUnits;
+        
+        const shippingTotalSpan = document.getElementById('shippingTotal');
+        if (shippingTotalSpan) shippingTotalSpan.textContent = `₦${totalShipping.toLocaleString()}`;
         
         const totalElement = document.getElementById('totalValue');
         if (totalElement) {
-            totalElement.innerText = `₦${total.toLocaleString()}`;
+            totalElement.textContent = `₦${total.toLocaleString()}`;
         }
     };
 
@@ -1741,9 +1922,10 @@
             return;
         }
         
+        const shippingPerUnit = product.shippingCost || SHIPPING_COST;
         const subtotal = product.price * units;
-        const shipping = product.shippingCost || SHIPPING_COST;
-        const total = subtotal + shipping;
+        const totalShipping = shippingPerUnit * units;
+        const total = subtotal + totalShipping;
 
         if (!currentUser) {
             alert('Please login to purchase');
@@ -1788,9 +1970,10 @@
         }
         
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
+        const shippingPerUnit = product.shippingCost || SHIPPING_COST;
         const subtotal = product.price * units;
-        const shipping = product.shippingCost || SHIPPING_COST;
-        const total = subtotal + shipping;
+        const totalShipping = shippingPerUnit * units;
+        const total = subtotal + totalShipping;
         
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
@@ -1870,9 +2053,10 @@
         }
         
         const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
+        const shippingPerUnit = product.shippingCost || SHIPPING_COST;
         const subtotal = product.price * units;
-        const shipping = product.shippingCost || SHIPPING_COST;
-        const total = subtotal + shipping;
+        const totalShipping = shippingPerUnit * units;
+        const total = subtotal + totalShipping;
         
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
@@ -2079,9 +2263,10 @@
             return;
         }
         
+        const shippingPerUnit = product.shippingCost || SHIPPING_COST;
         const subtotal = product.price * units;
-        const shipping = product.shippingCost || SHIPPING_COST;
-        const total = subtotal + shipping;
+        const totalShipping = shippingPerUnit * units;
+        const total = subtotal + totalShipping;
 
         // Update local data
         walletBalance -= total;
@@ -2118,7 +2303,7 @@
                     productName: product.name,
                     units: units,
                     subtotal: subtotal,
-                    shipping: shipping,
+                    shipping: totalShipping,
                     total: total,
                     shippingDetails: { 
                         name: document.getElementById('fullName')?.value,
@@ -2137,7 +2322,7 @@
                     userId: currentUser.uid,
                     type: 'purchase',
                     amount: total,
-                    description: `Purchase of ${units} x ${product.name}`,
+                    description: `Purchase of ${units} x ${product.name} (includes shipping)`,
                     status: 'completed',
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });

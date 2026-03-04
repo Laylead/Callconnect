@@ -13,7 +13,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
-    <!-- External Configurations - loads from separate file -->
+    <!-- External Configurations -->
     <script src="firebase-config.js"></script>
     
     <style>
@@ -134,7 +134,6 @@
             font-weight: 600;
             font-size: 18px;
             box-shadow: 0 4px 10px rgba(37,99,235,0.2);
-            text-transform: uppercase;
         }
         .user-info {
             flex: 1;
@@ -1114,7 +1113,7 @@
             </div>
         </div>
 
-        <!-- other pages (redirects to maintain external config) -->
+        <!-- other pages (redirect to .html) -->
         <div id="orders-page" class="page"></div>
         <div id="wallet-page" class="page"></div>
         <div id="track-page" class="page"></div>
@@ -1131,857 +1130,1266 @@
     </main>
 </div>
 
-<!-- GLOBAL POPUP MODAL -->
+<!-- GLOBAL POPUP MODAL (dynamic) -->
 <div class="popup-overlay" id="popupOverlay">
-    <div class="popup-card" id="popupCard"></div>
+    <div class="popup-card" id="popupCard">
+        <!-- content injected via js -->
+    </div>
 </div>
 
 <script>
-    (function() {
-        // ========== PRODUCTION READY CONFIG ==========
-        const CONFIG = {
-            SHIPPING_COST: 2500,
-            MIN_DEPOSIT: 100,
-            DEFAULT_WALLET: 24900,
-            DEFAULT_JOINED: 2,
-            DEFAULT_RESERVED: 4
-        };
+    // ========== GLOBALS ==========
+    let currentUser = null;
+    let userData = null;
+    let walletBalance = 24900;
+    let joinedCampaigns = 2;
+    let reservedUnits = 4;
+    let campaigns = [];
+    let currentProduct = null;
+    let isSwiping = false;
+    const SHIPPING_COST = 2500; // Fixed shipping cost
+    let orders = [];
+    let transactionHistory = [];
 
-        // ========== GLOBAL STATE ==========
-        let currentUser = null;
-        let userData = null;
-        let walletBalance = CONFIG.DEFAULT_WALLET;
-        let joinedCampaigns = CONFIG.DEFAULT_JOINED;
-        let reservedUnits = CONFIG.DEFAULT_RESERVED;
-        let campaigns = [];
-        let currentProduct = null;
-        let isSwiping = false;
-
-        // ========== FIREBASE INIT ==========
-        function initFirebase() {
-            if (typeof firebaseConfig !== 'undefined' && !firebase.apps.length) {
-                try {
-                    firebase.initializeApp(firebaseConfig);
-                    return true;
-                } catch (e) {
-                    console.warn('Firebase init failed:', e);
-                    return false;
-                }
-            }
-            return false;
+    // ========== FIREBASE AUTH ==========
+    document.addEventListener('DOMContentLoaded', () => {
+        // Check Firebase config
+        if (typeof firebaseConfig !== 'undefined' && firebase.apps.length === 0) {
+            firebase.initializeApp(firebaseConfig);
         }
 
-        // ========== AUTH MANAGEMENT ==========
-        function setupAuth() {
-            if (!initFirebase() || !firebase.auth) {
-                loadDemoData();
-                return;
-            }
-
+        // Check auth state
+        if (firebase.auth) {
             firebase.auth().onAuthStateChanged(async (user) => {
-                currentUser = user;
                 if (user) {
+                    currentUser = user;
                     await loadUserData();
-                    updateUIForLoggedInUser();
+                    await loadUserOrders();
+                    await loadUserTransactions();
+                    showLoggedInUI();
+                    
+                    // Set avatar with first letter of email/name
+                    const displayName = userData?.displayName || user.displayName || user.email || 'User';
+                    const firstLetter = displayName.charAt(0).toUpperCase();
+                    document.getElementById('userAvatar').innerText = firstLetter;
+                    document.getElementById('sidebarUserName').innerHTML = `${displayName} <span class="material-icons">arrow_drop_down</span>`;
                 } else {
-                    updateUIForGuest();
+                    showLoggedOutUI();
+                    
+                    // Set guest avatar
+                    document.getElementById('userAvatar').innerText = 'G';
+                    document.getElementById('sidebarUserName').innerHTML = 'Guest <span class="material-icons">arrow_drop_down</span>';
                 }
-                loadCampaigns();
+                updateUI();
                 attachEvents();
+                loadCampaignsFromFirestore();
             });
+        } else {
+            // Demo mode
+            showLoggedOutUI();
+            attachEvents();
+            loadCampaigns();
         }
+    });
 
-        async function loadUserData() {
-            if (!currentUser || !firebase.firestore) return;
+    async function loadUserData() {
+        if (!currentUser || !firebase.firestore) return;
+        try {
+            const userRef = firebase.firestore().collection('users').doc(currentUser.uid);
+            const doc = await userRef.get();
+            if (doc.exists) {
+                userData = doc.data();
+                walletBalance = userData.walletBalance || 24900;
+                joinedCampaigns = userData.joinedCampaigns || 2;
+                reservedUnits = userData.reservedUnits || 4;
+            } else {
+                // create default
+                const newUser = {
+                    displayName: currentUser.displayName || 'User',
+                    email: currentUser.email,
+                    walletBalance: 24900,
+                    joinedCampaigns: 2,
+                    reservedUnits: 4,
+                    pin: null,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                await userRef.set(newUser);
+                userData = newUser;
+            }
+        } catch (e) { console.warn('Firestore error, using demo', e); }
+    }
+
+    async function loadUserOrders() {
+        if (!currentUser || !firebase.firestore) return;
+        try {
+            const ordersRef = firebase.firestore().collection('orders').where('userId', '==', currentUser.uid);
+            const snapshot = await ordersRef.get();
+            orders = [];
+            snapshot.forEach(doc => {
+                orders.push({ id: doc.id, ...doc.data() });
+            });
+        } catch (e) { console.warn('Error loading orders', e); }
+    }
+
+    async function loadUserTransactions() {
+        if (!currentUser || !firebase.firestore) return;
+        try {
+            const transactionsRef = firebase.firestore().collection('transactions').where('userId', '==', currentUser.uid);
+            const snapshot = await transactionsRef.get();
+            transactionHistory = [];
+            snapshot.forEach(doc => {
+                transactionHistory.push({ id: doc.id, ...doc.data() });
+            });
+        } catch (e) { console.warn('Error loading transactions', e); }
+    }
+
+    function showLoggedInUI() {
+        document.getElementById('loginBtn').style.display = 'none';
+        document.getElementById('walletDisplay').style.display = 'flex';
+        document.getElementById('depositTopBtn').style.display = 'flex';
+    }
+
+    function showLoggedOutUI() {
+        document.getElementById('loginBtn').style.display = 'flex';
+        document.getElementById('walletDisplay').style.display = 'none';
+        document.getElementById('depositTopBtn').style.display = 'none';
+        document.getElementById('greetingHi').innerText = 'Hi, Guest';
+    }
+
+    function updateUI() {
+        if (!currentUser) return;
+        const name = userData?.displayName || currentUser?.displayName || 'User';
+        document.getElementById('greetingHi').innerText = `Hi, ${name.split(' ')[0]}`;
+
+        const fmt = `₦${walletBalance.toLocaleString()}`;
+        document.getElementById('walletDisplay').innerHTML = `<span class="material-icons">account_balance_wallet</span> ${fmt}`;
+        document.getElementById('dropdownBalance').innerText = fmt;
+        document.getElementById('statJoined').innerText = joinedCampaigns;
+        document.getElementById('statUnits').innerText = reservedUnits;
+        document.getElementById('dropdownJoined').innerText = joinedCampaigns;
+        document.getElementById('dropdownUnits').innerText = reservedUnits;
+    }
+
+    // ========== FIRESTORE CAMPAIGNS ==========
+    async function loadCampaignsFromFirestore() {
+        if (firebase.firestore) {
             try {
-                const userRef = firebase.firestore().collection('users').doc(currentUser.uid);
-                const doc = await userRef.get();
+                const campaignsRef = firebase.firestore().collection('campaigns');
+                const snapshot = await campaignsRef.get();
                 
-                if (doc.exists) {
-                    userData = doc.data();
-                    walletBalance = userData.walletBalance || CONFIG.DEFAULT_WALLET;
-                    joinedCampaigns = userData.joinedCampaigns || CONFIG.DEFAULT_JOINED;
-                    reservedUnits = userData.reservedUnits || CONFIG.DEFAULT_RESERVED;
+                if (snapshot.empty) {
+                    await initializeCampaigns();
                 } else {
-                    userData = {
-                        displayName: currentUser.displayName || 'User',
-                        email: currentUser.email,
-                        walletBalance: CONFIG.DEFAULT_WALLET,
-                        joinedCampaigns: CONFIG.DEFAULT_JOINED,
-                        reservedUnits: CONFIG.DEFAULT_RESERVED,
-                        pin: null,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-                    await userRef.set(userData);
+                    campaigns = [];
+                    snapshot.forEach(doc => {
+                        campaigns.push({ id: doc.id, ...doc.data() });
+                    });
                 }
             } catch (e) {
-                console.warn('Firestore error:', e);
+                console.warn('Error loading campaigns', e);
+                loadCampaigns();
             }
+        } else {
+            loadCampaigns();
         }
+        renderCampaigns();
+    }
 
-        // ========== UI UPDATES ==========
-        function updateUIForLoggedInUser() {
-            const name = userData?.displayName || currentUser?.displayName || currentUser?.email || 'User';
-            const firstName = name.split(' ')[0];
-            const firstLetter = (currentUser?.email || name).charAt(0).toUpperCase();
+    async function initializeCampaigns() {
+        const defaultCampaigns = [
+            { 
+                name: 'iPhone 15 Pro', 
+                goal: 100, 
+                reserved: 45, 
+                price: 450000, 
+                funded: 45, 
+                img: 'https://placehold.co/300x160/2563eb/white?text=iPhone+15+Pro',
+                images: [
+                    'https://placehold.co/600x400/2563eb/white?text=iPhone+Front',
+                    'https://placehold.co/600x400/3b82f6/white?text=iPhone+Back',
+                    'https://placehold.co/600x400/1d4ed8/white?text=iPhone+Side'
+                ],
+                description: 'Latest iPhone with A17 Pro chip, titanium design, and advanced camera system.',
+                specs: '6.1" Super Retina XDR, A17 Pro, 48MP Main, 12MP Telephoto',
+                shipping: 'Ships within 7 days after group buy completes',
+                shippingCost: 2500,
+                active: true,
+                completed: false
+            },
+            { 
+                name: 'MacBook Air M2', 
+                goal: 50, 
+                reserved: 28, 
+                price: 850000, 
+                funded: 56, 
+                img: 'https://placehold.co/300x160/7c3aed/white?text=MacBook+Air',
+                images: [
+                    'https://placehold.co/600x400/7c3aed/white?text=MacBook+Open',
+                    'https://placehold.co/600x400/8b5cf6/white?text=MacBook+Side',
+                    'https://placehold.co/600x400/6d28d9/white?text=MacBook+Closed'
+                ],
+                description: 'Supercharged by M2 chip, 18-hour battery life, and stunning Liquid Retina display.',
+                specs: '13.6" Liquid Retina, M2 (8-core), 8GB RAM, 256GB SSD',
+                shipping: 'Estimated delivery 10-14 days',
+                shippingCost: 3500,
+                active: true,
+                completed: false
+            },
+            { 
+                name: 'AirPods Max', 
+                goal: 75, 
+                reserved: 42, 
+                price: 180000, 
+                funded: 56, 
+                img: 'https://placehold.co/300x160/db2777/white?text=AirPods+Max',
+                images: [
+                    'https://placehold.co/600x400/db2777/white?text=AirPods+Left',
+                    'https://placehold.co/600x400/ec4899/white?text=AirPods+Right',
+                    'https://placehold.co/600x400/be185d/white?text=Case'
+                ],
+                description: 'High-fidelity audio, Active Noise Cancellation, and computational audio.',
+                specs: 'Over-ear, H1 chip, 20hr battery, 5 colors',
+                shipping: 'Ships in 5-7 business days',
+                shippingCost: 2000,
+                active: true,
+                completed: false
+            },
+            { 
+                name: 'iPad Pro 11"', 
+                goal: 60, 
+                reserved: 33, 
+                price: 620000, 
+                funded: 55, 
+                img: 'https://placehold.co/300x160/ea580c/white?text=iPad+Pro',
+                images: [
+                    'https://placehold.co/600x400/ea580c/white?text=iPad+Front',
+                    'https://placehold.co/600x400/f97316/white?text=iPad+Back',
+                    'https://placehold.co/600x400/c2410c/white?text=With+Pencil'
+                ],
+                description: 'M2 chip, LiDAR scanner, and Thunderbolt for pro workflows.',
+                specs: '11" Liquid Retina, M2, 128GB-2TB, Face ID',
+                shipping: '1-2 weeks for delivery',
+                shippingCost: 3000,
+                active: true,
+                completed: false
+            },
+            { 
+                name: 'PS5 Digital', 
+                goal: 30, 
+                reserved: 21, 
+                price: 280000, 
+                funded: 70, 
+                img: 'https://placehold.co/300x160/16a34a/white?text=PS5',
+                images: [
+                    'https://placehold.co/600x400/16a34a/white?text=Console',
+                    'https://placehold.co/600x400/22c55e/white?text=Controller',
+                    'https://placehold.co/600x400/15803d/white?text=Ports'
+                ],
+                description: 'Lightning-fast SSD, haptic feedback, and immersive 3D audio.',
+                specs: '825GB SSD, 4K/120fps, Ray Tracing',
+                shipping: 'Ships within 3 days',
+                shippingCost: 5000,
+                active: true,
+                completed: false
+            },
+        ];
+
+        if (firebase.firestore) {
+            const batch = firebase.firestore().batch();
+            defaultCampaigns.forEach(campaign => {
+                const docRef = firebase.firestore().collection('campaigns').doc();
+                batch.set(docRef, campaign);
+            });
+            await batch.commit();
             
-            document.getElementById('greetingHi').innerText = `Hi, ${firstName}`;
-            document.getElementById('sidebarUserName').innerHTML = `${name} <span class="material-icons">arrow_drop_down</span>`;
-            document.getElementById('userAvatar').innerText = firstLetter;
-            document.getElementById('loginBtn').style.display = 'none';
-            document.getElementById('walletDisplay').style.display = 'flex';
-            document.getElementById('depositTopBtn').style.display = 'flex';
+            const snapshot = await firebase.firestore().collection('campaigns').get();
+            campaigns = [];
+            snapshot.forEach(doc => {
+                campaigns.push({ id: doc.id, ...doc.data() });
+            });
+        } else {
+            campaigns = defaultCampaigns.map((c, index) => ({ id: index + 1, ...c }));
+        }
+    }
+
+    function loadCampaigns() {
+        campaigns = [
+            { 
+                id: 1, 
+                name: 'iPhone 15 Pro', 
+                goal: 100, 
+                reserved: 45, 
+                price: 450000, 
+                funded: 45, 
+                img: 'https://placehold.co/300x160/2563eb/white?text=iPhone+15+Pro',
+                images: [
+                    'https://placehold.co/600x400/2563eb/white?text=iPhone+Front',
+                    'https://placehold.co/600x400/3b82f6/white?text=iPhone+Back',
+                    'https://placehold.co/600x400/1d4ed8/white?text=iPhone+Side'
+                ],
+                description: 'Latest iPhone with A17 Pro chip, titanium design, and advanced camera system.',
+                specs: '6.1" Super Retina XDR, A17 Pro, 48MP Main, 12MP Telephoto',
+                shipping: 'Ships within 7 days after group buy completes',
+                shippingCost: 2500,
+                completed: false
+            },
+            { 
+                id: 2, 
+                name: 'MacBook Air M2', 
+                goal: 50, 
+                reserved: 28, 
+                price: 850000, 
+                funded: 56, 
+                img: 'https://placehold.co/300x160/7c3aed/white?text=MacBook+Air',
+                images: [
+                    'https://placehold.co/600x400/7c3aed/white?text=MacBook+Open',
+                    'https://placehold.co/600x400/8b5cf6/white?text=MacBook+Side',
+                    'https://placehold.co/600x400/6d28d9/white?text=MacBook+Closed'
+                ],
+                description: 'Supercharged by M2 chip, 18-hour battery life, and stunning Liquid Retina display.',
+                specs: '13.6" Liquid Retina, M2 (8-core), 8GB RAM, 256GB SSD',
+                shipping: 'Estimated delivery 10-14 days',
+                shippingCost: 3500,
+                completed: false
+            },
+            { 
+                id: 3, 
+                name: 'AirPods Max', 
+                goal: 75, 
+                reserved: 42, 
+                price: 180000, 
+                funded: 56, 
+                img: 'https://placehold.co/300x160/db2777/white?text=AirPods+Max',
+                images: [
+                    'https://placehold.co/600x400/db2777/white?text=AirPods+Left',
+                    'https://placehold.co/600x400/ec4899/white?text=AirPods+Right',
+                    'https://placehold.co/600x400/be185d/white?text=Case'
+                ],
+                description: 'High-fidelity audio, Active Noise Cancellation, and computational audio.',
+                specs: 'Over-ear, H1 chip, 20hr battery, 5 colors',
+                shipping: 'Ships in 5-7 business days',
+                shippingCost: 2000,
+                completed: false
+            },
+            { 
+                id: 4, 
+                name: 'iPad Pro 11"', 
+                goal: 60, 
+                reserved: 33, 
+                price: 620000, 
+                funded: 55, 
+                img: 'https://placehold.co/300x160/ea580c/white?text=iPad+Pro',
+                images: [
+                    'https://placehold.co/600x400/ea580c/white?text=iPad+Front',
+                    'https://placehold.co/600x400/f97316/white?text=iPad+Back',
+                    'https://placehold.co/600x400/c2410c/white?text=With+Pencil'
+                ],
+                description: 'M2 chip, LiDAR scanner, and Thunderbolt for pro workflows.',
+                specs: '11" Liquid Retina, M2, 128GB-2TB, Face ID',
+                shipping: '1-2 weeks for delivery',
+                shippingCost: 3000,
+                completed: false
+            },
+            { 
+                id: 5, 
+                name: 'PS5 Digital', 
+                goal: 30, 
+                reserved: 21, 
+                price: 280000, 
+                funded: 70, 
+                img: 'https://placehold.co/300x160/16a34a/white?text=PS5',
+                images: [
+                    'https://placehold.co/600x400/16a34a/white?text=Console',
+                    'https://placehold.co/600x400/22c55e/white?text=Controller',
+                    'https://placehold.co/600x400/15803d/white?text=Ports'
+                ],
+                description: 'Lightning-fast SSD, haptic feedback, and immersive 3D audio.',
+                specs: '825GB SSD, 4K/120fps, Ray Tracing',
+                shipping: 'Ships within 3 days',
+                shippingCost: 5000,
+                completed: false
+            },
+        ];
+        renderCampaigns();
+    }
+
+    function renderCampaigns() {
+        let html = '';
+        campaigns.forEach(c => {
+            const available = c.goal - c.reserved;
+            const progressPercent = (c.reserved / c.goal * 100).toFixed(1);
+            const isCompleted = c.reserved >= c.goal;
             
-            updateWalletDisplay();
-        }
-
-        function updateUIForGuest() {
-            document.getElementById('greetingHi').innerText = 'Hi, Guest';
-            document.getElementById('sidebarUserName').innerHTML = 'Guest <span class="material-icons">arrow_drop_down</span>';
-            document.getElementById('userAvatar').innerText = 'G';
-            document.getElementById('loginBtn').style.display = 'flex';
-            document.getElementById('walletDisplay').style.display = 'none';
-            document.getElementById('depositTopBtn').style.display = 'none';
-            
-            walletBalance = CONFIG.DEFAULT_WALLET;
-            joinedCampaigns = CONFIG.DEFAULT_JOINED;
-            reservedUnits = CONFIG.DEFAULT_RESERVED;
-            updateWalletDisplay();
-        }
-
-        function updateWalletDisplay() {
-            const fmt = `₦${walletBalance.toLocaleString()}`;
-            const walletEl = document.getElementById('walletDisplay');
-            if (walletEl) walletEl.innerHTML = `<span class="material-icons">account_balance_wallet</span> ${fmt}`;
-            
-            document.getElementById('dropdownBalance').innerText = fmt;
-            document.getElementById('statJoined').innerText = joinedCampaigns;
-            document.getElementById('statUnits').innerText = reservedUnits;
-            document.getElementById('dropdownJoined').innerText = joinedCampaigns;
-            document.getElementById('dropdownUnits').innerText = reservedUnits;
-        }
-
-        // ========== CAMPAIGN MANAGEMENT ==========
-        function loadDemoData() {
-            campaigns = [
-                { id: '1', name: 'iPhone 15 Pro', goal: 100, reserved: 45, price: 450000, funded: 45, img: 'https://placehold.co/300x160/2563eb/white?text=iPhone+15+Pro', images: ['https://placehold.co/600x400/2563eb/white?text=iPhone+Front', 'https://placehold.co/600x400/3b82f6/white?text=iPhone+Back', 'https://placehold.co/600x400/1d4ed8/white?text=iPhone+Side'], description: 'Latest iPhone with A17 Pro chip, titanium design, and advanced camera system.', specs: '6.1" Super Retina XDR, A17 Pro, 48MP Main, 12MP Telephoto', shipping: 'Ships within 7 days after group buy completes', shippingCost: 2500, completed: false },
-                { id: '2', name: 'MacBook Air M2', goal: 50, reserved: 28, price: 850000, funded: 56, img: 'https://placehold.co/300x160/7c3aed/white?text=MacBook+Air', images: ['https://placehold.co/600x400/7c3aed/white?text=MacBook+Open', 'https://placehold.co/600x400/8b5cf6/white?text=MacBook+Side', 'https://placehold.co/600x400/6d28d9/white?text=MacBook+Closed'], description: 'Supercharged by M2 chip, 18-hour battery life, and stunning Liquid Retina display.', specs: '13.6" Liquid Retina, M2 (8-core), 8GB RAM, 256GB SSD', shipping: 'Estimated delivery 10-14 days', shippingCost: 3500, completed: false },
-                { id: '3', name: 'AirPods Max', goal: 75, reserved: 42, price: 180000, funded: 56, img: 'https://placehold.co/300x160/db2777/white?text=AirPods+Max', images: ['https://placehold.co/600x400/db2777/white?text=AirPods+Left', 'https://placehold.co/600x400/ec4899/white?text=AirPods+Right', 'https://placehold.co/600x400/be185d/white?text=Case'], description: 'High-fidelity audio, Active Noise Cancellation, and computational audio.', specs: 'Over-ear, H1 chip, 20hr battery, 5 colors', shipping: 'Ships in 5-7 business days', shippingCost: 2000, completed: false },
-                { id: '4', name: 'iPad Pro 11"', goal: 60, reserved: 33, price: 620000, funded: 55, img: 'https://placehold.co/300x160/ea580c/white?text=iPad+Pro', images: ['https://placehold.co/600x400/ea580c/white?text=iPad+Front', 'https://placehold.co/600x400/f97316/white?text=iPad+Back', 'https://placehold.co/600x400/c2410c/white?text=With+Pencil'], description: 'M2 chip, LiDAR scanner, and Thunderbolt for pro workflows.', specs: '11" Liquid Retina, M2, 128GB-2TB, Face ID', shipping: '1-2 weeks for delivery', shippingCost: 3000, completed: false },
-                { id: '5', name: 'PS5 Digital', goal: 30, reserved: 21, price: 280000, funded: 70, img: 'https://placehold.co/300x160/16a34a/white?text=PS5', images: ['https://placehold.co/600x400/16a34a/white?text=Console', 'https://placehold.co/600x400/22c55e/white?text=Controller', 'https://placehold.co/600x400/15803d/white?text=Ports'], description: 'Lightning-fast SSD, haptic feedback, and immersive 3D audio.', specs: '825GB SSD, 4K/120fps, Ray Tracing', shipping: 'Ships within 3 days', shippingCost: 5000, completed: false }
-            ];
-            renderCampaigns();
-        }
-
-        async function loadCampaigns() {
-            if (firebase.firestore && currentUser) {
-                try {
-                    const snapshot = await firebase.firestore().collection('campaigns').get();
-                    if (!snapshot.empty) {
-                        campaigns = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    } else {
-                        await initializeCampaigns();
-                    }
-                } catch (e) {
-                    console.warn('Error loading campaigns:', e);
-                    loadDemoData();
-                }
-            } else {
-                loadDemoData();
+            // Mark as completed if goal reached
+            if (isCompleted && !c.completed) {
+                c.completed = true;
             }
-            renderCampaigns();
-        }
-
-        async function initializeCampaigns() {
-            const defaultCampaigns = [
-                { name: 'iPhone 15 Pro', goal: 100, reserved: 45, price: 450000, funded: 45, img: 'https://placehold.co/300x160/2563eb/white?text=iPhone+15+Pro', images: ['https://placehold.co/600x400/2563eb/white?text=iPhone+Front', 'https://placehold.co/600x400/3b82f6/white?text=iPhone+Back', 'https://placehold.co/600x400/1d4ed8/white?text=iPhone+Side'], description: 'Latest iPhone with A17 Pro chip, titanium design, and advanced camera system.', specs: '6.1" Super Retina XDR, A17 Pro, 48MP Main, 12MP Telephoto', shipping: 'Ships within 7 days after group buy completes', shippingCost: 2500, active: true, completed: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() },
-                { name: 'MacBook Air M2', goal: 50, reserved: 28, price: 850000, funded: 56, img: 'https://placehold.co/300x160/7c3aed/white?text=MacBook+Air', images: ['https://placehold.co/600x400/7c3aed/white?text=MacBook+Open', 'https://placehold.co/600x400/8b5cf6/white?text=MacBook+Side', 'https://placehold.co/600x400/6d28d9/white?text=MacBook+Closed'], description: 'Supercharged by M2 chip, 18-hour battery life, and stunning Liquid Retina display.', specs: '13.6" Liquid Retina, M2 (8-core), 8GB RAM, 256GB SSD', shipping: 'Estimated delivery 10-14 days', shippingCost: 3500, active: true, completed: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() },
-                { name: 'AirPods Max', goal: 75, reserved: 42, price: 180000, funded: 56, img: 'https://placehold.co/300x160/db2777/white?text=AirPods+Max', images: ['https://placehold.co/600x400/db2777/white?text=AirPods+Left', 'https://placehold.co/600x400/ec4899/white?text=AirPods+Right', 'https://placehold.co/600x400/be185d/white?text=Case'], description: 'High-fidelity audio, Active Noise Cancellation, and computational audio.', specs: 'Over-ear, H1 chip, 20hr battery, 5 colors', shipping: 'Ships in 5-7 business days', shippingCost: 2000, active: true, completed: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() },
-                { name: 'iPad Pro 11"', goal: 60, reserved: 33, price: 620000, funded: 55, img: 'https://placehold.co/300x160/ea580c/white?text=iPad+Pro', images: ['https://placehold.co/600x400/ea580c/white?text=iPad+Front', 'https://placehold.co/600x400/f97316/white?text=iPad+Back', 'https://placehold.co/600x400/c2410c/white?text=With+Pencil'], description: 'M2 chip, LiDAR scanner, and Thunderbolt for pro workflows.', specs: '11" Liquid Retina, M2, 128GB-2TB, Face ID', shipping: '1-2 weeks for delivery', shippingCost: 3000, active: true, completed: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() },
-                { name: 'PS5 Digital', goal: 30, reserved: 21, price: 280000, funded: 70, img: 'https://placehold.co/300x160/16a34a/white?text=PS5', images: ['https://placehold.co/600x400/16a34a/white?text=Console', 'https://placehold.co/600x400/22c55e/white?text=Controller', 'https://placehold.co/600x400/15803d/white?text=Ports'], description: 'Lightning-fast SSD, haptic feedback, and immersive 3D audio.', specs: '825GB SSD, 4K/120fps, Ray Tracing', shipping: 'Ships within 3 days', shippingCost: 5000, active: true, completed: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() }
-            ];
-
-            if (firebase.firestore) {
-                const batch = firebase.firestore().batch();
-                defaultCampaigns.forEach(campaign => {
-                    const docRef = firebase.firestore().collection('campaigns').doc();
-                    batch.set(docRef, campaign);
-                });
-                await batch.commit();
-                
-                const snapshot = await firebase.firestore().collection('campaigns').get();
-                campaigns = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            }
-        }
-
-        function renderCampaigns() {
-            const container = document.getElementById('campaignsContainer');
-            if (!container) return;
-
-            container.innerHTML = campaigns.map(c => {
-                const available = c.goal - c.reserved;
-                const progressPercent = (c.reserved / c.goal * 100).toFixed(1);
-                const isCompleted = c.reserved >= c.goal;
-                
-                if (isCompleted) c.completed = true;
-                
-                return `
-                    <div class="campaign-card ${isCompleted ? 'completed' : ''}" data-id="${c.id}">
-                        <div class="campaign-img" style="background-image:url('${c.img}')" onclick="window.showProductDetail('${c.id}')"></div>
-                        <div class="campaign-header">
-                            <span class="campaign-title">${c.name}</span>
-                            ${isCompleted ? 
-                                '<span class="campaign-completed-badge"><span class="material-icons" style="font-size:14px;">check_circle</span> Completed</span>' : 
-                                `<span class="units-badge">${c.reserved}/${c.goal}</span>`
-                            }
-                        </div>
-                        <div class="price-tag">₦${c.price.toLocaleString()}</div>
-                        <div class="progress-container">
-                            <div class="progress-bar-bg"><div class="progress-fill" style="width:${progressPercent}%"></div></div>
-                        </div>
-                        <div class="card-actions">
-                            <button class="btn-primary buy-campaign" data-id="${c.id}" ${isCompleted ? 'disabled' : ''}>
-                                <span class="material-icons">${isCompleted ? 'check_circle' : 'shopping_cart'}</span>
-                                ${isCompleted ? 'Awaiting Shipping' : 'Buy Now'}
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // ========== PRODUCT DETAIL ==========
-        window.showProductDetail = function(productId) {
-            const product = campaigns.find(c => c.id == productId);
-            if (!product) return;
             
-            currentProduct = product;
-            const popupCard = document.getElementById('popupCard');
-            const thumbsHtml = product.images.map(img => 
-                `<div class="product-thumb" style="background-image:url('${img}')" onclick="window.changeMainImage(this, '${img}')"></div>`
-            ).join('');
-
-            popupCard.innerHTML = `
-                <div class="popup-title"><span class="material-icons">info</span> ${product.name}</div>
-                <div class="product-detail-grid">
-                    <div class="product-gallery">
-                        <div class="product-main-img" id="mainProductImage" style="background-image:url('${product.images[0]}')"></div>
-                        <div class="product-thumbnails">${thumbsHtml}</div>
+            html += `
+                <div class="campaign-card ${isCompleted ? 'completed' : ''}" data-id="${c.id}">
+                    <div class="campaign-img" style="background-image:url('${c.img}')" onclick="showProductDetail('${c.id}')"></div>
+                    <div class="campaign-header">
+                        <span class="campaign-title">${c.name}</span>
+                        ${isCompleted ? 
+                            '<span class="campaign-completed-badge"><span class="material-icons" style="font-size:14px;">check_circle</span> Completed</span>' : 
+                            `<span class="units-badge">${c.reserved}/${c.goal}</span>`
+                        }
                     </div>
-                    <div class="product-info-detailed">
-                        <div class="product-price-big">₦${product.price.toLocaleString()}</div>
-                        <div class="product-meta">
-                            <span><span class="material-icons">inventory</span> Goal: ${product.goal} units</span>
-                            <span><span class="material-icons">group</span> Reserved: ${product.reserved}</span>
-                            <span><span class="material-icons">local_shipping</span> Shipping: ₦${(product.shippingCost || CONFIG.SHIPPING_COST).toLocaleString()}</span>
-                        </div>
-                        <div class="product-description">
-                            <p>${product.description}</p>
-                            <p><strong>Specs:</strong> ${product.specs}</p>
-                        </div>
-                        <div class="how-it-works">
-                            <h4><span class="material-icons">info</span> How group buy works</h4>
-                            <ul>
-                                <li><span class="material-icons">groups</span> Pool with others to reach goal</li>
-                                <li><span class="material-icons">local_shipping</span> ${product.shipping}</li>
-                                <li><span class="material-icons">verified</span> Price drops when goal met</li>
-                                <li><span class="material-icons">security</span> Money-back if campaign fails</li>
-                            </ul>
-                        </div>
+                    <div class="price-tag">₦${c.price.toLocaleString()}</div>
+                    <div class="progress-container">
+                        <div class="progress-bar-bg"><div class="progress-fill" style="width:${progressPercent}%"></div></div>
                     </div>
-                </div>
-                <div class="popup-actions">
-                    <button class="popup-btn popup-btn-outline" onclick="closePopup()">Close</button>
-                    ${product.reserved < product.goal ? 
-                        `<button class="popup-btn popup-btn-primary" onclick="window.showBuyForm('${product.id}')">Buy now</button>` : 
-                        `<button class="popup-btn popup-btn-primary" disabled style="opacity:0.5;">Campaign Completed</button>`
-                    }
+                    <div class="card-actions">
+                        <!-- Single button that serves both view and buy functions -->
+                        <button class="btn-primary" onclick="handleBuyClick('${c.id}')" ${isCompleted ? 'disabled' : ''}>
+                            <span class="material-icons">${isCompleted ? 'check_circle' : 'shopping_cart'}</span>
+                            ${isCompleted ? 'Awaiting Shipping' : 'Buy Now'}
+                        </button>
+                    </div>
                 </div>
             `;
-            document.getElementById('popupOverlay').classList.add('show');
-        };
+        });
+        document.getElementById('campaignsContainer').innerHTML = html;
+    }
 
-        window.changeMainImage = function(thumb, url) {
-            document.getElementById('mainProductImage').style.backgroundImage = `url('${url}')`;
-            document.querySelectorAll('.product-thumb').forEach(t => t.classList.remove('active'));
-            thumb.classList.add('active');
-        };
+    // FIXED: Separate handler for buy button clicks
+    window.handleBuyClick = function(productId) {
+        const product = campaigns.find(c => c.id == productId);
+        
+        // Check if campaign is completed
+        if (product && product.reserved >= product.goal) {
+            alert('This campaign is already completed and awaiting shipping.');
+            return;
+        }
+        
+        if (!currentUser) {
+            alert('Please login to purchase');
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        // Show product detail first
+        showProductDetail(productId);
+    };
 
-        // ========== BUY FLOW ==========
-        window.showBuyForm = function(productId) {
-            const product = campaigns.find(c => c.id == productId);
-            if (!product || product.reserved >= product.goal) {
-                alert('Campaign completed or not found');
-                closePopup();
-                return;
-            }
+    // ========== PRODUCT DETAIL VIEW ==========
+    window.showProductDetail = function(productId) {
+        const product = campaigns.find(c => c.id == productId);
+        if (!product) return;
+        currentProduct = product;
 
-            const available = product.goal - product.reserved;
-            const shipping = product.shippingCost || CONFIG.SHIPPING_COST;
-            
-            document.getElementById('popupCard').innerHTML = `
-                <div class="popup-title"><span class="material-icons">shopping_cart</span> Buy ${product.name}</div>
-                <div class="units-left-badge">
-                    <span class="material-icons">inventory</span> Available: <span id="availableUnits">${available}</span> units left
-                </div>
-                <div style="margin-bottom:16px;"><p>Price per unit: ₦${product.price.toLocaleString()}</p></div>
-                <div class="shipping-cost">
-                    <span class="label">Shipping cost:</span>
-                    <span class="value" id="shippingCost">₦${shipping.toLocaleString()}</span>
-                </div>
-                <div class="total-amount" id="totalAmount">
-                    <span class="label">Total amount:</span>
-                    <span class="value" id="totalValue">₦${(product.price + shipping).toLocaleString()}</span>
-                </div>
-                
-                <input type="number" id="buyUnits" class="popup-input" min="1" max="${available}" value="1" placeholder="Number of units" oninput="window.updateTotal('${product.id}')">
-                <input type="text" id="fullName" class="popup-input" placeholder="Full name *" required>
-                <input type="text" id="address" class="popup-input" placeholder="Shipping address *" required>
-                <input type="text" id="phone" class="popup-input" placeholder="Phone number *" required>
-                <input type="text" id="city" class="popup-input" placeholder="City *" required>
-                <textarea id="notes" class="popup-textarea" placeholder="Additional notes (optional)"></textarea>
-                
-                <div class="popup-actions">
-                    <button class="popup-btn popup-btn-outline" onclick="window.showProductDetail('${product.id}')">Back</button>
-                    <button class="popup-btn popup-btn-primary" onclick="window.checkPinAndProceed('${product.id}')">Continue to payment</button>
-                </div>
-            `;
-        };
-
-        window.updateTotal = function(productId) {
-            const product = campaigns.find(c => c.id == productId);
-            if (!product) return;
-            
-            const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
-            const available = product.goal - product.reserved;
-            
-            if (units > available) {
-                document.getElementById('buyUnits').value = available;
-                alert(`Only ${available} units available`);
-                return;
-            }
-            
-            const subtotal = product.price * units;
-            const shipping = product.shippingCost || CONFIG.SHIPPING_COST;
-            const total = subtotal + shipping;
-            
-            const totalEl = document.getElementById('totalValue');
-            if (totalEl) totalEl.innerText = `₦${total.toLocaleString()}`;
-        };
-
-        window.checkPinAndProceed = function(productId) {
-            const product = campaigns.find(c => c.id == productId);
-            if (!product || product.reserved >= product.goal) {
-                alert('Campaign completed');
-                closePopup();
-                return;
-            }
-
-            const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
-            if (units > (product.goal - product.reserved)) {
-                alert(`Only ${product.goal - product.reserved} units available`);
-                return;
-            }
-
-            if (!currentUser) {
-                alert('Please login to purchase');
-                window.location.href = 'login.html';
-                return;
-            }
-
-            const name = document.getElementById('fullName')?.value;
-            const address = document.getElementById('address')?.value;
-            const phone = document.getElementById('phone')?.value;
-            const city = document.getElementById('city')?.value;
-
-            if (!name || !address || !phone || !city) {
-                alert('Please fill all required shipping fields');
-                return;
-            }
-
-            const subtotal = product.price * units;
-            const shipping = product.shippingCost || CONFIG.SHIPPING_COST;
-            const total = subtotal + shipping;
-
-            if (walletBalance < total) {
-                alert('Insufficient balance. Please deposit funds.');
-                closePopup();
-                showDepositPopup();
-                return;
-            }
-
-            if (userData?.pin) {
-                showPinEntry(productId);
-            } else {
-                showCreatePin(productId);
-            }
-        };
-
-        function showCreatePin(productId) {
-            const product = campaigns.find(c => c.id == productId);
-            const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
-            const subtotal = product.price * units;
-            const shipping = product.shippingCost || CONFIG.SHIPPING_COST;
-            const total = subtotal + shipping;
-
-            document.getElementById('popupCard').innerHTML = `
-                <div class="popup-title"><span class="material-icons">lock</span> Create Security PIN</div>
-                <div style="margin-bottom:24px; text-align:center;">
-                    <p style="font-size:1.2rem; font-weight:600; color:#0f172a;">Total: ₦${total.toLocaleString()}</p>
-                    <p style="color:#64748b;">Create a 4-digit PIN for future transactions</p>
-                </div>
-                <div class="pin-container">
-                    ${[1,2,3,4].map(i => `<div class="pin-digit"><input type="number" id="pin${i}" maxlength="1" oninput="window.moveToNext(this, ${i+1})"></div>`).join('')}
-                </div>
-                <div style="margin:24px 0;"><p style="color:#64748b; font-size:0.9rem;">Remember this PIN - you'll need it for all purchases</p></div>
-                <div class="popup-actions">
-                    <button class="popup-btn popup-btn-outline" onclick="window.showBuyForm('${product.id}')">Back</button>
-                    <button class="popup-btn popup-btn-primary" onclick="window.savePinAndProceed('${product.id}')" id="savePinBtn" style="opacity:0.5; pointer-events:none;">Enter 4-digit PIN</button>
-                </div>
-            `;
-
-            document.querySelectorAll('.pin-digit input').forEach((input, index) => {
-                input.addEventListener('keyup', (e) => {
-                    if (e.key === 'Backspace' && index > 0) {
-                        document.querySelectorAll('.pin-digit input')[index - 1].focus();
-                    }
-                    checkPinComplete('savePinBtn');
-                });
-                input.addEventListener('input', () => checkPinComplete('savePinBtn'));
+        const popup = document.getElementById('popupCard');
+        let thumbsHtml = '';
+        if (product.images && product.images.length > 0) {
+            product.images.forEach((img, idx) => {
+                thumbsHtml += `<div class="product-thumb" style="background-image:url('${img}')" onclick="changeMainImage(this, '${img}')"></div>`;
             });
         }
 
-        window.savePinAndProceed = async function(productId) {
-            const pin = [1,2,3,4].map(i => document.getElementById(`pin${i}`)?.value).join('');
-            if (pin.length !== 4) {
-                alert('Please enter a 4-digit PIN');
-                return;
-            }
-
-            if (firebase.firestore && currentUser) {
-                try {
-                    await firebase.firestore().collection('users').doc(currentUser.uid).update({ pin });
-                    userData = { ...userData, pin };
-                } catch (e) {
-                    console.warn('Error saving PIN:', e);
+        popup.innerHTML = `
+            <div class="popup-title">
+                <span class="material-icons">info</span> ${product.name}
+            </div>
+            <div class="product-detail-grid">
+                <div class="product-gallery">
+                    <div class="product-main-img" id="mainProductImage" style="background-image:url('${product.images ? product.images[0] : product.img}')"></div>
+                    <div class="product-thumbnails">
+                        ${thumbsHtml}
+                    </div>
+                </div>
+                <div class="product-info-detailed">
+                    <div class="product-price-big">₦${product.price.toLocaleString()}</div>
+                    <div class="product-meta">
+                        <span><span class="material-icons">inventory</span> Goal: ${product.goal} units</span>
+                        <span><span class="material-icons">group</span> Reserved: ${product.reserved}</span>
+                        <span><span class="material-icons">local_shipping</span> Shipping: ₦${(product.shippingCost || SHIPPING_COST).toLocaleString()}</span>
+                    </div>
+                    <div class="product-description">
+                        <p>${product.description}</p>
+                        <p><strong>Specs:</strong> ${product.specs}</p>
+                    </div>
+                    <div class="how-it-works">
+                        <h4><span class="material-icons">info</span> How group buy works</h4>
+                        <ul>
+                            <li><span class="material-icons">groups</span> Pool with others to reach goal</li>
+                            <li><span class="material-icons">local_shipping</span> ${product.shipping}</li>
+                            <li><span class="material-icons">verified</span> Price drops when goal met</li>
+                            <li><span class="material-icons">security</span> Money-back if campaign fails</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="popup-actions">
+                <button class="popup-btn popup-btn-outline" onclick="closePopup()">Close</button>
+                ${product.reserved < product.goal ? 
+                    `<button class="popup-btn popup-btn-primary" onclick="showBuyForm('${product.id}')">Buy now</button>` : 
+                    `<button class="popup-btn popup-btn-primary" disabled style="opacity:0.5;">Campaign Completed</button>`
                 }
-            } else {
-                userData = { ...userData, pin };
-            }
+            </div>
+        `;
+        document.getElementById('popupOverlay').classList.add('show');
+    };
+
+    window.changeMainImage = function(thumb, url) {
+        const mainImage = document.getElementById('mainProductImage');
+        if (mainImage) {
+            mainImage.style.backgroundImage = `url('${url}')`;
+        }
+        document.querySelectorAll('.product-thumb').forEach(t => t.classList.remove('active'));
+        thumb.classList.add('active');
+    };
+
+    window.showBuyForm = function(productId) {
+        const product = campaigns.find(c => c.id == productId);
+        
+        // Check if campaign is already completed
+        if (product.reserved >= product.goal) {
+            alert('This campaign is already completed and awaiting shipping.');
+            closePopup();
+            return;
+        }
+        
+        currentProduct = product;
+        const available = product.goal - product.reserved;
+        
+        const popup = document.getElementById('popupCard');
+        popup.innerHTML = `
+            <div class="popup-title">
+                <span class="material-icons">shopping_cart</span> Buy ${product.name}
+            </div>
+            
+            <div class="units-left-badge">
+                <span class="material-icons">inventory</span> Available: <span id="availableUnits">${available}</span> units left
+            </div>
+            
+            <div style="margin-bottom:16px;">
+                <p>Price per unit: ₦${product.price.toLocaleString()}</p>
+            </div>
+            
+            <input type="number" id="buyUnits" class="popup-input" min="1" max="${available}" value="1" placeholder="Number of units" onchange="updateTotal('${product.id}')" onkeyup="updateTotal('${product.id}')">
+            
+            <div class="shipping-cost">
+                <span class="label">Shipping cost:</span>
+                <span class="value" id="shippingCost">₦${(product.shippingCost || SHIPPING_COST).toLocaleString()}</span>
+            </div>
+            
+            <div class="total-amount" id="totalAmount">
+                <span class="label">Total amount:</span>
+                <span class="value" id="totalValue">₦${(product.price + (product.shippingCost || SHIPPING_COST)).toLocaleString()}</span>
+            </div>
+            
+            <input type="text" id="fullName" class="popup-input" placeholder="Full name *" required>
+            <input type="text" id="address" class="popup-input" placeholder="Shipping address *" required>
+            <input type="text" id="phone" class="popup-input" placeholder="Phone number *" required>
+            <input type="text" id="city" class="popup-input" placeholder="City *" required>
+            <textarea id="notes" class="popup-textarea" placeholder="Additional notes (optional)"></textarea>
+            
+            <div class="popup-actions">
+                <button class="popup-btn popup-btn-outline" onclick="showProductDetail('${product.id}')">Back</button>
+                <button class="popup-btn popup-btn-primary" onclick="checkPinAndProceed('${product.id}')">Continue to payment</button>
+            </div>
+        `;
+    };
+
+    window.updateTotal = function(productId) {
+        const product = campaigns.find(c => c.id == productId);
+        const unitsInput = document.getElementById('buyUnits');
+        if (!unitsInput) return;
+        
+        const units = parseInt(unitsInput.value) || 1;
+        const available = product.goal - product.reserved;
+        
+        // Validate units against available
+        if (units > available) {
+            unitsInput.value = available;
+            alert(`Only ${available} units available`);
+            return;
+        }
+        
+        if (units < 1) {
+            unitsInput.value = 1;
+        }
+        
+        const validUnits = parseInt(unitsInput.value) || 1;
+        const subtotal = product.price * validUnits;
+        const shipping = product.shippingCost || SHIPPING_COST;
+        const total = subtotal + shipping;
+        
+        const totalElement = document.getElementById('totalValue');
+        if (totalElement) {
+            totalElement.innerText = `₦${total.toLocaleString()}`;
+        }
+    };
+
+    window.checkPinAndProceed = async function(productId) {
+        const product = campaigns.find(c => c.id == productId);
+        
+        // Check if campaign is already completed
+        if (product.reserved >= product.goal) {
+            alert('This campaign is already completed and awaiting shipping.');
+            closePopup();
+            return;
+        }
+        
+        const unitsInput = document.getElementById('buyUnits');
+        const units = parseInt(unitsInput?.value) || 1;
+        const available = product.goal - product.reserved;
+        
+        // Double-check availability
+        if (units > available) {
+            alert(`Only ${available} units available`);
+            return;
+        }
+        
+        const subtotal = product.price * units;
+        const shipping = product.shippingCost || SHIPPING_COST;
+        const total = subtotal + shipping;
+
+        if (!currentUser) {
+            alert('Please login to purchase');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        if (walletBalance < total) {
+            alert('Insufficient balance. Please deposit funds.');
+            closePopup();
+            showDepositPopup();
+            return;
+        }
+
+        // Validate shipping fields
+        const name = document.getElementById('fullName')?.value;
+        const address = document.getElementById('address')?.value;
+        const phone = document.getElementById('phone')?.value;
+        const city = document.getElementById('city')?.value;
+
+        if (!name || !address || !phone || !city) {
+            alert('Please fill all required shipping fields');
+            return;
+        }
+
+        // Check if user has PIN set
+        if (userData && userData.pin) {
             showPinEntry(productId);
-        };
-
-        function showPinEntry(productId) {
-            const product = campaigns.find(c => c.id == productId);
-            const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
-            const subtotal = product.price * units;
-            const shipping = product.shippingCost || CONFIG.SHIPPING_COST;
-            const total = subtotal + shipping;
-
-            document.getElementById('popupCard').innerHTML = `
-                <div class="popup-title"><span class="material-icons">lock</span> Enter PIN</div>
-                <div style="margin-bottom:24px; text-align:center;">
-                    <p style="font-size:1.2rem; font-weight:600; color:#0f172a;">Total: ₦${total.toLocaleString()}</p>
-                    <p style="color:#64748b;">Enter your 4-digit PIN to authorize payment</p>
-                </div>
-                <div class="pin-container">
-                    ${[1,2,3,4].map(i => `<div class="pin-digit"><input type="number" id="pin${i}" maxlength="1" oninput="window.moveToNext(this, ${i+1})"></div>`).join('')}
-                </div>
-                <div style="margin:24px 0;">
-                    <div class="swipe-container" id="swipeContainer">
-                        <div class="swipe-track" id="swipeTrack"></div>
-                        <div class="swipe-thumb" id="swipeThumb" onmousedown="startSwipe(event)" ontouchstart="startSwipe(event)">
-                            <span class="material-icons">chevron_right</span>
-                        </div>
-                        <div class="swipe-text"><span>Swipe to confirm payment</span></div>
-                    </div>
-                </div>
-                <div class="popup-actions">
-                    <button class="popup-btn popup-btn-outline" onclick="window.showBuyForm('${product.id}')">Back</button>
-                </div>
-            `;
-
-            document.querySelectorAll('.pin-digit input').forEach((input, index) => {
-                input.addEventListener('keyup', (e) => {
-                    if (e.key === 'Backspace' && index > 0) {
-                        document.querySelectorAll('.pin-digit input')[index - 1].focus();
-                    }
-                    checkPinComplete();
-                });
-                input.addEventListener('input', checkPinComplete);
-            });
-
-            setTimeout(initSwipe, 100);
+        } else {
+            showCreatePin(productId);
         }
+    };
 
-        window.moveToNext = function(current, nextId) {
-            if (current.value.length === 1 && nextId <= 4) {
-                document.getElementById(`pin${nextId}`)?.focus();
-            }
-        };
-
-        function checkPinComplete(btnId = null) {
-            const pin = [1,2,3,4].map(i => document.getElementById(`pin${i}`)?.value).join('');
-            const complete = pin.length === 4 && /^\d+$/.test(pin);
+    window.showCreatePin = function(productId) {
+        const product = campaigns.find(c => c.id == productId);
+        
+        // Check if campaign is already completed
+        if (product.reserved >= product.goal) {
+            alert('This campaign is already completed and awaiting shipping.');
+            closePopup();
+            return;
+        }
+        
+        const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
+        const subtotal = product.price * units;
+        const shipping = product.shippingCost || SHIPPING_COST;
+        const total = subtotal + shipping;
+        
+        const popup = document.getElementById('popupCard');
+        popup.innerHTML = `
+            <div class="popup-title">
+                <span class="material-icons">lock</span> Create Security PIN
+            </div>
+            <div style="margin-bottom:24px; text-align:center;">
+                <p style="font-size:1.2rem; font-weight:600; color:#0f172a;">Total: ₦${total.toLocaleString()}</p>
+                <p style="color:#64748b;">Create a 4-digit PIN for future transactions</p>
+            </div>
             
-            document.querySelectorAll('.pin-digit').forEach((d, i) => {
-                const input = d.querySelector('input');
-                if (input?.value) d.classList.add('filled');
-                else d.classList.remove('filled');
+            <div class="pin-container">
+                <div class="pin-digit"><input type="number" id="pin1" maxlength="1" oninput="moveToNext(this, 2)" autofocus></div>
+                <div class="pin-digit"><input type="number" id="pin2" maxlength="1" oninput="moveToNext(this, 3)"></div>
+                <div class="pin-digit"><input type="number" id="pin3" maxlength="1" oninput="moveToNext(this, 4)"></div>
+                <div class="pin-digit"><input type="number" id="pin4" maxlength="1" oninput="moveToNext(this, null)"></div>
+            </div>
+            
+            <div style="margin:24px 0;">
+                <p style="color:#64748b; font-size:0.9rem;">Remember this PIN - you'll need it for all purchases</p>
+            </div>
+            
+            <div class="popup-actions">
+                <button class="popup-btn popup-btn-outline" onclick="showBuyForm('${product.id}')">Back</button>
+                <button class="popup-btn popup-btn-primary" onclick="savePinAndProceed('${product.id}')" id="savePinBtn">Save PIN & Continue</button>
+            </div>
+        `;
+        
+        document.querySelectorAll('.pin-digit input').forEach((input, index) => {
+            input.addEventListener('keyup', (e) => {
+                if (e.key === 'Backspace' && index > 0) {
+                    const prevInput = document.querySelectorAll('.pin-digit input')[index - 1];
+                    prevInput.focus();
+                }
             });
+        });
+    };
 
-            if (btnId) {
-                const btn = document.getElementById(btnId);
-                if (btn) {
-                    btn.style.opacity = complete ? '1' : '0.5';
-                    btn.style.pointerEvents = complete ? 'auto' : 'none';
-                    btn.innerText = complete ? 'Save PIN & Continue' : 'Enter 4-digit PIN';
-                }
-            }
-            return complete;
+    window.savePinAndProceed = async function(productId) {
+        const pin1 = document.getElementById('pin1')?.value;
+        const pin2 = document.getElementById('pin2')?.value;
+        const pin3 = document.getElementById('pin3')?.value;
+        const pin4 = document.getElementById('pin4')?.value;
+        const newPin = `${pin1}${pin2}${pin3}${pin4}`;
+        
+        if (newPin.length !== 4) {
+            alert('Please enter a 4-digit PIN');
+            return;
         }
-
-        function initSwipe() {
-            const thumb = document.getElementById('swipeThumb');
-            const track = document.getElementById('swipeTrack');
-            const container = document.getElementById('swipeContainer');
-            if (!thumb || !track || !container) return;
-
-            const containerWidth = container.offsetWidth;
-            const thumbWidth = 56;
-            const maxSwipe = containerWidth - thumbWidth - 8;
-            let isSwiping = false;
-
-            const onMove = (e) => {
-                if (!isSwiping) return;
-                e.preventDefault();
-                
-                const clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
-                const containerRect = container.getBoundingClientRect();
-                let newX = clientX - containerRect.left - thumbWidth/2;
-                newX = Math.max(4, Math.min(newX, maxSwipe));
-                
-                thumb.style.left = newX + 'px';
-                const progress = (newX - 4) / (maxSwipe - 4);
-                track.style.transform = `translateX(-${100 - (progress * 100)}%)`;
-                
-                if (newX >= maxSwipe - 10) endSwipe(true);
-            };
-
-            const onUp = () => {
-                if (isSwiping) endSwipe(false);
-            };
-
-            window.startSwipe = function(e) {
-                e.preventDefault();
-                isSwiping = true;
-                document.addEventListener('mousemove', onMove);
-                document.addEventListener('touchmove', onMove);
-                document.addEventListener('mouseup', onUp);
-                document.addEventListener('touchend', onUp);
-            };
-
-            function endSwipe(completed) {
-                isSwiping = false;
-                document.removeEventListener('mousemove', onMove);
-                document.removeEventListener('touchmove', onMove);
-                document.removeEventListener('mouseup', onUp);
-                document.removeEventListener('touchend', onUp);
-
-                if (completed) {
-                    if (checkPinComplete()) {
-                        verifyPinAndPay(currentProduct?.id);
-                    } else {
-                        alert('Please enter your 4-digit PIN first');
-                        resetSwipe();
-                    }
-                } else {
-                    resetSwipe();
-                }
+        
+        // Save PIN to Firebase
+        if (firebase.firestore && currentUser) {
+            try {
+                await firebase.firestore().collection('users').doc(currentUser.uid).update({
+                    pin: newPin
+                });
+                userData.pin = newPin;
+                showPinEntry(productId);
+            } catch (e) {
+                console.warn('Error saving PIN', e);
+                alert('Error saving PIN. Please try again.');
             }
+        } else {
+            userData = { pin: newPin };
+            showPinEntry(productId);
+        }
+    };
 
-            function resetSwipe() {
+    window.showPinEntry = function(productId) {
+        const product = campaigns.find(c => c.id == productId);
+        
+        // Check if campaign is already completed
+        if (product.reserved >= product.goal) {
+            alert('This campaign is already completed and awaiting shipping.');
+            closePopup();
+            return;
+        }
+        
+        const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
+        const subtotal = product.price * units;
+        const shipping = product.shippingCost || SHIPPING_COST;
+        const total = subtotal + shipping;
+        
+        const popup = document.getElementById('popupCard');
+        popup.innerHTML = `
+            <div class="popup-title">
+                <span class="material-icons">lock</span> Enter PIN
+            </div>
+            <div style="margin-bottom:24px; text-align:center;">
+                <p style="font-size:1.2rem; font-weight:600; color:#0f172a;">Total: ₦${total.toLocaleString()}</p>
+                <p style="color:#64748b;">Enter your 4-digit PIN to authorize payment</p>
+            </div>
+            
+            <div class="pin-container">
+                <div class="pin-digit"><input type="number" id="pin1" maxlength="1" oninput="moveToNext(this, 2)" autofocus></div>
+                <div class="pin-digit"><input type="number" id="pin2" maxlength="1" oninput="moveToNext(this, 3)"></div>
+                <div class="pin-digit"><input type="number" id="pin3" maxlength="1" oninput="moveToNext(this, 4)"></div>
+                <div class="pin-digit"><input type="number" id="pin4" maxlength="1" oninput="moveToNext(this, null)"></div>
+            </div>
+            
+            <div style="margin:24px 0;">
+                <div class="swipe-container" id="swipeContainer">
+                    <div class="swipe-track" id="swipeTrack"></div>
+                    <div class="swipe-thumb" id="swipeThumb" onmousedown="startSwipe(event)" ontouchstart="startSwipe(event)">
+                        <span class="material-icons">chevron_right</span>
+                    </div>
+                    <div class="swipe-text"><span>Swipe to confirm payment</span></div>
+                </div>
+            </div>
+            
+            <div class="popup-actions">
+                <button class="popup-btn popup-btn-outline" onclick="showBuyForm('${product.id}')">Back</button>
+            </div>
+        `;
+        
+        document.querySelectorAll('.pin-digit input').forEach((input, index) => {
+            input.addEventListener('keyup', (e) => {
+                if (e.key === 'Backspace' && index > 0) {
+                    const prevInput = document.querySelectorAll('.pin-digit input')[index - 1];
+                    prevInput.focus();
+                }
+                // Update visual feedback
+                if (input.value.length === 1) {
+                    input.parentElement.classList.add('filled');
+                } else {
+                    input.parentElement.classList.remove('filled');
+                }
+            });
+            input.addEventListener('input', function() {
+                if (this.value.length === 1) {
+                    this.parentElement.classList.add('filled');
+                } else {
+                    this.parentElement.classList.remove('filled');
+                }
+            });
+        });
+        
+        setTimeout(() => {
+            initSwipe(productId);
+        }, 100);
+    };
+
+    function moveToNext(current, nextId) {
+        if (current.value.length === 1) {
+            if (nextId) {
+                const nextInput = document.getElementById(`pin${nextId}`);
+                if (nextInput) nextInput.focus();
+            }
+        }
+    }
+
+    function initSwipe(productId) {
+        const thumb = document.getElementById('swipeThumb');
+        const track = document.getElementById('swipeTrack');
+        const container = document.getElementById('swipeContainer');
+        
+        if (!thumb || !track || !container) return;
+        
+        const containerWidth = container.offsetWidth;
+        const thumbWidth = 56;
+        const maxSwipe = containerWidth - thumbWidth - 8;
+        let isSwiping = false;
+        
+        const onMove = (e) => {
+            if (!isSwiping) return;
+            e.preventDefault();
+            
+            let clientX;
+            if (e.type === 'mousemove') {
+                clientX = e.clientX;
+            } else {
+                clientX = e.touches[0].clientX;
+            }
+            
+            const containerRect = container.getBoundingClientRect();
+            let newX = clientX - containerRect.left - thumbWidth/2;
+            
+            newX = Math.max(4, Math.min(newX, maxSwipe));
+            
+            thumb.style.left = newX + 'px';
+            
+            const progress = (newX - 4) / (maxSwipe - 4);
+            const trackWidth = progress * 100;
+            track.style.transform = `translateX(-${100 - trackWidth}%)`;
+            
+            if (newX >= maxSwipe - 10) {
+                endSwipe(true);
+            }
+        };
+        
+        const onUp = () => {
+            if (isSwiping) {
+                endSwipe(false);
+            }
+        };
+        
+        const endSwipe = (completed) => {
+            isSwiping = false;
+            
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            document.removeEventListener('touchend', onUp);
+            
+            if (completed) {
+                // Check PIN before completing
+                const pin1 = document.getElementById('pin1')?.value;
+                const pin2 = document.getElementById('pin2')?.value;
+                const pin3 = document.getElementById('pin3')?.value;
+                const pin4 = document.getElementById('pin4')?.value;
+                const pinComplete = pin1 && pin2 && pin3 && pin4 && 
+                                   pin1.length === 1 && pin2.length === 1 && 
+                                   pin3.length === 1 && pin4.length === 1;
+                
+                if (pinComplete) {
+                    verifyPinAndPay(productId);
+                } else {
+                    alert('Please enter your 4-digit PIN first');
+                    thumb.style.left = '4px';
+                    track.style.transform = 'translateX(-100%)';
+                }
+            } else {
+                thumb.style.left = '4px';
+                track.style.transform = 'translateX(-100%)';
+            }
+        };
+        
+        window.startSwipe = function(e) {
+            e.preventDefault();
+            isSwiping = true;
+            
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('touchmove', onMove);
+            document.addEventListener('mouseup', onUp);
+            document.addEventListener('touchend', onUp);
+        };
+    }
+
+    window.verifyPinAndPay = async function(productId) {
+        const product = campaigns.find(c => c.id == productId);
+        
+        // Final check if campaign is already completed
+        if (product.reserved >= product.goal) {
+            alert('This campaign is already completed and awaiting shipping.');
+            closePopup();
+            return;
+        }
+        
+        const pin1 = document.getElementById('pin1')?.value;
+        const pin2 = document.getElementById('pin2')?.value;
+        const pin3 = document.getElementById('pin3')?.value;
+        const pin4 = document.getElementById('pin4')?.value;
+        const enteredPin = `${pin1}${pin2}${pin3}${pin4}`;
+        
+        if (enteredPin.length !== 4) {
+            alert('Please enter a 4-digit PIN');
+            return;
+        }
+        
+        // Verify PIN against stored PIN
+        if (userData && userData.pin) {
+            if (enteredPin !== userData.pin) {
+                alert('Incorrect PIN. Please try again.');
+                // Reset swipe
                 const thumb = document.getElementById('swipeThumb');
                 const track = document.getElementById('swipeTrack');
                 if (thumb) thumb.style.left = '4px';
                 if (track) track.style.transform = 'translateX(-100%)';
-            }
-        }
-
-        function verifyPinAndPay(productId) {
-            const pin = [1,2,3,4].map(i => document.getElementById(`pin${i}`)?.value).join('');
-            if (pin.length !== 4) {
-                alert('Please enter a 4-digit PIN');
-                resetSwipe();
                 return;
             }
-
-            if (userData?.pin && pin !== userData.pin) {
-                alert('Incorrect PIN');
-                resetSwipe();
-                return;
-            }
-
-            completePurchase(productId);
         }
+        
+        completePurchase(productId);
+    };
 
-        function resetSwipe() {
-            const thumb = document.getElementById('swipeThumb');
-            const track = document.getElementById('swipeTrack');
-            if (thumb) thumb.style.left = '4px';
-            if (track) track.style.transform = 'translateX(-100%)';
+    window.completePurchase = async function(productId) {
+        const product = campaigns.find(c => c.id == productId);
+        const unitsInput = document.getElementById('buyUnits');
+        const units = parseInt(unitsInput?.value) || 1;
+        const available = product.goal - product.reserved;
+        
+        // Final availability check
+        if (units > available) {
+            alert(`Sorry, only ${available} units are now available. Please adjust your order.`);
+            closePopup();
+            return;
         }
+        
+        const subtotal = product.price * units;
+        const shipping = product.shippingCost || SHIPPING_COST;
+        const total = subtotal + shipping;
 
-        async function completePurchase(productId) {
-            const product = campaigns.find(c => c.id == productId);
-            const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
-            
-            if (units > (product.goal - product.reserved)) {
-                alert(`Only ${product.goal - product.reserved} units available`);
-                closePopup();
-                return;
-            }
+        // Update local data
+        walletBalance -= total;
+        reservedUnits += units;
+        joinedCampaigns += 1;
+        product.reserved += units;
+        
+        // Check if campaign is now completed
+        const isCompleted = product.reserved >= product.goal;
 
-            const subtotal = product.price * units;
-            const shipping = product.shippingCost || CONFIG.SHIPPING_COST;
-            const total = subtotal + shipping;
-
-            // Update local state
-            walletBalance -= total;
-            reservedUnits += units;
-            joinedCampaigns += 1;
-            product.reserved += units;
-            const isCompleted = product.reserved >= product.goal;
-
-            if (firebase.firestore && currentUser) {
-                try {
-                    const batch = firebase.firestore().batch();
-                    
-                    const userRef = firebase.firestore().collection('users').doc(currentUser.uid);
-                    batch.update(userRef, {
-                        walletBalance: firebase.firestore.FieldValue.increment(-total),
-                        joinedCampaigns: firebase.firestore.FieldValue.increment(1),
-                        reservedUnits: firebase.firestore.FieldValue.increment(units)
-                    });
-
-                    const campaignQuery = await firebase.firestore().collection('campaigns').where('name', '==', product.name).get();
-                    if (!campaignQuery.empty) {
-                        batch.update(campaignQuery.docs[0].ref, {
-                            reserved: firebase.firestore.FieldValue.increment(units)
-                        });
-                    }
-
-                    const orderRef = firebase.firestore().collection('orders').doc();
-                    batch.set(orderRef, {
-                        userId: currentUser.uid,
-                        productId: productId,
-                        productName: product.name,
-                        units: units,
-                        subtotal: subtotal,
-                        shipping: shipping,
-                        total: total,
-                        shippingDetails: {
-                            name: document.getElementById('fullName')?.value,
-                            address: document.getElementById('address')?.value,
-                            phone: document.getElementById('phone')?.value,
-                            city: document.getElementById('city')?.value,
-                            notes: document.getElementById('notes')?.value
-                        },
-                        status: isCompleted ? 'awaiting_shipping' : 'pending',
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    const transactionRef = firebase.firestore().collection('transactions').doc();
-                    batch.set(transactionRef, {
-                        userId: currentUser.uid,
-                        type: 'purchase',
-                        amount: total,
-                        description: `Purchase of ${units} x ${product.name}`,
-                        status: 'completed',
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    await batch.commit();
-                } catch (e) {
-                    console.warn('Firestore error:', e);
-                }
-            }
-
-            updateWalletDisplay();
-            renderCampaigns();
-            showConfirmation(total, product.reserved, product.goal, isCompleted);
-        }
-
-        function showConfirmation(amount, reserved, goal, isCompleted) {
-            document.getElementById('popupCard').innerHTML = `
-                <div class="checkmark-container">
-                    <svg class="checkmark-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-                        <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
-                        <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
-                    </svg>
-                    <div class="checkmark-text">Payment Successful!</div>
-                    <div class="checkmark-subtext">₦${amount.toLocaleString()} • Order confirmed</div>
-                    <div class="checkmark-subtext" style="font-size:0.9rem;">Updated: ${reserved}/${goal} units reserved</div>
-                    ${isCompleted ? '<div class="checkmark-subtext" style="color:#10b981; margin-top:8px;">🎉 Campaign completed! Awaiting shipping.</div>' : ''}
-                    <button class="popup-btn popup-btn-primary" onclick="closePopup()" style="margin-top:24px;">Done</button>
-                </div>
-            `;
-
-            // Success sound
+        if (firebase.firestore && currentUser) {
             try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                osc.connect(gain).connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.2);
+                const batch = firebase.firestore().batch();
                 
-                setTimeout(() => {
-                    const osc2 = audioCtx.createOscillator();
-                    const gain2 = audioCtx.createGain();
-                    osc2.frequency.setValueAtTime(1174.66, audioCtx.currentTime);
-                    gain2.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                    gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                    osc2.connect(gain2).connect(audioCtx.destination);
-                    osc2.start();
-                    osc2.stop(audioCtx.currentTime + 0.3);
-                }, 150);
-            } catch (e) {}
+                // Update user wallet and stats
+                const userRef = firebase.firestore().collection('users').doc(currentUser.uid);
+                batch.update(userRef, {
+                    walletBalance: firebase.firestore.FieldValue.increment(-total),
+                    joinedCampaigns: firebase.firestore.FieldValue.increment(1),
+                    reservedUnits: firebase.firestore.FieldValue.increment(units)
+                });
+                
+                // Update campaign reserved count
+                const campaignRef = firebase.firestore().collection('campaigns').doc(product.id);
+                batch.update(campaignRef, {
+                    reserved: firebase.firestore.FieldValue.increment(units)
+                });
+                
+                // Create order
+                const orderRef = firebase.firestore().collection('orders').doc();
+                batch.set(orderRef, {
+                    userId: currentUser.uid,
+                    productId: productId,
+                    productName: product.name,
+                    units: units,
+                    subtotal: subtotal,
+                    shipping: shipping,
+                    total: total,
+                    shippingDetails: { 
+                        name: document.getElementById('fullName')?.value,
+                        address: document.getElementById('address')?.value,
+                        phone: document.getElementById('phone')?.value,
+                        city: document.getElementById('city')?.value,
+                        notes: document.getElementById('notes')?.value 
+                    },
+                    status: isCompleted ? 'awaiting_shipping' : 'pending',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Create transaction record
+                const transactionRef = firebase.firestore().collection('transactions').doc();
+                batch.set(transactionRef, {
+                    userId: currentUser.uid,
+                    type: 'purchase',
+                    amount: total,
+                    description: `Purchase of ${units} x ${product.name}`,
+                    status: 'completed',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                await batch.commit();
+                
+                // Reload orders and transactions
+                await loadUserOrders();
+                await loadUserTransactions();
+                
+            } catch (e) { 
+                console.warn('Firestore error', e); 
+            }
         }
 
-        // ========== DEPOSIT ==========
-        function showDepositPopup() {
-            document.getElementById('popupCard').innerHTML = `
-                <div class="popup-title"><span class="material-icons">add_circle</span> Deposit funds</div>
-                <div class="deposit-options">
-                    <div class="deposit-option active" onclick="selectDepositOption('normal', this)">
-                        <span class="material-icons">account_balance</span><span>Normal deposit</span>
-                    </div>
-                    <div class="deposit-option" onclick="selectDepositOption('giftcard', this)">
-                        <span class="material-icons">card_giftcard</span><span>Gift card</span>
-                    </div>
+        updateUI();
+        renderCampaigns(); // Update the UI with new availability
+        showConfirmation(total, product.reserved, product.goal, isCompleted);
+    };
+
+    window.showConfirmation = function(amount, reserved, goal, isCompleted) {
+        const popup = document.getElementById('popupCard');
+        popup.innerHTML = `
+            <div class="checkmark-container">
+                <svg class="checkmark-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                    <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>
+                <div class="checkmark-text">Payment Successful!</div>
+                <div class="checkmark-subtext">₦${amount.toLocaleString()} • Order confirmed</div>
+                <div class="checkmark-subtext" style="font-size:0.9rem;">Updated: ${reserved}/${goal} units reserved</div>
+                ${isCompleted ? '<div class="checkmark-subtext" style="color:#10b981; margin-top:8px;">🎉 Campaign completed! Awaiting shipping.</div>' : ''}
+                <button class="popup-btn popup-btn-primary" onclick="closePopup()" style="margin-top:24px;">Done</button>
+            </div>
+        `;
+    };
+
+    // ========== DEPOSIT POPUP ==========
+    function showDepositPopup() {
+        const popup = document.getElementById('popupCard');
+        popup.innerHTML = `
+            <div class="popup-title">
+                <span class="material-icons">add_circle</span> Deposit funds
+            </div>
+            <div class="deposit-options">
+                <div class="deposit-option active" onclick="selectDepositOption('normal', this)">
+                    <span class="material-icons">account_balance</span>
+                    <span>Normal deposit</span>
                 </div>
-                <div id="depositNormal">
-                    <input type="number" id="depositAmount" class="popup-input" placeholder="Amount (₦)" min="${CONFIG.MIN_DEPOSIT}" value="5000">
+                <div class="deposit-option" onclick="selectDepositOption('giftcard', this)">
+                    <span class="material-icons">card_giftcard</span>
+                    <span>Gift card</span>
                 </div>
-                <div id="depositGiftcard" style="display:none;">
-                    <input type="text" id="giftcardCode" class="popup-input" placeholder="Enter gift card code">
-                    <p style="color:#64748b; font-size:0.9rem; margin-bottom:16px;">Redeem your gift card to add funds</p>
-                </div>
-                <div class="popup-actions">
-                    <button class="popup-btn popup-btn-outline" onclick="closePopup()">Cancel</button>
-                    <button class="popup-btn popup-btn-primary" onclick="processDeposit()">Proceed</button>
-                </div>
-            `;
-            document.getElementById('popupOverlay').classList.add('show');
+            </div>
+            <div id="depositNormal">
+                <input type="number" id="depositAmount" class="popup-input" placeholder="Amount (₦)" min="100" value="5000">
+            </div>
+            <div id="depositGiftcard" style="display:none;">
+                <input type="text" id="giftcardCode" class="popup-input" placeholder="Enter gift card code">
+                <p style="color:#64748b; font-size:0.9rem; margin-bottom:16px;">Redeem your gift card to add funds</p>
+            </div>
+            <div class="popup-actions">
+                <button class="popup-btn popup-btn-outline" onclick="closePopup()">Cancel</button>
+                <button class="popup-btn popup-btn-primary" onclick="processDeposit()">Proceed</button>
+            </div>
+        `;
+        document.getElementById('popupOverlay').classList.add('show');
+    }
+
+    window.selectDepositOption = function(option, el) {
+        document.querySelectorAll('.deposit-option').forEach(opt => opt.classList.remove('active'));
+        el.classList.add('active');
+        if (option === 'normal') {
+            document.getElementById('depositNormal').style.display = 'block';
+            document.getElementById('depositGiftcard').style.display = 'none';
+        } else {
+            document.getElementById('depositNormal').style.display = 'none';
+            document.getElementById('depositGiftcard').style.display = 'block';
         }
+    };
 
-        window.selectDepositOption = function(option, el) {
-            document.querySelectorAll('.deposit-option').forEach(opt => opt.classList.remove('active'));
-            el.classList.add('active');
-            document.getElementById('depositNormal').style.display = option === 'normal' ? 'block' : 'none';
-            document.getElementById('depositGiftcard').style.display = option === 'giftcard' ? 'block' : 'none';
-        };
-
-        window.processDeposit = async function() {
-            const activeOption = document.querySelector('.deposit-option.active span:last-child').innerText;
-            
-            if (activeOption === 'Normal deposit') {
-                const amount = parseFloat(document.getElementById('depositAmount')?.value);
-                if (!amount || amount < CONFIG.MIN_DEPOSIT) {
-                    alert(`Enter valid amount (min ₦${CONFIG.MIN_DEPOSIT})`);
-                    return;
-                }
+    window.processDeposit = async function() {
+        const activeOption = document.querySelector('.deposit-option.active span:last-child').innerText;
+        if (activeOption === 'Normal deposit') {
+            const amount = parseFloat(document.getElementById('depositAmount')?.value);
+            if (amount && amount >= 100) {
                 walletBalance += amount;
-                updateWalletDisplay();
+                
+                if (firebase.firestore && currentUser) {
+                    try {
+                        const batch = firebase.firestore().batch();
+                        
+                        const userRef = firebase.firestore().collection('users').doc(currentUser.uid);
+                        batch.update(userRef, {
+                            walletBalance: firebase.firestore.FieldValue.increment(amount)
+                        });
+                        
+                        const transactionRef = firebase.firestore().collection('transactions').doc();
+                        batch.set(transactionRef, {
+                            userId: currentUser.uid,
+                            type: 'deposit',
+                            amount: amount,
+                            description: 'Normal deposit',
+                            status: 'completed',
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        await batch.commit();
+                        await loadUserTransactions();
+                        
+                    } catch (e) {
+                        console.warn('Firestore error', e);
+                    }
+                }
+                
+                updateUI();
                 alert(`✅ Deposited ₦${amount.toLocaleString()}`);
                 closePopup();
             } else {
-                const code = document.getElementById('giftcardCode')?.value;
-                if (!code?.trim()) {
-                    alert('Please enter a gift card code');
-                    return;
-                }
+                alert('Enter valid amount (min ₦100)');
+            }
+        } else {
+            const code = document.getElementById('giftcardCode')?.value;
+            if (code && code.trim() !== '') {
                 const amount = 10000;
                 walletBalance += amount;
-                updateWalletDisplay();
+                
+                if (firebase.firestore && currentUser) {
+                    try {
+                        const batch = firebase.firestore().batch();
+                        
+                        const userRef = firebase.firestore().collection('users').doc(currentUser.uid);
+                        batch.update(userRef, {
+                            walletBalance: firebase.firestore.FieldValue.increment(amount)
+                        });
+                        
+                        const transactionRef = firebase.firestore().collection('transactions').doc();
+                        batch.set(transactionRef, {
+                            userId: currentUser.uid,
+                            type: 'giftcard',
+                            amount: amount,
+                            description: `Gift card redeemed: ${code}`,
+                            status: 'completed',
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        await batch.commit();
+                        await loadUserTransactions();
+                        
+                    } catch (e) {
+                        console.warn('Firestore error', e);
+                    }
+                }
+                
+                updateUI();
                 alert(`✅ Gift card redeemed! ₦${amount.toLocaleString()} added.`);
                 closePopup();
+            } else {
+                alert('Please enter a gift card code');
             }
-        };
+        }
+    };
 
-        // ========== EVENT HANDLERS ==========
-        function attachEvents() {
-            // Username click -> logout popup
-            document.getElementById('userInfo')?.addEventListener('click', (e) => {
+    // ========== EVENT LISTENERS ==========
+    function attachEvents() {
+        // User info click for logout popup - clicking username opens logout popup
+        const userInfo = document.getElementById('userInfo');
+        if (userInfo) {
+            userInfo.addEventListener('click', (e) => {
                 e.stopPropagation();
                 document.getElementById('logoutPopup').classList.toggle('show');
             });
+        }
 
-            // Close logout popup when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.user-info') && !e.target.closest('.logout-popup')) {
-                    document.getElementById('logoutPopup').classList.remove('show');
-                }
-            });
+        // Close logout popup when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.user-info') && !e.target.closest('.logout-popup')) {
+                document.getElementById('logoutPopup').classList.remove('show');
+            }
+        });
 
-            // Wallet dropdown
-            document.querySelector('.wallet-pill')?.addEventListener('click', (e) => {
+        // Wallet pill dropdown
+        const walletPill = document.querySelector('.wallet-pill');
+        if (walletPill) {
+            walletPill.addEventListener('click', (e) => {
                 e.stopPropagation();
                 document.getElementById('walletDropdown').classList.toggle('show');
             });
+        }
+        
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.wallet-pill') && !e.target.closest('.wallet-dropdown')) {
+                document.getElementById('walletDropdown').classList.remove('show');
+            }
+        });
 
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.wallet-pill')) {
-                    document.getElementById('walletDropdown').classList.remove('show');
-                }
-            });
-
-            // Deposit
-            document.getElementById('depositTopBtn')?.addEventListener('click', showDepositPopup);
-            document.getElementById('quickDeposit')?.addEventListener('click', () => {
+        const depositBtn = document.getElementById('depositTopBtn');
+        if (depositBtn) {
+            depositBtn.addEventListener('click', showDepositPopup);
+        }
+        
+        const quickDeposit = document.getElementById('quickDeposit');
+        if (quickDeposit) {
+            quickDeposit.addEventListener('click', () => {
                 document.getElementById('walletDropdown').classList.remove('show');
                 showDepositPopup();
             });
+        }
 
-            // Login
-            document.getElementById('loginBtn')?.addEventListener('click', () => {
+        const loginBtn = document.getElementById('loginBtn');
+        if (loginBtn) {
+            loginBtn.addEventListener('click', () => {
                 window.location.href = 'login.html';
             });
+        }
 
-            // View history
-            document.getElementById('viewHistoryDropdown')?.addEventListener('click', () => {
+        const viewHistory = document.getElementById('viewHistoryDropdown');
+        if (viewHistory) {
+            viewHistory.addEventListener('click', () => {
                 window.location.href = 'wallet.html';
             });
+        }
 
-            // Navigation
-            document.querySelectorAll('[data-page]').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const page = btn.dataset.page;
-                    if (page === 'dashboard') {
-                        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                        document.getElementById('dashboard-page').classList.add('active');
-                        document.querySelectorAll('[data-page]').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                    } else {
-                        window.location.href = `${page}.html`;
-                    }
-                });
+        document.querySelectorAll('[data-page]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const page = btn.dataset.page;
+                if (page === 'dashboard') {
+                    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                    document.getElementById('dashboard-page').classList.add('active');
+                    document.querySelectorAll('[data-page]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                } else {
+                    window.location.href = `${page}.html`;
+                }
             });
+        });
 
-            // View all campaigns
-            document.getElementById('viewAllCampaignsLink')?.addEventListener('click', () => {
+        const viewAllLink = document.getElementById('viewAllCampaignsLink');
+        if (viewAllLink) {
+            viewAllLink.addEventListener('click', () => {
                 window.location.href = 'discover.html';
             });
+        }
 
-            // Request campaign
-            document.getElementById('requestCampaignBtn')?.addEventListener('click', () => {
-                document.getElementById('popupCard').innerHTML = `
-                    <div class="popup-title"><span class="material-icons">send</span> Request a group buy</div>
+        const requestBtn = document.getElementById('requestCampaignBtn');
+        if (requestBtn) {
+            requestBtn.addEventListener('click', () => {
+                const popup = document.getElementById('popupCard');
+                popup.innerHTML = `
+                    <div class="popup-title">
+                        <span class="material-icons">send</span> Request a group buy
+                    </div>
                     <input type="url" id="productLink" class="popup-input" placeholder="Product link (Amazon, etc)">
                     <input type="text" id="productName" class="popup-input" placeholder="Product name">
                     <textarea id="requestNotes" class="popup-textarea" placeholder="Additional details (optional)"></textarea>
@@ -1992,54 +2400,47 @@
                 `;
                 document.getElementById('popupOverlay').classList.add('show');
             });
+        }
 
-            // Logout
-            document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async () => {
                 if (firebase.auth) {
                     await firebase.auth().signOut();
                 }
                 window.location.href = 'login.html';
             });
-
-            // Buy button (single button)
-            document.addEventListener('click', (e) => {
-                const btn = e.target.closest('.buy-campaign');
-                if (btn && !btn.disabled) {
-                    const id = btn.dataset.id;
-                    const product = campaigns.find(c => c.id == id);
-                    if (product?.reserved >= product?.goal) {
-                        alert('Campaign completed - awaiting shipping');
-                        return;
-                    }
-                    if (!currentUser) {
-                        alert('Please login to purchase');
-                        window.location.href = 'login.html';
-                        return;
-                    }
-                    window.showBuyForm(id);
-                }
-            });
         }
+    }
 
-        window.submitRequest = async function() {
-            const link = document.getElementById('productLink')?.value;
-            const name = document.getElementById('productName')?.value;
-            if (!link || !name) {
-                alert('Please fill product link and name');
-                return;
+    window.submitRequest = async function() {
+        const link = document.getElementById('productLink')?.value;
+        const name = document.getElementById('productName')?.value;
+        if (link && name) {
+            if (firebase.firestore && currentUser) {
+                try {
+                    await firebase.firestore().collection('requests').add({
+                        userId: currentUser.uid,
+                        productLink: link,
+                        productName: name,
+                        notes: document.getElementById('requestNotes')?.value,
+                        status: 'pending',
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } catch (e) {
+                    console.warn('Firestore error', e);
+                }
             }
             alert(`✅ Campaign requested for ${name}. We'll review and start a group buy!`);
             closePopup();
-        };
+        } else {
+            alert('Please fill at least product link and name');
+        }
+    };
 
-        window.closePopup = function() {
-            document.getElementById('popupOverlay').classList.remove('show');
-            isSwiping = false;
-        };
-
-        // ========== INIT ==========
-        document.addEventListener('DOMContentLoaded', setupAuth);
-    })();
+    window.closePopup = function() {
+        document.getElementById('popupOverlay').classList.remove('show');
+    };
 </script>
 </body>
 </html>

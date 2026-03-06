@@ -13,7 +13,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
-    <!-- External Configurations -->
+    <!-- External Configurations - Must be loaded before main script -->
     <script src="firebase-config.js"></script>
     
     <style>
@@ -998,6 +998,33 @@
             background: #eef2ff;
         }
 
+        /* Debug Panel */
+        .debug-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            z-index: 10000;
+            display: none;
+        }
+        .debug-panel.show {
+            display: block;
+        }
+        .debug-btn {
+            background: #2463eb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            margin: 4px;
+        }
+
         /* Responsive Design - Guaranteed */
         @media (max-width: 1200px) {
             .orders-stats {
@@ -1131,6 +1158,16 @@
             </div>
         </div>
 
+        <!-- Debug Button (hidden by default, shows in development) -->
+        <button class="debug-btn" onclick="toggleDebugPanel()" style="margin-bottom: 10px; display: none;" id="debugToggle">Debug</button>
+        <div class="debug-panel" id="debugPanel">
+            <h4 style="margin-bottom: 8px;">Firebase Debug</h4>
+            <button class="debug-btn" onclick="testFirebaseConnection()">Test Connection</button>
+            <button class="debug-btn" onclick="checkUserOrders()">Check User Orders</button>
+            <button class="debug-btn" onclick="console.log('allOrders:', allOrders)">Log Orders</button>
+            <button class="debug-btn" onclick="window.location.reload()">Refresh Page</button>
+        </div>
+
         <!-- Filter Section - Premium -->
         <div class="filter-section">
             <div class="filter-tabs">
@@ -1196,32 +1233,80 @@
 </div>
 
 <script>
-    // ========== FIREBASE INIT ==========
+    // ========== FIREBASE INIT WITH BETTER ERROR HANDLING ==========
     let db, auth;
     let currentUser = null;
     let userData = null;
     let allOrders = [];
     let filteredOrders = [];
 
-    // Initialize Firebase
+    // Check if Firebase config exists
+    console.log("Checking Firebase config:", typeof firebaseConfig);
+
+    // Initialize Firebase with better error handling
     try {
-        if (typeof firebaseConfig !== 'undefined') {
-            firebase.initializeApp(firebaseConfig);
+        if (typeof firebaseConfig !== 'undefined' && firebaseConfig) {
+            console.log("Firebase config found, initializing...");
+            
+            // Check if Firebase is already initialized
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+                console.log("Firebase initialized for first time");
+            } else {
+                firebase.app(); // use existing app
+                console.log("Using existing Firebase app");
+            }
+            
             db = firebase.firestore();
             auth = firebase.auth();
-            console.log("Firebase initialized");
+            console.log("Firebase initialized successfully", {db: !!db, auth: !!auth});
+            
+            // Enable offline persistence for better performance
+            db.enablePersistence()
+                .then(() => console.log("Offline persistence enabled"))
+                .catch(err => {
+                    if (err.code == 'failed-precondition') {
+                        console.log("Persistence failed: Multiple tabs open");
+                    } else if (err.code == 'unimplemented') {
+                        console.log("Persistence not supported");
+                    }
+                });
+            
+            // Show debug button in development
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                document.getElementById('debugToggle').style.display = 'inline-block';
+            }
         } else {
-            console.error("Firebase config not found");
+            console.error("Firebase config not found - check firebase-config.js exists and is loaded");
+            showToast("Firebase configuration error: Check firebase-config.js", "error");
+            
+            // Show error in UI
+            document.getElementById('ordersContainer').innerHTML = `
+                <div class="empty-state">
+                    <span class="material-icons">error</span>
+                    <h3>Configuration Error</h3>
+                    <p>Firebase configuration not found. Please check that firebase-config.js exists and contains valid credentials.</p>
+                    <button class="btn-primary" onclick="window.location.reload()">
+                        <span class="material-icons">refresh</span> Retry
+                    </button>
+                </div>
+            `;
         }
     } catch (error) {
         console.error("Firebase init error:", error);
+        showToast("Failed to initialize app: " + error.message, "error");
     }
 
-    // ========== AUTH STATE ==========
+    // ========== AUTH STATE WITH DEBUGGING ==========
     if (auth) {
         auth.onAuthStateChanged(async (user) => {
+            console.log("Auth state changed:", user ? `User: ${user.uid}` : "No user");
+            
             if (user) {
                 currentUser = user;
+                console.log("Current user UID:", currentUser.uid);
+                console.log("Current user email:", currentUser.email);
+                
                 await loadUserData();
                 await loadOrders();
                 
@@ -1231,93 +1316,301 @@
                 document.getElementById('userAvatar').innerText = displayName.charAt(0).toUpperCase();
                 document.getElementById('sidebarUserName').innerHTML = displayName;
                 document.getElementById('userEmail').innerHTML = email;
+                
+                console.log("User authenticated and data loaded");
             } else {
-                window.location.href = 'index.html';
+                console.log("No user, redirecting to login");
+                // Try different possible login page names
+                const loginPages = ['login.html', 'index.html', 'signin.html'];
+                let redirected = false;
+                
+                for (const page of loginPages) {
+                    try {
+                        const response = await fetch(page, { method: 'HEAD' });
+                        if (response.ok) {
+                            window.location.href = page;
+                            redirected = true;
+                            break;
+                        }
+                    } catch (e) {
+                        // Continue trying
+                    }
+                }
+                
+                if (!redirected) {
+                    // Default fallback
+                    window.location.href = 'login.html';
+                }
             }
-            attachEvents();
         });
+        
+        // Add error handler for auth
+        auth.onAuthStateChanged.error = (error) => {
+            console.error("Auth error:", error);
+            showToast("Authentication error: " + error.message, "error");
+        };
+    } else {
+        console.error("Auth not initialized - Firebase may not be configured correctly");
     }
 
+    // ========== LOAD USER DATA WITH DEBUGGING ==========
     async function loadUserData() {
-        if (!currentUser || !db) return;
+        if (!currentUser || !db) {
+            console.log("No current user or db for loadUserData");
+            return null;
+        }
+        
         try {
+            console.log("Loading user data for:", currentUser.uid);
             const userRef = db.collection('users').doc(currentUser.uid);
             const doc = await userRef.get();
+            
             if (doc.exists) {
                 userData = doc.data();
+                console.log("User data loaded:", userData);
+                return userData;
             } else {
+                console.log("User document doesn't exist, creating...");
                 // Create user document if doesn't exist
-                await userRef.set({
+                const newUser = {
                     email: currentUser.email,
                     displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'User',
                     walletBalance: 0,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                userData = { walletBalance: 0 };
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    uid: currentUser.uid,
+                    ordersCount: 0
+                };
+                
+                await userRef.set(newUser);
+                userData = newUser;
+                console.log("User document created");
+                return userData;
             }
         } catch (e) { 
-            console.warn('Error loading user data:', e); 
+            console.error('Error loading/creating user data:', e);
+            showToast('Error loading user profile: ' + e.message, 'error');
+            return null;
         }
     }
 
-    // ========== LOAD ORDERS FROM FIREBASE - FIXED ==========
+    // ========== LOAD ORDERS FROM FIREBASE - FIXED WITH MULTIPLE FIELD ATTEMPTS ==========
     async function loadOrders() {
         if (!currentUser || !db) {
-            console.log("No current user or db");
+            console.log("Cannot load orders: No current user or db");
             return;
         }
         
         try {
             console.log("Loading orders for user:", currentUser.uid);
             
-            // IMPORTANT: Using the correct collection name from reference
-            // The reference shows orders are stored in 'orders' collection with userId field
-            const ordersRef = db.collection('orders')
-                .where('userId', '==', currentUser.uid)
-                .orderBy('timestamp', 'desc');
+            // Show loading state
+            const container = document.getElementById('ordersContainer');
+            container.innerHTML = `
+                <div class="loading-container">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 20px; color: #64748b; font-size: 1rem;">Loading your orders...</p>
+                </div>
+            `;
             
-            const snapshot = await ordersRef.get();
+            // Check if orders collection exists by getting a sample
+            try {
+                const testQuery = await db.collection('orders').limit(1).get();
+                console.log("Orders collection test:", testQuery.empty ? "Empty" : "Has data", "Size:", testQuery.size);
+                
+                if (!testQuery.empty) {
+                    const sampleDoc = testQuery.docs[0];
+                    console.log("Sample order fields:", Object.keys(sampleDoc.data()));
+                    console.log("Sample order data:", sampleDoc.data());
+                }
+            } catch (e) {
+                console.log("Could not access orders collection:", e);
+            }
             
-            console.log("Orders snapshot size:", snapshot.size);
+            // Try different possible field names for user ID
+            const possibleFieldNames = ['userId', 'uid', 'customerId', 'user', 'userUid', 'customerUid'];
+            let snapshot = null;
+            let successfulField = null;
             
+            for (const fieldName of possibleFieldNames) {
+                try {
+                    console.log(`Trying query with field: '${fieldName}'`);
+                    const query = await db.collection('orders')
+                        .where(fieldName, '==', currentUser.uid)
+                        .orderBy('timestamp', 'desc')
+                        .get();
+                    
+                    if (query.size > 0) {
+                        console.log(`✅ Found ${query.size} orders using field '${fieldName}'`);
+                        snapshot = query;
+                        successfulField = fieldName;
+                        break;
+                    } else {
+                        console.log(`No orders found with field '${fieldName}'`);
+                    }
+                } catch (e) {
+                    console.log(`Query with field '${fieldName}' failed:`, e.message);
+                }
+            }
+            
+            // If no orders found with any field, try without ordering first
+            if (!snapshot) {
+                console.log("Trying queries without ordering...");
+                
+                for (const fieldName of possibleFieldNames) {
+                    try {
+                        const query = await db.collection('orders')
+                            .where(fieldName, '==', currentUser.uid)
+                            .get();
+                        
+                        if (query.size > 0) {
+                            console.log(`✅ Found ${query.size} orders using field '${fieldName}' (no ordering)`);
+                            snapshot = query;
+                            successfulField = fieldName;
+                            break;
+                        }
+                    } catch (e) {
+                        console.log(`Simple query with field '${fieldName}' failed:`, e.message);
+                    }
+                }
+            }
+            
+            // If still no orders found, try getting all orders and filtering client-side
+            if (!snapshot) {
+                console.log("No orders found with field queries, trying client-side filtering...");
+                
+                try {
+                    const allOrdersSnapshot = await db.collection('orders').get();
+                    console.log(`Got all ${allOrdersSnapshot.size} orders for client-side filtering`);
+                    
+                    // Create array of matching docs
+                    const matchingDocs = [];
+                    allOrdersSnapshot.forEach(doc => {
+                        const data = doc.data();
+                        // Check all possible user ID fields
+                        for (const field of possibleFieldNames) {
+                            if (data[field] === currentUser.uid) {
+                                matchingDocs.push({
+                                    id: doc.id,
+                                    data: () => data
+                                });
+                                console.log(`Found matching order using field '${field}':`, doc.id);
+                                break;
+                            }
+                        }
+                    });
+                    
+                    if (matchingDocs.length > 0) {
+                        console.log(`Client-side filtering found ${matchingDocs.length} orders`);
+                        snapshot = {
+                            size: matchingDocs.length,
+                            empty: matchingDocs.length === 0,
+                            docs: matchingDocs,
+                            forEach: (callback) => matchingDocs.forEach(callback)
+                        };
+                        successfulField = 'client-filtered';
+                    }
+                } catch (e) {
+                    console.error("Client-side filtering failed:", e);
+                }
+            }
+            
+            // Process the orders
             allOrders = [];
-            snapshot.forEach(doc => {
-                const orderData = doc.data();
-                console.log("Order found:", doc.id, orderData);
-                allOrders.push({ 
-                    id: doc.id, 
-                    ...orderData,
-                    // Ensure timestamp is handled properly
-                    timestamp: orderData.timestamp || orderData.createdAt || new Date()
+            
+            if (snapshot && !snapshot.empty) {
+                console.log(`Processing ${snapshot.size} orders from ${successfulField || 'unknown'} field`);
+                
+                snapshot.forEach(doc => {
+                    const orderData = doc.data();
+                    console.log("Order found:", doc.id, orderData);
+                    
+                    // Handle timestamp safely
+                    let timestamp = orderData.timestamp || orderData.createdAt || orderData.orderDate || orderData.date || new Date();
+                    
+                    // Create a normalized order object
+                    const normalizedOrder = {
+                        id: doc.id,
+                        // Try different field names for common properties
+                        productName: orderData.productName || orderData.product?.name || orderData.itemName || orderData.name || 'Product',
+                        productImage: orderData.productImage || orderData.image || orderData.product?.image || 'https://placehold.co/300x200/2463eb/ffffff?text=Product',
+                        units: orderData.units || orderData.quantity || 1,
+                        pricePerUnit: orderData.pricePerUnit || orderData.price || orderData.unitPrice || 0,
+                        shippingPerUnit: orderData.shippingPerUnit || orderData.shippingCost || 0,
+                        total: orderData.total || orderData.amount || (orderData.price * (orderData.quantity || 1)) || 0,
+                        status: orderData.status || 'pending',
+                        timestamp: timestamp,
+                        shippingDetails: orderData.shippingDetails || orderData.shipping || orderData.addressInfo || {},
+                        userId: orderData.userId || orderData.uid || orderData.customerId || orderData.user || currentUser.uid
+                    };
+                    
+                    // Calculate missing values if needed
+                    if (!normalizedOrder.total && normalizedOrder.pricePerUnit && normalizedOrder.units) {
+                        normalizedOrder.total = normalizedOrder.pricePerUnit * normalizedOrder.units;
+                        if (normalizedOrder.shippingPerUnit) {
+                            normalizedOrder.total += normalizedOrder.shippingPerUnit * normalizedOrder.units;
+                        }
+                    }
+                    
+                    allOrders.push(normalizedOrder);
                 });
-            });
+                
+                console.log(`Successfully processed ${allOrders.length} orders`);
+            } else {
+                console.log("No orders found for user");
+                
+                // Try to check if there are any orders at all in the database
+                try {
+                    const anyOrders = await db.collection('orders').limit(1).get();
+                    if (anyOrders.empty) {
+                        console.log("Orders collection is completely empty");
+                    } else {
+                        console.log("Orders exist but none for this user");
+                        const sampleOrder = anyOrders.docs[0].data();
+                        console.log("Sample order user field:", 
+                            sampleOrder.userId || sampleOrder.uid || sampleOrder.customerId || 'unknown');
+                    }
+                } catch (e) {
+                    console.log("Could not check orders collection:", e);
+                }
+            }
             
             filteredOrders = [...allOrders];
             renderOrders();
             updateStats();
             
-            // Set up real-time listener for updates
-            ordersRef.onSnapshot((snapshot) => {
-                console.log("Real-time update received");
-                allOrders = [];
-                snapshot.forEach(doc => {
-                    const orderData = doc.data();
-                    allOrders.push({ 
-                        id: doc.id, 
-                        ...orderData,
-                        timestamp: orderData.timestamp || orderData.createdAt || new Date()
+            // Set up real-time listener for updates (only if we found a working field)
+            if (successfulField && successfulField !== 'client-filtered') {
+                try {
+                    console.log(`Setting up real-time listener with field '${successfulField}'`);
+                    const listenerQuery = db.collection('orders')
+                        .where(successfulField, '==', currentUser.uid)
+                        .orderBy('timestamp', 'desc');
+                    
+                    listenerQuery.onSnapshot((snapshot) => {
+                        console.log("Real-time update received");
+                        allOrders = [];
+                        snapshot.forEach(doc => {
+                            const orderData = doc.data();
+                            allOrders.push({ 
+                                id: doc.id, 
+                                ...orderData,
+                                timestamp: orderData.timestamp || orderData.createdAt || new Date()
+                            });
+                        });
+                        filteredOrders = [...allOrders];
+                        renderOrders();
+                        updateStats();
+                    }, (error) => {
+                        console.error("Listener error:", error);
                     });
-                });
-                filteredOrders = [...allOrders];
-                renderOrders();
-                updateStats();
-            }, (error) => {
-                console.error("Listener error:", error);
-            });
+                } catch (e) {
+                    console.log("Could not set up real-time listener:", e);
+                }
+            }
             
         } catch (e) {
             console.error('Error loading orders:', e);
-            showToast('Failed to load orders. Please refresh.', 'error');
+            showToast('Failed to load orders: ' + e.message, 'error');
             
             // Show error in UI
             const container = document.getElementById('ordersContainer');
@@ -1325,7 +1618,7 @@
                 <div class="empty-state">
                     <span class="material-icons">error</span>
                     <h3>Error Loading Orders</h3>
-                    <p>There was a problem loading your orders. Please try again.</p>
+                    <p>${e.message || 'There was a problem loading your orders.'}</p>
                     <button class="btn-primary" onclick="location.reload()">
                         <span class="material-icons">refresh</span> Refresh
                     </button>
@@ -1358,8 +1651,10 @@
             let date;
             if (order.timestamp && typeof order.timestamp.toDate === 'function') {
                 date = order.timestamp.toDate();
-            } else if (order.createdAt && typeof order.createdAt.toDate === 'function') {
-                date = order.createdAt.toDate();
+            } else if (order.timestamp && order.timestamp.seconds) {
+                date = new Date(order.timestamp.seconds * 1000);
+            } else if (order.timestamp) {
+                date = new Date(order.timestamp);
             } else {
                 date = new Date();
             }
@@ -1367,21 +1662,20 @@
             const status = order.status || 'pending';
             const statusClass = getStatusClass(status);
             
-            // Get product details from order
-            const productName = order.productName || order.productDetails?.name || 'Product';
-            const productImage = order.productImage || order.productDetails?.image || 'https://placehold.co/300x200/2463eb/ffffff?text=Product';
-            const units = order.units || order.quantity || 1;
-            const pricePerUnit = order.pricePerUnit || order.productPrice || 0;
-            const shippingPerUnit = order.shippingPerUnit || order.shippingCost || 0;
-            const subtotal = order.subtotal || (pricePerUnit * units);
-            const totalShipping = order.totalShipping || (shippingPerUnit * units);
+            const productName = order.productName || 'Product';
+            const productImage = order.productImage || 'https://placehold.co/300x200/2463eb/ffffff?text=Product';
+            const units = order.units || 1;
+            const pricePerUnit = order.pricePerUnit || 0;
+            const shippingPerUnit = order.shippingPerUnit || 0;
+            const subtotal = pricePerUnit * units;
+            const totalShipping = shippingPerUnit * units;
             const total = order.total || (subtotal + totalShipping);
             
-            // Get shipping details
-            const shipping = order.shippingDetails || order.shipping || {};
+            // Get shipping details safely
+            const shipping = order.shippingDetails || {};
             const customerName = shipping.name || shipping.fullName || 'N/A';
             const customerAddress = shipping.address || '';
-            const customerCity = shipping.city || shipping.city || '';
+            const customerCity = shipping.city || '';
             const customerPhone = shipping.phone || shipping.phoneNumber || 'N/A';
             
             html += `
@@ -1475,6 +1769,7 @@
     }
 
     function formatStatus(status) {
+        if (!status) return 'Pending';
         return status.split('_').map(word => 
             word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ');
@@ -1549,29 +1844,31 @@
         let date;
         if (order.timestamp && typeof order.timestamp.toDate === 'function') {
             date = order.timestamp.toDate();
-        } else if (order.createdAt && typeof order.createdAt.toDate === 'function') {
-            date = order.createdAt.toDate();
+        } else if (order.timestamp && order.timestamp.seconds) {
+            date = new Date(order.timestamp.seconds * 1000);
+        } else if (order.timestamp) {
+            date = new Date(order.timestamp);
         } else {
             date = new Date();
         }
         
         const statusClass = getStatusClass(order.status || 'pending');
         
-        const productName = order.productName || order.productDetails?.name || 'Product';
-        const productImage = order.productImage || order.productDetails?.image || 'https://placehold.co/300x200/2463eb/ffffff?text=Product';
-        const units = order.units || order.quantity || 1;
-        const pricePerUnit = order.pricePerUnit || order.productPrice || 0;
-        const shippingPerUnit = order.shippingPerUnit || order.shippingCost || 0;
-        const subtotal = order.subtotal || (pricePerUnit * units);
-        const totalShipping = order.totalShipping || (shippingPerUnit * units);
+        const productName = order.productName || 'Product';
+        const productImage = order.productImage || 'https://placehold.co/300x200/2463eb/ffffff?text=Product';
+        const units = order.units || 1;
+        const pricePerUnit = order.pricePerUnit || 0;
+        const shippingPerUnit = order.shippingPerUnit || 0;
+        const subtotal = pricePerUnit * units;
+        const totalShipping = shippingPerUnit * units;
         const total = order.total || (subtotal + totalShipping);
         
-        const shipping = order.shippingDetails || order.shipping || {};
+        const shipping = order.shippingDetails || {};
         const customerName = shipping.name || shipping.fullName || 'N/A';
         const customerEmail = shipping.email || shipping.emailAddress || 'N/A';
         const customerPhone = shipping.phone || shipping.phoneNumber || 'N/A';
         const customerAddress = shipping.address || '';
-        const customerCity = shipping.city || shipping.city || '';
+        const customerCity = shipping.city || '';
         const customerNotes = shipping.notes || shipping.specialInstructions || '';
         
         const modal = document.getElementById('modalContent');
@@ -1712,6 +2009,80 @@
         }, 3500);
     }
 
+    // ========== DEBUG FUNCTIONS ==========
+    window.toggleDebugPanel = function() {
+        document.getElementById('debugPanel').classList.toggle('show');
+    };
+
+    window.testFirebaseConnection = async function() {
+        console.log("=== Firebase Connection Test ===");
+        
+        try {
+            console.log("Firebase apps:", firebase.apps.length);
+            console.log("Current user:", currentUser ? currentUser.uid : "No user");
+            console.log("Database available:", !!db);
+            
+            if (!db) {
+                showToast("Database not initialized", "error");
+                return;
+            }
+            
+            // Test reading from orders collection
+            const testSnapshot = await db.collection('orders').limit(1).get();
+            console.log("Orders collection accessible:", !testSnapshot.empty ? "Yes" : "Collection exists but empty");
+            console.log("Orders count:", testSnapshot.size);
+            
+            if (testSnapshot.size > 0) {
+                const sampleDoc = testSnapshot.docs[0];
+                console.log("Sample order ID:", sampleDoc.id);
+                console.log("Sample order data:", sampleDoc.data());
+                console.log("Available fields:", Object.keys(sampleDoc.data()));
+            }
+            
+            // Test reading from users collection
+            if (currentUser) {
+                const userTest = await db.collection('users').doc(currentUser.uid).get();
+                console.log("User document exists:", userTest.exists);
+                if (userTest.exists) {
+                    console.log("User data:", userTest.data());
+                }
+            }
+            
+            showToast("Connection test complete - check console (F12)", "success");
+            
+        } catch (e) {
+            console.error("Connection test failed:", e);
+            showToast("Connection test failed: " + e.message, "error");
+        }
+    };
+
+    window.checkUserOrders = async function() {
+        console.log("=== User Orders Check ===");
+        console.log("Current user:", currentUser?.uid);
+        console.log("All orders array length:", allOrders.length);
+        console.log("All orders:", allOrders);
+        
+        if (!currentUser || !db) {
+            console.log("Cannot check: No user or db");
+            return;
+        }
+        
+        try {
+            // Try direct query
+            const directQuery = await db.collection('orders')
+                .where('userId', '==', currentUser.uid)
+                .get();
+            
+            console.log("Direct query with userId:", directQuery.size, "results");
+            directQuery.forEach(doc => console.log(" -", doc.id, doc.data()));
+            
+        } catch (e) {
+            console.log("Direct query failed:", e);
+        }
+        
+        showToast("Check console (F12) for details", "info");
+    };
+
     // ========== EVENT LISTENERS ==========
     function attachEvents() {
         document.getElementById('userInfo')?.addEventListener('click', (e) => {
@@ -1726,8 +2097,10 @@
         });
 
         document.getElementById('logoutBtn')?.addEventListener('click', async () => {
-            if (auth) await auth.signOut();
-            window.location.href = 'login.html';
+            if (auth) {
+                await auth.signOut();
+                window.location.href = 'login.html';
+            }
         });
 
         document.querySelectorAll('[data-page]').forEach(btn => {
@@ -1754,7 +2127,15 @@
 
     // Initialize after DOM load
     document.addEventListener('DOMContentLoaded', function() {
-        console.log("DOM loaded, Firebase ready");
+        console.log("DOM loaded, Firebase ready check:", !!firebase.apps.length);
+        
+        // Show debug panel automatically if there are issues
+        setTimeout(() => {
+            if (allOrders.length === 0 && currentUser) {
+                console.log("No orders loaded after 3 seconds, showing debug panel");
+                document.getElementById('debugToggle').style.display = 'inline-block';
+            }
+        }, 3000);
     });
 </script>
 </body>

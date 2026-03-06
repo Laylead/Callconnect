@@ -216,7 +216,7 @@
             height: 100vh;
         }
 
-        /* Top Bar - Simplified */
+        /* Top Bar - Updated Text */
         .top-bar {
             display: flex;
             align-items: center;
@@ -224,7 +224,7 @@
             margin-bottom: 32px;
         }
         .greeting h1 { 
-            font-size: 2rem; 
+            font-size: 2.2rem; 
             font-weight: 700; 
             color: #0f172a;
             letter-spacing: -0.02em;
@@ -232,7 +232,7 @@
         }
         .greeting .sub {
             color: #64748b;
-            font-size: 1rem;
+            font-size: 1.1rem;
             margin-top: 6px;
             font-weight: 400;
         }
@@ -357,7 +357,7 @@
             box-shadow: 0 15px 25px -8px #2463ebcc;
         }
 
-        /* Stats Cards - Premium */
+        /* Stats Cards - Premium with K/M formatting */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -1176,6 +1176,7 @@
             .balance-card { padding: 28px; }
             .balance-amount { font-size: 2.5rem; }
             .greeting h1 { font-size: 1.8rem; }
+            .greeting .sub { font-size: 1rem; }
             .stat-value { font-size: 1.6rem; }
             .section-title { font-size: 1.4rem; }
             .transaction-row { padding: 16px 20px; }
@@ -1193,8 +1194,6 @@
 
         @media (max-width: 400px) {
             .balance-amount { font-size: 2rem; }
-            .greeting h1 { font-size: 1.6rem; }
-            .greeting .sub { font-size: 0.9rem; }
             .stat-card { padding: 16px; }
             .stat-value { font-size: 1.4rem; }
             .transaction-meta { flex-direction: column; gap: 8px; align-items: flex-start; }
@@ -1235,7 +1234,7 @@
 
     <!-- MAIN CONTENT -->
     <main class="main-content">
-        <!-- Top Bar - Simplified -->
+        <!-- Top Bar - Updated Text -->
         <div class="top-bar">
             <div class="greeting">
                 <h1>Wallet</h1>
@@ -1262,7 +1261,7 @@
             </div>
         </div>
 
-        <!-- Stats Cards -->
+        <!-- Stats Cards - With K/M formatting -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-label">
@@ -1600,7 +1599,19 @@
     }
 
     function updateUI() {
+        // Available balance remains as full numbers
         document.getElementById('walletBalance').innerHTML = `₦${walletBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    }
+
+    // Helper function to format numbers with K/M suffixes
+    function formatLargeNumber(num) {
+        if (num >= 1000000) {
+            return '₦' + (num / 1000000).toFixed(1) + 'M';
+        } else if (num >= 1000) {
+            return '₦' + (num / 1000).toFixed(1) + 'K';
+        } else {
+            return '₦' + num.toString();
+        }
     }
 
     function updateStats() {
@@ -1620,8 +1631,9 @@
             }
         });
         
-        document.getElementById('totalDeposits').innerHTML = `₦${totalDeposits.toLocaleString()}`;
-        document.getElementById('totalSpent').innerHTML = `₦${totalSpent.toLocaleString()}`;
+        // Format large numbers with K/M suffixes
+        document.getElementById('totalDeposits').innerHTML = formatLargeNumber(totalDeposits);
+        document.getElementById('totalSpent').innerHTML = formatLargeNumber(totalSpent);
         document.getElementById('giftcardCount').innerHTML = giftcardCount;
         document.getElementById('transactionCount').innerHTML = transactions.length;
     }

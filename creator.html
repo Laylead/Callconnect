@@ -247,6 +247,38 @@
             font-size: 0.9rem;
         }
 
+        /* Search Bar */
+        .search-container {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 14px 20px;
+            background: rgba(255,255,255,0.07);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 40px;
+            color: white;
+            font-size: 15px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+        }
+
+        .search-btn {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 0 30px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
         /* Tab Navigation */
         .tab-nav {
             display: flex;
@@ -367,6 +399,25 @@
             color: white;
         }
 
+        .btn-success {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-success:hover {
+            background: #22c55e;
+            color: white;
+        }
+
         /* Tables */
         .table-container {
             background: #16213e;
@@ -431,6 +482,11 @@
             color: #3b82f6;
         }
 
+        .status-badge.completed {
+            background: rgba(139, 92, 246, 0.2);
+            color: #8b5cf6;
+        }
+
         .action-btns {
             display: flex;
             gap: 8px;
@@ -484,8 +540,19 @@
             color: #22c55e;
         }
 
+        .action-btn.refund {
+            background: rgba(234, 179, 8, 0.2);
+            color: #eab308;
+        }
+
+        .action-btn.ship {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
         .action-btn:hover {
             transform: translateY(-2px);
+            filter: brightness(1.2);
         }
 
         /* Grid for products */
@@ -641,10 +708,30 @@
             display: flex;
             gap: 8px;
             align-items: center;
+            margin-bottom: 8px;
         }
 
         .image-input-group input {
             flex: 1;
+        }
+
+        .remove-image {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .remove-image:hover {
+            background: #ef4444;
+            color: white;
         }
 
         /* Toast */
@@ -683,7 +770,7 @@
             border-left-color: #eab308;
         }
 
-        /* Gift Card Generator */
+        /* Gift Card Preview */
         .giftcard-preview {
             background: linear-gradient(135deg, #6d28d9, #db2777);
             border-radius: 20px;
@@ -700,6 +787,7 @@
             padding: 16px;
             border-radius: 12px;
             margin: 16px 0;
+            font-family: monospace;
         }
 
         /* Loading */
@@ -715,6 +803,51 @@
 
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        /* Order Details */
+        .order-details {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .order-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .order-detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: #a0a0c0;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: white;
+            font-weight: 600;
+        }
+
+        .campaign-users-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            margin-bottom: 5px;
         }
 
         /* Responsive */
@@ -897,6 +1030,13 @@
             <div class="section-header">
                 <h2 class="section-title"><span class="material-icons">people</span> Manage Users</h2>
             </div>
+            
+            <!-- Search Users -->
+            <div class="search-container">
+                <input type="text" id="userSearchInput" class="search-input" placeholder="Search users by email or name...">
+                <button class="search-btn" onclick="searchUsers()">Search</button>
+            </div>
+            
             <div class="table-container">
                 <table>
                     <thead>
@@ -1018,7 +1158,7 @@
                 <div id="imagesContainer">
                     <div class="image-input-group">
                         <input type="url" id="productImage1" class="form-input" placeholder="Image 1 URL">
-                        <button type="button" class="action-btn delete" onclick="removeImageInput(this)">×</button>
+                        <button type="button" class="remove-image" onclick="removeImageInput(this)">×</button>
                     </div>
                 </div>
                 <button type="button" class="btn-secondary" onclick="addImageInput()" style="margin-top: 10px;">
@@ -1033,7 +1173,7 @@
             
             <div class="form-group">
                 <label class="form-label">Specifications</label>
-                <input type="text" id="productSpecs" class="form-input" placeholder="e.g., 6.1" display, A17 Pro">
+                <input type="text" id="productSpecs" class="form-input" placeholder="e.g., 6.1&quot; display, A17 Pro">
             </div>
             
             <div class="form-group">
@@ -1147,6 +1287,46 @@
     </div>
 </div>
 
+<!-- Campaign Refund Popup -->
+<div class="form-popup" id="campaignRefundPopup">
+    <div class="form-card">
+        <h2 class="form-title">
+            <span class="material-icons">restore</span>
+            Refund Campaign
+        </h2>
+        <form id="campaignRefundForm">
+            <input type="hidden" id="refundCampaignId">
+            <input type="hidden" id="refundCampaignName">
+            
+            <div class="form-group">
+                <label class="form-label">Campaign</label>
+                <input type="text" id="refundCampaignDisplay" class="form-input" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Total Orders</label>
+                <input type="text" id="refundTotalOrders" class="form-input" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Total Amount to Refund</label>
+                <input type="text" id="refundTotalAmount" class="form-input" readonly>
+            </div>
+            
+            <div class="campaign-users-list" id="refundUsersList"></div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-danger">
+                    <span class="material-icons">restore</span> Process Refunds
+                </button>
+                <button type="button" class="btn-secondary" onclick="hideCampaignRefundForm()">
+                    <span class="material-icons">close</span> Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Order Details Popup -->
 <div class="form-popup" id="orderDetailsPopup">
     <div class="form-card">
@@ -1195,7 +1375,7 @@
             document.getElementById('userEmail').textContent = user.email;
             document.getElementById('userAvatar').textContent = (user.displayName || 'C').charAt(0).toUpperCase();
             
-            // Load all data
+            // Load all real data from Firebase
             await loadDashboardData();
             await loadProducts();
             await loadOrders();
@@ -1236,6 +1416,13 @@
                     item.classList.add('active');
                 }
             });
+            
+            // Refresh data for the active tab
+            if (tabName === 'products') loadProducts();
+            if (tabName === 'orders') loadOrders();
+            if (tabName === 'users') loadUsers();
+            if (tabName === 'giftcards') loadGiftCards();
+            if (tabName === 'transactions') loadTransactions();
         });
     });
 
@@ -1259,6 +1446,13 @@
             // Update tab content
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // Refresh data for the active tab
+            if (tabName === 'products') loadProducts();
+            if (tabName === 'orders') loadOrders();
+            if (tabName === 'users') loadUsers();
+            if (tabName === 'giftcards') loadGiftCards();
+            if (tabName === 'transactions') loadTransactions();
         });
     });
 
@@ -1398,7 +1592,9 @@
         
         let html = '';
         products.forEach(product => {
-            const progress = (product.reserved / product.goal * 100).toFixed(1);
+            const progress = ((product.reserved || 0) / product.goal * 100).toFixed(1);
+            const isCompleted = product.reserved >= product.goal;
+            
             html += `
                 <div class="product-card">
                     <div class="product-img" style="background-image: url('${product.img || 'https://placehold.co/300x200/16213e/8b5cf6?text=Product'}')"></div>
@@ -1413,6 +1609,7 @@
                             <div class="progress-fill" style="width: ${progress}%; height: 8px; background: linear-gradient(90deg, #6d28d9, #db2777); border-radius: 20px;"></div>
                         </div>
                     </div>
+                    ${isCompleted ? '<div style="margin-bottom: 10px;"><span class="status-badge completed">Campaign Completed</span></div>' : ''}
                     <div class="action-btns">
                         <button class="action-btn edit" onclick="editProduct('${product.id}')">
                             <span class="material-icons">edit</span> Edit
@@ -1421,8 +1618,16 @@
                             <span class="material-icons">delete</span> Delete
                         </button>
                         <button class="action-btn view" onclick="viewProductOrders('${product.id}')">
-                            <span class="material-icons">visibility</span> View Orders
+                            <span class="material-icons">visibility</span> Orders
                         </button>
+                        ${isCompleted ? `
+                            <button class="action-btn ship" onclick="markCampaignShipped('${product.id}')">
+                                <span class="material-icons">local_shipping</span> Mark Shipped
+                            </button>
+                            <button class="action-btn refund" onclick="showCampaignRefundForm('${product.id}')">
+                                <span class="material-icons">restore</span> Refund All
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
             `;
@@ -1440,7 +1645,7 @@
         div.className = 'image-input-group';
         div.innerHTML = `
             <input type="url" id="productImage${imageCount}" class="form-input" placeholder="Image ${imageCount} URL">
-            <button type="button" class="action-btn delete" onclick="removeImageInput(this)">×</button>
+            <button type="button" class="remove-image" onclick="removeImageInput(this)">×</button>
         `;
         container.appendChild(div);
     }
@@ -1480,7 +1685,7 @@
                     div.className = 'image-input-group';
                     div.innerHTML = `
                         <input type="url" id="productImage${imageCount}" class="form-input" value="${img}" placeholder="Image ${imageCount} URL">
-                        <button type="button" class="action-btn delete" onclick="removeImageInput(this)">×</button>
+                        <button type="button" class="remove-image" onclick="removeImageInput(this)">×</button>
                     `;
                     container.appendChild(div);
                 });
@@ -1490,7 +1695,7 @@
                 div.className = 'image-input-group';
                 div.innerHTML = `
                     <input type="url" id="productImage1" class="form-input" placeholder="Image 1 URL">
-                    <button type="button" class="action-btn delete" onclick="removeImageInput(this)">×</button>
+                    <button type="button" class="remove-image" onclick="removeImageInput(this)">×</button>
                 `;
                 container.appendChild(div);
             }
@@ -1516,7 +1721,7 @@
         container.innerHTML = `
             <div class="image-input-group">
                 <input type="url" id="productImage1" class="form-input" placeholder="Image 1 URL">
-                <button type="button" class="action-btn delete" onclick="removeImageInput(this)">×</button>
+                <button type="button" class="remove-image" onclick="removeImageInput(this)">×</button>
             </div>
         `;
         imageCount = 1;
@@ -1611,15 +1816,50 @@
     function viewProductOrders(productId) {
         // Switch to orders tab and filter by product
         document.querySelector('[data-tab="orders"]').click();
-        showToast("Filtering orders for this product...", "info");
+        showToast("Loading orders for this product...", "info");
+        loadOrders(productId);
+    }
+
+    async function markCampaignShipped(productId) {
+        if (!confirm("Mark this campaign as shipped? All orders will be updated to 'shipped' status.")) {
+            return;
+        }
+        
+        try {
+            // Update campaign
+            await db.collection('campaigns').doc(productId).update({
+                status: 'shipped'
+            });
+            
+            // Update all orders for this campaign
+            const ordersSnap = await db.collection('orders')
+                .where('productId', '==', productId)
+                .get();
+            
+            const batch = db.batch();
+            ordersSnap.forEach(doc => {
+                batch.update(doc.ref, { status: 'shipped' });
+            });
+            await batch.commit();
+            
+            showToast("Campaign marked as shipped", "success");
+            await loadProducts();
+            await loadOrders();
+        } catch (error) {
+            console.error("Error marking campaign shipped:", error);
+            showToast("Failed to mark campaign shipped", "error");
+        }
     }
 
     // ========== ORDERS MANAGEMENT ==========
-    async function loadOrders() {
+    async function loadOrders(productFilter = null) {
         try {
-            const snapshot = await db.collection('orders')
-                .orderBy('timestamp', 'desc')
-                .get();
+            let query = db.collection('orders').orderBy('timestamp', 'desc');
+            if (productFilter) {
+                query = query.where('productId', '==', productFilter);
+            }
+            
+            const snapshot = await query.get();
             
             const tbody = document.getElementById('ordersTable');
             
@@ -1629,7 +1869,7 @@
             }
             
             let html = '';
-            snapshot.forEach(doc => {
+            for (const doc of snapshot.docs) {
                 const order = doc.data();
                 const date = order.timestamp?.toDate() || new Date();
                 
@@ -1651,14 +1891,17 @@
                                 <button class="action-btn view" onclick="viewOrderDetails('${doc.id}')">
                                     <span class="material-icons">visibility</span> View
                                 </button>
-                                <button class="action-btn edit" onclick="updateOrderStatus('${doc.id}')">
-                                    <span class="material-icons">update</span> Status
-                                </button>
+                                <select onchange="updateOrderStatus('${doc.id}', this.value)" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 5px;">
+                                    <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
+                                    <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                                    <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                </select>
                             </div>
                         </td>
                     </tr>
                 `;
-            });
+            }
             tbody.innerHTML = html;
             
         } catch (error) {
@@ -1666,80 +1909,187 @@
         }
     }
 
-    function viewOrderDetails(orderId) {
-        // Implement order details view
-        showToast("Loading order details...", "info");
+    async function viewOrderDetails(orderId) {
+        try {
+            const orderDoc = await db.collection('orders').doc(orderId).get();
+            if (!orderDoc.exists) return;
+            
+            const order = orderDoc.data();
+            const date = order.timestamp?.toDate() || new Date();
+            
+            const content = document.getElementById('orderDetailsContent');
+            content.innerHTML = `
+                <div class="order-details">
+                    <div class="order-detail-row">
+                        <span class="detail-label">Order ID:</span>
+                        <span class="detail-value">${orderId}</span>
+                    </div>
+                    <div class="order-detail-row">
+                        <span class="detail-label">Product:</span>
+                        <span class="detail-value">${order.productName}</span>
+                    </div>
+                    <div class="order-detail-row">
+                        <span class="detail-label">Customer:</span>
+                        <span class="detail-value">${order.shippingDetails?.name}</span>
+                    </div>
+                    <div class="order-detail-row">
+                        <span class="detail-label">Email:</span>
+                        <span class="detail-value">${order.shippingDetails?.email || 'N/A'}</span>
+                    </div>
+                    <div class="order-detail-row">
+                        <span class="detail-label">Phone:</span>
+                        <span class="detail-value">${order.shippingDetails?.phone}</span>
+                    </div>
+                    <div class="order-detail-row">
+                        <span class="detail-label">Address:</span>
+                        <span class="detail-value">${order.shippingDetails?.address}, ${order.shippingDetails?.city}</span>
+                    </div>
+                    <div class="order-detail-row">
+                        <span class="detail-label">Units:</span>
+                        <span class="detail-value">${order.units}</span>
+                    </div>
+                    <div class="order-detail-row">
+                        <span class="detail-label">Price per unit:</span>
+                        <span class="detail-value">₦${(order.pricePerUnit || 0).toLocaleString()}</span>
+                    </div>
+                    <div class="order-detail-row">
+                        <span class="detail-label">Shipping per unit:</span>
+                        <span class="detail-value">₦${(order.shippingPerUnit || 0).toLocaleString()}</span>
+                    </div>
+                    <div class="order-detail-row">
+                        <span class="detail-label">Subtotal:</span>
+                        <span class="detail-value">₦${(order.subtotal || 0).toLocaleString()}</span>
+                    </div>
+                    <div class="order-detail-row">
+                        <span class="detail-label">Total Shipping:</span>
+                        <span class="detail-value">₦${(order.totalShipping || 0).toLocaleString()}</span>
+                    </div>
+                    <div class="order-detail-row">
+                        <span class="detail-label">Total:</span>
+                        <span class="detail-value">₦${(order.total || 0).toLocaleString()}</span>
+                    </div>
+                    <div class="order-detail-row">
+                        <span class="detail-label">Status:</span>
+                        <span class="detail-value">${order.status || 'pending'}</span>
+                    </div>
+                    <div class="order-detail-row">
+                        <span class="detail-label">Date:</span>
+                        <span class="detail-value">${date.toLocaleString()}</span>
+                    </div>
+                    ${order.notes ? `
+                    <div class="order-detail-row">
+                        <span class="detail-label">Notes:</span>
+                        <span class="detail-value">${order.notes}</span>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            document.getElementById('orderDetailsPopup').classList.add('show');
+            
+        } catch (error) {
+            console.error("Error loading order details:", error);
+            showToast("Failed to load order details", "error");
+        }
     }
 
-    function updateOrderStatus(orderId) {
-        // Implement status update
-        showToast("Status update feature coming soon", "info");
+    async function updateOrderStatus(orderId, newStatus) {
+        try {
+            await db.collection('orders').doc(orderId).update({
+                status: newStatus
+            });
+            
+            showToast(`Order status updated to ${newStatus}`, "success");
+            await loadOrders();
+        } catch (error) {
+            console.error("Error updating order status:", error);
+            showToast("Failed to update order status", "error");
+        }
     }
 
     // ========== USERS MANAGEMENT ==========
+    let allUsers = [];
+
     async function loadUsers() {
         try {
             const snapshot = await db.collection('users').get();
-            
-            const tbody = document.getElementById('usersTable');
-            
-            if (snapshot.empty) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No users found</td></tr>';
-                return;
-            }
-            
-            let html = '';
-            for (const doc of snapshot.docs) {
-                const user = doc.data();
-                const joinDate = user.createdAt?.toDate() || new Date();
-                
-                // Get user orders count
-                const ordersSnap = await db.collection('orders')
-                    .where('userId', '==', doc.id)
-                    .get();
-                
-                html += `
-                    <tr>
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <div class="avatar" style="width: 32px; height: 32px; font-size: 14px;">
-                                    ${(user.displayName || 'U').charAt(0).toUpperCase()}
-                                </div>
-                                ${user.displayName || 'Unknown'}
-                            </div>
-                        </td>
-                        <td>${user.email || 'No email'}</td>
-                        <td>₦${(user.walletBalance || 0).toLocaleString()}</td>
-                        <td>${joinDate.toLocaleDateString()}</td>
-                        <td>${ordersSnap.size}</td>
-                        <td>
-                            <span class="status-badge ${user.banned ? 'banned' : 'active'}">
-                                ${user.banned ? 'Banned' : 'Active'}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="action-btns">
-                                <button class="action-btn add" onclick="showUserBalanceForm('${doc.id}', '${user.displayName || 'User'}', ${user.walletBalance || 0})">
-                                    <span class="material-icons">account_balance_wallet</span> Balance
-                                </button>
-                                ${user.banned ? 
-                                    `<button class="action-btn unban" onclick="toggleUserBan('${doc.id}', false)">
-                                        <span class="material-icons">lock_open</span> Unban
-                                    </button>` : 
-                                    `<button class="action-btn ban" onclick="toggleUserBan('${doc.id}', true)">
-                                        <span class="material-icons">block</span> Ban
-                                    </button>`
-                                }
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }
-            tbody.innerHTML = html;
-            
+            allUsers = [];
+            snapshot.forEach(doc => {
+                allUsers.push({ id: doc.id, ...doc.data() });
+            });
+            renderUsers(allUsers);
         } catch (error) {
             console.error("Error loading users:", error);
         }
+    }
+
+    function renderUsers(users) {
+        const tbody = document.getElementById('usersTable');
+        
+        if (users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No users found</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        users.forEach(user => {
+            const joinDate = user.createdAt?.toDate() || new Date();
+            
+            html += `
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div class="avatar" style="width: 32px; height: 32px; font-size: 14px;">
+                                ${(user.displayName || 'U').charAt(0).toUpperCase()}
+                            </div>
+                            ${user.displayName || 'Unknown'}
+                        </div>
+                    </td>
+                    <td>${user.email || 'No email'}</td>
+                    <td>₦${(user.walletBalance || 0).toLocaleString()}</td>
+                    <td>${joinDate.toLocaleDateString()}</td>
+                    <td>${user.ordersCount || 0}</td>
+                    <td>
+                        <span class="status-badge ${user.banned ? 'banned' : 'active'}">
+                            ${user.banned ? 'Banned' : 'Active'}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="action-btn add" onclick="showUserBalanceForm('${user.id}', '${user.displayName || 'User'}', ${user.walletBalance || 0})">
+                                <span class="material-icons">account_balance_wallet</span> Balance
+                            </button>
+                            ${user.banned ? 
+                                `<button class="action-btn unban" onclick="toggleUserBan('${user.id}', false)">
+                                    <span class="material-icons">lock_open</span> Unban
+                                </button>` : 
+                                `<button class="action-btn ban" onclick="toggleUserBan('${user.id}', true)">
+                                    <span class="material-icons">block</span> Ban
+                                </button>`
+                            }
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
+    function searchUsers() {
+        const searchTerm = document.getElementById('userSearchInput').value.toLowerCase().trim();
+        
+        if (!searchTerm) {
+            renderUsers(allUsers);
+            return;
+        }
+        
+        const filtered = allUsers.filter(user => 
+            (user.email && user.email.toLowerCase().includes(searchTerm)) ||
+            (user.displayName && user.displayName.toLowerCase().includes(searchTerm))
+        );
+        
+        renderUsers(filtered);
+        showToast(`Found ${filtered.length} users`, "info");
     }
 
     function showUserBalanceForm(userId, userName, currentBalance) {
@@ -1836,6 +2186,139 @@
             showToast(`Failed to ${action} user: ` + error.message, "error");
         }
     }
+
+    // ========== CAMPAIGN REFUND ==========
+    async function showCampaignRefundForm(campaignId) {
+        try {
+            const campaign = products.find(p => p.id === campaignId);
+            if (!campaign) return;
+            
+            // Get all orders for this campaign
+            const ordersSnap = await db.collection('orders')
+                .where('productId', '==', campaignId)
+                .where('status', '!=', 'cancelled')
+                .get();
+            
+            let totalRefund = 0;
+            const usersList = [];
+            
+            ordersSnap.forEach(doc => {
+                const order = doc.data();
+                totalRefund += order.total || 0;
+                usersList.push({
+                    orderId: doc.id,
+                    userId: order.userId,
+                    amount: order.total || 0,
+                    units: order.units || 1
+                });
+            });
+            
+            document.getElementById('refundCampaignId').value = campaignId;
+            document.getElementById('refundCampaignName').value = campaign.name;
+            document.getElementById('refundCampaignDisplay').value = campaign.name;
+            document.getElementById('refundTotalOrders').value = ordersSnap.size;
+            document.getElementById('refundTotalAmount').value = `₦${totalRefund.toLocaleString()}`;
+            
+            // Render users list
+            let usersHtml = '<h4>Users to refund:</h4>';
+            usersList.forEach(item => {
+                usersHtml += `
+                    <div class="user-item">
+                        <span>Order: ${item.orderId.slice(0, 8)}...</span>
+                        <span>₦${item.amount.toLocaleString()} (${item.units} units)</span>
+                    </div>
+                `;
+            });
+            document.getElementById('refundUsersList').innerHTML = usersHtml;
+            
+            document.getElementById('campaignRefundPopup').classList.add('show');
+            
+        } catch (error) {
+            console.error("Error loading refund data:", error);
+            showToast("Failed to load refund data", "error");
+        }
+    }
+
+    function hideCampaignRefundForm() {
+        document.getElementById('campaignRefundPopup').classList.remove('show');
+    }
+
+    document.getElementById('campaignRefundForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const campaignId = document.getElementById('refundCampaignId').value;
+        
+        if (!confirm("Are you sure you want to refund all users for this campaign? This action cannot be undone.")) {
+            return;
+        }
+        
+        try {
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading-spinner"></span> Processing...';
+            
+            // Get all orders
+            const ordersSnap = await db.collection('orders')
+                .where('productId', '==', campaignId)
+                .where('status', '!=', 'cancelled')
+                .get();
+            
+            const batch = db.batch();
+            
+            // Process each order
+            for (const doc of ordersSnap.docs) {
+                const order = doc.data();
+                
+                // Refund user
+                const userRef = db.collection('users').doc(order.userId);
+                const userDoc = await userRef.get();
+                const currentBalance = userDoc.data().walletBalance || 0;
+                
+                batch.update(userRef, {
+                    walletBalance: currentBalance + (order.total || 0)
+                });
+                
+                // Create refund transaction
+                const transactionRef = db.collection('transactions').doc();
+                batch.set(transactionRef, {
+                    userId: order.userId,
+                    type: 'refund',
+                    amount: order.total || 0,
+                    description: `Refund for campaign: ${order.productName}`,
+                    status: 'completed',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Update order status
+                batch.update(doc.ref, { status: 'cancelled' });
+            }
+            
+            // Update campaign
+            const campaignRef = db.collection('campaigns').doc(campaignId);
+            batch.update(campaignRef, {
+                active: false,
+                status: 'refunded',
+                reserved: 0
+            });
+            
+            await batch.commit();
+            
+            showToast(`Successfully refunded all users`, "success");
+            hideCampaignRefundForm();
+            await loadProducts();
+            await loadOrders();
+            await loadUsers();
+            await loadTransactions();
+            
+        } catch (error) {
+            console.error("Error processing refunds:", error);
+            showToast("Failed to process refunds: " + error.message, "error");
+        } finally {
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span class="material-icons">restore</span> Process Refunds';
+        }
+    });
 
     // ========== GIFT CARDS MANAGEMENT ==========
     async function loadGiftCards() {

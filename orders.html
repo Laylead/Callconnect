@@ -748,7 +748,7 @@
             box-shadow: 0 15px 25px -8px #05966980;
         }
 
-        /* Empty State - Fixed button size */
+        /* ===== FIXED EMPTY STATE - PROPER BUTTON SIZING ===== */
         .empty-state {
             text-align: center;
             padding: 60px 30px;
@@ -757,6 +757,10 @@
             border: 1px solid #e9eef2;
             box-shadow: 0 20px 40px -20px rgba(0,0,0,0.1);
             grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .empty-state .material-icons {
@@ -785,14 +789,39 @@
             margin-right: auto;
         }
 
-        /* Fixed button size - normal, not too big */
+        /* FIXED: Proper button sizing - not too big, not too small */
         .empty-state .btn-primary {
             display: inline-flex;
-            padding: 12px 28px;
-            font-size: 0.95rem;
+            padding: 14px 32px;
+            font-size: 1rem;
             width: auto;
-            min-width: 180px;
+            min-width: 200px;
+            border-radius: 60px;
+            background: linear-gradient(145deg, #2463eb, #4f46e5);
+            color: white;
+            border: none;
+            font-weight: 600;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px -8px #2463eb80;
             margin: 0 auto;
+        }
+
+        .empty-state .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px -8px #2463eb;
+        }
+
+        .empty-state .btn-primary .material-icons {
+            font-size: 20px;
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            color: white;
+            box-shadow: none;
         }
 
         /* Premium Modal */
@@ -998,33 +1027,6 @@
             background: #eef2ff;
         }
 
-        /* Debug Panel */
-        .debug-panel {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            z-index: 10000;
-            display: none;
-        }
-        .debug-panel.show {
-            display: block;
-        }
-        .debug-btn {
-            background: #2463eb;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-            margin: 4px;
-        }
-
         /* Responsive Design - Guaranteed */
         @media (max-width: 1200px) {
             .orders-stats {
@@ -1158,16 +1160,6 @@
             </div>
         </div>
 
-        <!-- Debug Button (hidden by default, shows in development) -->
-        <button class="debug-btn" onclick="toggleDebugPanel()" style="margin-bottom: 10px; display: none;" id="debugToggle">Debug</button>
-        <div class="debug-panel" id="debugPanel">
-            <h4 style="margin-bottom: 8px;">Firebase Debug</h4>
-            <button class="debug-btn" onclick="testFirebaseConnection()">Test Connection</button>
-            <button class="debug-btn" onclick="checkUserOrders()">Check User Orders</button>
-            <button class="debug-btn" onclick="console.log('allOrders:', allOrders)">Log Orders</button>
-            <button class="debug-btn" onclick="window.location.reload()">Refresh Page</button>
-        </div>
-
         <!-- Filter Section - Premium -->
         <div class="filter-section">
             <div class="filter-tabs">
@@ -1240,9 +1232,6 @@
     let allOrders = [];
     let filteredOrders = [];
 
-    // Check if Firebase config exists
-    console.log("Checking Firebase config:", typeof firebaseConfig);
-
     // Initialize Firebase with better error handling
     try {
         if (typeof firebaseConfig !== 'undefined' && firebaseConfig) {
@@ -1272,10 +1261,6 @@
                     }
                 });
             
-            // Show debug button in development
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                document.getElementById('debugToggle').style.display = 'inline-block';
-            }
         } else {
             console.error("Firebase config not found - check firebase-config.js exists and is loaded");
             showToast("Firebase configuration error: Check firebase-config.js", "error");
@@ -2009,80 +1994,6 @@
         }, 3500);
     }
 
-    // ========== DEBUG FUNCTIONS ==========
-    window.toggleDebugPanel = function() {
-        document.getElementById('debugPanel').classList.toggle('show');
-    };
-
-    window.testFirebaseConnection = async function() {
-        console.log("=== Firebase Connection Test ===");
-        
-        try {
-            console.log("Firebase apps:", firebase.apps.length);
-            console.log("Current user:", currentUser ? currentUser.uid : "No user");
-            console.log("Database available:", !!db);
-            
-            if (!db) {
-                showToast("Database not initialized", "error");
-                return;
-            }
-            
-            // Test reading from orders collection
-            const testSnapshot = await db.collection('orders').limit(1).get();
-            console.log("Orders collection accessible:", !testSnapshot.empty ? "Yes" : "Collection exists but empty");
-            console.log("Orders count:", testSnapshot.size);
-            
-            if (testSnapshot.size > 0) {
-                const sampleDoc = testSnapshot.docs[0];
-                console.log("Sample order ID:", sampleDoc.id);
-                console.log("Sample order data:", sampleDoc.data());
-                console.log("Available fields:", Object.keys(sampleDoc.data()));
-            }
-            
-            // Test reading from users collection
-            if (currentUser) {
-                const userTest = await db.collection('users').doc(currentUser.uid).get();
-                console.log("User document exists:", userTest.exists);
-                if (userTest.exists) {
-                    console.log("User data:", userTest.data());
-                }
-            }
-            
-            showToast("Connection test complete - check console (F12)", "success");
-            
-        } catch (e) {
-            console.error("Connection test failed:", e);
-            showToast("Connection test failed: " + e.message, "error");
-        }
-    };
-
-    window.checkUserOrders = async function() {
-        console.log("=== User Orders Check ===");
-        console.log("Current user:", currentUser?.uid);
-        console.log("All orders array length:", allOrders.length);
-        console.log("All orders:", allOrders);
-        
-        if (!currentUser || !db) {
-            console.log("Cannot check: No user or db");
-            return;
-        }
-        
-        try {
-            // Try direct query
-            const directQuery = await db.collection('orders')
-                .where('userId', '==', currentUser.uid)
-                .get();
-            
-            console.log("Direct query with userId:", directQuery.size, "results");
-            directQuery.forEach(doc => console.log(" -", doc.id, doc.data()));
-            
-        } catch (e) {
-            console.log("Direct query failed:", e);
-        }
-        
-        showToast("Check console (F12) for details", "info");
-    };
-
     // ========== EVENT LISTENERS ==========
     function attachEvents() {
         document.getElementById('userInfo')?.addEventListener('click', (e) => {
@@ -2128,14 +2039,6 @@
     // Initialize after DOM load
     document.addEventListener('DOMContentLoaded', function() {
         console.log("DOM loaded, Firebase ready check:", !!firebase.apps.length);
-        
-        // Show debug panel automatically if there are issues
-        setTimeout(() => {
-            if (allOrders.length === 0 && currentUser) {
-                console.log("No orders loaded after 3 seconds, showing debug panel");
-                document.getElementById('debugToggle').style.display = 'inline-block';
-            }
-        }, 3000);
     });
 </script>
 </body>

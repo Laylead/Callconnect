@@ -517,24 +517,6 @@
             transform: none;
             box-shadow: none;
         }
-        .btn-secondary {
-            background: #f1f5f9;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 40px;
-            font-weight: 600;
-            color: #1e293b;
-            cursor: pointer;
-            transition: 0.2s;
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .btn-secondary:hover {
-            background: #e2e8f0;
-        }
 
         /* request banner */
         .request-banner {
@@ -853,50 +835,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Gift Card Styles */
-        .giftcard-input-container {
-            background: #f8fafc;
-            border-radius: 60px;
-            padding: 4px;
-            display: flex;
-            margin-bottom: 20px;
-        }
-        .giftcard-input {
-            flex: 1;
-            padding: 16px 20px;
-            border: none;
-            background: transparent;
-            font-size: 1rem;
-            outline: none;
-            font-family: monospace;
-            letter-spacing: 2px;
-        }
-        .giftcard-btn {
-            background: linear-gradient(135deg, #2563eb, #7c3aed);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 60px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .giftcard-info {
-            text-align: center;
-            margin: 20px 0;
-            color: #64748b;
-        }
-        .attempts-warning {
-            color: #f59e0b;
-            font-size: 0.9rem;
-            margin-top: 8px;
-        }
-        .attempts-danger {
-            color: #ef4444;
-            font-size: 0.9rem;
-            margin-top: 8px;
-        }
-
-        /* deposit options */
+        /* deposit options - UPDATED for new flow */
         .deposit-options {
             display: flex;
             gap: 12px;
@@ -904,7 +843,7 @@
         }
         .deposit-option {
             flex: 1;
-            padding: 20px;
+            padding: 24px;
             border: 2px solid #e2e8f0;
             border-radius: 20px;
             text-align: center;
@@ -916,13 +855,32 @@
             background: #f1f5f9;
         }
         .deposit-option .material-icons {
-            font-size: 32px;
+            font-size: 48px;
             color: #2563eb;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
         }
         .deposit-option span {
             display: block;
             font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+        .deposit-option small {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        /* Gift card attempts warning */
+        .attempts-warning {
+            background: #fef2f2;
+            border: 1px solid #ef4444;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 16px 0;
+            color: #ef4444;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         /* product detail view */
@@ -1071,38 +1029,21 @@
             gap: 4px;
         }
 
-        /* Session timeout indicator */
-        .session-timeout {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: white;
-            border-radius: 40px;
-            padding: 12px 20px;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            z-index: 1000;
-            font-size: 0.9rem;
-            border: 1px solid #e2e8f0;
-            transform: translateX(150%);
-            transition: transform 0.3s ease;
+        /* Orders Table */
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
         }
-        .session-timeout.show {
-            transform: translateX(0);
-        }
-        .session-timeout .material-icons {
-            color: #f59e0b;
-        }
-        .session-timeout button {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 6px 16px;
-            border-radius: 40px;
+        .orders-table th {
+            text-align: left;
+            padding: 16px;
+            color: #64748b;
             font-weight: 600;
-            cursor: pointer;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .orders-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f1f5f9;
         }
 
         @media (max-width: 800px) {
@@ -1113,6 +1054,7 @@
             .wallet-block { width: 100%; justify-content: space-between; }
             .request-banner { flex-direction: column; text-align: center; }
             .product-detail-grid { grid-template-columns: 1fr; }
+            .orders-table { font-size: 0.85rem; }
         }
         @media (max-width: 480px) {
             .campaign-card { min-width: 260px; width: 260px; }
@@ -1167,7 +1109,7 @@
                 <button class="login-btn" id="loginBtn"><span class="material-icons">login</span> Login</button>
                 
                 <span class="wallet-pill" id="walletDisplay" style="display: none;">
-                    <span class="material-icons">account_balance_wallet</span> ₦0
+                    <span class="material-icons">account_balance_wallet</span> ₦<span id="walletAmount">0</span>
                 </span>
                 <button class="deposit-btn" id="depositTopBtn" style="display: none;"><span class="material-icons">add</span> Deposit</button>
                 
@@ -1208,25 +1150,26 @@
             </div>
         </div>
 
-        <!-- ORDERS PAGE -->
+        <!-- MY ORDERS PAGE -->
         <div id="orders-page" class="page">
             <div class="section-header">
                 <h2 class="section-title"><span class="material-icons">shopping_bag</span> My Orders</h2>
             </div>
-            <div class="table-container" style="background: white; border: 1px solid #e2e8f0; border-radius: 20px; overflow-x: auto;">
-                <table style="width: 100%;">
+            <div class="table-container">
+                <table class="orders-table">
                     <thead>
                         <tr>
-                            <th style="padding: 20px; color: #64748b;">Order ID</th>
-                            <th style="padding: 20px; color: #64748b;">Product</th>
-                            <th style="padding: 20px; color: #64748b;">Units</th>
-                            <th style="padding: 20px; color: #64748b;">Total</th>
-                            <th style="padding: 20px; color: #64748b;">Status</th>
-                            <th style="padding: 20px; color: #64748b;">Date</th>
+                            <th>Order ID</th>
+                            <th>Product</th>
+                            <th>Units</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="ordersTable">
-                        <tr><td colspan="6" style="text-align: center; padding: 40px;">Loading...</td></tr>
+                    <tbody id="ordersTableBody">
+                        <tr><td colspan="7" style="text-align: center;">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1238,29 +1181,29 @@
                 <h2 class="section-title"><span class="material-icons">account_balance_wallet</span> My Wallet</h2>
             </div>
             
-            <div style="background: linear-gradient(135deg, #2563eb, #7c3aed); border-radius: 30px; padding: 30px; color: white; margin-bottom: 30px;">
-                <div style="font-size: 1rem; opacity: 0.9; margin-bottom: 10px;">Available Balance</div>
-                <div style="font-size: 3rem; font-weight: 700; margin-bottom: 20px;" id="walletBalanceDisplay">₦0</div>
+            <div style="background: linear-gradient(135deg, #2563eb, #7c3aed); border-radius: 30px; padding: 40px; margin-bottom: 30px; color: white;">
+                <div style="font-size: 1rem; opacity: 0.9; margin-bottom: 10px;">Current Balance</div>
+                <div style="font-size: 3rem; font-weight: 700; margin-bottom: 20px;">₦<span id="walletPageBalance">0</span></div>
                 <div style="display: flex; gap: 15px;">
-                    <button class="btn-primary" onclick="showDepositOptions()" style="background: white; color: #2563eb;">Add Funds</button>
+                    <button class="btn-primary" onclick="showDepositOptions()" style="background: white; color: #2563eb;">Deposit Funds</button>
                 </div>
             </div>
             
-            <div class="section-header" style="margin-top: 20px;">
+            <div class="section-header">
                 <h3 class="section-title"><span class="material-icons">history</span> Transaction History</h3>
             </div>
-            <div class="table-container" style="background: white; border: 1px solid #e2e8f0; border-radius: 20px; overflow-x: auto;">
-                <table style="width: 100%;">
+            <div class="table-container">
+                <table class="orders-table">
                     <thead>
                         <tr>
-                            <th style="padding: 20px; color: #64748b;">Type</th>
-                            <th style="padding: 20px; color: #64748b;">Description</th>
-                            <th style="padding: 20px; color: #64748b;">Amount</th>
-                            <th style="padding: 20px; color: #64748b;">Date</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Date</th>
                         </tr>
                     </thead>
-                    <tbody id="transactionsTable">
-                        <tr><td colspan="4" style="text-align: center; padding: 40px;">Loading...</td></tr>
+                    <tbody id="transactionsTableBody">
+                        <tr><td colspan="4" style="text-align: center;">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1271,7 +1214,7 @@
             <div class="section-header">
                 <h2 class="section-title"><span class="material-icons">local_shipping</span> Track Orders</h2>
             </div>
-            <div id="trackingContainer"></div>
+            <div id="trackingContent"></div>
         </div>
 
         <!-- DISCOVER PAGE -->
@@ -1279,7 +1222,7 @@
             <div class="section-header">
                 <h2 class="section-title"><span class="material-icons">explore</span> Discover Campaigns</h2>
             </div>
-            <div class="campaign-scroll" id="discoverContainer" style="flex-wrap: wrap; overflow-x: visible;"></div>
+            <div class="campaign-scroll" id="discoverContainer" style="overflow-x: visible; flex-wrap: wrap;"></div>
         </div>
 
         <!-- MOBILE BOTTOM NAV -->
@@ -1293,19 +1236,59 @@
     </main>
 </div>
 
-<!-- Session Timeout Notification -->
-<div class="session-timeout" id="sessionTimeout">
-    <span class="material-icons">timer</span>
-    <span>Session expiring soon</span>
-    <button onclick="extendSession()">Stay logged in</button>
+<!-- DEPOSIT OPTIONS POPUP -->
+<div class="popup-overlay" id="depositPopup">
+    <div class="popup-card">
+        <div class="popup-title">
+            <span class="material-icons">add_circle</span> Deposit Funds
+        </div>
+        <div class="deposit-options">
+            <div class="deposit-option active" onclick="selectDepositMethod('normal')">
+                <span class="material-icons">account_balance</span>
+                <span>Normal Deposit</span>
+                <small>via payment page</small>
+            </div>
+            <div class="deposit-option" onclick="selectDepositMethod('giftcard')">
+                <span class="material-icons">card_giftcard</span>
+                <span>Gift Card</span>
+                <small>redeem code</small>
+            </div>
+        </div>
+        
+        <div id="normalDepositSection" style="display: block;">
+            <p style="text-align: center; margin: 20px 0; color: #64748b;">You will be redirected to the secure payment page.</p>
+            <button class="btn-primary" onclick="proceedToFundPage()" style="width: 100%; padding: 16px;">
+                <span class="material-icons">payment</span> Proceed to Payment
+            </button>
+        </div>
+        
+        <div id="giftcardSection" style="display: none;">
+            <div class="attempts-warning" id="giftcardWarning" style="display: none;">
+                <span class="material-icons">warning</span>
+                <span id="warningMessage">Invalid code. 2 attempts remaining.</span>
+            </div>
+            
+            <input type="text" id="giftcardCode" class="popup-input" placeholder="Enter gift card code (e.g., ABCD-1234-EFGH)">
+            <button class="btn-primary" onclick="redeemGiftCard()" style="width: 100%; padding: 16px;">
+                <span class="material-icons">redeem</span> Redeem Gift Card
+            </button>
+        </div>
+        
+        <div class="popup-actions" style="margin-top: 20px;">
+            <button class="popup-btn popup-btn-outline" onclick="closeDepositPopup()">Cancel</button>
+        </div>
+    </div>
 </div>
 
-<!-- GLOBAL POPUP MODAL (dynamic) -->
+<!-- GLOBAL POPUP MODAL -->
 <div class="popup-overlay" id="popupOverlay">
     <div class="popup-card" id="popupCard">
         <!-- content injected via js -->
     </div>
 </div>
+
+<!-- Toast -->
+<div class="toast" id="toast" style="position: fixed; top: 30px; right: 30px; background: #16213e; border-left: 4px solid #8b5cf6; border-radius: 12px; padding: 16px 24px; color: white; font-weight: 500; z-index: 2000; opacity: 0; transform: translateX(100%); transition: all 0.3s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 400px;"></div>
 
 <script>
     // ========== FIREBASE INIT ==========
@@ -1313,13 +1296,7 @@
     let auth;
     let currentUser = null;
     let userData = null;
-    let walletBalance = 0;
-    let joinedCampaigns = 0;
-    let reservedUnits = 0;
     let campaigns = [];
-    let currentProduct = null;
-    let isSwiping = false;
-    const SHIPPING_COST = 2500;
     let orders = [];
     let transactions = [];
     
@@ -1327,16 +1304,12 @@
     let giftcardAttempts = 0;
     const MAX_ATTEMPTS = 3;
 
-    // Session timeout variables
-    let sessionTimeoutTimer;
-    let sessionWarningTimer;
-    const SESSION_DURATION = 15 * 60 * 1000;
-    const WARNING_BEFORE = 2 * 60 * 1000;
-
-    // ========== FIREBASE INIT ==========
+    // Initialize Firebase
     try {
         if (typeof firebaseConfig !== 'undefined') {
-            firebase.initializeApp(firebaseConfig);
+            if (firebase.apps.length === 0) {
+                firebase.initializeApp(firebaseConfig);
+            }
             db = firebase.firestore();
             auth = firebase.auth();
             console.log("Firebase initialized");
@@ -1347,42 +1320,6 @@
         console.error("Firebase init error:", error);
     }
 
-    // ========== SESSION MANAGEMENT ==========
-    function resetSessionTimer() {
-        if (!currentUser) return;
-        
-        if (sessionTimeoutTimer) clearTimeout(sessionTimeoutTimer);
-        if (sessionWarningTimer) clearTimeout(sessionWarningTimer);
-        
-        document.getElementById('sessionTimeout').classList.remove('show');
-        
-        sessionWarningTimer = setTimeout(() => {
-            document.getElementById('sessionTimeout').classList.add('show');
-        }, SESSION_DURATION - WARNING_BEFORE);
-        
-        sessionTimeoutTimer = setTimeout(() => {
-            autoLogout();
-        }, SESSION_DURATION);
-    }
-    
-    window.extendSession = function() {
-        resetSessionTimer();
-    };
-    
-    function autoLogout() {
-        if (currentUser && auth) {
-            auth.signOut();
-            alert('Your session has expired. Please login again.');
-            window.location.href = 'login.html';
-        }
-    }
-    
-    ['click', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(event => {
-        document.addEventListener(event, () => {
-            resetSessionTimer();
-        });
-    });
-
     // ========== AUTH STATE ==========
     auth.onAuthStateChanged(async (user) => {
         if (user) {
@@ -1391,48 +1328,51 @@
             // Check if user is banned
             const userDoc = await db.collection('users').doc(user.uid).get();
             if (userDoc.exists && userDoc.data().banned) {
-                alert('Your account has been banned. Please contact support.');
+                showToast("Your account has been banned. Please contact support.", "error");
                 await auth.signOut();
                 window.location.href = 'login.html';
                 return;
             }
             
             await loadUserData();
+            await loadCampaigns();
             await loadUserOrders();
             await loadUserTransactions();
             showLoggedInUI();
-            resetSessionTimer();
             
+            // Set avatar with first letter
             const displayName = userData?.displayName || user.displayName || user.email || 'User';
             const firstLetter = displayName.charAt(0).toUpperCase();
             document.getElementById('userAvatar').innerText = firstLetter;
             document.getElementById('sidebarUserName').innerHTML = `${displayName} <span class="material-icons">arrow_drop_down</span>`;
+            
+            // Load giftcard attempts from localStorage
+            const savedAttempts = localStorage.getItem(`giftcard_attempts_${user.uid}`);
+            if (savedAttempts) {
+                giftcardAttempts = parseInt(savedAttempts);
+            }
         } else {
             showLoggedOutUI();
             document.getElementById('userAvatar').innerText = 'G';
             document.getElementById('sidebarUserName').innerHTML = 'Guest <span class="material-icons">arrow_drop_down</span>';
-            
-            if (sessionTimeoutTimer) clearTimeout(sessionTimeoutTimer);
-            if (sessionWarningTimer) clearTimeout(sessionWarningTimer);
+            await loadCampaigns(); // Load campaigns even for guests
         }
         updateUI();
         attachEvents();
-        loadCampaignsFromFirestore();
     });
 
+    // ========== USER DATA ==========
     async function loadUserData() {
         if (!currentUser || !db) return;
+        
         try {
             const userRef = db.collection('users').doc(currentUser.uid);
             const doc = await userRef.get();
             
             if (doc.exists) {
                 userData = doc.data();
-                walletBalance = userData.walletBalance || 0;
-                joinedCampaigns = userData.joinedCampaigns || 0;
-                reservedUnits = userData.reservedUnits || 0;
             } else {
-                // Create new user document
+                // Create new user
                 const newUser = {
                     displayName: currentUser.displayName || 'User',
                     email: currentUser.email,
@@ -1441,112 +1381,23 @@
                     reservedUnits: 0,
                     pin: null,
                     banned: false,
-                    giftcardAttempts: 0,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 await userRef.set(newUser);
                 userData = newUser;
             }
-        } catch (e) { 
-            console.error("Error loading user data:", e);
+        } catch (error) {
+            console.error("Error loading user data:", error);
             showToast("Error loading user data", "error");
         }
     }
 
-    async function loadUserOrders() {
-        if (!currentUser || !db) return;
+    // ========== CAMPAIGNS ==========
+    async function loadCampaigns() {
         try {
-            const ordersRef = db.collection('orders')
-                .where('userId', '==', currentUser.uid)
-                .orderBy('timestamp', 'desc');
-            const snapshot = await ordersRef.get();
-            
-            orders = [];
-            snapshot.forEach(doc => {
-                orders.push({ id: doc.id, ...doc.data() });
-            });
-            
-            // Update reserved units count from orders
-            let totalReserved = 0;
-            orders.forEach(order => {
-                if (order.status !== 'cancelled' && order.status !== 'refunded') {
-                    totalReserved += order.units || 0;
-                }
-            });
-            reservedUnits = totalReserved;
-            
-        } catch (e) { 
-            console.error("Error loading orders:", e);
-        }
-    }
-
-    async function loadUserTransactions() {
-        if (!currentUser || !db) return;
-        try {
-            const transactionsRef = db.collection('transactions')
-                .where('userId', '==', currentUser.uid)
-                .orderBy('timestamp', 'desc')
-                .limit(20);
-            const snapshot = await transactionsRef.get();
-            
-            transactions = [];
-            snapshot.forEach(doc => {
-                transactions.push({ id: doc.id, ...doc.data() });
-            });
-            
-        } catch (e) { 
-            console.error("Error loading transactions:", e);
-        }
-    }
-
-    function showLoggedInUI() {
-        document.getElementById('loginBtn').style.display = 'none';
-        document.getElementById('walletDisplay').style.display = 'flex';
-        document.getElementById('depositTopBtn').style.display = 'flex';
-    }
-
-    function showLoggedOutUI() {
-        document.getElementById('loginBtn').style.display = 'flex';
-        document.getElementById('walletDisplay').style.display = 'none';
-        document.getElementById('depositTopBtn').style.display = 'none';
-        document.getElementById('greetingHi').innerText = 'Hi, Guest';
-    }
-
-    function updateUI() {
-        if (!currentUser) return;
-        
-        const name = userData?.displayName || currentUser?.displayName || 'User';
-        document.getElementById('greetingHi').innerText = `Hi, ${name.split(' ')[0]}`;
-
-        const fmt = `₦${(walletBalance || 0).toLocaleString()}`;
-        document.getElementById('walletDisplay').innerHTML = `<span class="material-icons">account_balance_wallet</span> ${fmt}`;
-        document.getElementById('dropdownBalance').innerText = fmt;
-        document.getElementById('statJoined').innerText = joinedCampaigns || 0;
-        document.getElementById('statUnits').innerText = reservedUnits || 0;
-        document.getElementById('dropdownJoined').innerText = joinedCampaigns || 0;
-        document.getElementById('dropdownUnits').innerText = reservedUnits || 0;
-        
-        // Update wallet page balance
-        const walletBalanceDisplay = document.getElementById('walletBalanceDisplay');
-        if (walletBalanceDisplay) {
-            walletBalanceDisplay.innerText = fmt;
-        }
-        
-        // Render orders if on orders page
-        renderOrders();
-        
-        // Render transactions if on wallet page
-        renderTransactions();
-    }
-
-    // ========== CAMPAIGNS FROM FIRESTORE ==========
-    async function loadCampaignsFromFirestore() {
-        if (!db) return;
-        
-        try {
-            const campaignsRef = db.collection('campaigns')
-                .where('active', '==', true);
-            const snapshot = await campaignsRef.get();
+            const snapshot = await db.collection('campaigns')
+                .where('active', '==', true)
+                .get();
             
             campaigns = [];
             snapshot.forEach(doc => {
@@ -1562,35 +1413,37 @@
 
     function renderCampaigns() {
         const container = document.getElementById('campaignsContainer');
-        if (!container) return;
+        const discoverContainer = document.getElementById('discoverContainer');
         
         if (campaigns.length === 0) {
-            container.innerHTML = '<div style="text-align: center; padding: 40px; width: 100%;">No active campaigns at the moment</div>';
+            const emptyMsg = '<div style="text-align: center; padding: 40px;">No active campaigns at the moment</div>';
+            container.innerHTML = emptyMsg;
+            if (discoverContainer) discoverContainer.innerHTML = emptyMsg;
             return;
         }
         
         let html = '';
-        campaigns.forEach(c => {
-            const available = (c.goal || 0) - (c.reserved || 0);
-            const progressPercent = ((c.reserved || 0) / (c.goal || 1) * 100).toFixed(1);
-            const isCompleted = (c.reserved || 0) >= (c.goal || 0);
+        campaigns.forEach(campaign => {
+            const available = campaign.goal - (campaign.reserved || 0);
+            const progressPercent = ((campaign.reserved || 0) / campaign.goal * 100).toFixed(1);
+            const isCompleted = (campaign.reserved || 0) >= campaign.goal;
             
             html += `
-                <div class="campaign-card ${isCompleted ? 'completed' : ''}" data-id="${c.id}">
-                    <div class="campaign-img" style="background-image:url('${c.img || 'https://placehold.co/300x160/e2e8f0/64748b?text=No+Image'}')" onclick="showProductDetail('${c.id}')"></div>
+                <div class="campaign-card ${isCompleted ? 'completed' : ''}" data-id="${campaign.id}">
+                    <div class="campaign-img" style="background-image:url('${campaign.img || 'https://placehold.co/300x160/f1f5f9/2563eb?text=Product'}')" onclick="showProductDetail('${campaign.id}')"></div>
                     <div class="campaign-header">
-                        <span class="campaign-title">${c.name || 'Unnamed Product'}</span>
+                        <span class="campaign-title">${campaign.name}</span>
                         ${isCompleted ? 
                             '<span class="campaign-completed-badge"><span class="material-icons" style="font-size:14px;">check_circle</span> Completed</span>' : 
-                            `<span class="units-badge">${c.reserved || 0}/${c.goal || 0}</span>`
+                            `<span class="units-badge">${campaign.reserved || 0}/${campaign.goal}</span>`
                         }
                     </div>
-                    <div class="price-tag">₦${(c.price || 0).toLocaleString()}</div>
+                    <div class="price-tag">₦${campaign.price.toLocaleString()}</div>
                     <div class="progress-container">
                         <div class="progress-bar-bg"><div class="progress-fill" style="width:${progressPercent}%"></div></div>
                     </div>
                     <div class="card-actions">
-                        <button class="btn-primary" onclick="handleBuyClick('${c.id}')" ${isCompleted ? 'disabled' : ''}>
+                        <button class="btn-primary" onclick="handleBuyClick('${campaign.id}')" ${isCompleted ? 'disabled' : ''}>
                             <span class="material-icons">${isCompleted ? 'check_circle' : 'shopping_cart'}</span>
                             ${isCompleted ? 'Awaiting Shipping' : 'Buy Now'}
                         </button>
@@ -1598,38 +1451,171 @@
                 </div>
             `;
         });
-        container.innerHTML = html;
         
-        // Also render discover page
-        const discoverContainer = document.getElementById('discoverContainer');
-        if (discoverContainer) {
-            discoverContainer.innerHTML = html;
+        container.innerHTML = html;
+        if (discoverContainer) discoverContainer.innerHTML = html;
+    }
+
+    // ========== USER ORDERS ==========
+    async function loadUserOrders() {
+        if (!currentUser || !db) return;
+        
+        try {
+            const snapshot = await db.collection('orders')
+                .where('userId', '==', currentUser.uid)
+                .orderBy('timestamp', 'desc')
+                .get();
+            
+            orders = [];
+            snapshot.forEach(doc => {
+                orders.push({ id: doc.id, ...doc.data() });
+            });
+            
+            renderOrders();
+        } catch (error) {
+            console.error("Error loading orders:", error);
         }
     }
 
-    window.handleBuyClick = function(productId) {
-        const product = campaigns.find(c => c.id == productId);
+    function renderOrders() {
+        const tbody = document.getElementById('ordersTableBody');
+        const trackingDiv = document.getElementById('trackingContent');
         
-        if (product && (product.reserved || 0) >= (product.goal || 0)) {
-            alert('This campaign is already completed and awaiting shipping.');
+        if (!tbody) return;
+        
+        if (orders.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No orders found</td></tr>';
+            if (trackingDiv) trackingDiv.innerHTML = '<div style="text-align: center; padding: 40px;">No orders to track</div>';
             return;
         }
         
-        if (!currentUser) {
-            alert('Please login to purchase');
-            window.location.href = 'login.html';
-            return;
-        }
+        let html = '';
+        let trackingHtml = '';
         
-        showProductDetail(productId);
-    };
+        orders.forEach(order => {
+            const date = order.timestamp?.toDate() || new Date();
+            const status = order.status || 'pending';
+            
+            html += `
+                <tr>
+                    <td>${order.id.slice(0, 8)}...</td>
+                    <td>${order.productName}</td>
+                    <td>${order.units}</td>
+                    <td>₦${(order.total || 0).toLocaleString()}</td>
+                    <td><span class="status-badge ${status}">${status}</span></td>
+                    <td>${date.toLocaleDateString()}</td>
+                    <td>
+                        <button class="action-btn view" onclick="viewOrderDetails('${order.id}')">
+                            <span class="material-icons">visibility</span>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            
+            trackingHtml += `
+                <div style="background: #f8fafc; border-radius: 20px; padding: 20px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <strong>${order.productName}</strong>
+                        <span class="status-badge ${status}">${status}</span>
+                    </div>
+                    <div style="color: #64748b;">Order #: ${order.id.slice(0, 12)}...</div>
+                    <div style="color: #64748b;">Units: ${order.units}</div>
+                    <div style="color: #64748b;">Total: ₦${(order.total || 0).toLocaleString()}</div>
+                    ${order.status === 'shipped' ? '<div style="margin-top: 10px; color: #2563eb;">📦 Your order has been shipped!</div>' : ''}
+                    ${order.status === 'delivered' ? '<div style="margin-top: 10px; color: #10b981;">✅ Delivered</div>' : ''}
+                </div>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+        if (trackingDiv) trackingDiv.innerHTML = trackingHtml || '<div style="text-align: center; padding: 40px;">No orders to track</div>';
+    }
 
-    // ========== PRODUCT DETAIL VIEW ==========
+    // ========== TRANSACTIONS ==========
+    async function loadUserTransactions() {
+        if (!currentUser || !db) return;
+        
+        try {
+            const snapshot = await db.collection('transactions')
+                .where('userId', '==', currentUser.uid)
+                .orderBy('timestamp', 'desc')
+                .limit(20)
+                .get();
+            
+            transactions = [];
+            snapshot.forEach(doc => {
+                transactions.push({ id: doc.id, ...doc.data() });
+            });
+            
+            renderTransactions();
+        } catch (error) {
+            console.error("Error loading transactions:", error);
+        }
+    }
+
+    function renderTransactions() {
+        const tbody = document.getElementById('transactionsTableBody');
+        if (!tbody) return;
+        
+        if (transactions.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No transactions found</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        transactions.forEach(transaction => {
+            const date = transaction.timestamp?.toDate() || new Date();
+            const type = transaction.type || 'transaction';
+            
+            html += `
+                <tr>
+                    <td><span class="status-badge ${type}">${type}</span></td>
+                    <td>${transaction.description || '-'}</td>
+                    <td>₦${(transaction.amount || 0).toLocaleString()}</td>
+                    <td>${date.toLocaleString()}</td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+    }
+
+    // ========== UI FUNCTIONS ==========
+    function showLoggedInUI() {
+        document.getElementById('loginBtn').style.display = 'none';
+        document.getElementById('walletDisplay').style.display = 'flex';
+        document.getElementById('depositTopBtn').style.display = 'flex';
+    }
+
+    function showLoggedOutUI() {
+        document.getElementById('loginBtn').style.display = 'flex';
+        document.getElementById('walletDisplay').style.display = 'none';
+        document.getElementById('depositTopBtn').style.display = 'none';
+        document.getElementById('greetingHi').innerText = 'Hi, Guest';
+    }
+
+    function updateUI() {
+        if (currentUser && userData) {
+            const name = userData.displayName || currentUser.displayName || 'User';
+            document.getElementById('greetingHi').innerText = `Hi, ${name.split(' ')[0]}`;
+            
+            const balance = userData.walletBalance || 0;
+            document.getElementById('walletAmount').innerText = balance.toLocaleString();
+            document.getElementById('dropdownBalance').innerText = `₦${balance.toLocaleString()}`;
+            document.getElementById('walletPageBalance').innerText = balance.toLocaleString();
+            
+            document.getElementById('statJoined').innerText = userData.joinedCampaigns || 0;
+            document.getElementById('statUnits').innerText = userData.reservedUnits || 0;
+            document.getElementById('dropdownJoined').innerText = userData.joinedCampaigns || 0;
+            document.getElementById('dropdownUnits').innerText = userData.reservedUnits || 0;
+        }
+    }
+
+    // ========== PRODUCT & PURCHASE FLOW ==========
     window.showProductDetail = function(productId) {
-        const product = campaigns.find(c => c.id == productId);
+        const product = campaigns.find(c => c.id === productId);
         if (!product) return;
-        currentProduct = product;
-
+        
         const popup = document.getElementById('popupCard');
         let thumbsHtml = '';
         if (product.images && product.images.length > 0) {
@@ -1640,25 +1626,25 @@
 
         popup.innerHTML = `
             <div class="popup-title">
-                <span class="material-icons">info</span> ${product.name || 'Product'}
+                <span class="material-icons">info</span> ${product.name}
             </div>
             <div class="product-detail-grid">
                 <div class="product-gallery">
-                    <div class="product-main-img" id="mainProductImage" style="background-image:url('${product.images && product.images[0] ? product.images[0] : product.img || 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image'}')"></div>
+                    <div class="product-main-img" id="mainProductImage" style="background-image:url('${product.images ? product.images[0] : product.img}')"></div>
                     <div class="product-thumbnails">
                         ${thumbsHtml}
                     </div>
                 </div>
                 <div class="product-info-detailed">
-                    <div class="product-price-big">₦${(product.price || 0).toLocaleString()}</div>
+                    <div class="product-price-big">₦${product.price.toLocaleString()}</div>
                     <div class="product-meta">
-                        <span><span class="material-icons">inventory</span> Goal: ${product.goal || 0} units</span>
+                        <span><span class="material-icons">inventory</span> Goal: ${product.goal} units</span>
                         <span><span class="material-icons">group</span> Reserved: ${product.reserved || 0}</span>
-                        <span><span class="material-icons">local_shipping</span> Shipping: ₦${(product.shippingCost || SHIPPING_COST).toLocaleString()}/unit</span>
+                        <span><span class="material-icons">local_shipping</span> Shipping: ₦${(product.shippingCost || 2500).toLocaleString()}/unit</span>
                     </div>
                     <div class="product-description">
-                        <p>${product.description || 'No description available'}</p>
-                        ${product.specs ? `<p><strong>Specs:</strong> ${product.specs}</p>` : ''}
+                        <p>${product.description}</p>
+                        <p><strong>Specs:</strong> ${product.specs || 'N/A'}</p>
                     </div>
                     <div class="how-it-works">
                         <h4><span class="material-icons">info</span> How group buy works</h4>
@@ -1673,7 +1659,7 @@
             </div>
             <div class="popup-actions">
                 <button class="popup-btn popup-btn-outline" onclick="closePopup()">Close</button>
-                ${(product.reserved || 0) < (product.goal || 0) ? 
+                ${(product.reserved || 0) < product.goal ? 
                     `<button class="popup-btn popup-btn-primary" onclick="showBuyForm('${product.id}')">Buy now</button>` : 
                     `<button class="popup-btn popup-btn-primary" disabled style="opacity:0.5;">Campaign Completed</button>`
                 }
@@ -1691,23 +1677,44 @@
         thumb.classList.add('active');
     };
 
-    window.showBuyForm = function(productId) {
-        const product = campaigns.find(c => c.id == productId);
+    window.handleBuyClick = function(productId) {
+        const product = campaigns.find(c => c.id === productId);
         
-        if ((product.reserved || 0) >= (product.goal || 0)) {
+        if (product && (product.reserved || 0) >= product.goal) {
+            alert('This campaign is already completed and awaiting shipping.');
+            return;
+        }
+        
+        if (!currentUser) {
+            alert('Please login to purchase');
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        if (userData && userData.banned) {
+            alert('Your account has been banned. Please contact support.');
+            return;
+        }
+        
+        showProductDetail(productId);
+    };
+
+    window.showBuyForm = function(productId) {
+        const product = campaigns.find(c => c.id === productId);
+        
+        if ((product.reserved || 0) >= product.goal) {
             alert('This campaign is already completed and awaiting shipping.');
             closePopup();
             return;
         }
         
-        currentProduct = product;
-        const available = (product.goal || 0) - (product.reserved || 0);
-        const shippingPerUnit = product.shippingCost || SHIPPING_COST;
+        const available = product.goal - (product.reserved || 0);
+        const shippingPerUnit = product.shippingCost || 2500;
         
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
             <div class="popup-title">
-                <span class="material-icons">shopping_cart</span> Buy ${product.name || 'Product'}
+                <span class="material-icons">shopping_cart</span> Buy ${product.name}
             </div>
             
             <div class="units-left-badge">
@@ -1715,7 +1722,7 @@
             </div>
             
             <div style="margin-bottom:16px;">
-                <p>Price per unit: ₦${(product.price || 0).toLocaleString()}</p>
+                <p>Price per unit: ₦${product.price.toLocaleString()}</p>
                 <p>Shipping per unit: ₦${shippingPerUnit.toLocaleString()}</p>
             </div>
             
@@ -1728,7 +1735,7 @@
             
             <div class="total-amount" id="totalAmount">
                 <span class="label">Total amount (price + shipping):</span>
-                <span class="value" id="totalValue">₦${((product.price || 0) + shippingPerUnit).toLocaleString()}</span>
+                <span class="value" id="totalValue">₦${(product.price + shippingPerUnit).toLocaleString()}</span>
             </div>
             
             <input type="text" id="fullName" class="popup-input" placeholder="Full name *" required value="${userData?.displayName || ''}">
@@ -1745,12 +1752,12 @@
     };
 
     window.updateTotal = function(productId) {
-        const product = campaigns.find(c => c.id == productId);
+        const product = campaigns.find(c => c.id === productId);
         const unitsInput = document.getElementById('buyUnits');
         if (!unitsInput) return;
         
         const units = parseInt(unitsInput.value) || 1;
-        const available = (product.goal || 0) - (product.reserved || 0);
+        const available = product.goal - (product.reserved || 0);
         
         if (units > available) {
             unitsInput.value = available;
@@ -1758,66 +1765,50 @@
             return;
         }
         
-        if (units < 1) {
-            unitsInput.value = 1;
-        }
+        if (units < 1) unitsInput.value = 1;
         
         const validUnits = parseInt(unitsInput.value) || 1;
-        const pricePerUnit = product.price || 0;
-        const shippingPerUnit = product.shippingCost || SHIPPING_COST;
+        const pricePerUnit = product.price;
+        const shippingPerUnit = product.shippingCost || 2500;
         
         const subtotal = pricePerUnit * validUnits;
         const totalShipping = shippingPerUnit * validUnits;
         const total = subtotal + totalShipping;
         
-        const totalElement = document.getElementById('totalValue');
-        if (totalElement) {
-            totalElement.innerText = `₦${total.toLocaleString()}`;
-        }
-        
-        const totalShippingElement = document.getElementById('totalShipping');
-        if (totalShippingElement) {
-            totalShippingElement.innerText = `₦${totalShipping.toLocaleString()}`;
-        }
-        
-        const shippingUnitsElement = document.getElementById('shippingUnits');
-        if (shippingUnitsElement) {
-            shippingUnitsElement.innerText = validUnits;
-        }
+        document.getElementById('totalValue').innerText = `₦${total.toLocaleString()}`;
+        document.getElementById('totalShipping').innerText = `₦${totalShipping.toLocaleString()}`;
+        document.getElementById('shippingUnits').innerText = validUnits;
     };
 
     window.checkPinAndProceed = async function(productId) {
-        const product = campaigns.find(c => c.id == productId);
+        const product = campaigns.find(c => c.id === productId);
         
-        if ((product.reserved || 0) >= (product.goal || 0)) {
-            alert('This campaign is already completed and awaiting shipping.');
+        if ((product.reserved || 0) >= product.goal) {
+            alert('This campaign is already completed.');
             closePopup();
             return;
         }
         
-        const unitsInput = document.getElementById('buyUnits');
-        const units = parseInt(unitsInput?.value) || 1;
-        const available = (product.goal || 0) - (product.reserved || 0);
+        const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
+        const available = product.goal - (product.reserved || 0);
         
         if (units > available) {
             alert(`Only ${available} units available`);
             return;
         }
         
-        const pricePerUnit = product.price || 0;
-        const shippingPerUnit = product.shippingCost || SHIPPING_COST;
-        
+        const pricePerUnit = product.price;
+        const shippingPerUnit = product.shippingCost || 2500;
         const subtotal = pricePerUnit * units;
         const totalShipping = shippingPerUnit * units;
         const total = subtotal + totalShipping;
 
         if (!currentUser) {
             alert('Please login to purchase');
-            window.location.href = 'login.html';
             return;
         }
 
-        if ((walletBalance || 0) < total) {
+        if ((userData.walletBalance || 0) < total) {
             alert('Insufficient balance. Please deposit funds.');
             closePopup();
             showDepositOptions();
@@ -1834,7 +1825,7 @@
             return;
         }
 
-        if (userData && userData.pin) {
+        if (userData.pin) {
             showPinEntry(productId, units, total);
         } else {
             showCreatePin(productId, units, total);
@@ -1842,7 +1833,7 @@
     };
 
     window.showCreatePin = function(productId, units, total) {
-        const product = campaigns.find(c => c.id == productId);
+        const product = campaigns.find(c => c.id === productId);
         
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
@@ -1868,15 +1859,14 @@
             
             <div class="popup-actions">
                 <button class="popup-btn popup-btn-outline" onclick="showBuyForm('${product.id}')">Back</button>
-                <button class="popup-btn popup-btn-primary" onclick="savePinAndProceed('${product.id}', ${units}, ${total})" id="savePinBtn">Save PIN & Continue</button>
+                <button class="popup-btn popup-btn-primary" onclick="savePinAndProceed('${product.id}', ${units}, ${total})">Save PIN & Continue</button>
             </div>
         `;
         
         document.querySelectorAll('.pin-digit input').forEach((input, index) => {
             input.addEventListener('keyup', (e) => {
                 if (e.key === 'Backspace' && index > 0) {
-                    const prevInput = document.querySelectorAll('.pin-digit input')[index - 1];
-                    prevInput.focus();
+                    document.querySelectorAll('.pin-digit input')[index - 1].focus();
                 }
             });
         });
@@ -1894,25 +1884,20 @@
             return;
         }
         
-        if (db && currentUser) {
-            try {
-                await db.collection('users').doc(currentUser.uid).update({
-                    pin: newPin
-                });
-                userData.pin = newPin;
-                showPinEntry(productId, units, total);
-            } catch (e) {
-                console.error('Error saving PIN:', e);
-                alert('Error saving PIN. Please try again.');
-            }
-        } else {
-            userData = { pin: newPin };
+        try {
+            await db.collection('users').doc(currentUser.uid).update({
+                pin: newPin
+            });
+            userData.pin = newPin;
             showPinEntry(productId, units, total);
+        } catch (error) {
+            console.error("Error saving PIN:", error);
+            alert('Error saving PIN. Please try again.');
         }
     };
 
     window.showPinEntry = function(productId, units, total) {
-        const product = campaigns.find(c => c.id == productId);
+        const product = campaigns.find(c => c.id === productId);
         
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
@@ -1950,8 +1935,7 @@
         document.querySelectorAll('.pin-digit input').forEach((input, index) => {
             input.addEventListener('keyup', (e) => {
                 if (e.key === 'Backspace' && index > 0) {
-                    const prevInput = document.querySelectorAll('.pin-digit input')[index - 1];
-                    prevInput.focus();
+                    document.querySelectorAll('.pin-digit input')[index - 1].focus();
                 }
                 if (input.value.length === 1) {
                     input.parentElement.classList.add('filled');
@@ -1974,11 +1958,8 @@
     };
 
     function moveToNext(current, nextId) {
-        if (current.value.length === 1) {
-            if (nextId) {
-                const nextInput = document.getElementById(`pin${nextId}`);
-                if (nextInput) nextInput.focus();
-            }
+        if (current.value.length === 1 && nextId) {
+            document.getElementById(`pin${nextId}`)?.focus();
         }
     }
 
@@ -1998,23 +1979,14 @@
             if (!isSwiping) return;
             e.preventDefault();
             
-            let clientX;
-            if (e.type === 'mousemove') {
-                clientX = e.clientX;
-            } else {
-                clientX = e.touches[0].clientX;
-            }
-            
+            let clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
             const containerRect = container.getBoundingClientRect();
             let newX = clientX - containerRect.left - thumbWidth/2;
-            
             newX = Math.max(4, Math.min(newX, maxSwipe));
             
             thumb.style.left = newX + 'px';
-            
             const progress = (newX - 4) / (maxSwipe - 4);
-            const trackWidth = progress * 100;
-            track.style.transform = `translateX(-${100 - trackWidth}%)`;
+            track.style.transform = `translateX(-${100 - (progress * 100)}%)`;
             
             if (newX >= maxSwipe - 10) {
                 endSwipe(true);
@@ -2022,14 +1994,11 @@
         };
         
         const onUp = () => {
-            if (isSwiping) {
-                endSwipe(false);
-            }
+            if (isSwiping) endSwipe(false);
         };
         
         const endSwipe = (completed) => {
             isSwiping = false;
-            
             document.removeEventListener('mousemove', onMove);
             document.removeEventListener('touchmove', onMove);
             document.removeEventListener('mouseup', onUp);
@@ -2040,9 +2009,7 @@
                 const pin2 = document.getElementById('pin2')?.value;
                 const pin3 = document.getElementById('pin3')?.value;
                 const pin4 = document.getElementById('pin4')?.value;
-                const pinComplete = pin1 && pin2 && pin3 && pin4 && 
-                                   pin1.length === 1 && pin2.length === 1 && 
-                                   pin3.length === 1 && pin4.length === 1;
+                const pinComplete = pin1 && pin2 && pin3 && pin4;
                 
                 if (pinComplete) {
                     verifyPinAndPay(productId, units, total);
@@ -2060,7 +2027,6 @@
         window.startSwipe = function(e) {
             e.preventDefault();
             isSwiping = true;
-            
             document.addEventListener('mousemove', onMove);
             document.addEventListener('touchmove', onMove);
             document.addEventListener('mouseup', onUp);
@@ -2069,10 +2035,10 @@
     }
 
     window.verifyPinAndPay = async function(productId, units, total) {
-        const product = campaigns.find(c => c.id == productId);
+        const product = campaigns.find(c => c.id === productId);
         
-        if ((product.reserved || 0) >= (product.goal || 0)) {
-            alert('This campaign is already completed and awaiting shipping.');
+        if ((product.reserved || 0) >= product.goal) {
+            alert('Campaign is now completed.');
             closePopup();
             return;
         }
@@ -2088,107 +2054,104 @@
             return;
         }
         
-        if (userData && userData.pin) {
-            if (enteredPin !== userData.pin) {
-                alert('Incorrect PIN. Please try again.');
-                const thumb = document.getElementById('swipeThumb');
-                const track = document.getElementById('swipeTrack');
-                if (thumb) thumb.style.left = '4px';
-                if (track) track.style.transform = 'translateX(-100%)';
-                return;
-            }
+        if (enteredPin !== userData.pin) {
+            alert('Incorrect PIN. Please try again.');
+            document.getElementById('swipeThumb').style.left = '4px';
+            document.getElementById('swipeTrack').style.transform = 'translateX(-100%)';
+            return;
         }
         
         completePurchase(productId, units, total);
     };
 
     window.completePurchase = async function(productId, units, total) {
-        const product = campaigns.find(c => c.id == productId);
-        const available = (product.goal || 0) - (product.reserved || 0);
+        const product = campaigns.find(c => c.id === productId);
+        const available = product.goal - (product.reserved || 0);
         
         if (units > available) {
-            alert(`Sorry, only ${available} units are now available. Please adjust your order.`);
+            alert(`Sorry, only ${available} units are now available.`);
             closePopup();
             return;
         }
         
-        const pricePerUnit = product.price || 0;
-        const shippingPerUnit = product.shippingCost || SHIPPING_COST;
-        
+        const pricePerUnit = product.price;
+        const shippingPerUnit = product.shippingCost || 2500;
         const subtotal = pricePerUnit * units;
         const totalShipping = shippingPerUnit * units;
-
-        if (db && currentUser) {
-            try {
-                const batch = db.batch();
-                
-                const userRef = db.collection('users').doc(currentUser.uid);
-                batch.update(userRef, {
-                    walletBalance: firebase.firestore.FieldValue.increment(-total),
-                    joinedCampaigns: firebase.firestore.FieldValue.increment(1),
-                    reservedUnits: firebase.firestore.FieldValue.increment(units)
-                });
-                
-                const campaignRef = db.collection('campaigns').doc(productId);
-                batch.update(campaignRef, {
-                    reserved: firebase.firestore.FieldValue.increment(units)
-                });
-                
-                const orderRef = db.collection('orders').doc();
-                batch.set(orderRef, {
-                    userId: currentUser.uid,
-                    productId: productId,
-                    productName: product.name,
-                    units: units,
-                    pricePerUnit: pricePerUnit,
-                    shippingPerUnit: shippingPerUnit,
-                    subtotal: subtotal,
-                    totalShipping: totalShipping,
-                    total: total,
-                    shippingDetails: { 
-                        name: document.getElementById('fullName')?.value,
-                        address: document.getElementById('address')?.value,
-                        phone: document.getElementById('phone')?.value,
-                        city: document.getElementById('city')?.value,
-                        notes: document.getElementById('notes')?.value 
-                    },
-                    status: 'pending',
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                const transactionRef = db.collection('transactions').doc();
-                batch.set(transactionRef, {
-                    userId: currentUser.uid,
-                    type: 'purchase',
-                    amount: total,
-                    description: `Purchase of ${units} × ${product.name}`,
-                    status: 'completed',
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                await batch.commit();
-                
-                walletBalance -= total;
-                reservedUnits += units;
-                joinedCampaigns += 1;
-                product.reserved += units;
-                
-                await loadUserOrders();
-                await loadUserTransactions();
-                
-            } catch (e) { 
-                console.error('Firestore error:', e);
-                showToast("Error processing purchase", "error");
-                return;
-            }
+        
+        try {
+            const batch = db.batch();
+            
+            // Update user wallet
+            const userRef = db.collection('users').doc(currentUser.uid);
+            batch.update(userRef, {
+                walletBalance: firebase.firestore.FieldValue.increment(-total),
+                joinedCampaigns: firebase.firestore.FieldValue.increment(1),
+                reservedUnits: firebase.firestore.FieldValue.increment(units)
+            });
+            
+            // Update campaign
+            const campaignRef = db.collection('campaigns').doc(productId);
+            batch.update(campaignRef, {
+                reserved: firebase.firestore.FieldValue.increment(units)
+            });
+            
+            // Create order
+            const orderRef = db.collection('orders').doc();
+            batch.set(orderRef, {
+                userId: currentUser.uid,
+                productId: productId,
+                productName: product.name,
+                units: units,
+                pricePerUnit: pricePerUnit,
+                shippingPerUnit: shippingPerUnit,
+                subtotal: subtotal,
+                totalShipping: totalShipping,
+                total: total,
+                shippingDetails: {
+                    name: document.getElementById('fullName')?.value,
+                    address: document.getElementById('address')?.value,
+                    phone: document.getElementById('phone')?.value,
+                    city: document.getElementById('city')?.value,
+                    notes: document.getElementById('notes')?.value
+                },
+                status: 'pending',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            // Create transaction
+            const transactionRef = db.collection('transactions').doc();
+            batch.set(transactionRef, {
+                userId: currentUser.uid,
+                type: 'purchase',
+                amount: total,
+                description: `Purchase of ${units} × ${product.name}`,
+                status: 'completed',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            await batch.commit();
+            
+            // Update local data
+            userData.walletBalance = (userData.walletBalance || 0) - total;
+            userData.joinedCampaigns = (userData.joinedCampaigns || 0) + 1;
+            userData.reservedUnits = (userData.reservedUnits || 0) + units;
+            product.reserved = (product.reserved || 0) + units;
+            
+            updateUI();
+            await loadUserOrders();
+            await loadUserTransactions();
+            renderCampaigns();
+            
+            showConfirmation(total, units, product);
+            
+        } catch (error) {
+            console.error("Error completing purchase:", error);
+            alert("Purchase failed. Please try again.");
         }
-
-        updateUI();
-        renderCampaigns();
-        showConfirmation(total, units, product.reserved, product.goal, pricePerUnit, shippingPerUnit);
     };
 
-    window.showConfirmation = function(total, units, reserved, goal, pricePerUnit, shippingPerUnit) {
+    window.showConfirmation = function(total, units, product) {
         const popup = document.getElementById('popupCard');
         popup.innerHTML = `
             <div class="checkmark-container">
@@ -2198,174 +2161,131 @@
                 </svg>
                 <div class="checkmark-text">Payment Successful!</div>
                 <div class="checkmark-subtext">₦${total.toLocaleString()} • ${units} unit${units > 1 ? 's' : ''}</div>
-                <div class="checkmark-subtext" style="font-size:0.9rem;">Breakdown: ₦${pricePerUnit.toLocaleString()} × ${units} + ₦${shippingPerUnit.toLocaleString()} × ${units} shipping</div>
+                <div class="checkmark-subtext" style="font-size:0.9rem;">Your order has been confirmed</div>
                 <button class="popup-btn popup-btn-primary" onclick="closePopup()" style="margin-top:24px;">Done</button>
             </div>
         `;
     };
 
-    // ========== GIFT CARD FUNDING ==========
-    window.showDepositOptions = function() {
-        const popup = document.getElementById('popupCard');
-        popup.innerHTML = `
-            <div class="popup-title">
-                <span class="material-icons">add_circle</span> Add Funds
-            </div>
-            <div class="deposit-options">
-                <div class="deposit-option active" onclick="selectDepositOption('giftcard', this)">
-                    <span class="material-icons">card_giftcard</span>
-                    <span>Gift Card</span>
-                </div>
-            </div>
-            <div id="depositGiftcard">
-                <div class="giftcard-input-container">
-                    <input type="text" id="giftcardCode" class="giftcard-input" placeholder="Enter gift card code (e.g., ABCD-EFGH-IJKL)" autocomplete="off">
-                    <button class="giftcard-btn" onclick="redeemGiftCard()">Redeem</button>
-                </div>
-                <div id="giftcardStatus" class="giftcard-info"></div>
-                <div id="giftcardAttempts" class="attempts-warning"></div>
-                <p style="color:#64748b; font-size:0.9rem; margin-top:16px;">Enter your gift card code to add funds to your wallet. Each gift card can only be used once.</p>
-            </div>
-            <div class="popup-actions">
-                <button class="popup-btn popup-btn-outline" onclick="closePopup()">Cancel</button>
-            </div>
-        `;
-        document.getElementById('popupOverlay').classList.add('show');
-        
-        // Load user's giftcard attempts
-        if (userData && userData.giftcardAttempts) {
-            giftcardAttempts = userData.giftcardAttempts;
-            updateGiftcardAttemptsDisplay();
-        }
-    };
-
-    window.selectDepositOption = function(option, el) {
-        document.querySelectorAll('.deposit-option').forEach(opt => opt.classList.remove('active'));
-        el.classList.add('active');
-    };
-
-    function updateGiftcardAttemptsDisplay() {
-        const attemptsLeft = MAX_ATTEMPTS - giftcardAttempts;
-        const attemptsElement = document.getElementById('giftcardAttempts');
-        const statusElement = document.getElementById('giftcardStatus');
-        
-        if (attemptsElement) {
-            if (giftcardAttempts >= MAX_ATTEMPTS) {
-                attemptsElement.className = 'attempts-danger';
-                attemptsElement.innerHTML = '<span class="material-icons">block</span> Too many failed attempts. Your account has been banned.';
-                if (statusElement) {
-                    statusElement.innerHTML = '';
-                }
-            } else {
-                attemptsElement.className = 'attempts-warning';
-                attemptsElement.innerHTML = `<span class="material-icons">warning</span> ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} remaining before account ban.`;
-            }
-        }
+    // ========== DEPOSIT FUNCTIONS ==========
+    function showDepositOptions() {
+        document.getElementById('depositPopup').classList.add('show');
     }
 
-    window.redeemGiftCard = async function() {
-        const code = document.getElementById('giftcardCode')?.value.trim().toUpperCase();
+    function closeDepositPopup() {
+        document.getElementById('depositPopup').classList.remove('show');
+        document.getElementById('giftcardWarning').style.display = 'none';
+        document.getElementById('giftcardCode').value = '';
+    }
+
+    let selectedMethod = 'normal';
+    window.selectDepositMethod = function(method) {
+        selectedMethod = method;
+        document.querySelectorAll('.deposit-option').forEach(opt => opt.classList.remove('active'));
+        event.currentTarget.classList.add('active');
         
-        if (!code) {
-            showToast("Please enter a gift card code", "error");
+        if (method === 'normal') {
+            document.getElementById('normalDepositSection').style.display = 'block';
+            document.getElementById('giftcardSection').style.display = 'none';
+        } else {
+            document.getElementById('normalDepositSection').style.display = 'none';
+            document.getElementById('giftcardSection').style.display = 'block';
+            // Reset attempts warning
+            document.getElementById('giftcardWarning').style.display = 'none';
+        }
+    };
+
+    window.proceedToFundPage = function() {
+        window.location.href = 'fund.html';
+    };
+
+    window.redeemGiftCard = async function() {
+        if (!currentUser) {
+            alert('Please login to redeem gift card');
             return;
         }
         
+        const code = document.getElementById('giftcardCode').value.trim().toUpperCase();
+        if (!code) {
+            showToast("Please enter a gift card code", "warning");
+            return;
+        }
+        
+        // Check attempts
         if (giftcardAttempts >= MAX_ATTEMPTS) {
-            showToast("Account banned due to too many failed attempts", "error");
+            // Ban user
+            await db.collection('users').doc(currentUser.uid).update({
+                banned: true
+            });
+            showToast("Too many invalid attempts. Your account has been banned.", "error");
+            setTimeout(() => {
+                auth.signOut();
+                window.location.href = 'login.html';
+            }, 3000);
             return;
         }
         
         try {
-            // Check if gift card exists and is not redeemed
-            const giftcardQuery = await db.collection('giftcards')
+            // Find gift card
+            const snapshot = await db.collection('giftcards')
                 .where('code', '==', code)
                 .where('redeemed', '==', false)
                 .get();
             
-            if (giftcardQuery.empty) {
-                // Invalid gift card
+            if (snapshot.empty) {
+                // Invalid code
                 giftcardAttempts++;
+                localStorage.setItem(`giftcard_attempts_${currentUser.uid}`, giftcardAttempts);
                 
-                // Update attempts in database
-                await db.collection('users').doc(currentUser.uid).update({
-                    giftcardAttempts: giftcardAttempts
-                });
+                const remaining = MAX_ATTEMPTS - giftcardAttempts;
+                document.getElementById('warningMessage').innerText = `Invalid code. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`;
+                document.getElementById('giftcardWarning').style.display = 'flex';
                 
-                const statusElement = document.getElementById('giftcardStatus');
-                statusElement.innerHTML = '<span style="color:#ef4444;">Invalid or already redeemed gift card code</span>';
-                statusElement.className = 'giftcard-info';
-                
-                updateGiftcardAttemptsDisplay();
-                
-                if (giftcardAttempts >= MAX_ATTEMPTS) {
-                    // Ban user
-                    await db.collection('users').doc(currentUser.uid).update({
-                        banned: true
-                    });
-                    showToast("Account banned due to too many failed attempts", "error");
-                    setTimeout(() => {
-                        auth.signOut();
-                        window.location.href = 'login.html';
-                    }, 2000);
+                if (remaining === 0) {
+                    showToast("Too many invalid attempts. Your account will be banned.", "error");
                 }
-                
                 return;
             }
             
             // Valid gift card
-            const giftcardDoc = giftcardQuery.docs[0];
-            const giftcardData = giftcardDoc.data();
-            const amount = giftcardData.amount;
+            const giftcardDoc = snapshot.docs[0];
+            const giftcard = giftcardDoc.data();
             
-            // Start transaction
-            const batch = db.batch();
+            // Reset attempts on success
+            giftcardAttempts = 0;
+            localStorage.removeItem(`giftcard_attempts_${currentUser.uid}`);
             
-            // Mark gift card as redeemed
-            batch.update(giftcardDoc.ref, {
+            // Update gift card
+            await db.collection('giftcards').doc(giftcardDoc.id).update({
                 redeemed: true,
                 redeemedBy: currentUser.uid,
                 redeemedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             
-            // Add funds to user
+            // Update user balance
             const userRef = db.collection('users').doc(currentUser.uid);
-            batch.update(userRef, {
-                walletBalance: firebase.firestore.FieldValue.increment(amount),
-                giftcardAttempts: 0 // Reset attempts on successful redemption
+            await userRef.update({
+                walletBalance: firebase.firestore.FieldValue.increment(giftcard.amount)
             });
             
-            // Create transaction record
-            const transactionRef = db.collection('transactions').doc();
-            batch.set(transactionRef, {
+            // Create transaction
+            await db.collection('transactions').add({
                 userId: currentUser.uid,
                 type: 'giftcard',
-                amount: amount,
+                amount: giftcard.amount,
                 description: `Gift card redeemed: ${code}`,
                 status: 'completed',
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
             
-            await batch.commit();
-            
-            // Update local balance
-            walletBalance += amount;
-            giftcardAttempts = 0;
-            
-            // Show success
-            const statusElement = document.getElementById('giftcardStatus');
-            statusElement.innerHTML = `<span style="color:#22c55e;">✅ Successfully redeemed! ₦${amount.toLocaleString()} added to your wallet.</span>`;
-            statusElement.className = 'giftcard-info';
-            
-            document.getElementById('giftcardCode').value = '';
-            updateGiftcardAttemptsDisplay();
+            // Update local data
+            userData.walletBalance = (userData.walletBalance || 0) + giftcard.amount;
             updateUI();
             
-            showToast(`₦${amount.toLocaleString()} added to your wallet`, "success");
+            showToast(`✅ Gift card redeemed! ₦${giftcard.amount.toLocaleString()} added to your wallet.`, "success");
+            closeDepositPopup();
             
-            setTimeout(() => {
-                closePopup();
-            }, 2000);
+            await loadUserTransactions();
             
         } catch (error) {
             console.error("Error redeeming gift card:", error);
@@ -2373,122 +2293,175 @@
         }
     };
 
-    // ========== RENDER ORDERS ==========
-    function renderOrders() {
-        const ordersTable = document.getElementById('ordersTable');
-        if (!ordersTable) return;
-        
-        if (orders.length === 0) {
-            ordersTable.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;">No orders yet</td></tr>';
-            return;
-        }
-        
-        let html = '';
-        orders.forEach(order => {
-            const date = order.timestamp?.toDate() || new Date();
-            html += `
-                <tr>
-                    <td style="padding: 16px 20px;">${order.id.slice(0, 8)}...</td>
-                    <td style="padding: 16px 20px;">${order.productName || 'Unknown'}</td>
-                    <td style="padding: 16px 20px;">${order.units || 1}</td>
-                    <td style="padding: 16px 20px;">₦${(order.total || 0).toLocaleString()}</td>
-                    <td style="padding: 16px 20px;"><span class="status-badge ${order.status || 'pending'}">${order.status || 'pending'}</span></td>
-                    <td style="padding: 16px 20px;">${date.toLocaleDateString()}</td>
-                </tr>
-            `;
-        });
-        ordersTable.innerHTML = html;
-    }
-
-    // ========== RENDER TRANSACTIONS ==========
-    function renderTransactions() {
-        const transactionsTable = document.getElementById('transactionsTable');
-        if (!transactionsTable) return;
-        
-        if (transactions.length === 0) {
-            transactionsTable.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px;">No transactions yet</td></tr>';
-            return;
-        }
-        
-        let html = '';
-        transactions.forEach(transaction => {
-            const date = transaction.timestamp?.toDate() || new Date();
-            const typeColor = transaction.type === 'purchase' ? '#ef4444' : '#22c55e';
-            const sign = transaction.type === 'purchase' ? '-' : '+';
+    // ========== ORDER DETAILS ==========
+    window.viewOrderDetails = async function(orderId) {
+        try {
+            const orderDoc = await db.collection('orders').doc(orderId).get();
+            if (!orderDoc.exists) return;
             
-            html += `
-                <tr>
-                    <td style="padding: 16px 20px;"><span class="status-badge ${transaction.type}">${transaction.type}</span></td>
-                    <td style="padding: 16px 20px;">${transaction.description || ''}</td>
-                    <td style="padding: 16px 20px; color: ${typeColor};">${sign} ₦${(transaction.amount || 0).toLocaleString()}</td>
-                    <td style="padding: 16px 20px;">${date.toLocaleString()}</td>
-                </tr>
+            const order = orderDoc.data();
+            const date = order.timestamp?.toDate() || new Date();
+            
+            const popup = document.getElementById('popupCard');
+            popup.innerHTML = `
+                <div class="popup-title">
+                    <span class="material-icons">receipt</span> Order Details
+                </div>
+                <div class="order-details">
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                            <span style="color: #64748b;">Order ID:</span>
+                            <span style="font-weight: 600;">${orderId}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                            <span style="color: #64748b;">Product:</span>
+                            <span style="font-weight: 600;">${order.productName}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                            <span style="color: #64748b;">Customer:</span>
+                            <span style="font-weight: 600;">${order.shippingDetails?.name}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                            <span style="color: #64748b;">Address:</span>
+                            <span style="font-weight: 600;">${order.shippingDetails?.address}, ${order.shippingDetails?.city}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                            <span style="color: #64748b;">Phone:</span>
+                            <span style="font-weight: 600;">${order.shippingDetails?.phone}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                            <span style="color: #64748b;">Units:</span>
+                            <span style="font-weight: 600;">${order.units}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                            <span style="color: #64748b;">Total:</span>
+                            <span style="font-weight: 600; color: #2563eb;">₦${(order.total || 0).toLocaleString()}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                            <span style="color: #64748b;">Status:</span>
+                            <span><span class="status-badge ${order.status || 'pending'}">${order.status || 'pending'}</span></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 10px 0;">
+                            <span style="color: #64748b;">Date:</span>
+                            <span style="font-weight: 600;">${date.toLocaleString()}</span>
+                        </div>
+                        ${order.notes ? `
+                        <div style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 12px;">
+                            <div style="color: #64748b; margin-bottom: 5px;">Notes:</div>
+                            <div>${order.notes}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                <div class="popup-actions">
+                    <button class="popup-btn popup-btn-outline" onclick="closePopup()">Close</button>
+                </div>
             `;
-        });
-        transactionsTable.innerHTML = html;
-    }
+            document.getElementById('popupOverlay').classList.add('show');
+            
+        } catch (error) {
+            console.error("Error loading order details:", error);
+        }
+    };
+
+    // ========== REQUEST CAMPAIGN ==========
+    document.getElementById('requestCampaignBtn')?.addEventListener('click', () => {
+        if (!currentUser) {
+            alert('Please login to request a campaign');
+            return;
+        }
+        
+        const popup = document.getElementById('popupCard');
+        popup.innerHTML = `
+            <div class="popup-title">
+                <span class="material-icons">send</span> Request a Group Buy
+            </div>
+            <input type="url" id="productLink" class="popup-input" placeholder="Product link (Amazon, etc)" required>
+            <input type="text" id="productName" class="popup-input" placeholder="Product name" required>
+            <textarea id="requestNotes" class="popup-textarea" placeholder="Additional details (optional)"></textarea>
+            <div class="popup-actions">
+                <button class="popup-btn popup-btn-outline" onclick="closePopup()">Cancel</button>
+                <button class="popup-btn popup-btn-primary" onclick="submitRequest()">Send Request</button>
+            </div>
+        `;
+        document.getElementById('popupOverlay').classList.add('show');
+    });
+
+    window.submitRequest = async function() {
+        const link = document.getElementById('productLink')?.value;
+        const name = document.getElementById('productName')?.value;
+        
+        if (!link || !name) {
+            alert('Please fill product link and name');
+            return;
+        }
+        
+        try {
+            await db.collection('requests').add({
+                userId: currentUser.uid,
+                userEmail: currentUser.email,
+                productLink: link,
+                productName: name,
+                notes: document.getElementById('requestNotes')?.value,
+                status: 'pending',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            alert(`✅ Campaign requested for ${name}. We'll review and start a group buy!`);
+            closePopup();
+        } catch (error) {
+            console.error("Error submitting request:", error);
+            alert("Failed to submit request. Please try again.");
+        }
+    };
 
     // ========== EVENT LISTENERS ==========
     function attachEvents() {
-        const userInfo = document.getElementById('userInfo');
-        if (userInfo) {
-            userInfo.addEventListener('click', (e) => {
-                e.stopPropagation();
-                document.getElementById('logoutPopup').classList.toggle('show');
-            });
-        }
+        // User info click for logout popup
+        document.getElementById('userInfo')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('logoutPopup').classList.toggle('show');
+        });
 
+        // Close logout popup when clicking outside
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.user-info') && !e.target.closest('.logout-popup')) {
                 document.getElementById('logoutPopup').classList.remove('show');
             }
         });
 
-        const walletPill = document.querySelector('.wallet-pill');
-        if (walletPill) {
-            walletPill.addEventListener('click', (e) => {
-                e.stopPropagation();
-                document.getElementById('walletDropdown').classList.toggle('show');
-            });
-        }
+        // Wallet pill dropdown
+        document.querySelector('.wallet-pill')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('walletDropdown').classList.toggle('show');
+        });
         
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.wallet-pill') && !e.target.closest('.wallet-dropdown')) {
+            if (!e.target.closest('.wallet-pill')) {
                 document.getElementById('walletDropdown').classList.remove('show');
             }
         });
 
-        const depositBtn = document.getElementById('depositTopBtn');
-        if (depositBtn) {
-            depositBtn.addEventListener('click', showDepositOptions);
-        }
+        document.getElementById('depositTopBtn')?.addEventListener('click', showDepositOptions);
         
-        const quickDeposit = document.getElementById('quickDeposit');
-        if (quickDeposit) {
-            quickDeposit.addEventListener('click', () => {
-                document.getElementById('walletDropdown').classList.remove('show');
-                showDepositOptions();
-            });
-        }
+        document.getElementById('quickDeposit')?.addEventListener('click', () => {
+            document.getElementById('walletDropdown').classList.remove('show');
+            showDepositOptions();
+        });
 
-        const loginBtn = document.getElementById('loginBtn');
-        if (loginBtn) {
-            loginBtn.addEventListener('click', () => {
-                window.location.href = 'login.html';
-            });
-        }
+        document.getElementById('loginBtn')?.addEventListener('click', () => {
+            window.location.href = 'login.html';
+        });
 
-        const viewHistory = document.getElementById('viewHistoryDropdown');
-        if (viewHistory) {
-            viewHistory.addEventListener('click', () => {
-                document.querySelector('[data-page="wallet"]').click();
-                document.getElementById('walletDropdown').classList.remove('show');
-            });
-        }
+        document.getElementById('viewHistoryDropdown')?.addEventListener('click', () => {
+            document.querySelector('[data-page="wallet"]').click();
+        });
 
+        // Page navigation
         document.querySelectorAll('[data-page]').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const page = btn.dataset.page;
+                
                 document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
                 document.getElementById(`${page}-page`).classList.add('active');
                 
@@ -2496,117 +2469,36 @@
                 btn.classList.add('active');
                 
                 document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
-                const mobileBtn = document.querySelector(`.mobile-nav-item[data-page="${page}"]`);
-                if (mobileBtn) mobileBtn.classList.add('active');
-                
-                // Refresh data for the page
-                if (page === 'orders') {
-                    loadUserOrders().then(() => {
-                        renderOrders();
-                    });
-                } else if (page === 'wallet') {
-                    loadUserTransactions().then(() => {
-                        renderTransactions();
-                        updateUI();
-                    });
-                }
+                document.querySelector(`.mobile-nav-item[data-page="${page}"]`)?.classList.add('active');
             });
         });
 
-        const viewAllLink = document.getElementById('viewAllCampaignsLink');
-        if (viewAllLink) {
-            viewAllLink.addEventListener('click', () => {
-                document.querySelector('[data-page="discover"]').click();
-            });
-        }
+        document.getElementById('viewAllCampaignsLink')?.addEventListener('click', () => {
+            document.querySelector('[data-page="discover"]').click();
+        });
 
-        const requestBtn = document.getElementById('requestCampaignBtn');
-        if (requestBtn) {
-            requestBtn.addEventListener('click', () => {
-                if (!currentUser) {
-                    alert('Please login to request a campaign');
-                    window.location.href = 'login.html';
-                    return;
-                }
-                
-                const popup = document.getElementById('popupCard');
-                popup.innerHTML = `
-                    <div class="popup-title">
-                        <span class="material-icons">send</span> Request a group buy
-                    </div>
-                    <input type="url" id="productLink" class="popup-input" placeholder="Product link (Amazon, etc)">
-                    <input type="text" id="productName" class="popup-input" placeholder="Product name">
-                    <textarea id="requestNotes" class="popup-textarea" placeholder="Additional details (optional)"></textarea>
-                    <div class="popup-actions">
-                        <button class="popup-btn popup-btn-outline" onclick="closePopup()">Cancel</button>
-                        <button class="popup-btn popup-btn-primary" onclick="submitRequest()">Send request</button>
-                    </div>
-                `;
-                document.getElementById('popupOverlay').classList.add('show');
-            });
-        }
-
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', async () => {
-                if (auth) {
-                    await auth.signOut();
-                }
-                window.location.href = 'login.html';
-            });
-        }
+        document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+            await auth.signOut();
+            window.location.href = 'index.html';
+        });
     }
 
-    window.submitRequest = async function() {
-        const link = document.getElementById('productLink')?.value;
-        const name = document.getElementById('productName')?.value;
-        if (link && name) {
-            if (db && currentUser) {
-                try {
-                    await db.collection('requests').add({
-                        userId: currentUser.uid,
-                        productLink: link,
-                        productName: name,
-                        notes: document.getElementById('requestNotes')?.value,
-                        status: 'pending',
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    alert(`✅ Campaign requested for ${name}. We'll review and start a group buy!`);
-                    closePopup();
-                } catch (e) {
-                    console.error('Firestore error:', e);
-                    alert('Error submitting request. Please try again.');
-                }
-            }
-        } else {
-            alert('Please fill at least product link and name');
-        }
-    };
+    // ========== UTILITY FUNCTIONS ==========
+    function showToast(message, type = 'info') {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = 'toast';
+        toast.classList.add(type);
+        toast.classList.add('show');
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
 
     window.closePopup = function() {
         document.getElementById('popupOverlay').classList.remove('show');
-        isSwiping = false;
     };
-
-    function showToast(message, type = 'info') {
-        const toast = document.getElementById('toast');
-        if (!toast) {
-            const newToast = document.createElement('div');
-            newToast.className = 'toast';
-            newToast.id = 'toast';
-            document.body.appendChild(newToast);
-        }
-        
-        const toastEl = document.getElementById('toast');
-        toastEl.textContent = message;
-        toastEl.className = 'toast';
-        toastEl.classList.add(type);
-        toastEl.classList.add('show');
-        
-        setTimeout(() => {
-            toastEl.classList.remove('show');
-        }, 3000);
-    }
 </script>
 </body>
 </html>

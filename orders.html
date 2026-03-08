@@ -1125,7 +1125,7 @@
             font-size: 24px;
         }
 
-        /* ===== MOBILE BOTTOM NAV - EXACT SPECIFICATIONS ===== */
+        /* ===== FIXED MOBILE BOTTOM NAV - EXACT SPECIFICATIONS ===== */
         .mobile-bottom-nav {
             display: none;
             position: fixed;
@@ -1133,17 +1133,17 @@
             left: 0;
             right: 0;
             width: 100%;
-            height: 78px;
+            height: 90px;
+            padding: 12px 18px;
+            display: flex;
+            justify-content: space-around;
             background: rgba(255,255,255,0.95);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(203,213,225,0.5);
+            border-top: 1px solid rgba(203, 213, 225, 0.5);
+            border-radius: 42px 42px 0 0;
+            box-shadow: 0 -6px 32px rgba(0,0,0,0.12);
             z-index: 100;
-            padding: 10px 16px;
-            display: flex;
-            justify-content: space-around;
-            border-radius: 40px 40px 0 0;
-            box-shadow: 0 -5px 30px rgba(0,0,0,0.1);
         }
         
         .mobile-nav-item {
@@ -1151,33 +1151,43 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
-            padding: 8px 0;
+            gap: 8px;
+            padding: 10px 0;
             color: #64748b;
-            font-size: 12px;
+            font-size: 13px;
+            line-height: 16px;
             font-weight: 500;
             cursor: pointer;
             background: none;
             border: none;
-            transition: 0.3s;
+            transition: all 0.2s;
             text-decoration: none;
         }
         
         .mobile-nav-item .material-icons { 
-            font-size: 24px; 
+            font-size: 28px; 
+            color: #64748b;
+            transition: color 0.2s;
+        }
+        
+        .mobile-nav-item span:last-child {
+            font-size: 13px;
+            line-height: 16px;
+            font-weight: 500;
+            white-space: nowrap;
         }
         
         .mobile-nav-item.active {
             color: #2463eb;
-            background: transparent;
         }
         
         .mobile-nav-item.active .material-icons {
             color: #2463eb;
         }
-        
+
         .mobile-nav-item:hover {
-            color: #2463eb;
+            background: #f1f5f9;
+            border-radius: 30px;
         }
 
         /* ===== RESPONSIVE DESIGN ===== */
@@ -1201,7 +1211,7 @@
             .sidebar { display: none; }
             .mobile-bottom-nav { display: flex; }
             .main-content { 
-                padding: 24px 20px 98px; 
+                padding: 24px 20px 110px; 
                 height: auto;
                 min-height: 100vh;
             }
@@ -1222,7 +1232,7 @@
 
         @media (max-width: 600px) {
             .main-content { 
-                padding: 20px 16px 98px; 
+                padding: 20px 16px 110px; 
             }
             .greeting h1 { 
                 font-size: 1.8rem; 
@@ -1260,7 +1270,7 @@
             .order-btn {
                 min-height: 56px;
                 font-size: 1rem;
-                padding: 16px 24px;
+                padding: 14px 24px;
             }
             .order-header {
                 flex-direction: column;
@@ -1280,8 +1290,8 @@
                 font-size: 1.5rem;
             }
             .modal-close {
-                width: 44px;
-                height: 44px;
+                width: 48px;
+                height: 48px;
             }
             .modal-order-header {
                 flex-direction: column;
@@ -1315,9 +1325,25 @@
                 padding: 14px 24px;
                 border-radius: 60px;
             }
+            
+            /* Bottom nav already fixed with exact specs */
+            .mobile-bottom-nav {
+                height: 90px;
+                padding: 12px 18px;
+            }
         }
 
         @media (max-width: 400px) {
+            .mobile-bottom-nav {
+                padding: 10px 12px;
+                height: 85px;
+            }
+            .mobile-nav-item .material-icons { 
+                font-size: 26px; 
+            }
+            .mobile-nav-item span:last-child {
+                font-size: 12px;
+            }
             .order-header { 
                 flex-direction: column; 
                 align-items: flex-start; 
@@ -1382,7 +1408,7 @@
             </button>
         </div>
 
-        <!-- Premium Stats Cards -->
+        <!-- Stats Cards -->
         <div class="orders-stats" id="ordersStats">
             <div class="stat-card">
                 <div class="stat-label"><span class="material-icons">shopping_bag</span> Total Orders</div>
@@ -1446,7 +1472,7 @@
             </div>
         </div>
 
-        <!-- MOBILE BOTTOM NAV - EXACT SPECIFICATIONS -->
+        <!-- FIXED MOBILE BOTTOM NAV - EXACT SPECIFICATIONS -->
         <div class="mobile-bottom-nav">
             <button class="mobile-nav-item" onclick="window.location.href='index.html'">
                 <span class="material-icons">dashboard</span>
@@ -1486,7 +1512,7 @@
 </div>
 
 <script>
-    // ========== FIREBASE INIT ==========
+    // ========== FIREBASE INIT WITH BETTER ERROR HANDLING ==========
     let db, auth;
     let currentUser = null;
     let userData = null;
@@ -1543,7 +1569,7 @@
         showToast("Failed to initialize app: " + error.message, "error");
     }
 
-    // ========== AUTH STATE ==========
+    // ========== AUTH STATE WITH DEBUGGING ==========
     if (auth) {
         auth.onAuthStateChanged(async (user) => {
             console.log("Auth state changed:", user ? `User: ${user.uid}` : "No user");
@@ -1599,7 +1625,7 @@
         console.error("Auth not initialized - Firebase may not be configured correctly");
     }
 
-    // ========== LOAD USER DATA ==========
+    // ========== LOAD USER DATA WITH DEBUGGING ==========
     async function loadUserData() {
         if (!currentUser || !db) {
             console.log("No current user or db for loadUserData");
@@ -1639,7 +1665,7 @@
         }
     }
 
-    // ========== LOAD ORDERS ==========
+    // ========== LOAD ORDERS FROM FIREBASE ==========
     async function loadOrders() {
         if (!currentUser || !db) {
             console.log("Cannot load orders: No current user or db");

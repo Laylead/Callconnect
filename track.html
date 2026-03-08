@@ -41,7 +41,7 @@
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
         }
 
-        /* ---------- SIDEBAR (Premium) ---------- */
+        /* ---------- SIDEBAR (Identical to Wallet/Orders) ---------- */
         .sidebar {
             width: 280px;
             background: linear-gradient(180deg, #ffffff 0%, #f9fcff 100%);
@@ -163,7 +163,7 @@
             color: #64748b;
         }
 
-        /* Logout popup */
+        /* Logout popup - Glassmorphism */
         .logout-popup {
             position: absolute;
             bottom: 80px;
@@ -214,9 +214,10 @@
             padding: 32px 36px 36px;
             overflow-y: auto;
             height: 100vh;
+            position: relative;
         }
 
-        /* Top Bar */
+        /* Top Bar - Identical to other pages */
         .top-bar {
             display: flex;
             align-items: center;
@@ -226,7 +227,7 @@
             gap: 15px;
         }
         .greeting h1 { 
-            font-size: 2.2rem; 
+            font-size: 2rem; 
             font-weight: 700; 
             color: #0f172a;
             letter-spacing: -0.02em;
@@ -234,9 +235,10 @@
         }
         .greeting .sub {
             color: #64748b;
-            font-size: 1.1rem;
+            font-size: 1rem;
             margin-top: 6px;
             font-weight: 400;
+            max-width: 500px;
         }
 
         .back-btn {
@@ -264,7 +266,7 @@
             font-size: 20px;
         }
 
-        /* Tracking Hero Section - Premium */
+        /* Premium Tracking Hero Section */
         .tracking-hero {
             background: linear-gradient(145deg, #0b1f35, #0a2a44);
             border-radius: 36px;
@@ -409,12 +411,25 @@
             50% { transform: translateX(5px); }
         }
 
-        /* Quick Track Cards */
+        /* Quick Track Cards - Always visible at top */
         .quick-track {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
             margin-bottom: 32px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 200px;
+            opacity: 1;
+            transform: translateY(0);
+            overflow: hidden;
+        }
+
+        .quick-track.hidden {
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
         }
 
         .quick-card {
@@ -462,7 +477,15 @@
             color: #0f172a;
         }
 
-        /* Tracking Result Card - Premium */
+        .quick-status {
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        /* Tracking Result Card - With Slide Animation */
         .tracking-result {
             background: white;
             border: 1px solid #e9eef2;
@@ -471,13 +494,15 @@
             margin-bottom: 32px;
             box-shadow: 0 20px 35px -10px rgba(0,0,0,0.05);
             opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(30px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            display: none;
         }
 
         .tracking-result.show {
             opacity: 1;
             transform: translateY(0);
+            display: block;
         }
 
         /* Order Header */
@@ -602,7 +627,7 @@
             color: #2463eb;
         }
 
-        /* ===== ANIMATED TRACKING TIMELINE - COOL EFFECTS ===== */
+        /* Animated Tracking Timeline */
         .tracking-timeline {
             margin: 40px 0;
             position: relative;
@@ -740,21 +765,14 @@
         .step-time {
             font-size: 0.8rem;
             color: #94a3b8;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.5s ease;
         }
 
         .step-time.show {
-            animation: fadeInUp 0.5s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            opacity: 1;
+            transform: translateY(0);
         }
 
         /* Delivery Info Card */
@@ -802,14 +820,29 @@
             font-size: 1.1rem;
             font-weight: 600;
             color: #0f172a;
+            word-break: break-word;
         }
 
-        /* Recent Tracks */
+        /* Recent Tracks - Only 2 items */
         .recent-tracks {
             background: white;
             border: 1px solid #e9eef2;
             border-radius: 32px;
             padding: 28px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 300px;
+            opacity: 1;
+            transform: translateY(0);
+            overflow: hidden;
+        }
+
+        .recent-tracks.hidden {
+            max-height: 0;
+            opacity: 0;
+            padding: 0;
+            margin: 0;
+            transform: translateY(20px);
+            pointer-events: none;
         }
 
         .recent-header {
@@ -859,6 +892,8 @@
             display: flex;
             align-items: center;
             gap: 15px;
+            flex: 1;
+            min-width: 0;
         }
 
         .recent-icon {
@@ -870,10 +905,16 @@
             align-items: center;
             justify-content: center;
             color: #2463eb;
+            flex-shrink: 0;
         }
 
         .recent-icon .material-icons {
             font-size: 22px;
+        }
+
+        .recent-info {
+            flex: 1;
+            min-width: 0;
         }
 
         .recent-info h4 {
@@ -881,11 +922,17 @@
             font-weight: 600;
             color: #0f172a;
             margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .recent-info p {
             font-size: 0.85rem;
             color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .recent-status {
@@ -893,6 +940,7 @@
             border-radius: 40px;
             font-size: 0.75rem;
             font-weight: 600;
+            flex-shrink: 0;
         }
 
         /* Loading Spinner */
@@ -959,7 +1007,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: rgba(255,255,255,0.95);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-top: 1px solid rgba(203, 213, 225, 0.5);
@@ -970,7 +1018,7 @@
             display: flex;
             justify-content: space-around;
             border-radius: 40px 40px 0 0;
-            box-shadow: 0 -5px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.1);
         }
 
         .mobile-nav-item {
@@ -978,6 +1026,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 6px;
             padding: 8px 0;
             color: #64748b;
@@ -989,10 +1038,19 @@
             transition: 0.3s;
             border-radius: 24px;
             text-decoration: none;
+            height: 100%;
+            max-width: 80px;
         }
 
         .mobile-nav-item .material-icons { 
             font-size: 24px;
+            margin-bottom: 2px;
+        }
+
+        .mobile-nav-item span:last-child {
+            font-size: 11px;
+            font-weight: 500;
+            white-space: nowrap;
         }
 
         .mobile-nav-item.active {
@@ -1004,22 +1062,56 @@
             background: #f1f5f9;
         }
 
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+
+        .empty-state .material-icons {
+            font-size: 48px;
+            opacity: 0.4;
+            margin-bottom: 16px;
+        }
+
         /* Responsive Design - Mobile Optimized */
+        @media (max-width: 1200px) {
+            .quick-track {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .quick-track {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         @media (max-width: 900px) {
             .sidebar { display: none; }
-            .mobile-bottom-nav { display: flex; }
             .main-content { 
                 padding: 24px 20px 98px; 
                 height: auto;
                 min-height: 100vh;
             }
-            .quick-track { grid-template-columns: 1fr; }
-            .delivery-info { grid-template-columns: 1fr; }
+            .quick-track { 
+                grid-template-columns: repeat(2, 1fr); 
+            }
+            .delivery-info { 
+                grid-template-columns: 1fr; 
+            }
         }
 
         @media (max-width: 600px) {
             .main-content { 
                 padding: 20px 16px 90px; 
+            }
+            .greeting h1 { 
+                font-size: 1.8rem; 
+            }
+            .greeting .sub { 
+                font-size: 0.9rem; 
             }
             .tracking-hero { 
                 padding: 28px; 
@@ -1029,8 +1121,11 @@
             }
             .tracking-btn { 
                 width: 100%; 
-                justify-content: center; 
+                justify-content: center;
                 padding: 16px 30px;
+            }
+            .quick-track { 
+                grid-template-columns: 1fr; 
             }
             .order-header { 
                 flex-direction: column; 
@@ -1044,14 +1139,6 @@
                 width: 100%; 
                 height: 160px; 
             }
-            .product-name {
-                font-size: 1.2rem;
-            }
-            .product-meta {
-                gap: 16px;
-            }
-            
-            /* Mobile Timeline - Perfect Alignment */
             .timeline-steps { 
                 flex-direction: column;
                 gap: 20px;
@@ -1064,65 +1151,46 @@
                 flex-direction: row;
                 gap: 20px;
                 width: 100%;
-                text-align: left;
+                align-items: center;
             }
             .step-icon { 
                 width: 50px; 
                 height: 50px; 
                 margin-bottom: 0;
-                flex-shrink: 0;
             }
             .step-icon .material-icons { 
                 font-size: 24px; 
             }
             .step-content { 
-                text-align: left;
+                text-align: left; 
                 flex: 1;
             }
-            .step-label {
-                margin-bottom: 2px;
-            }
-            
             .delivery-info {
-                gap: 16px;
+                grid-template-columns: 1fr;
             }
-            .info-item {
-                flex-direction: column;
-                gap: 10px;
-            }
-            .info-icon {
-                width: 44px;
-                height: 44px;
-            }
-            
-            .toast { 
-                left: 20px;
-                right: 20px;
-                max-width: none;
-                top: 20px;
-                font-size: 0.9rem;
-                padding: 14px 24px;
-            }
-        }
-
-        @media (max-width: 400px) {
             .recent-item { 
                 flex-direction: column; 
                 align-items: flex-start;
                 gap: 10px;
             }
+            .recent-status { 
+                align-self: flex-start; 
+                margin-left: 59px;
+            }
+            .toast { 
+                left: 20px;
+                right: 20px;
+                max-width: none;
+                top: 20px;
+            }
+        }
+
+        @media (max-width: 400px) {
             .recent-left {
                 width: 100%;
             }
             .recent-status { 
-                align-self: flex-start;
-                margin-left: 59px;
-            }
-            .order-id-badge {
-                width: 100%;
-                justify-content: center;
-            }
-            .order-status-badge {
+                margin-left: 0;
                 width: 100%;
                 text-align: center;
             }
@@ -1130,36 +1198,42 @@
                 flex-direction: column;
                 gap: 8px;
             }
+            .info-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .mobile-nav-item span:last-child {
+                font-size: 10px;
+            }
         }
 
         @media (max-width: 360px) {
             .mobile-nav-item {
-                font-size: 11px;
+                max-width: 70px;
             }
-            .mobile-nav-item .material-icons { 
+            .mobile-nav-item .material-icons {
                 font-size: 22px;
             }
-            .step-icon {
-                width: 44px;
-                height: 44px;
+            .mobile-nav-item span:last-child {
+                font-size: 9px;
             }
         }
     </style>
 </head>
 <body>
 <div class="app">
-    <!-- SIDEBAR -->
+    <!-- SIDEBAR (Identical to other pages) -->
     <aside class="sidebar">
         <div class="logo-area">
             <span class="logo-icon"><span class="material-icons">local_shipping</span></span>
             <span class="logo-text">CrowdShop</span>
         </div>
         <div class="nav-links">
-            <button class="nav-item" data-page="dashboard"><span class="material-icons">dashboard</span> Dashboard</button>
-            <button class="nav-item" data-page="orders"><span class="material-icons">shopping_bag</span> My Orders</button>
-            <button class="nav-item" data-page="wallet"><span class="material-icons">account_balance_wallet</span> Wallet</button>
-            <button class="nav-item active" data-page="track"><span class="material-icons">local_shipping</span> Track Orders</button>
-            <button class="nav-item" data-page="discover"><span class="material-icons">explore</span> Discover</button>
+            <button class="nav-item" onclick="window.location.href='index.html'"><span class="material-icons">dashboard</span> Dashboard</button>
+            <button class="nav-item" onclick="window.location.href='orders.html'"><span class="material-icons">shopping_bag</span> My Orders</button>
+            <button class="nav-item" onclick="window.location.href='wallet.html'"><span class="material-icons">account_balance_wallet</span> Wallet</button>
+            <button class="nav-item active" onclick="window.location.href='track.html'"><span class="material-icons">local_shipping</span> Track Orders</button>
+            <button class="nav-item" onclick="window.location.href='discover.html'"><span class="material-icons">explore</span> Discover</button>
         </div>
         <div class="user-profile-bottom">
             <div class="avatar" id="userAvatar">JD</div>
@@ -1180,7 +1254,7 @@
 
     <!-- MAIN CONTENT -->
     <main class="main-content">
-        <!-- Top Bar -->
+        <!-- Top Bar - Identical to other pages -->
         <div class="top-bar">
             <div class="greeting">
                 <h1>Track Orders</h1>
@@ -1208,7 +1282,7 @@
             </div>
         </div>
 
-        <!-- Quick Track Cards -->
+        <!-- Quick Track Cards - Always visible at top -->
         <div class="quick-track" id="quickTrackContainer">
             <!-- Will be populated dynamically -->
         </div>
@@ -1225,7 +1299,7 @@
 
             <!-- Product Info -->
             <div class="product-info-card">
-                <div class="product-image" id="productImage"></div>
+                <div class="product-image" id="productImage" style="background-image: url('https://placehold.co/300x200/2463eb/ffffff?text=Product')"></div>
                 <div class="product-details">
                     <div class="product-name" id="productName">Product Name</div>
                     <div class="product-meta">
@@ -1329,28 +1403,24 @@
             </div>
         </div>
 
-        <!-- Recent Tracks Section -->
-        <div class="recent-tracks">
+        <!-- Recent Tracks Section - Only 2 items -->
+        <div class="recent-tracks" id="recentTracks">
             <div class="recent-header">
                 <span class="material-icons">history</span>
                 <h2>Recent Tracking Activity</h2>
             </div>
             <div class="recent-list" id="recentList">
-                <!-- Will be populated dynamically -->
-                <div style="text-align: center; padding: 40px; color: #94a3b8;">
-                    <span class="material-icons" style="font-size: 48px; opacity: 0.4;">history</span>
-                    <p>No recent tracks</p>
-                </div>
+                <!-- Will be populated dynamically (max 2 items) -->
             </div>
         </div>
 
         <!-- MOBILE BOTTOM NAV - EXACT SPECS -->
         <div class="mobile-bottom-nav">
-            <button class="mobile-nav-item" data-page="dashboard"><span class="material-icons">dashboard</span><span>Home</span></button>
-            <button class="mobile-nav-item" data-page="orders"><span class="material-icons">shopping_bag</span><span>Orders</span></button>
-            <button class="mobile-nav-item" data-page="wallet"><span class="material-icons">account_balance_wallet</span><span>Wallet</span></button>
-            <button class="mobile-nav-item active" data-page="track"><span class="material-icons">local_shipping</span><span>Track</span></button>
-            <button class="mobile-nav-item" data-page="discover"><span class="material-icons">explore</span><span>Discover</span></button>
+            <button class="mobile-nav-item" onclick="window.location.href='index.html'"><span class="material-icons">dashboard</span><span>Home</span></button>
+            <button class="mobile-nav-item" onclick="window.location.href='orders.html'"><span class="material-icons">shopping_bag</span><span>Orders</span></button>
+            <button class="mobile-nav-item" onclick="window.location.href='wallet.html'"><span class="material-icons">account_balance_wallet</span><span>Wallet</span></button>
+            <button class="mobile-nav-item active" onclick="window.location.href='track.html'"><span class="material-icons">local_shipping</span><span>Track</span></button>
+            <button class="mobile-nav-item" onclick="window.location.href='discover.html'"><span class="material-icons">explore</span><span>Discover</span></button>
         </div>
     </main>
 </div>
@@ -1433,25 +1503,21 @@
                     .where('userId', '==', currentUser.uid)
                     .orderBy('timestamp', 'desc')
                     .limit(5);
-                    
                 const snapshot = await tracksRef.get();
+                
                 if (!snapshot.empty) {
                     // Merge with local storage
                     snapshot.forEach(doc => {
                         const data = doc.data();
-                        const trackId = data.orderId || doc.id;
-                        
-                        // Add to recentTracks if not already there
-                        if (!recentTracks.some(t => t.id === trackId)) {
+                        if (!recentTracks.some(t => t.id === data.orderId)) {
                             recentTracks.unshift({
-                                id: trackId,
-                                productName: data.productName || 'Order',
-                                status: data.status || 'pending',
-                                timestamp: data.timestamp?.toDate() ? data.timestamp.toDate().toISOString() : new Date().toISOString()
+                                id: data.orderId,
+                                productName: data.productName,
+                                status: data.status,
+                                timestamp: data.timestamp?.toDate ? data.timestamp.toDate().toISOString() : new Date().toISOString()
                             });
                         }
                     });
-                    
                     // Keep only last 5
                     recentTracks = recentTracks.slice(0, 5);
                     localStorage.setItem(`recentTracks_${currentUser.uid}`, JSON.stringify(recentTracks));
@@ -1459,7 +1525,7 @@
                     updateQuickTrackCards();
                 }
             } catch (e) {
-                console.log('Firestore tracking fetch error (non-critical):', e);
+                console.log('Firestore tracking not available:', e);
             }
         } catch (e) {
             console.error('Error loading recent tracks:', e);
@@ -1469,10 +1535,13 @@
     function renderRecentTracks() {
         const container = document.getElementById('recentList');
         
-        if (recentTracks.length === 0) {
+        // Show only last 2 items
+        const displayTracks = recentTracks.slice(0, 2);
+        
+        if (displayTracks.length === 0) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 40px; color: #94a3b8;">
-                    <span class="material-icons" style="font-size: 48px; opacity: 0.4;">history</span>
+                <div class="empty-state">
+                    <span class="material-icons">history</span>
                     <p>No recent tracks</p>
                 </div>
             `;
@@ -1480,7 +1549,7 @@
         }
         
         let html = '';
-        recentTracks.forEach(track => {
+        displayTracks.forEach(track => {
             const statusClass = getStatusClass(track.status);
             const statusDisplay = track.status ? track.status.charAt(0).toUpperCase() + track.status.slice(1) : 'Pending';
             
@@ -1502,16 +1571,53 @@
         container.innerHTML = html;
     }
 
+    function updateQuickTrackCards() {
+        const container = document.getElementById('quickTrackContainer');
+        
+        if (recentTracks.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+        
+        // Show only last 3 items for quick track
+        const displayTracks = recentTracks.slice(0, 3);
+        
+        let html = '';
+        displayTracks.forEach(track => {
+            const statusClass = getStatusClass(track.status);
+            const statusDisplay = track.status ? track.status.charAt(0).toUpperCase() + track.status.slice(1) : 'Pending';
+            
+            html += `
+                <div class="quick-card" onclick="quickTrack('${track.id}')">
+                    <div class="quick-icon">
+                        <span class="material-icons">local_shipping</span>
+                    </div>
+                    <div class="quick-info">
+                        <h3>${track.productName || 'Order'}</h3>
+                        <p><span class="quick-status ${statusClass}">${statusDisplay}</span></p>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
     // ========== TRACKING FUNCTIONS ==========
     window.trackOrder = async function() {
         const input = document.getElementById('trackingInput');
         const trackBtn = document.getElementById('trackBtn');
+        const quickTrack = document.getElementById('quickTrackContainer');
+        const recentTracks = document.getElementById('recentTracks');
         const trackingId = input.value.trim();
         
         if (!trackingId) {
             showToast('Please enter a tracking ID', 'error');
             return;
         }
+        
+        // Hide quick track and recent tracks with animation
+        quickTrack.classList.add('hidden');
+        recentTracks.classList.add('hidden');
         
         // Show loading
         trackBtn.disabled = true;
@@ -1521,54 +1627,44 @@
             // Try to find order in Firestore
             let orderData = null;
             
-            if (db && currentUser) {
-                try {
-                    // Try by exact document ID
-                    const orderDoc = await db.collection('orders').doc(trackingId).get();
-                    if (orderDoc.exists) {
-                        const data = orderDoc.data();
-                        // Verify ownership if needed
-                        if (data.userId === currentUser.uid || data.uid === currentUser.uid || data.customerId === currentUser.uid) {
-                            orderData = { id: orderDoc.id, ...data };
-                        }
-                    } else {
-                        // Try searching by custom tracking number field
-                        const query = await db.collection('orders')
-                            .where('trackingNumber', '==', trackingId)
-                            .limit(1)
-                            .get();
-                        
-                        if (!query.empty) {
-                            const doc = query.docs[0];
-                            const data = doc.data();
-                            // Verify ownership if needed
-                            if (data.userId === currentUser.uid || data.uid === currentUser.uid || data.customerId === currentUser.uid) {
-                                orderData = { id: doc.id, ...data };
-                            }
-                        }
+            if (db) {
+                // Try by order ID
+                const orderDoc = await db.collection('orders').doc(trackingId).get();
+                if (orderDoc.exists) {
+                    orderData = { id: orderDoc.id, ...orderDoc.data() };
+                } else {
+                    // Try searching by custom tracking ID field
+                    const query = await db.collection('orders')
+                        .where('trackingNumber', '==', trackingId)
+                        .limit(1)
+                        .get();
+                    
+                    if (!query.empty) {
+                        orderData = { id: query.docs[0].id, ...query.docs[0].data() };
                     }
-                } catch (e) {
-                    console.log('Firestore query error:', e);
                 }
             }
             
             if (orderData) {
                 displayTrackingResult(orderData);
                 saveToRecent(orderData);
+                showToast('Order found successfully', 'success');
             } else {
-                // For demo: Show sample tracking with animation based on ID
+                // For demo: Show sample tracking with animation
                 showDemoTracking(trackingId);
             }
             
         } catch (error) {
             console.error('Tracking error:', error);
             showToast('Error tracking order. Please try again.', 'error');
+            
+            // Show quick track and recent tracks again on error
+            quickTrack.classList.remove('hidden');
+            recentTracks.classList.remove('hidden');
         } finally {
-            // Reset button after delay
-            setTimeout(() => {
-                trackBtn.disabled = false;
-                trackBtn.innerHTML = '<span class="material-icons">search</span> Track Now';
-            }, 1000);
+            // Reset button
+            trackBtn.disabled = false;
+            trackBtn.innerHTML = '<span class="material-icons">search</span> Track Now';
         }
     };
 
@@ -1585,25 +1681,12 @@
         // Update customer info
         const shipping = order.shippingDetails || order.shipping || {};
         document.getElementById('customerName').textContent = shipping.name || shipping.fullName || 'N/A';
-        
-        const address = [shipping.address, shipping.city, shipping.state].filter(Boolean).join(', ');
-        document.getElementById('deliveryAddress').textContent = address || 'N/A';
-        
+        document.getElementById('deliveryAddress').textContent = `${shipping.address || ''}${shipping.city ? ', ' + shipping.city : ''}`.trim() || 'N/A';
         document.getElementById('carrier').textContent = order.carrier || 'Standard Shipping';
         document.getElementById('trackingNumber').textContent = order.trackingNumber || order.id;
         
         // Update date
-        let orderDate;
-        if (order.timestamp?.toDate) {
-            orderDate = order.timestamp.toDate();
-        } else if (order.timestamp?.seconds) {
-            orderDate = new Date(order.timestamp.seconds * 1000);
-        } else if (order.timestamp) {
-            orderDate = new Date(order.timestamp);
-        } else {
-            orderDate = new Date();
-        }
-        
+        const orderDate = order.timestamp?.toDate ? order.timestamp.toDate() : new Date(order.timestamp || new Date());
         document.getElementById('orderDate').textContent = orderDate.toLocaleDateString('en-US', { 
             year: 'numeric', 
             month: 'short', 
@@ -1611,45 +1694,28 @@
         });
         
         // Update status and timeline
-        const status = order.status || 'pending';
-        updateTimeline(status, {
-            placed: order.timestamps?.placed || orderDate,
-            processing: order.timestamps?.processing,
-            shipped: order.timestamps?.shipped,
-            delivered: order.timestamps?.delivered
-        });
+        updateTimeline(order.status || 'pending', order.timestamps || {});
         
         // Show result with animation
         result.classList.add('show');
-        
-        // Scroll to result smoothly
-        result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function showDemoTracking(trackingId) {
         const result = document.getElementById('trackingResult');
         
-        // Generate demo data based on tracking ID to make it feel consistent
-        const hash = trackingId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        // Generate demo data
         const statuses = ['pending', 'processing', 'shipped', 'delivered'];
-        const statusIndex = hash % 4;
-        const randomStatus = statuses[statusIndex];
+        const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
         
-        // Generate dates based on status
         const now = new Date();
         const timestamps = {
-            placed: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
+            placed: new Date(now - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+            processing: new Date(now - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+            shipped: randomStatus !== 'pending' && randomStatus !== 'processing' ? 
+                new Date(now - 2 * 24 * 60 * 60 * 1000) : null, // 2 days ago
+            delivered: randomStatus === 'delivered' ? 
+                new Date(now - 1 * 24 * 60 * 60 * 1000) : null // 1 day ago
         };
-        
-        if (statusIndex >= 1) {
-            timestamps.processing = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000); // 5 days ago
-        }
-        if (statusIndex >= 2) {
-            timestamps.shipped = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
-        }
-        if (statusIndex >= 3) {
-            timestamps.delivered = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000); // 1 day ago
-        }
         
         const demoOrder = {
             id: trackingId,
@@ -1660,14 +1726,13 @@
             status: randomStatus,
             carrier: 'Express Logistics',
             trackingNumber: trackingId,
+            timestamps: timestamps,
             shippingDetails: {
                 name: currentUser?.displayName || 'John Doe',
                 address: '123 Tech Avenue',
                 city: 'Lagos',
-                state: 'Lagos',
                 phone: '+234 123 456 7890'
-            },
-            timestamps: timestamps
+            }
         };
         
         displayTrackingResult(demoOrder);
@@ -1676,8 +1741,6 @@
     }
 
     function updateTimeline(status, timestamps = {}) {
-        // Define step order
-        const steps = ['step1', 'step2', 'step3', 'step4'];
         const statusMap = {
             'pending': 1,
             'processing': 2,
@@ -1687,51 +1750,42 @@
         
         const currentStep = statusMap[status] || 1;
         
-        // Update progress bar with animation
+        // Update progress bar
         const progressWidth = ((currentStep - 1) / 3) * 100;
         document.getElementById('progressFill').style.width = `${progressWidth}%`;
         
         // Update each step
+        const steps = ['step1', 'step2', 'step3', 'step4'];
+        const stepTimes = ['placed', 'processing', 'shipped', 'delivered'];
+        
         steps.forEach((stepId, index) => {
             const step = document.getElementById(stepId);
             const stepNum = index + 1;
             
-            // Reset classes with animation delay based on step
-            setTimeout(() => {
-                step.classList.remove('completed', 'active');
-                
-                if (stepNum < currentStep) {
-                    step.classList.add('completed');
-                } else if (stepNum === currentStep) {
-                    step.classList.add('active');
-                }
-            }, index * 100); // Stagger animation
+            // Reset classes
+            step.classList.remove('completed', 'active');
             
-            // Set timestamps
-            let timeText = '';
-            let timeObj = null;
-            
-            if (stepNum === 1 && timestamps.placed) {
-                timeObj = timestamps.placed;
-            } else if (stepNum === 2 && timestamps.processing) {
-                timeObj = timestamps.processing;
-            } else if (stepNum === 3 && timestamps.shipped) {
-                timeObj = timestamps.shipped;
-            } else if (stepNum === 4 && timestamps.delivered) {
-                timeObj = timestamps.delivered;
+            if (stepNum < currentStep) {
+                step.classList.add('completed');
+            } else if (stepNum === currentStep) {
+                step.classList.add('active');
             }
             
-            if (timeObj) {
-                if (typeof timeObj.toDate === 'function') timeObj = timeObj.toDate();
-                const d = new Date(timeObj);
-                timeText = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + 
-                          d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-            }
-            
+            // Set timestamps with animation
+            const timeKey = stepTimes[index];
             const timeElement = document.getElementById(`${stepId}Time`);
-            if (timeText) {
-                timeElement.textContent = timeText;
-                setTimeout(() => timeElement.classList.add('show'), index * 100 + 300);
+            
+            if (timestamps[timeKey]) {
+                const date = timestamps[timeKey];
+                const d = date.toDate ? date.toDate() : new Date(date);
+                timeElement.textContent = d.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                }) + ' · ' + d.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                timeElement.classList.add('show');
             } else {
                 timeElement.textContent = '';
                 timeElement.classList.remove('show');
@@ -1771,37 +1825,19 @@
         updateQuickTrackCards();
     }
 
-    function updateQuickTrackCards() {
-        const container = document.getElementById('quickTrackContainer');
-        
-        if (recentTracks.length === 0) {
-            container.innerHTML = '';
-            return;
-        }
-        
-        let html = '';
-        recentTracks.slice(0, 3).forEach(track => {
-            const statusClass = getStatusClass(track.status);
-            const statusDisplay = track.status ? track.status.charAt(0).toUpperCase() + track.status.slice(1) : 'Pending';
-            
-            html += `
-                <div class="quick-card" onclick="quickTrack('${track.id}')">
-                    <div class="quick-icon">
-                        <span class="material-icons">local_shipping</span>
-                    </div>
-                    <div class="quick-info">
-                        <h3>${track.productName || 'Order'}</h3>
-                        <p><span class="recent-status ${statusClass}" style="margin-left: 0; display: inline-block;">${statusDisplay}</span></p>
-                    </div>
-                </div>
-            `;
-        });
-        container.innerHTML = html;
-    }
-
     window.quickTrack = function(orderId) {
         document.getElementById('trackingInput').value = orderId;
         trackOrder();
+    };
+
+    window.clearSearch = function() {
+        const quickTrack = document.getElementById('quickTrackContainer');
+        const recentTracks = document.getElementById('recentTracks');
+        
+        quickTrack.classList.remove('hidden');
+        recentTracks.classList.remove('hidden');
+        document.getElementById('trackingResult').classList.remove('show');
+        document.getElementById('trackingInput').value = '';
     };
 
     function getStatusClass(status) {
@@ -1839,7 +1875,7 @@
         toast.classList.add(type);
         toast.classList.add('show');
         
-        setTimeout(() => toast.classList.remove('show'), 4000);
+        setTimeout(() => toast.classList.remove('show'), 4500);
     }
 
     // ========== EVENT LISTENERS ==========
@@ -1857,13 +1893,6 @@
     document.getElementById('logoutBtn')?.addEventListener('click', async () => {
         if (auth) await auth.signOut();
         window.location.href = 'login.html';
-    });
-
-    document.querySelectorAll('[data-page]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const page = btn.dataset.page;
-            window.location.href = page === 'dashboard' ? 'index.html' : `${page}.html`;
-        });
     });
 
     // Enter key to track

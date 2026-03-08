@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>CrowdShop · Track Orders</title>
+    <!-- Material Icons + Google Font -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <!-- External Configurations -->
+    <script src="firebase-config.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: #f0f4f8;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .app {
+            display: flex;
+            width: 100%;
+            max-width: 1600px;
+            min-height: 100vh;
+            background: white;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+        }
+
+        /* ---------- SIDEBAR (Premium) ---------- */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #ffffff 0%, #f9fcff 100%);
+            display: flex;
+            flex-direction: column;
+            padding: 32px 0 24px;
+            border-right: 1px solid rgba(0,0,0,0.03);
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 0 24px 28px;
+            border-bottom: 1px solid rgba(36, 99, 235, 0.1);
+            margin-bottom: 28px;
+        }
+        .logo-icon {
+            background: linear-gradient(145deg, #2463eb, #7c3aed);
+            border-radius: 14px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 20px -5px rgba(36,99,235,0.3);
+        }
+        .logo-icon .material-icons { font-size: 26px; color: white; }
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 20px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 20px;
+            border-radius: 16px;
+            color: #475569;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+        .nav-item .material-icons { font-size: 22px; color: #64748b; transition: all 0.3s; }
+        .nav-item.active {
+            background: linear-gradient(145deg, #eef2ff, #e6eaff);
+            color: #2463eb;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(36,99,235,0.1);
+        }
+        .nav-item.active .material-icons { color: #2463eb; }
+        .nav-item:hover {
+            background: #f1f5f9;
+            transform: translateX(5px);
+        }
+
+        .user-profile-bottom {
+            margin-top: auto;
+            padding: 24px 20px 8px;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: relative;
+        }
+        .avatar {
+            background: linear-gradient(145deg, #2463eb, #7c3aed);
+            width: 48px;
+            height: 48px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+            box-shadow: 0 8px 16px rgba(36,99,235,0.25);
+        }
+        .user-info {
+            flex: 1;
+            cursor: pointer;
+        }
+        .user-name { 
+            color: #0f172a; 
+            font-weight: 600; 
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .user-email {
+            color: #64748b;
+            font-size: 0.8rem;
+            margin-top: 2px;
+        }
+        .user-name .material-icons {
+            font-size: 18px;
+            color: #64748b;
+        }
+
+        /* Logout popup */
+        .logout-popup {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 8px;
+            min-width: 160px;
+            box-shadow: 0 25px 40px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.7);
+            opacity: 0;
+            transform: scale(0.95) translateY(10px);
+            transition: all 0.25s cubic-bezier(0.2,0,0,1);
+            pointer-events: none;
+            z-index: 100;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .logout-popup.show {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: all;
+        }
+        .logout-popup-item {
+            padding: 14px 18px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: 0.15s;
+            color: #e53e3e;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        .logout-popup-item:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .logout-popup-item .material-icons {
+            font-size: 20px;
+            color: #e53e3e;
+        }
+
+        /* ---------- MAIN CONTENT ---------- */
+        .main-content {
+            flex: 1;
+            background: #ffffff;
+            padding: 32px 36px 36px;
+            overflow-y: auto;
+            height: 100vh;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .greeting h1 { 
+            font-size: 2.2rem; 
+            font-weight: 700; 
+            color: #0f172a;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+        .greeting .sub {
+            color: #64748b;
+            font-size: 1.1rem;
+            margin-top: 6px;
+            font-weight: 400;
+        }
+
+        .back-btn {
+            background: #f1f5f9;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #2463eb;
+            font-size: 0.95rem;
+            border: 1px solid transparent;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+        .back-btn:hover {
+            background: #e2e8f0;
+            transform: translateX(-5px);
+            border-color: #2463eb30;
+        }
+        .back-btn .material-icons {
+            font-size: 20px;
+        }
+
+        /* Tracking Hero Section */
+        .tracking-hero {
+            background: linear-gradient(145deg, #0b1f35, #0a2a44);
+            border-radius: 36px;
+            padding: 40px;
+            margin-bottom: 32px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 30px 40px -15px rgba(0,30,60,0.4);
+        }
+
+        .tracking-hero::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 50%;
+            animation: float 8s infinite ease-in-out;
+        }
+
+        .tracking-hero::after {
+            content: '';
+            position: absolute;
+            bottom: -80px;
+            left: -80px;
+            width: 250px;
+            height: 250px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 50%;
+            animation: float 12s infinite reverse ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(20px, -20px) rotate(5deg); }
+            75% { transform: translate(-20px, 20px) rotate(-5deg); }
+        }
+
+        .tracking-title {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            opacity: 0.8;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .tracking-title .material-icons {
+            font-size: 24px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
+        }
+
+        .tracking-input-area {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+            margin-top: 20px;
+        }
+
+        .tracking-input-wrapper {
+            flex: 1;
+            min-width: 280px;
+            position: relative;
+        }
+
+        .tracking-input {
+            width: 100%;
+            padding: 20px 30px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 60px;
+            color: white;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            letter-spacing: 0.5px;
+        }
+
+        .tracking-input:focus {
+            outline: none;
+            border-color: white;
+            background: rgba(255,255,255,0.15);
+            box-shadow: 0 0 30px rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        .tracking-input::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+
+        .tracking-btn {
+            background: linear-gradient(145deg, #2463eb, #4f46e5);
+            color: white;
+            border: none;
+            padding: 20px 50px;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 20px 30px -10px #2463ebcc;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .tracking-btn:hover:not(:disabled) {
+            transform: translateY(-4px);
+            box-shadow: 0 30px 40px -8px #2463eb;
+        }
+
+        .tracking-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .tracking-btn .material-icons {
+            font-size: 24px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(5px); }
+        }
+
+        /* Quick Track Cards */
+        .quick-track {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .quick-card {
+            background: #f8fcff;
+            border: 1px solid #e2e8f0;
+            border-radius: 28px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .quick-card:hover {
+            transform: translateY(-5px);
+            border-color: #2463eb;
+            box-shadow: 0 15px 25px -10px #2463eb80;
+        }
+
+        .quick-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(145deg, #eef2ff, #e6eaff);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2463eb;
+        }
+
+        .quick-icon .material-icons {
+            font-size: 26px;
+        }
+
+        .quick-info h3 {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .quick-info p {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        /* Tracking Result Card */
+        .tracking-result {
+            background: white;
+            border: 1px solid #e9eef2;
+            border-radius: 36px;
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.05);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tracking-result.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Order Header */
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .order-id-badge {
+            background: #f1f5f9;
+            padding: 12px 24px;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #2463eb;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .order-id-badge .material-icons {
+            font-size: 20px;
+        }
+
+        .order-status-badge {
+            padding: 10px 28px;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .status-pending {
+            background: rgba(254, 243, 199, 0.9);
+            color: #b45309;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-processing {
+            background: rgba(219, 234, 254, 0.9);
+            color: #1e40af;
+            border: 1px solid rgba(37, 99, 235, 0.3);
+        }
+
+        .status-shipped {
+            background: rgba(237, 233, 254, 0.9);
+            color: #6d28d9;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .status-delivered {
+            background: rgba(220, 252, 231, 0.9);
+            color: #166534;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-cancelled {
+            background: rgba(254, 226, 226, 0.9);
+            color: #b91c1c;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* Product Info */
+        .product-info-card {
+            background: #f8fcff;
+            border-radius: 28px;
+            padding: 24px;
+            margin-bottom: 32px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            border: 1px solid #e2e8f0;
+        }
+
+        .product-image {
+            width: 100px;
+            height: 100px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 24px;
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+        }
+
+        .product-details {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .product-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .product-meta {
+            display: flex;
+            gap: 24px;
+            color: #64748b;
+            font-size: 0.95rem;
+            flex-wrap: wrap;
+        }
+
+        .product-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .product-meta .material-icons {
+            font-size: 18px;
+            color: #2463eb;
+        }
+
+        /* Tracking Timeline - COOL ANIMATED STEPS */
+        .tracking-timeline {
+            margin: 40px 0;
+            position: relative;
+        }
+
+        .timeline-progress {
+            position: absolute;
+            top: 35px;
+            left: 60px;
+            right: 60px;
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .timeline-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2463eb, #7c3aed);
+            border-radius: 4px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timeline-progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255,255,255,0.4), 
+                transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .timeline-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            z-index: 2;
+        }
+
+        .timeline-step {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .step-icon {
+            width: 70px;
+            height: 70px;
+            background: white;
+            border: 4px solid #e2e8f0;
+            border-radius: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 3;
+        }
+
+        .step-icon .material-icons {
+            font-size: 32px;
+            color: #94a3b8;
+            transition: all 0.5s ease;
+        }
+
+        .timeline-step.completed .step-icon {
+            border-color: #2463eb;
+            background: linear-gradient(145deg, #2463eb, #4f46e5);
+            transform: scale(1.1);
+            box-shadow: 0 15px 30px -8px #2463eb80;
+            animation: pop 0.5s ease-out;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1.1); }
+        }
+
+        .timeline-step.completed .step-icon .material-icons {
+            color: white;
+            animation: spin 0.5s ease-out;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .timeline-step.active .step-icon {
+            border-color: #2463eb;
+            background: white;
+            transform: scale(1.05);
+            box-shadow: 0 0 0 8px #2463eb20;
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 8px #2463eb20; }
+            50% { box-shadow: 0 0 0 12px #2463eb10; }
+        }
+
+        .timeline-step.active .step-icon .material-icons {
+            color: #2463eb;
+        }
+
+        .step-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 4px;
+            transition: all 0.3s;
+        }
+
+        .timeline-step.completed .step-label {
+            color: #2463eb;
+        }
+
+        .step-time {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .step-time.show {
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Delivery Info Card */
+        .delivery-info {
+            background: linear-gradient(145deg, #f8fcff, #ffffff);
+            border-radius: 28px;
+            padding: 24px;
+            margin-top: 32px;
+            border: 1px solid #e2e8f0;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .info-item {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .info-icon {
+            width: 48px;
+            height: 48px;
+            background: #f1f5f9;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2463eb;
+        }
+
+        .info-icon .material-icons {
+            font-size: 24px;
+        }
+
+        .info-content h4 {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-content p {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        /* Recent Tracks */
+        .recent-tracks {
+            background: white;
+            border: 1px solid #e9eef2;
+            border-radius: 32px;
+            padding: 28px;
+        }
+
+        .recent-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .recent-header .material-icons {
+            color: #2463eb;
+            font-size: 28px;
+        }
+
+        .recent-header h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .recent-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .recent-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: #f8fcff;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+
+        .recent-item:hover {
+            background: white;
+            border-color: #2463eb;
+            transform: translateX(5px);
+            box-shadow: 0 10px 20px -8px #2463eb40;
+        }
+
+        .recent-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .recent-icon {
+            width: 44px;
+            height: 44px;
+            background: #eef2ff;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2463eb;
+        }
+
+        .recent-icon .material-icons {
+            font-size: 22px;
+        }
+
+        .recent-info h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .recent-info p {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .recent-status {
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 60px;
+            padding: 16px 32px;
+            color: white;
+            font-weight: 500;
+            z-index: 2000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: 0.4s;
+            max-width: 450px;
+            box-shadow: 0 25px 40px -12px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.95rem;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            background: rgba(21, 128, 61, 0.95);
+        }
+
+        .toast.error {
+            background: rgba(185, 28, 28, 0.95);
+        }
+
+        .toast .material-icons {
+            font-size: 24px;
+        }
+
+        /* MOBILE BOTTOM NAV - EXACT SPECS */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(203, 213, 225, 0.5);
+            z-index: 100;
+            height: 78px;
+            width: 100%;
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-around;
+            border-radius: 40px 40px 0 0;
+            box-shadow: 0 -5px 30px rgba(0,0,0,0.1);
+        }
+
+        .mobile-nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 0;
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            background: none;
+            border: none;
+            transition: 0.3s;
+            border-radius: 24px;
+            text-decoration: none;
+        }
+
+        .mobile-nav-item .material-icons { 
+            font-size: 24px;
+        }
+
+        .mobile-nav-item.active {
+            color: #2463eb;
+            background: #eef2ff;
+        }
+
+        .mobile-nav-item:hover {
+            background: #f1f5f9;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .mobile-bottom-nav { display: flex; }
+            .main-content { 
+                padding: 24px 20px 98px; 
+                height: auto;
+                min-height: 100vh;
+            }
+            .quick-track { grid-template-columns: 1fr; }
+            .delivery-info { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 600px) {
+            .main-content { padding: 20px 16px 90px; }
+            .tracking-hero { padding: 28px; }
+            .tracking-input-area { flex-direction: column; }
+            .tracking-btn { width: 100%; justify-content: center; }
+            .order-header { flex-direction: column; align-items: flex-start; }
+            .product-info-card { flex-direction: column; align-items: flex-start; }
+            .product-image { width: 100%; height: 160px; }
+            .timeline-steps { 
+                flex-direction: column;
+                gap: 20px;
+                align-items: flex-start;
+            }
+            .timeline-progress { display: none; }
+            .timeline-step {
+                flex-direction: row;
+                gap: 20px;
+                width: 100%;
+            }
+            .step-icon { 
+                width: 50px; 
+                height: 50px; 
+                margin-bottom: 0;
+            }
+            .step-icon .material-icons { font-size: 24px; }
+            .step-content { text-align: left; }
+            .toast { 
+                left: 20px;
+                right: 20px;
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .recent-item { 
+                flex-direction: column; 
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .recent-status { align-self: flex-start; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="logo-area">
+            <span class="logo-icon"><span class="material-icons">local_shipping</span></span>
+            <span class="logo-text">CrowdShop</span>
+        </div>
+        <div class="nav-links">
+            <button class="nav-item" data-page="dashboard"><span class="material-icons">dashboard</span> Dashboard</button>
+            <button class="nav-item" data-page="orders"><span class="material-icons">shopping_bag</span> My Orders</button>
+            <button class="nav-item" data-page="wallet"><span class="material-icons">account_balance_wallet</span> Wallet</button>
+            <button class="nav-item active" data-page="track"><span class="material-icons">local_shipping</span> Track Orders</button>
+            <button class="nav-item" data-page="discover"><span class="material-icons">explore</span> Discover</button>
+        </div>
+        <div class="user-profile-bottom">
+            <div class="avatar" id="userAvatar">JD</div>
+            <div class="user-info" id="userInfo">
+                <div class="user-name" id="sidebarUserName">
+                    Loading...
+                </div>
+                <div class="user-email" id="userEmail">loading...</div>
+            </div>
+            <div class="logout-popup" id="logoutPopup">
+                <div class="logout-popup-item" id="logoutBtn">
+                    <span class="material-icons">logout</span>
+                    <span>Sign out</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="greeting">
+                <h1>Track Orders</h1>
+                <div class="sub">Real-time package tracking with animated updates</div>
+            </div>
+            <button class="back-btn" onclick="goToDashboard()">
+                <span class="material-icons">arrow_back</span> Dashboard
+            </button>
+        </div>
+
+        <!-- Tracking Hero Section -->
+        <div class="tracking-hero">
+            <div class="tracking-title">
+                <span class="material-icons">radar</span>
+                TRACK YOUR PACKAGE
+            </div>
+            
+            <div class="tracking-input-area">
+                <div class="tracking-input-wrapper">
+                    <input type="text" class="tracking-input" id="trackingInput" placeholder="Enter tracking ID (e.g., ORD-123456)" autocomplete="off">
+                </div>
+                <button class="tracking-btn" onclick="trackOrder()" id="trackBtn">
+                    <span class="material-icons">search</span> Track Now
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Track Cards -->
+        <div class="quick-track" id="quickTrackContainer">
+            <!-- Will be populated dynamically -->
+        </div>
+
+        <!-- Tracking Result Card (Initially Hidden) -->
+        <div class="tracking-result" id="trackingResult">
+            <div class="order-header">
+                <div class="order-id-badge">
+                    <span class="material-icons">receipt</span>
+                    <span id="orderIdDisplay">ORD-123456</span>
+                </div>
+                <div class="order-status-badge" id="orderStatusDisplay">PENDING</div>
+            </div>
+
+            <!-- Product Info -->
+            <div class="product-info-card">
+                <div class="product-image" id="productImage"></div>
+                <div class="product-details">
+                    <div class="product-name" id="productName">Product Name</div>
+                    <div class="product-meta">
+                        <span><span class="material-icons">inventory</span> <span id="productQuantity">2</span> units</span>
+                        <span><span class="material-icons">payments</span> ₦<span id="productTotal">0</span></span>
+                        <span><span class="material-icons">calendar_today</span> <span id="orderDate">Mar 7, 2026</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Animated Tracking Timeline -->
+            <div class="tracking-timeline">
+                <div class="timeline-progress">
+                    <div class="timeline-progress-fill" id="progressFill" style="width: 0%;"></div>
+                </div>
+                <div class="timeline-steps">
+                    <!-- Step 1: Order Placed -->
+                    <div class="timeline-step" id="step1">
+                        <div class="step-icon">
+                            <span class="material-icons">shopping_bag</span>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-label">Order Placed</div>
+                            <div class="step-time" id="step1Time"></div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Processing -->
+                    <div class="timeline-step" id="step2">
+                        <div class="step-icon">
+                            <span class="material-icons">inventory</span>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-label">Processing</div>
+                            <div class="step-time" id="step2Time"></div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Shipped -->
+                    <div class="timeline-step" id="step3">
+                        <div class="step-icon">
+                            <span class="material-icons">local_shipping</span>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-label">Shipped</div>
+                            <div class="step-time" id="step3Time"></div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Delivered -->
+                    <div class="timeline-step" id="step4">
+                        <div class="step-icon">
+                            <span class="material-icons">check_circle</span>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-label">Delivered</div>
+                            <div class="step-time" id="step4Time"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delivery Information -->
+            <div class="delivery-info">
+                <div class="info-item">
+                    <div class="info-icon">
+                        <span class="material-icons">person</span>
+                    </div>
+                    <div class="info-content">
+                        <h4>Customer</h4>
+                        <p id="customerName">John Doe</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">
+                        <span class="material-icons">location_on</span>
+                    </div>
+                    <div class="info-content">
+                        <h4>Delivery Address</h4>
+                        <p id="deliveryAddress">123 Main St, City</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">
+                        <span class="material-icons">local_shipping</span>
+                    </div>
+                    <div class="info-content">
+                        <h4>Carrier</h4>
+                        <p id="carrier">Standard Shipping</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon">
+                        <span class="material-icons">track_changes</span>
+                    </div>
+                    <div class="info-content">
+                        <h4>Tracking #</h4>
+                        <p id="trackingNumber">ORD-123456</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Tracks Section -->
+        <div class="recent-tracks">
+            <div class="recent-header">
+                <span class="material-icons">history</span>
+                <h2>Recent Tracking Activity</h2>
+            </div>
+            <div class="recent-list" id="recentList">
+                <!-- Will be populated dynamically -->
+                <div style="text-align: center; padding: 40px; color: #94a3b8;">
+                    <span class="material-icons" style="font-size: 48px; opacity: 0.4;">history</span>
+                    <p>No recent tracks</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- MOBILE BOTTOM NAV - EXACT SPECS -->
+        <div class="mobile-bottom-nav">
+            <button class="mobile-nav-item" data-page="dashboard"><span class="material-icons">dashboard</span><span>Home</span></button>
+            <button class="mobile-nav-item" data-page="orders"><span class="material-icons">shopping_bag</span><span>Orders</span></button>
+            <button class="mobile-nav-item" data-page="wallet"><span class="material-icons">account_balance_wallet</span><span>Wallet</span></button>
+            <button class="mobile-nav-item active" data-page="track"><span class="material-icons">local_shipping</span><span>Track</span></button>
+            <button class="mobile-nav-item" data-page="discover"><span class="material-icons">explore</span><span>Discover</span></button>
+        </div>
+    </main>
+</div>
+
+<!-- Toast Notifications -->
+<div class="toast" id="toast">
+    <span class="material-icons" id="toastIcon">info</span>
+    <span id="toastMessage"></span>
+</div>
+
+<script>
+    // ========== FIREBASE INIT ==========
+    let db, auth;
+    let currentUser = null;
+    let userData = null;
+    let recentTracks = [];
+
+    // Initialize Firebase
+    try {
+        if (typeof firebaseConfig !== 'undefined') {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            db = firebase.firestore();
+            auth = firebase.auth();
+        } else {
+            console.error("Firebase config not found");
+        }
+    } catch (error) {
+        console.error("Firebase init error:", error);
+    }
+
+    // ========== AUTH STATE ==========
+    if (auth) {
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                await loadUserData();
+                await loadRecentTracks();
+                
+                // Set avatar and user info
+                const displayName = userData?.displayName || user.displayName || user.email?.split('@')[0] || 'User';
+                const email = user.email || '';
+                document.getElementById('userAvatar').innerText = displayName.charAt(0).toUpperCase();
+                document.getElementById('sidebarUserName').innerHTML = displayName;
+                document.getElementById('userEmail').innerHTML = email;
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+    }
+
+    async function loadUserData() {
+        if (!currentUser || !db) return;
+        try {
+            const userRef = db.collection('users').doc(currentUser.uid);
+            const doc = await userRef.get();
+            if (doc.exists) {
+                userData = doc.data();
+            }
+        } catch (e) {
+            console.error('Error loading user:', e);
+        }
+    }
+
+    async function loadRecentTracks() {
+        if (!currentUser || !db) return;
+        try {
+            // Get user's recent tracking activity from localStorage or Firestore
+            const saved = localStorage.getItem(`recentTracks_${currentUser.uid}`);
+            if (saved) {
+                recentTracks = JSON.parse(saved);
+                renderRecentTracks();
+            }
+            
+            // Also try to get from Firestore if available
+            const tracksRef = db.collection('tracking').where('userId', '==', currentUser.uid).limit(5);
+            const snapshot = await tracksRef.get();
+            if (!snapshot.empty) {
+                // Merge with local storage
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    // Add to recentTracks if not already there
+                    if (!recentTracks.some(t => t.id === data.orderId)) {
+                        recentTracks.unshift({
+                            id: data.orderId,
+                            productName: data.productName,
+                            status: data.status,
+                            timestamp: data.timestamp?.toDate() || new Date()
+                        });
+                    }
+                });
+                // Keep only last 5
+                recentTracks = recentTracks.slice(0, 5);
+                localStorage.setItem(`recentTracks_${currentUser.uid}`, JSON.stringify(recentTracks));
+                renderRecentTracks();
+            }
+        } catch (e) {
+            console.error('Error loading recent tracks:', e);
+        }
+    }
+
+    function renderRecentTracks() {
+        const container = document.getElementById('recentList');
+        
+        if (recentTracks.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #94a3b8;">
+                    <span class="material-icons" style="font-size: 48px; opacity: 0.4;">history</span>
+                    <p>No recent tracks</p>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        recentTracks.forEach(track => {
+            const statusClass = getStatusClass(track.status);
+            const statusDisplay = track.status ? track.status.charAt(0).toUpperCase() + track.status.slice(1) : 'Pending';
+            
+            html += `
+                <div class="recent-item" onclick="quickTrack('${track.id}')">
+                    <div class="recent-left">
+                        <div class="recent-icon">
+                            <span class="material-icons">local_shipping</span>
+                        </div>
+                        <div class="recent-info">
+                            <h4>${track.productName || 'Order'}</h4>
+                            <p>ID: ${track.id}</p>
+                        </div>
+                    </div>
+                    <span class="recent-status ${statusClass}">${statusDisplay}</span>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    // ========== TRACKING FUNCTIONS ==========
+    window.trackOrder = async function() {
+        const input = document.getElementById('trackingInput');
+        const trackBtn = document.getElementById('trackBtn');
+        const trackingId = input.value.trim();
+        
+        if (!trackingId) {
+            showToast('Please enter a tracking ID', 'error');
+            return;
+        }
+        
+        // Show loading
+        trackBtn.disabled = true;
+        trackBtn.innerHTML = '<span class="loading-spinner"></span> Tracking...';
+        
+        try {
+            // Try to find order in Firestore
+            let orderData = null;
+            
+            if (db) {
+                // Try by order ID
+                const orderDoc = await db.collection('orders').doc(trackingId).get();
+                if (orderDoc.exists) {
+                    orderData = { id: orderDoc.id, ...orderDoc.data() };
+                } else {
+                    // Try searching by custom tracking ID field
+                    const query = await db.collection('orders')
+                        .where('trackingNumber', '==', trackingId)
+                        .limit(1)
+                        .get();
+                    
+                    if (!query.empty) {
+                        orderData = { id: query.docs[0].id, ...query.docs[0].data() };
+                    }
+                }
+            }
+            
+            if (orderData) {
+                displayTrackingResult(orderData);
+                saveToRecent(orderData);
+            } else {
+                // For demo: Show sample tracking with animation
+                showDemoTracking(trackingId);
+            }
+            
+        } catch (error) {
+            console.error('Tracking error:', error);
+            showToast('Error tracking order. Please try again.', 'error');
+        } finally {
+            // Reset button
+            trackBtn.disabled = false;
+            trackBtn.innerHTML = '<span class="material-icons">search</span> Track Now';
+        }
+    };
+
+    function displayTrackingResult(order) {
+        const result = document.getElementById('trackingResult');
+        
+        // Update order info
+        document.getElementById('orderIdDisplay').textContent = order.id;
+        document.getElementById('productName').textContent = order.productName || 'Product';
+        document.getElementById('productQuantity').textContent = order.units || order.quantity || 1;
+        document.getElementById('productTotal').textContent = (order.total || 0).toLocaleString();
+        document.getElementById('productImage').style.backgroundImage = `url('${order.productImage || 'https://placehold.co/300x200/2463eb/ffffff?text=Product'}')`;
+        
+        // Update customer info
+        const shipping = order.shippingDetails || order.shipping || {};
+        document.getElementById('customerName').textContent = shipping.name || shipping.fullName || 'N/A';
+        document.getElementById('deliveryAddress').textContent = `${shipping.address || ''}, ${shipping.city || ''}`.trim() || 'N/A';
+        document.getElementById('carrier').textContent = order.carrier || 'Standard Shipping';
+        document.getElementById('trackingNumber').textContent = order.trackingNumber || order.id;
+        
+        // Update date
+        const orderDate = order.timestamp?.toDate() || new Date();
+        document.getElementById('orderDate').textContent = orderDate.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        });
+        
+        // Update status and timeline
+        updateTimeline(order.status || 'pending', order.timestamps || {});
+        
+        // Show result with animation
+        result.classList.add('show');
+    }
+
+    function showDemoTracking(trackingId) {
+        const result = document.getElementById('trackingResult');
+        
+        // Generate demo data
+        const statuses = ['pending', 'processing', 'shipped', 'delivered'];
+        const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+        
+        const demoOrder = {
+            id: trackingId,
+            productName: 'Premium Wireless Headphones',
+            productImage: 'https://placehold.co/300x200/2463eb/ffffff?text=Headphones',
+            units: 1,
+            total: 125000,
+            status: randomStatus,
+            carrier: 'Express Logistics',
+            trackingNumber: trackingId,
+            shippingDetails: {
+                name: currentUser?.displayName || 'John Doe',
+                address: '123 Tech Avenue',
+                city: 'Lagos',
+                phone: '+234 123 456 7890'
+            },
+            timestamps: {
+                placed: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+                processing: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+                shipped: randomStatus !== 'pending' && randomStatus !== 'processing' ? 
+                    new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) : null, // 2 days ago
+                delivered: randomStatus === 'delivered' ? 
+                    new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) : null // 1 day ago
+            }
+        };
+        
+        displayTrackingResult(demoOrder);
+        saveToRecent(demoOrder);
+        showToast(`Tracking ID: ${trackingId}`, 'info');
+    }
+
+    function updateTimeline(status, timestamps = {}) {
+        // Define step order
+        const steps = ['step1', 'step2', 'step3', 'step4'];
+        const statusMap = {
+            'pending': 1,
+            'processing': 2,
+            'shipped': 3,
+            'delivered': 4
+        };
+        
+        const currentStep = statusMap[status] || 1;
+        
+        // Update progress bar
+        const progressWidth = ((currentStep - 1) / 3) * 100;
+        document.getElementById('progressFill').style.width = `${progressWidth}%`;
+        
+        // Update each step
+        steps.forEach((stepId, index) => {
+            const step = document.getElementById(stepId);
+            const stepNum = index + 1;
+            
+            // Reset classes
+            step.classList.remove('completed', 'active');
+            
+            if (stepNum < currentStep) {
+                step.classList.add('completed');
+            } else if (stepNum === currentStep) {
+                step.classList.add('active');
+            }
+            
+            // Set timestamps with animation
+            let timeText = '';
+            if (stepNum === 1 && timestamps.placed) {
+                timeText = formatTime(timestamps.placed);
+            } else if (stepNum === 2 && timestamps.processing) {
+                timeText = formatTime(timestamps.processing);
+            } else if (stepNum === 3 && timestamps.shipped) {
+                timeText = formatTime(timestamps.shipped);
+            } else if (stepNum === 4 && timestamps.delivered) {
+                timeText = formatTime(timestamps.delivered);
+            }
+            
+            const timeElement = document.getElementById(`${stepId}Time`);
+            if (timeText) {
+                timeElement.textContent = timeText;
+                timeElement.classList.add('show');
+            } else {
+                timeElement.textContent = '';
+                timeElement.classList.remove('show');
+            }
+        });
+        
+        // Update status badge
+        const statusBadge = document.getElementById('orderStatusDisplay');
+        statusBadge.className = `order-status-badge status-${status}`;
+        statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+    }
+
+    function formatTime(date) {
+        if (!date) return '';
+        if (typeof date.toDate === 'function') date = date.toDate();
+        const d = new Date(date);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + 
+               d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function saveToRecent(order) {
+        if (!currentUser) return;
+        
+        const trackEntry = {
+            id: order.id,
+            productName: order.productName || 'Order',
+            status: order.status || 'pending',
+            timestamp: new Date().toISOString()
+        };
+        
+        // Remove if exists
+        recentTracks = recentTracks.filter(t => t.id !== order.id);
+        
+        // Add to front
+        recentTracks.unshift(trackEntry);
+        
+        // Keep only last 5
+        recentTracks = recentTracks.slice(0, 5);
+        
+        // Save to localStorage
+        localStorage.setItem(`recentTracks_${currentUser.uid}`, JSON.stringify(recentTracks));
+        
+        // Update UI
+        renderRecentTracks();
+        
+        // Update quick track cards
+        updateQuickTrackCards();
+    }
+
+    function updateQuickTrackCards() {
+        const container = document.getElementById('quickTrackContainer');
+        
+        if (recentTracks.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+        
+        let html = '';
+        recentTracks.slice(0, 3).forEach(track => {
+            const statusClass = getStatusClass(track.status);
+            const statusDisplay = track.status ? track.status.charAt(0).toUpperCase() + track.status.slice(1) : 'Pending';
+            
+            html += `
+                <div class="quick-card" onclick="quickTrack('${track.id}')">
+                    <div class="quick-icon">
+                        <span class="material-icons">local_shipping</span>
+                    </div>
+                    <div class="quick-info">
+                        <h3>${track.productName}</h3>
+                        <p><span class="recent-status ${statusClass}" style="margin-left: 0;">${statusDisplay}</span></p>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    window.quickTrack = function(orderId) {
+        document.getElementById('trackingInput').value = orderId;
+        trackOrder();
+    };
+
+    function getStatusClass(status) {
+        const classes = {
+            'pending': 'status-pending',
+            'processing': 'status-processing',
+            'shipped': 'status-shipped',
+            'delivered': 'status-delivered',
+            'cancelled': 'status-cancelled'
+        };
+        return classes[status] || 'status-pending';
+    }
+
+    // ========== UTILITY FUNCTIONS ==========
+    function goToDashboard() {
+        window.location.href = 'index.html';
+    }
+
+    function showToast(message, type = 'info') {
+        const toast = document.getElementById('toast');
+        const toastIcon = document.getElementById('toastIcon');
+        const toastMessage = document.getElementById('toastMessage');
+        
+        const icons = { success: 'check_circle', error: 'error', warning: 'warning', info: 'info' };
+        toastIcon.textContent = icons[type] || 'info';
+        toastMessage.textContent = message;
+        
+        toast.className = 'toast';
+        toast.classList.add(type);
+        toast.classList.add('show');
+        
+        setTimeout(() => toast.classList.remove('show'), 4500);
+    }
+
+    // ========== EVENT LISTENERS ==========
+    document.getElementById('userInfo')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('logoutPopup').classList.toggle('show');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.user-info') && !e.target.closest('.logout-popup')) {
+            document.getElementById('logoutPopup').classList.remove('show');
+        }
+    });
+
+    document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+        if (auth) await auth.signOut();
+        window.location.href = 'login.html';
+    });
+
+    document.querySelectorAll('[data-page]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const page = btn.dataset.page;
+            window.location.href = page === 'dashboard' ? 'index.html' : `${page}.html`;
+        });
+    });
+
+    // Enter key to track
+    document.getElementById('trackingInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') trackOrder();
+    });
+
+    // Close popup on escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.getElementById('logoutPopup').classList.remove('show');
+        }
+    });
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+        updateQuickTrackCards();
+    });
+</script>
+</body>
+</html>

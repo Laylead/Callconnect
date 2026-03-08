@@ -264,7 +264,7 @@
             font-size: 20px;
         }
 
-        /* Tracking Hero Section */
+        /* Tracking Hero Section - Premium */
         .tracking-hero {
             background: linear-gradient(145deg, #0b1f35, #0a2a44);
             border-radius: 36px;
@@ -462,7 +462,7 @@
             color: #0f172a;
         }
 
-        /* Tracking Result Card */
+        /* Tracking Result Card - Premium */
         .tracking-result {
             background: white;
             border: 1px solid #e9eef2;
@@ -602,7 +602,7 @@
             color: #2463eb;
         }
 
-        /* Tracking Timeline - COOL ANIMATED STEPS */
+        /* ===== ANIMATED TRACKING TIMELINE - COOL EFFECTS ===== */
         .tracking-timeline {
             margin: 40px 0;
             position: relative;
@@ -952,7 +952,7 @@
             font-size: 24px;
         }
 
-        /* MOBILE BOTTOM NAV - EXACT SPECS */
+        /* ===== MOBILE BOTTOM NAV - EXACT SPECS ===== */
         .mobile-bottom-nav {
             display: none;
             position: fixed;
@@ -1004,7 +1004,7 @@
             background: #f1f5f9;
         }
 
-        /* Responsive Design */
+        /* Responsive Design - Mobile Optimized */
         @media (max-width: 900px) {
             .sidebar { display: none; }
             .mobile-bottom-nav { display: flex; }
@@ -1018,35 +1018,90 @@
         }
 
         @media (max-width: 600px) {
-            .main-content { padding: 20px 16px 90px; }
-            .tracking-hero { padding: 28px; }
-            .tracking-input-area { flex-direction: column; }
-            .tracking-btn { width: 100%; justify-content: center; }
-            .order-header { flex-direction: column; align-items: flex-start; }
-            .product-info-card { flex-direction: column; align-items: flex-start; }
-            .product-image { width: 100%; height: 160px; }
+            .main-content { 
+                padding: 20px 16px 90px; 
+            }
+            .tracking-hero { 
+                padding: 28px; 
+            }
+            .tracking-input-area { 
+                flex-direction: column; 
+            }
+            .tracking-btn { 
+                width: 100%; 
+                justify-content: center; 
+                padding: 16px 30px;
+            }
+            .order-header { 
+                flex-direction: column; 
+                align-items: flex-start; 
+            }
+            .product-info-card { 
+                flex-direction: column; 
+                align-items: flex-start; 
+            }
+            .product-image { 
+                width: 100%; 
+                height: 160px; 
+            }
+            .product-name {
+                font-size: 1.2rem;
+            }
+            .product-meta {
+                gap: 16px;
+            }
+            
+            /* Mobile Timeline - Perfect Alignment */
             .timeline-steps { 
                 flex-direction: column;
                 gap: 20px;
                 align-items: flex-start;
             }
-            .timeline-progress { display: none; }
+            .timeline-progress { 
+                display: none; 
+            }
             .timeline-step {
                 flex-direction: row;
                 gap: 20px;
                 width: 100%;
+                text-align: left;
             }
             .step-icon { 
                 width: 50px; 
                 height: 50px; 
                 margin-bottom: 0;
+                flex-shrink: 0;
             }
-            .step-icon .material-icons { font-size: 24px; }
-            .step-content { text-align: left; }
+            .step-icon .material-icons { 
+                font-size: 24px; 
+            }
+            .step-content { 
+                text-align: left;
+                flex: 1;
+            }
+            .step-label {
+                margin-bottom: 2px;
+            }
+            
+            .delivery-info {
+                gap: 16px;
+            }
+            .info-item {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .info-icon {
+                width: 44px;
+                height: 44px;
+            }
+            
             .toast { 
                 left: 20px;
                 right: 20px;
                 max-width: none;
+                top: 20px;
+                font-size: 0.9rem;
+                padding: 14px 24px;
             }
         }
 
@@ -1056,7 +1111,38 @@
                 align-items: flex-start;
                 gap: 10px;
             }
-            .recent-status { align-self: flex-start; }
+            .recent-left {
+                width: 100%;
+            }
+            .recent-status { 
+                align-self: flex-start;
+                margin-left: 59px;
+            }
+            .order-id-badge {
+                width: 100%;
+                justify-content: center;
+            }
+            .order-status-badge {
+                width: 100%;
+                text-align: center;
+            }
+            .product-meta {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .mobile-nav-item {
+                font-size: 11px;
+            }
+            .mobile-nav-item .material-icons { 
+                font-size: 22px;
+            }
+            .step-icon {
+                width: 44px;
+                height: 44px;
+            }
         }
     </style>
 </head>
@@ -1333,34 +1419,47 @@
     async function loadRecentTracks() {
         if (!currentUser || !db) return;
         try {
-            // Get user's recent tracking activity from localStorage or Firestore
+            // Get user's recent tracking activity from localStorage
             const saved = localStorage.getItem(`recentTracks_${currentUser.uid}`);
             if (saved) {
                 recentTracks = JSON.parse(saved);
                 renderRecentTracks();
+                updateQuickTrackCards();
             }
             
             // Also try to get from Firestore if available
-            const tracksRef = db.collection('tracking').where('userId', '==', currentUser.uid).limit(5);
-            const snapshot = await tracksRef.get();
-            if (!snapshot.empty) {
-                // Merge with local storage
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    // Add to recentTracks if not already there
-                    if (!recentTracks.some(t => t.id === data.orderId)) {
-                        recentTracks.unshift({
-                            id: data.orderId,
-                            productName: data.productName,
-                            status: data.status,
-                            timestamp: data.timestamp?.toDate() || new Date()
-                        });
-                    }
-                });
-                // Keep only last 5
-                recentTracks = recentTracks.slice(0, 5);
-                localStorage.setItem(`recentTracks_${currentUser.uid}`, JSON.stringify(recentTracks));
-                renderRecentTracks();
+            try {
+                const tracksRef = db.collection('tracking')
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('timestamp', 'desc')
+                    .limit(5);
+                    
+                const snapshot = await tracksRef.get();
+                if (!snapshot.empty) {
+                    // Merge with local storage
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const trackId = data.orderId || doc.id;
+                        
+                        // Add to recentTracks if not already there
+                        if (!recentTracks.some(t => t.id === trackId)) {
+                            recentTracks.unshift({
+                                id: trackId,
+                                productName: data.productName || 'Order',
+                                status: data.status || 'pending',
+                                timestamp: data.timestamp?.toDate() ? data.timestamp.toDate().toISOString() : new Date().toISOString()
+                            });
+                        }
+                    });
+                    
+                    // Keep only last 5
+                    recentTracks = recentTracks.slice(0, 5);
+                    localStorage.setItem(`recentTracks_${currentUser.uid}`, JSON.stringify(recentTracks));
+                    renderRecentTracks();
+                    updateQuickTrackCards();
+                }
+            } catch (e) {
+                console.log('Firestore tracking fetch error (non-critical):', e);
             }
         } catch (e) {
             console.error('Error loading recent tracks:', e);
@@ -1422,21 +1521,34 @@
             // Try to find order in Firestore
             let orderData = null;
             
-            if (db) {
-                // Try by order ID
-                const orderDoc = await db.collection('orders').doc(trackingId).get();
-                if (orderDoc.exists) {
-                    orderData = { id: orderDoc.id, ...orderDoc.data() };
-                } else {
-                    // Try searching by custom tracking ID field
-                    const query = await db.collection('orders')
-                        .where('trackingNumber', '==', trackingId)
-                        .limit(1)
-                        .get();
-                    
-                    if (!query.empty) {
-                        orderData = { id: query.docs[0].id, ...query.docs[0].data() };
+            if (db && currentUser) {
+                try {
+                    // Try by exact document ID
+                    const orderDoc = await db.collection('orders').doc(trackingId).get();
+                    if (orderDoc.exists) {
+                        const data = orderDoc.data();
+                        // Verify ownership if needed
+                        if (data.userId === currentUser.uid || data.uid === currentUser.uid || data.customerId === currentUser.uid) {
+                            orderData = { id: orderDoc.id, ...data };
+                        }
+                    } else {
+                        // Try searching by custom tracking number field
+                        const query = await db.collection('orders')
+                            .where('trackingNumber', '==', trackingId)
+                            .limit(1)
+                            .get();
+                        
+                        if (!query.empty) {
+                            const doc = query.docs[0];
+                            const data = doc.data();
+                            // Verify ownership if needed
+                            if (data.userId === currentUser.uid || data.uid === currentUser.uid || data.customerId === currentUser.uid) {
+                                orderData = { id: doc.id, ...data };
+                            }
+                        }
                     }
+                } catch (e) {
+                    console.log('Firestore query error:', e);
                 }
             }
             
@@ -1444,7 +1556,7 @@
                 displayTrackingResult(orderData);
                 saveToRecent(orderData);
             } else {
-                // For demo: Show sample tracking with animation
+                // For demo: Show sample tracking with animation based on ID
                 showDemoTracking(trackingId);
             }
             
@@ -1452,9 +1564,11 @@
             console.error('Tracking error:', error);
             showToast('Error tracking order. Please try again.', 'error');
         } finally {
-            // Reset button
-            trackBtn.disabled = false;
-            trackBtn.innerHTML = '<span class="material-icons">search</span> Track Now';
+            // Reset button after delay
+            setTimeout(() => {
+                trackBtn.disabled = false;
+                trackBtn.innerHTML = '<span class="material-icons">search</span> Track Now';
+            }, 1000);
         }
     };
 
@@ -1471,12 +1585,25 @@
         // Update customer info
         const shipping = order.shippingDetails || order.shipping || {};
         document.getElementById('customerName').textContent = shipping.name || shipping.fullName || 'N/A';
-        document.getElementById('deliveryAddress').textContent = `${shipping.address || ''}, ${shipping.city || ''}`.trim() || 'N/A';
+        
+        const address = [shipping.address, shipping.city, shipping.state].filter(Boolean).join(', ');
+        document.getElementById('deliveryAddress').textContent = address || 'N/A';
+        
         document.getElementById('carrier').textContent = order.carrier || 'Standard Shipping';
         document.getElementById('trackingNumber').textContent = order.trackingNumber || order.id;
         
         // Update date
-        const orderDate = order.timestamp?.toDate() || new Date();
+        let orderDate;
+        if (order.timestamp?.toDate) {
+            orderDate = order.timestamp.toDate();
+        } else if (order.timestamp?.seconds) {
+            orderDate = new Date(order.timestamp.seconds * 1000);
+        } else if (order.timestamp) {
+            orderDate = new Date(order.timestamp);
+        } else {
+            orderDate = new Date();
+        }
+        
         document.getElementById('orderDate').textContent = orderDate.toLocaleDateString('en-US', { 
             year: 'numeric', 
             month: 'short', 
@@ -1484,18 +1611,45 @@
         });
         
         // Update status and timeline
-        updateTimeline(order.status || 'pending', order.timestamps || {});
+        const status = order.status || 'pending';
+        updateTimeline(status, {
+            placed: order.timestamps?.placed || orderDate,
+            processing: order.timestamps?.processing,
+            shipped: order.timestamps?.shipped,
+            delivered: order.timestamps?.delivered
+        });
         
         // Show result with animation
         result.classList.add('show');
+        
+        // Scroll to result smoothly
+        result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function showDemoTracking(trackingId) {
         const result = document.getElementById('trackingResult');
         
-        // Generate demo data
+        // Generate demo data based on tracking ID to make it feel consistent
+        const hash = trackingId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
         const statuses = ['pending', 'processing', 'shipped', 'delivered'];
-        const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+        const statusIndex = hash % 4;
+        const randomStatus = statuses[statusIndex];
+        
+        // Generate dates based on status
+        const now = new Date();
+        const timestamps = {
+            placed: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
+        };
+        
+        if (statusIndex >= 1) {
+            timestamps.processing = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000); // 5 days ago
+        }
+        if (statusIndex >= 2) {
+            timestamps.shipped = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
+        }
+        if (statusIndex >= 3) {
+            timestamps.delivered = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000); // 1 day ago
+        }
         
         const demoOrder = {
             id: trackingId,
@@ -1510,16 +1664,10 @@
                 name: currentUser?.displayName || 'John Doe',
                 address: '123 Tech Avenue',
                 city: 'Lagos',
+                state: 'Lagos',
                 phone: '+234 123 456 7890'
             },
-            timestamps: {
-                placed: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-                processing: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-                shipped: randomStatus !== 'pending' && randomStatus !== 'processing' ? 
-                    new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) : null, // 2 days ago
-                delivered: randomStatus === 'delivered' ? 
-                    new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) : null // 1 day ago
-            }
+            timestamps: timestamps
         };
         
         displayTrackingResult(demoOrder);
@@ -1539,7 +1687,7 @@
         
         const currentStep = statusMap[status] || 1;
         
-        // Update progress bar
+        // Update progress bar with animation
         const progressWidth = ((currentStep - 1) / 3) * 100;
         document.getElementById('progressFill').style.width = `${progressWidth}%`;
         
@@ -1548,31 +1696,42 @@
             const step = document.getElementById(stepId);
             const stepNum = index + 1;
             
-            // Reset classes
-            step.classList.remove('completed', 'active');
+            // Reset classes with animation delay based on step
+            setTimeout(() => {
+                step.classList.remove('completed', 'active');
+                
+                if (stepNum < currentStep) {
+                    step.classList.add('completed');
+                } else if (stepNum === currentStep) {
+                    step.classList.add('active');
+                }
+            }, index * 100); // Stagger animation
             
-            if (stepNum < currentStep) {
-                step.classList.add('completed');
-            } else if (stepNum === currentStep) {
-                step.classList.add('active');
+            // Set timestamps
+            let timeText = '';
+            let timeObj = null;
+            
+            if (stepNum === 1 && timestamps.placed) {
+                timeObj = timestamps.placed;
+            } else if (stepNum === 2 && timestamps.processing) {
+                timeObj = timestamps.processing;
+            } else if (stepNum === 3 && timestamps.shipped) {
+                timeObj = timestamps.shipped;
+            } else if (stepNum === 4 && timestamps.delivered) {
+                timeObj = timestamps.delivered;
             }
             
-            // Set timestamps with animation
-            let timeText = '';
-            if (stepNum === 1 && timestamps.placed) {
-                timeText = formatTime(timestamps.placed);
-            } else if (stepNum === 2 && timestamps.processing) {
-                timeText = formatTime(timestamps.processing);
-            } else if (stepNum === 3 && timestamps.shipped) {
-                timeText = formatTime(timestamps.shipped);
-            } else if (stepNum === 4 && timestamps.delivered) {
-                timeText = formatTime(timestamps.delivered);
+            if (timeObj) {
+                if (typeof timeObj.toDate === 'function') timeObj = timeObj.toDate();
+                const d = new Date(timeObj);
+                timeText = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + 
+                          d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             }
             
             const timeElement = document.getElementById(`${stepId}Time`);
             if (timeText) {
                 timeElement.textContent = timeText;
-                timeElement.classList.add('show');
+                setTimeout(() => timeElement.classList.add('show'), index * 100 + 300);
             } else {
                 timeElement.textContent = '';
                 timeElement.classList.remove('show');
@@ -1583,14 +1742,6 @@
         const statusBadge = document.getElementById('orderStatusDisplay');
         statusBadge.className = `order-status-badge status-${status}`;
         statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-    }
-
-    function formatTime(date) {
-        if (!date) return '';
-        if (typeof date.toDate === 'function') date = date.toDate();
-        const d = new Date(date);
-        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + 
-               d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     }
 
     function saveToRecent(order) {
@@ -1617,8 +1768,6 @@
         
         // Update UI
         renderRecentTracks();
-        
-        // Update quick track cards
         updateQuickTrackCards();
     }
 
@@ -1641,8 +1790,8 @@
                         <span class="material-icons">local_shipping</span>
                     </div>
                     <div class="quick-info">
-                        <h3>${track.productName}</h3>
-                        <p><span class="recent-status ${statusClass}" style="margin-left: 0;">${statusDisplay}</span></p>
+                        <h3>${track.productName || 'Order'}</h3>
+                        <p><span class="recent-status ${statusClass}" style="margin-left: 0; display: inline-block;">${statusDisplay}</span></p>
                     </div>
                 </div>
             `;
@@ -1676,7 +1825,13 @@
         const toastIcon = document.getElementById('toastIcon');
         const toastMessage = document.getElementById('toastMessage');
         
-        const icons = { success: 'check_circle', error: 'error', warning: 'warning', info: 'info' };
+        const icons = { 
+            success: 'check_circle', 
+            error: 'error', 
+            warning: 'warning', 
+            info: 'info' 
+        };
+        
         toastIcon.textContent = icons[type] || 'info';
         toastMessage.textContent = message;
         
@@ -1684,7 +1839,7 @@
         toast.classList.add(type);
         toast.classList.add('show');
         
-        setTimeout(() => toast.classList.remove('show'), 4500);
+        setTimeout(() => toast.classList.remove('show'), 4000);
     }
 
     // ========== EVENT LISTENERS ==========

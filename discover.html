@@ -1676,7 +1676,7 @@
             return icons[category] || 'category';
         }
 
-        // ========== RENDER CATEGORIES - NO "ALL" BUTTON, NO "NO CATEGORIES" TEXT ==========
+        // ========== RENDER CATEGORIES - NO "ALL" BUTTON ==========
         function renderCategories() {
             const container = document.getElementById('categoriesScroll');
             
@@ -2156,6 +2156,7 @@
             
             document.getElementById('pinSwipeModal').classList.add('show');
             
+            // Initialize swipe after a short delay to ensure DOM is ready
             setTimeout(() => initSwipe(), 100);
         };
 
@@ -2163,7 +2164,11 @@
             const thumb = document.getElementById('swipeThumb');
             const track = document.getElementById('swipeTrack');
             const container = document.getElementById('swipeContainer');
-            if (!thumb || !track || !container) return;
+            
+            if (!thumb || !track || !container) {
+                console.error('Swipe elements not found');
+                return;
+            }
             
             const maxSwipe = container.offsetWidth - 64;
             let isSwiping = false;
@@ -2172,7 +2177,13 @@
                 if (!isSwiping) return;
                 e.preventDefault();
                 
-                let clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+                let clientX;
+                if (e.type === 'mousemove') {
+                    clientX = e.clientX;
+                } else {
+                    clientX = e.touches[0].clientX;
+                }
+                
                 const rect = container.getBoundingClientRect();
                 let newX = clientX - rect.left - 28;
                 newX = Math.max(4, Math.min(newX, maxSwipe));
@@ -2181,6 +2192,7 @@
                 const progress = ((newX - 4) / (maxSwipe - 4)) * 100;
                 track.style.transform = `translateX(-${100 - progress}%)`;
                 
+                // If swiped all the way to the end
                 if (newX >= maxSwipe - 10) {
                     endSwipe(true);
                 }

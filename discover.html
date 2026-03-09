@@ -566,6 +566,7 @@
             margin-top: 4px;
         }
 
+        /* Shipping section - removed delivery time */
         .product-modal-shipping {
             background: #f1f5f9;
             border-radius: 12px;
@@ -1373,7 +1374,7 @@
             <div class="active-filters" id="activeFiltersContainer"></div>
         </div>
 
-        <!-- CATEGORIES SCROLL - No "All" button, default shows all -->
+        <!-- CATEGORIES SCROLL - No "All" button, no "No categories" text -->
         <div class="categories-section">
             <div class="categories-scroll" id="categoriesScroll"></div>
         </div>
@@ -1675,15 +1676,11 @@
             return icons[category] || 'category';
         }
 
-        // ========== RENDER CATEGORIES - NO "ALL" BUTTON ==========
+        // ========== RENDER CATEGORIES - NO "ALL" BUTTON, NO "NO CATEGORIES" TEXT ==========
         function renderCategories() {
             const container = document.getElementById('categoriesScroll');
             
             let html = '';
-            
-            if (categories.length === 0) {
-                html = '<div style="color:#64748b; padding:16px;">No categories</div>';
-            }
             
             categories.forEach(cat => {
                 html += `
@@ -1837,9 +1834,10 @@
                             </div>
                         </div>
                         
+                        <!-- Shipping section - removed delivery time -->
                         <div class="product-modal-shipping">
                             <span class="material-icons">local_shipping</span>
-                            <span>Shipping: ₦${product.shippingCost.toLocaleString()} • ${product.shipping}</span>
+                            <span>Shipping: ₦${product.shippingCost.toLocaleString()}</span>
                         </div>
                         
                         <p class="product-modal-description">${product.description}</p>
@@ -1926,7 +1924,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Full Name *</label>
-                            <input type="text" class="form-input" id="shippingName" placeholder="John Doe" value="${userData?.fullName || ''}">
+                            <input type="text" class="form-input" id="shippingName" placeholder="Your name" value="${userData?.fullName || ''}">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Phone Number *</label>
@@ -1934,7 +1932,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Email *</label>
-                            <input type="email" class="form-input" id="shippingEmail" placeholder="john@example.com" value="${currentUser?.email || ''}">
+                            <input type="email" class="form-input" id="shippingEmail" placeholder="your.email@example.com" value="${currentUser?.email || ''}">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Address *</label>
@@ -1943,11 +1941,11 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">City *</label>
-                                <input type="text" class="form-input" id="shippingCity" placeholder="Lagos" value="${userData?.city || ''}">
+                                <input type="text" class="form-input" id="shippingCity" placeholder="FCT Abuja" value="${userData?.city || ''}">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">State *</label>
-                                <input type="text" class="form-input" id="shippingState" placeholder="Lagos" value="${userData?.state || ''}">
+                                <input type="text" class="form-input" id="shippingState" placeholder="FCT Abuja" value="${userData?.state || ''}">
                             </div>
                         </div>
                     </div>
@@ -2168,7 +2166,7 @@
             if (!thumb || !track || !container) return;
             
             const maxSwipe = container.offsetWidth - 64;
-            isSwiping = false;
+            let isSwiping = false;
             
             const onMove = (e) => {
                 if (!isSwiping) return;
@@ -2183,11 +2181,15 @@
                 const progress = ((newX - 4) / (maxSwipe - 4)) * 100;
                 track.style.transform = `translateX(-${100 - progress}%)`;
                 
-                if (newX >= maxSwipe - 10) endSwipe(true);
+                if (newX >= maxSwipe - 10) {
+                    endSwipe(true);
+                }
             };
             
             const onUp = () => {
-                if (isSwiping) endSwipe(false);
+                if (isSwiping) {
+                    endSwipe(false);
+                }
             };
             
             const endSwipe = (completed) => {

@@ -566,7 +566,7 @@
             margin-top: 4px;
         }
 
-        /* Shipping section - removed delivery time */
+        /* Shipping section */
         .product-modal-shipping {
             background: #f1f5f9;
             border-radius: 12px;
@@ -960,6 +960,30 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Ban message */
+        .ban-message {
+            text-align: center;
+            padding: 30px 20px;
+            background: #fee2e2;
+            border-radius: 20px;
+            color: #b91c1c;
+            margin: 20px 0;
+        }
+        .ban-message .material-icons {
+            font-size: 48px;
+            color: #b91c1c;
+            margin-bottom: 12px;
+        }
+        .ban-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .ban-subtext {
+            color: #7f1d1d;
+            font-size: 0.9rem;
         }
 
         /* ===== FILTER MODAL - Mobile Responsive ===== */
@@ -1374,7 +1398,7 @@
             <div class="active-filters" id="activeFiltersContainer"></div>
         </div>
 
-        <!-- CATEGORIES SCROLL - No "All" button, no "No categories" text -->
+        <!-- CATEGORIES SCROLL -->
         <div class="categories-section">
             <div class="categories-scroll" id="categoriesScroll"></div>
         </div>
@@ -1434,7 +1458,7 @@
         </div>
     </div>
 
-    <!-- FILTER MODAL - Mobile Responsive -->
+    <!-- FILTER MODAL -->
     <div class="modal-overlay" id="filterModal">
         <div class="modal-bottom-sheet">
             <div class="modal-header">
@@ -1538,6 +1562,8 @@
         let currentPurchase = null;
         let isSwiping = false;
         const SHIPPING_COST = 2500;
+        const MAX_PIN_ATTEMPTS = 4;
+        const BAN_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
         // Initialize Firebase
         try {
@@ -1559,6 +1585,20 @@
                 if (user) {
                     currentUser = user;
                     await loadUserData();
+                    
+                    // Check if user is banned
+                    if (userData?.banned) {
+                        const banExpiry = userData.banExpiry?.toDate?.();
+                        if (banExpiry && banExpiry > new Date()) {
+                            // Still banned
+                            showBanMessage(banExpiry);
+                            return;
+                        } else if (banExpiry && banExpiry <= new Date()) {
+                            // Ban expired, reset attempts
+                            await resetBan();
+                        }
+                    }
+                    
                     await loadProducts();
                 } else {
                     window.location.href = 'login.html';
@@ -1578,6 +1618,42 @@
             } catch (e) {
                 console.error('Error loading user:', e);
             }
+        }
+
+        async function resetBan() {
+            if (!db || !currentUser) return;
+            try {
+                const userRef = db.collection('users').doc(currentUser.uid);
+                await userRef.update({
+                    banned: false,
+                    banExpiry: null,
+                    pinAttempts: 0,
+                    lastPinAttempt: null
+                });
+                userData.banned = false;
+                userData.banExpiry = null;
+                userData.pinAttempts = 0;
+            } catch (error) {
+                console.error('Error resetting ban:', error);
+            }
+        }
+
+        function showBanMessage(banExpiry) {
+            const hoursLeft = Math.ceil((banExpiry - new Date()) / (1000 * 60 * 60));
+            const modalContent = document.getElementById('pinSwipeContent');
+            modalContent.innerHTML = `
+                <div class="product-modal-content">
+                    <div class="ban-message">
+                        <span class="material-icons">block</span>
+                        <div class="ban-title">Account Temporarily Banned</div>
+                        <div class="ban-subtext">Too many incorrect PIN attempts</div>
+                        <div style="margin-top: 16px; font-weight: 600;">${hoursLeft} hours remaining</div>
+                        <div style="margin-top: 8px; font-size: 0.85rem;">Contact support if you believe this is an error</div>
+                        <button class="product-modal-btn product-modal-btn-primary" onclick="closePinSwipeModal()" style="margin-top:20px;">OK</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('pinSwipeModal').classList.add('show');
         }
 
         // ========== LOAD PRODUCTS FROM CAMPAIGNS COLLECTION ==========
@@ -1676,7 +1752,7 @@
             return icons[category] || 'category';
         }
 
-        // ========== RENDER CATEGORIES - NO "ALL" BUTTON ==========
+        // ========== RENDER CATEGORIES ==========
         function renderCategories() {
             const container = document.getElementById('categoriesScroll');
             
@@ -1834,7 +1910,6 @@
                             </div>
                         </div>
                         
-                        <!-- Shipping section - removed delivery time -->
                         <div class="product-modal-shipping">
                             <span class="material-icons">local_shipping</span>
                             <span>Shipping: ₦${product.shippingCost.toLocaleString()}</span>
@@ -1887,7 +1962,6 @@
                 <div class="product-modal-content">
                     <div class="available-badge">${remaining} units available</div>
                     
-                    <!-- Units Selector -->
                     <div class="units-selector">
                         <label>Units:</label>
                         <div class="units-input-group">
@@ -1896,7 +1970,6 @@
                         </div>
                     </div>
                     
-                    <!-- Price Breakdown -->
                     <div class="price-breakdown" id="priceBreakdown">
                         <div class="price-row">
                             <span>Price per unit:</span>
@@ -1916,7 +1989,6 @@
                         </div>
                     </div>
                     
-                    <!-- Order Form -->
                     <div class="order-form">
                         <div class="order-title">
                             <span class="material-icons">contact_mail</span>
@@ -1941,11 +2013,11 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">City *</label>
-                                <input type="text" class="form-input" id="shippingCity" placeholder="FCT Abuja" value="${userData?.city || ''}">
+                                <input type="text" class="form-input" id="shippingCity" placeholder="Lagos" value="${userData?.city || ''}">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">State *</label>
-                                <input type="text" class="form-input" id="shippingState" placeholder="FCT Abuja" value="${userData?.state || ''}">
+                                <input type="text" class="form-input" id="shippingState" placeholder="Lagos" value="${userData?.state || ''}">
                             </div>
                         </div>
                     </div>
@@ -1992,6 +2064,15 @@
             }
             
             if (!selectedProduct) return;
+            
+            // Check if user is banned
+            if (userData?.banned) {
+                const banExpiry = userData.banExpiry?.toDate?.();
+                if (banExpiry && banExpiry > new Date()) {
+                    showBanMessage(banExpiry);
+                    return;
+                }
+            }
             
             const units = parseInt(document.getElementById('orderUnits')?.value) || 1;
             const remaining = selectedProduct.goal - (selectedProduct.reserved || 0);
@@ -2156,7 +2237,6 @@
             
             document.getElementById('pinSwipeModal').classList.add('show');
             
-            // Initialize swipe after a short delay to ensure DOM is ready
             setTimeout(() => initSwipe(), 100);
         };
 
@@ -2164,26 +2244,16 @@
             const thumb = document.getElementById('swipeThumb');
             const track = document.getElementById('swipeTrack');
             const container = document.getElementById('swipeContainer');
-            
-            if (!thumb || !track || !container) {
-                console.error('Swipe elements not found');
-                return;
-            }
+            if (!thumb || !track || !container) return;
             
             const maxSwipe = container.offsetWidth - 64;
-            let isSwiping = false;
+            let swipeCompleted = false;
             
             const onMove = (e) => {
-                if (!isSwiping) return;
+                if (!isSwiping || swipeCompleted) return;
                 e.preventDefault();
                 
-                let clientX;
-                if (e.type === 'mousemove') {
-                    clientX = e.clientX;
-                } else {
-                    clientX = e.touches[0].clientX;
-                }
-                
+                let clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
                 const rect = container.getBoundingClientRect();
                 let newX = clientX - rect.left - 28;
                 newX = Math.max(4, Math.min(newX, maxSwipe));
@@ -2192,19 +2262,19 @@
                 const progress = ((newX - 4) / (maxSwipe - 4)) * 100;
                 track.style.transform = `translateX(-${100 - progress}%)`;
                 
-                // If swiped all the way to the end
-                if (newX >= maxSwipe - 10) {
+                if (newX >= maxSwipe - 10 && !swipeCompleted) {
+                    swipeCompleted = true;
                     endSwipe(true);
                 }
             };
             
             const onUp = () => {
-                if (isSwiping) {
+                if (isSwiping && !swipeCompleted) {
                     endSwipe(false);
                 }
             };
             
-            const endSwipe = (completed) => {
+            const endSwipe = async (completed) => {
                 isSwiping = false;
                 document.removeEventListener('mousemove', onMove);
                 document.removeEventListener('touchmove', onMove);
@@ -2220,9 +2290,18 @@
                     
                     if (enteredPin.length === 4) {
                         if (userData?.pin === enteredPin) {
+                            // Reset PIN attempts on success
+                            if (db && currentUser) {
+                                await db.collection('users').doc(currentUser.uid).update({
+                                    pinAttempts: 0,
+                                    lastPinAttempt: null
+                                });
+                                userData.pinAttempts = 0;
+                            }
                             completePurchase();
                         } else {
-                            showToast('Incorrect PIN', 'error');
+                            // Handle failed PIN attempt
+                            await handleFailedPinAttempt();
                             resetSwipe(thumb, track);
                         }
                     } else {
@@ -2237,11 +2316,46 @@
             window.startSwipe = (e) => {
                 e.preventDefault();
                 isSwiping = true;
+                swipeCompleted = false;
                 document.addEventListener('mousemove', onMove);
                 document.addEventListener('touchmove', onMove);
                 document.addEventListener('mouseup', onUp);
                 document.addEventListener('touchend', onUp);
             };
+        }
+
+        async function handleFailedPinAttempt() {
+            if (!db || !currentUser) return;
+            
+            const attempts = (userData?.pinAttempts || 0) + 1;
+            const now = new Date();
+            
+            if (attempts >= MAX_PIN_ATTEMPTS) {
+                // Ban user for 24 hours
+                const banExpiry = new Date(now.getTime() + BAN_DURATION);
+                await db.collection('users').doc(currentUser.uid).update({
+                    banned: true,
+                    banExpiry: banExpiry,
+                    pinAttempts: attempts,
+                    lastPinAttempt: now
+                });
+                userData.banned = true;
+                userData.banExpiry = banExpiry;
+                
+                showToast('Too many incorrect attempts. Account banned for 24 hours.', 'error');
+                closePinSwipeModal();
+                showBanMessage(banExpiry);
+            } else {
+                // Increment attempts
+                await db.collection('users').doc(currentUser.uid).update({
+                    pinAttempts: attempts,
+                    lastPinAttempt: now
+                });
+                userData.pinAttempts = attempts;
+                
+                const remaining = MAX_PIN_ATTEMPTS - attempts;
+                showToast(`Incorrect PIN. ${remaining} attempt${remaining > 1 ? 's' : ''} remaining.`, 'warning');
+            }
         }
 
         function resetSwipe(thumb, track) {

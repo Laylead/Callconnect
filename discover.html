@@ -844,6 +844,20 @@
             margin: 0;
         }
 
+        /* Attempts badge */
+        .attempts-badge {
+            background: rgba(254, 226, 226, 0.95);
+            backdrop-filter: blur(8px);
+            color: #b91c1c;
+            padding: 6px 14px;
+            border-radius: 60px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid rgba(239,68,68,0.3);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
         /* Swipe button */
         .swipe-container {
             margin: 24px 0 16px;
@@ -1295,18 +1309,6 @@
             font-size: 20px;
         }
 
-        /* Ban message */
-        .banned-message {
-            background: #fee2e2;
-            color: #b91c1c;
-            padding: 12px;
-            border-radius: 12px;
-            margin: 16px 0;
-            text-align: center;
-            font-size: 14px;
-            border: 1px solid #fecaca;
-        }
-
         /* Mobile Responsive */
         @media (max-width: 480px) {
             .price-inputs {
@@ -1549,10 +1551,8 @@
         let selectedProduct = null;
         let currentPurchase = null;
         let isSwiping = false;
-        let pinAttempts = 0;
-        const MAX_PIN_ATTEMPTS = 4;
-        const BAN_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
         const SHIPPING_COST = 2500;
+        const MAX_GIFTCARD_ATTEMPTS = 4;
 
         // Initialize Firebase
         try {
@@ -1574,35 +1574,21 @@
                 if (user) {
                     currentUser = user;
                     await loadUserData();
-                    if (!userData?.banned || (userData.banExpires && userData.banExpires.toDate?.() < new Date())) {
-                        // Clear ban if expired
-                        if (userData?.banned && userData.banExpires?.toDate?.() < new Date()) {
-                            await db.collection('users').doc(currentUser.uid).update({
-                                banned: false,
-                                banExpires: null,
-                                pinAttempts: 0
-                            });
-                            userData.banned = false;
-                        }
-                        await loadProducts();
-                    } else {
-                        showBannedMessage();
+                    await loadProducts();
+                    
+                    // Check if user is banned
+                    if (userData?.banned) {
+                        showToast('Your account has been banned. Contact support.', 'error');
+                        setTimeout(() => {
+                            auth.signOut();
+                            window.location.href = 'login.html';
+                        }, 3000);
+                        return;
                     }
                 } else {
                     window.location.href = 'login.html';
                 }
             });
-        }
-
-        function showBannedMessage() {
-            const container = document.getElementById('productsGrid');
-            container.innerHTML = `
-                <div class="empty-state" style="grid-column: 1/-1;">
-                    <span class="material-icons">block</span>
-                    <p>Account Temporarily Banned</p>
-                    <p style="font-size: 14px; margin-top: 8px;">Too many incorrect PIN attempts. Please try again later or contact support.</p>
-                </div>
-            `;
         }
 
         async function loadUserData() {
@@ -1613,7 +1599,19 @@
                 if (doc.exists) {
                     userData = doc.data();
                     document.getElementById('walletBalance').innerHTML = `₦${(userData.walletBalance || 0).toLocaleString()}`;
-                    pinAttempts = userData.pinAttempts || 0;
+                    
+                    // Check for ban
+                    if (userData.banned) {
+                        showToast('Account banned. Contact support.', 'error');
+                        return;
+                    }
+                    
+                    // Check for temporary ban (24 hours)
+                    if (userData.banExpiry && userData.banExpiry.toDate() > new Date()) {
+                        const hoursLeft = Math.ceil((userData.banExpiry.toDate() - new Date()) / (1000 * 60 * 60));
+                        showToast(`Account temporarily locked. Try again in ${hoursLeft} hours`, 'warning');
+                        return;
+                    }
                 }
             } catch (e) {
                 console.error('Error loading user:', e);
@@ -1807,11 +1805,6 @@
 
         // ========== PRODUCT DETAIL MODAL ==========
         window.viewProduct = function(productId) {
-            if (userData?.banned) {
-                showToast('Your account is temporarily banned', 'error');
-                return;
-            }
-            
             const product = allProducts.find(p => p.id === productId);
             if (!product) return;
             
@@ -2036,8 +2029,16 @@
                 return;
             }
             
+            // Check if user is banned
             if (userData?.banned) {
-                showToast('Your account is temporarily banned', 'error');
+                showToast('Your account has been banned. Contact support.', 'error');
+                return;
+            }
+            
+            // Check for temporary ban
+            if (userData?.banExpiry && userData.banExpiry.toDate() > new Date()) {
+                const hoursLeft = Math.ceil((userData.banExpiry.toDate() - new Date()) / (1000 * 60 * 60));
+                showToast(`Account temporarily locked. Try again in ${hoursLeft} hours`, 'warning');
                 return;
             }
             
@@ -2171,6 +2172,8 @@
         };
 
         window.showPinEntry = function() {
+            const attemptsLeft = MAX_GIFTCARD_ATTEMPTS - (userData?.giftcardAttempts || 0);
+            
             const modalContent = document.getElementById('pinSwipeContent');
             modalContent.innerHTML = `
                 <div class="product-modal-header">
@@ -2183,6 +2186,11 @@
                     <div style="text-align:center; margin-bottom:20px; font-size:1.2rem; color:#0f172a;">
                         Total: ₦${currentPurchase.total.toLocaleString()}
                     </div>
+                    ${userData?.giftcardAttempts > 0 ? `
+                        <div class="attempts-badge">
+                            ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} remaining
+                        </div>
+                    ` : ''}
                     <div class="pin-container">
                         <div class="pin-digit"><input type="text" id="pin1" maxlength="1" oninput="moveToNext(this,2)" inputmode="numeric" pattern="[0-9]*"></div>
                         <div class="pin-digit"><input type="text" id="pin2" maxlength="1" oninput="moveToNext(this,3)" inputmode="numeric" pattern="[0-9]*"></div>
@@ -2217,9 +2225,10 @@
             
             const maxSwipe = container.offsetWidth - 64;
             let isSwiping = false;
+            let swipeCompleted = false;
             
             const onMove = (e) => {
-                if (!isSwiping) return;
+                if (!isSwiping || swipeCompleted) return;
                 e.preventDefault();
                 
                 let clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
@@ -2231,18 +2240,20 @@
                 const progress = ((newX - 4) / (maxSwipe - 4)) * 100;
                 track.style.transform = `translateX(-${100 - progress}%)`;
                 
-                if (newX >= maxSwipe - 10) {
+                if (newX >= maxSwipe - 10 && !swipeCompleted) {
+                    swipeCompleted = true;
                     endSwipe(true);
                 }
             };
             
             const onUp = () => {
-                if (isSwiping) {
+                if (isSwiping && !swipeCompleted) {
                     endSwipe(false);
                 }
+                isSwiping = false;
             };
             
-            const endSwipe = (completed) => {
+            const endSwipe = async (completed) => {
                 isSwiping = false;
                 document.removeEventListener('mousemove', onMove);
                 document.removeEventListener('touchmove', onMove);
@@ -2258,35 +2269,18 @@
                     
                     if (enteredPin.length === 4) {
                         if (userData?.pin === enteredPin) {
-                            // Reset attempts on success
-                            pinAttempts = 0;
-                            db.collection('users').doc(currentUser.uid).update({
-                                pinAttempts: 0
-                            });
-                            completePurchase();
-                        } else {
-                            // Increment attempts
-                            pinAttempts++;
-                            db.collection('users').doc(currentUser.uid).update({
-                                pinAttempts: pinAttempts
-                            });
-                            
-                            if (pinAttempts >= MAX_PIN_ATTEMPTS) {
-                                // Ban user for 24 hours
-                                const banExpiry = new Date();
-                                banExpiry.setHours(banExpiry.getHours() + 24);
-                                db.collection('users').doc(currentUser.uid).update({
-                                    banned: true,
-                                    banExpires: firebase.firestore.Timestamp.fromDate(banExpiry),
-                                    pinAttempts: 0
+                            // Reset attempts on successful PIN
+                            if (userData?.giftcardAttempts > 0) {
+                                await db.collection('users').doc(currentUser.uid).update({
+                                    giftcardAttempts: 0
                                 });
-                                userData.banned = true;
-                                showToast('Too many incorrect attempts. Account banned for 24 hours.', 'error');
-                                closePinSwipeModal();
-                            } else {
-                                showToast(`Incorrect PIN. ${MAX_PIN_ATTEMPTS - pinAttempts} attempts left`, 'error');
-                                resetSwipe(thumb, track);
+                                userData.giftcardAttempts = 0;
                             }
+                            await completePurchase();
+                        } else {
+                            // Handle failed attempt
+                            await handleFailedPinAttempt();
+                            resetSwipe(thumb, track);
                         }
                     } else {
                         showToast('Enter PIN first', 'warning');
@@ -2305,6 +2299,47 @@
                 document.addEventListener('mouseup', onUp);
                 document.addEventListener('touchend', onUp);
             };
+        }
+
+        async function handleFailedPinAttempt() {
+            if (!currentUser || !db) return;
+            
+            const userRef = db.collection('users').doc(currentUser.uid);
+            const currentAttempts = (userData?.giftcardAttempts || 0) + 1;
+            
+            if (currentAttempts >= MAX_GIFTCARD_ATTEMPTS) {
+                // 24-hour ban
+                const banExpiry = new Date();
+                banExpiry.setHours(banExpiry.getHours() + 24);
+                
+                await userRef.update({
+                    giftcardAttempts: currentAttempts,
+                    banExpiry: banExpiry,
+                    temporarilyBanned: true
+                });
+                
+                userData.giftcardAttempts = currentAttempts;
+                userData.banExpiry = banExpiry;
+                userData.temporarilyBanned = true;
+                
+                showToast(`Too many incorrect attempts. Account locked for 24 hours`, 'error');
+                closePinSwipeModal();
+            } else {
+                await userRef.update({
+                    giftcardAttempts: currentAttempts
+                });
+                
+                userData.giftcardAttempts = currentAttempts;
+                
+                const attemptsLeft = MAX_GIFTCARD_ATTEMPTS - currentAttempts;
+                showToast(`Incorrect PIN. ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} remaining`, 'error');
+                
+                // Update attempts display
+                const attemptsBadge = document.querySelector('.attempts-badge');
+                if (attemptsBadge) {
+                    attemptsBadge.innerHTML = `${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} remaining`;
+                }
+            }
         }
 
         function resetSwipe(thumb, track) {
@@ -2333,8 +2368,7 @@
                     walletBalance: firebase.firestore.FieldValue.increment(-total),
                     joinedCampaigns: firebase.firestore.FieldValue.increment(1),
                     reservedUnits: firebase.firestore.FieldValue.increment(units),
-                    totalSpent: firebase.firestore.FieldValue.increment(total),
-                    pinAttempts: 0 // Reset attempts on success
+                    totalSpent: firebase.firestore.FieldValue.increment(total)
                 });
                 
                 // Create order

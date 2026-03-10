@@ -1266,13 +1266,28 @@
                 return;
             }
             
-            // Save purchase data
+            // Save purchase data with ALL necessary information
             currentPurchase = {
                 productId: selectedProduct.id,
+                productName: selectedProduct.name,
+                productImage: selectedProduct.img,
+                pricePerUnit: selectedProduct.price,
+                shippingPerUnit: selectedProduct.shippingCost,
                 units: units,
+                subtotal: selectedProduct.price * units,
+                totalShipping: selectedProduct.shippingCost * units,
                 total: total,
-                shippingDetails: { name, phone, email, address, city, state }
+                shippingDetails: { 
+                    name: name, 
+                    phone: phone, 
+                    email: email, 
+                    address: address, 
+                    city: city, 
+                    state: state 
+                }
             };
+            
+            console.log("Purchase data saved:", currentPurchase); // Debug log
             
             closeProductModal();
             
@@ -1285,6 +1300,11 @@
 
         // ========== PIN FUNCTIONS ==========
         window.showCreatePin = function() {
+            if (!currentPurchase) {
+                showToast('Purchase data missing', 'error');
+                return;
+            }
+            
             const modalContent = document.getElementById('pinSwipeContent');
             modalContent.innerHTML = `
                 <div class="product-modal-header">
@@ -1330,6 +1350,11 @@
         };
 
         window.showPinEntry = function() {
+            if (!currentPurchase) {
+                showToast('Purchase data missing', 'error');
+                return;
+            }
+            
             const attemptsLeft = MAX_PIN_ATTEMPTS - (userData?.pinAttempts || 0);
             
             const modalContent = document.getElementById('pinSwipeContent');
@@ -1458,6 +1483,14 @@
         }
 
         async function verifyPinAndPay() {
+            // Check if purchase data exists
+            if (!currentPurchase) {
+                showToast('Purchase data missing. Please try again.', 'error');
+                resetSwipe();
+                swipeCompleted = false;
+                return;
+            }
+            
             const pin = getPinFromInputs();
             
             if (pin.length !== 4) {
@@ -1534,33 +1567,45 @@
 
         // ========== COMPLETE PURCHASE ==========
         async function completePurchase() {
-            if (!currentPurchase || !selectedProduct) {
-                showToast('Purchase data missing', 'error');
+            // Double-check purchase data
+            if (!currentPurchase) {
+                showToast('Purchase data missing. Please start over.', 'error');
+                closePinSwipeModal();
                 return;
             }
             
+            if (!selectedProduct) {
+                // Try to get product from currentPurchase
+                selectedProduct = allProducts.find(p => p.id === currentPurchase.productId);
+                if (!selectedProduct) {
+                    showToast('Product data missing. Please start over.', 'error');
+                    closePinSwipeModal();
+                    return;
+                }
+            }
+            
             try {
+                console.log("Processing purchase:", currentPurchase); // Debug log
+                
+                const purchase = currentPurchase;
                 const product = selectedProduct;
-                const units = currentPurchase.units;
-                const total = currentPurchase.total;
-                const details = currentPurchase.shippingDetails;
                 
                 // Start a batch write
                 const batch = db.batch();
                 
                 // Update campaign reserved count
-                const campaignRef = db.collection('campaigns').doc(product.id);
+                const campaignRef = db.collection('campaigns').doc(purchase.productId);
                 batch.update(campaignRef, {
-                    reserved: firebase.firestore.FieldValue.increment(units)
+                    reserved: firebase.firestore.FieldValue.increment(purchase.units)
                 });
                 
                 // Update user wallet and stats
                 const userRef = db.collection('users').doc(currentUser.uid);
                 batch.update(userRef, {
-                    walletBalance: firebase.firestore.FieldValue.increment(-total),
+                    walletBalance: firebase.firestore.FieldValue.increment(-purchase.total),
                     joinedCampaigns: firebase.firestore.FieldValue.increment(1),
-                    reservedUnits: firebase.firestore.FieldValue.increment(units),
-                    totalSpent: firebase.firestore.FieldValue.increment(total)
+                    reservedUnits: firebase.firestore.FieldValue.increment(purchase.units),
+                    totalSpent: firebase.firestore.FieldValue.increment(purchase.total)
                 });
                 
                 // Create order
@@ -1568,16 +1613,16 @@
                 batch.set(orderRef, {
                     orderId: orderRef.id,
                     userId: currentUser.uid,
-                    productId: product.id,
-                    productName: product.name,
-                    productImage: product.img,
-                    units: units,
-                    pricePerUnit: product.price,
-                    shippingPerUnit: product.shippingCost,
-                    subtotal: product.price * units,
-                    totalShipping: product.shippingCost * units,
-                    total: total,
-                    shippingDetails: details,
+                    productId: purchase.productId,
+                    productName: purchase.productName || product.name,
+                    productImage: purchase.productImage || product.img,
+                    units: purchase.units,
+                    pricePerUnit: purchase.pricePerUnit,
+                    shippingPerUnit: purchase.shippingPerUnit,
+                    subtotal: purchase.subtotal,
+                    totalShipping: purchase.totalShipping,
+                    total: purchase.total,
+                    shippingDetails: purchase.shippingDetails,
                     status: 'pending',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -1587,8 +1632,8 @@
                 batch.set(transactionRef, {
                     userId: currentUser.uid,
                     type: 'purchase',
-                    amount: total,
-                    description: `Purchased ${units} × ${product.name}`,
+                    amount: purchase.total,
+                    description: `Purchased ${purchase.units} × ${purchase.productName || product.name}`,
                     status: 'completed',
                     orderId: orderRef.id,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1596,13 +1641,16 @@
                 
                 // Commit the batch
                 await batch.commit();
+                console.log("Purchase committed successfully"); // Debug log
                 
                 // Update local data
-                userData.walletBalance -= total;
+                userData.walletBalance -= purchase.total;
                 document.getElementById('walletBalance').innerHTML = `₦${(userData.walletBalance || 0).toLocaleString()}`;
                 
                 // Update product reserved count locally
-                product.reserved = (product.reserved || 0) + units;
+                if (product) {
+                    product.reserved = (product.reserved || 0) + purchase.units;
+                }
                 
                 // Show success
                 showSuccess();
@@ -1618,6 +1666,8 @@
         }
 
         function showSuccess() {
+            if (!currentPurchase) return;
+            
             const modalContent = document.getElementById('pinSwipeContent');
             modalContent.innerHTML = `
                 <div class="product-modal-content">
@@ -1664,7 +1714,13 @@
 
         window.closePinSwipeModal = function() {
             document.getElementById('pinSwipeModal').classList.remove('show');
-            currentPurchase = null;
+            // Don't clear purchase data immediately to allow success screen to show
+            setTimeout(() => {
+                if (!document.getElementById('pinSwipeModal').classList.contains('show')) {
+                    currentPurchase = null;
+                    selectedProduct = null;
+                }
+            }, 500);
             swipeCompleted = false;
         };
 

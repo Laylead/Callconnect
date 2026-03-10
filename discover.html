@@ -878,7 +878,7 @@
             
             <div class="search-bar">
                 <span class="material-icons">search</span>
-                <input type="text" id="searchInput" placeholder="Search products...">
+                <input type="text" id="searchInput" placeholder="Search products..." onkeyup="searchProducts()">
             </div>
         </div>
 
@@ -955,7 +955,7 @@
                 <button class="modal-close" onclick="closeFilterModal()">✕</button>
             </div>
             <div class="modal-content">
-                <!-- Add filter options here -->
+                <!-- Filter options would go here -->
             </div>
         </div>
     </div>
@@ -1565,7 +1565,7 @@
             }
         };
 
-        // ========== COMPLETE PURCHASE ==========
+        // ========== COMPLETE PURCHASE - FIXED ==========
         async function completePurchase() {
             // Double-check purchase data
             if (!currentPurchase) {
@@ -1617,17 +1617,17 @@
                     productName: purchase.productName || product.name,
                     productImage: purchase.productImage || product.img,
                     units: purchase.units,
-                    pricePerUnit: purchase.pricePerUnit,
-                    shippingPerUnit: purchase.shippingPerUnit,
-                    subtotal: purchase.subtotal,
-                    totalShipping: purchase.totalShipping,
+                    pricePerUnit: purchase.pricePerUnit || product.price,
+                    shippingPerUnit: purchase.shippingPerUnit || product.shippingCost,
+                    subtotal: (purchase.pricePerUnit || product.price) * purchase.units,
+                    totalShipping: (purchase.shippingPerUnit || product.shippingCost) * purchase.units,
                     total: purchase.total,
                     shippingDetails: purchase.shippingDetails,
                     status: 'pending',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                // Create transaction record
+                // Create transaction record for the purchase (DEBIT)
                 const transactionRef = db.collection('transactions').doc();
                 batch.set(transactionRef, {
                     userId: currentUser.uid,
@@ -1636,7 +1636,7 @@
                     description: `Purchased ${purchase.units} × ${purchase.productName || product.name}`,
                     status: 'completed',
                     orderId: orderRef.id,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
                 // Commit the batch
@@ -1749,6 +1749,20 @@
 
         window.closeFilterModal = function() {
             document.getElementById('filterModal').classList.remove('show');
+        };
+
+        window.searchProducts = function() {
+            // Simple search implementation
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (searchTerm) {
+                filteredProducts = allProducts.filter(p => 
+                    p.name.toLowerCase().includes(searchTerm) || 
+                    p.description.toLowerCase().includes(searchTerm)
+                );
+            } else {
+                filteredProducts = [...allProducts];
+            }
+            renderProducts();
         };
 
         // Initialize Swiper

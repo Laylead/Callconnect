@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     
-    <!-- Swiper CSS for touch sliders -->
+    <!-- Swiper CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     
     <!-- Firebase SDKs -->
@@ -1166,7 +1166,7 @@
                         <label>Units:</label>
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <input type="number" id="orderUnits" class="units-input" min="1" max="${remaining}" value="1">
-                            <span class="max-units" onclick="setMaxUnits(${remaining})">Max</span>
+                            <span class="max-units" onclick="document.getElementById('orderUnits').value=${remaining}; updateTotalDisplay()">Max</span>
                         </div>
                     </div>
                     
@@ -1186,13 +1186,13 @@
                     </div>
                     
                     <div class="order-form">
-                        <input type="text" class="form-input" id="shippingName" placeholder="Full Name *">
-                        <input type="tel" class="form-input" id="shippingPhone" placeholder="Phone *">
-                        <input type="email" class="form-input" id="shippingEmail" placeholder="Email *">
-                        <input type="text" class="form-input" id="shippingAddress" placeholder="Address *">
+                        <input type="text" class="form-input" id="shippingName" placeholder="Full Name *" value="${userData?.fullName || ''}">
+                        <input type="tel" class="form-input" id="shippingPhone" placeholder="Phone *" value="${userData?.phone || ''}">
+                        <input type="email" class="form-input" id="shippingEmail" placeholder="Email *" value="${currentUser?.email || ''}">
+                        <input type="text" class="form-input" id="shippingAddress" placeholder="Address *" value="${userData?.address || ''}">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                            <input type="text" class="form-input" id="shippingCity" placeholder="City *">
-                            <input type="text" class="form-input" id="shippingState" placeholder="State *">
+                            <input type="text" class="form-input" id="shippingCity" placeholder="City *" value="${userData?.city || ''}">
+                            <input type="text" class="form-input" id="shippingState" placeholder="State *" value="${userData?.state || ''}">
                         </div>
                     </div>
                     
@@ -1213,11 +1213,6 @@
             const total = (selectedProduct.price + selectedProduct.shippingCost) * units;
             document.querySelector('#totalDisplay .total-value').innerHTML = `₦${total.toLocaleString()}`;
         }
-
-        window.setMaxUnits = function(max) {
-            document.getElementById('orderUnits').value = max;
-            updateTotalDisplay();
-        };
 
         window.closeProductModal = function() {
             document.getElementById('productModal').classList.remove('show');
@@ -1476,9 +1471,7 @@
                 // Correct PIN - reset attempts and complete purchase
                 if (userData?.pinAttempts) {
                     await db.collection('users').doc(currentUser.uid).update({
-                        pinAttempts: 0,
-                        temporarilyBanned: false,
-                        banExpiry: null
+                        pinAttempts: 0
                     });
                     userData.pinAttempts = 0;
                 }
@@ -1541,7 +1534,10 @@
 
         // ========== COMPLETE PURCHASE ==========
         async function completePurchase() {
-            if (!currentPurchase || !selectedProduct) return;
+            if (!currentPurchase || !selectedProduct) {
+                showToast('Purchase data missing', 'error');
+                return;
+            }
             
             try {
                 const product = selectedProduct;
@@ -1549,15 +1545,16 @@
                 const total = currentPurchase.total;
                 const details = currentPurchase.shippingDetails;
                 
+                // Start a batch write
                 const batch = db.batch();
                 
-                // Update campaign
+                // Update campaign reserved count
                 const campaignRef = db.collection('campaigns').doc(product.id);
                 batch.update(campaignRef, {
                     reserved: firebase.firestore.FieldValue.increment(units)
                 });
                 
-                // Update user wallet
+                // Update user wallet and stats
                 const userRef = db.collection('users').doc(currentUser.uid);
                 batch.update(userRef, {
                     walletBalance: firebase.firestore.FieldValue.increment(-total),
@@ -1573,28 +1570,50 @@
                     userId: currentUser.uid,
                     productId: product.id,
                     productName: product.name,
+                    productImage: product.img,
                     units: units,
+                    pricePerUnit: product.price,
+                    shippingPerUnit: product.shippingCost,
+                    subtotal: product.price * units,
+                    totalShipping: product.shippingCost * units,
                     total: total,
                     shippingDetails: details,
                     status: 'pending',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
+                // Create transaction record
+                const transactionRef = db.collection('transactions').doc();
+                batch.set(transactionRef, {
+                    userId: currentUser.uid,
+                    type: 'purchase',
+                    amount: total,
+                    description: `Purchased ${units} × ${product.name}`,
+                    status: 'completed',
+                    orderId: orderRef.id,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Commit the batch
                 await batch.commit();
                 
                 // Update local data
                 userData.walletBalance -= total;
                 document.getElementById('walletBalance').innerHTML = `₦${(userData.walletBalance || 0).toLocaleString()}`;
                 
+                // Update product reserved count locally
+                product.reserved = (product.reserved || 0) + units;
+                
                 // Show success
                 showSuccess();
                 
-                // Reload products
+                // Reload products to reflect updated counts
                 await loadProducts();
                 
             } catch (error) {
-                console.error('Error:', error);
-                showToast('Purchase failed', 'error');
+                console.error('Purchase error:', error);
+                showToast('Purchase failed: ' + error.message, 'error');
+                swipeCompleted = false;
             }
         }
 
@@ -1655,7 +1674,12 @@
             const icon = document.getElementById('toastIcon');
             const msg = document.getElementById('toastMessage');
             
-            const icons = { success: 'check_circle', error: 'error', warning: 'warning', info: 'info' };
+            const icons = { 
+                success: 'check_circle', 
+                error: 'error', 
+                warning: 'warning', 
+                info: 'info' 
+            };
             icon.textContent = icons[type] || 'info';
             msg.textContent = message;
             

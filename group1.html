@@ -260,6 +260,27 @@
             box-shadow: 0 15px 25px -8px #2463eb;
         }
 
+        /* Curved divider - replaces straight border line */
+        .curved-divider {
+            position: relative;
+            height: 20px;
+            margin: 20px 0 30px;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .curved-divider::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -5%;
+            width: 110%;
+            height: 30px;
+            background: radial-gradient(ellipse at center, rgba(36,99,235,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translateY(50%);
+        }
+
         /* FINANCIAL CARDS - PREMIUM DESIGN */
         .finance-section {
             margin-bottom: 36px;
@@ -340,10 +361,12 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            white-space: nowrap;
         }
         
         .finance-label .material-icons {
             font-size: 16px;
+            flex-shrink: 0;
         }
         
         .finance-value {
@@ -352,6 +375,8 @@
             margin-bottom: 8px;
             line-height: 1.2;
             word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
         }
         
         .finance-sub {
@@ -360,6 +385,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            flex-wrap: wrap;
         }
         
         .finance-badge {
@@ -369,7 +395,7 @@
             border-radius: 40px;
             font-size: 0.7rem;
             font-weight: 600;
-            margin-left: 8px;
+            white-space: nowrap;
         }
         
         .dot-indicators {
@@ -392,7 +418,7 @@
             background: #2463eb;
         }
 
-        /* section header */
+        /* section header - renamed to "Campaigns" */
         .section-header {
             display: flex;
             align-items: center;
@@ -1080,6 +1106,15 @@
             .request-banner {
                 padding: 24px;
             }
+            
+            /* Better touch targets on mobile */
+            .nav-item, .mobile-nav-item, .btn-primary, .request-btn, .popup-btn {
+                min-height: 48px;
+            }
+            
+            .finance-card {
+                cursor: pointer;
+            }
         }
 
         @media (max-width: 600px) {
@@ -1166,6 +1201,12 @@
                 top: 20px;
                 font-size: 0.9rem;
                 padding: 14px 24px;
+            }
+            
+            /* Better mobile scrolling */
+            .campaign-scroll, .finance-scroll {
+                -webkit-overflow-scrolling: touch;
+                scroll-snap-type: x mandatory;
             }
         }
 
@@ -1261,7 +1302,7 @@
         <!-- FINANCE CARDS - SWIPEABLE (PREMIUM) -->
         <div class="finance-section">
             <div class="finance-scroll" id="financeCards">
-                <!-- Main Balance Card -->
+                <!-- Main Balance Card - Fixed text wrapping -->
                 <div class="finance-card primary">
                     <div class="finance-label">
                         <span class="material-icons">account_balance_wallet</span> MAIN BALANCE
@@ -1321,10 +1362,14 @@
             <div class="dot-indicators" id="financeDots"></div>
         </div>
 
+        <!-- Curved divider - replaces straight border line -->
+        <div class="curved-divider"></div>
+
         <!-- DASHBOARD PAGE -->
         <div id="dashboard-page" class="page active">
             <div class="section-header">
-                <h2 class="section-title"><span class="material-icons">local_fire_department</span> Active campaigns</h2>
+                <!-- Renamed from "Active campaigns" to "Campaigns" as requested -->
+                <h2 class="section-title"><span class="material-icons">local_fire_department</span> Campaigns</h2>
                 <span class="view-all-link" id="viewAllCampaignsLink"><span class="material-icons">arrow_forward</span> view all</span>
             </div>
 
@@ -1540,7 +1585,8 @@
     }
 
     function renderCampaigns() {
-        // Filter out completed campaigns
+        // Filter out completed campaigns (reserved >= goal)
+        // Only show active campaigns that are not completed
         const activeCampaigns = campaigns.filter(c => (c.reserved || 0) < (c.goal || 1));
         
         let html = '';

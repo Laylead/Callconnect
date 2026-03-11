@@ -1,691 +1,529 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Creator · Live Auto‑fund Dashboard</title>
-    <!-- Google Font & Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
-    <!-- External configs - MUST exist in your server -->
-    <script src="firebase-config.js"></script>
-    <script src="pay.js"></script>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        }
-        body {
-            background: #0b0b14;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            color: #e2e2f0;
-            padding: 16px;
-        }
-        .dashboard {
-            width: 100%;
-            max-width: 1400px;
-            background: #14141f;
-            border-radius: 32px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        .top-bar {
-            background: #1e1e2d;
-            padding: 18px 28px;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #2c2c42;
-            gap: 16px;
-        }
-        .title-section h1 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #a78bfa, #ec4899);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        .title-section p {
-            color: #8f8fb1;
-            font-size: 0.9rem;
-        }
-        .action-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-        .btn {
-            padding: 12px 24px;
-            border-radius: 40px;
-            font-weight: 600;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 0.95rem;
-            background: #2a2a3c;
-            color: #c7c7e6;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #6d28d9, #c026d3);
-            color: white;
-            box-shadow: 0 8px 16px rgba(109,40,217,0.3);
-        }
-        .btn-primary:hover { transform: translateY(-3px); filter: brightness(1.1); }
-        .btn-outline {
-            background: transparent;
-            border: 1px solid #3f3f5e;
-        }
-        .btn-outline:hover { background: #2a2a3f; }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 18px;
-            padding: 28px;
-        }
-        .stat-card {
-            background: #1e1e2d;
-            border: 1px solid #2f2f48;
-            border-radius: 24px;
-            padding: 22px 18px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            transition: 0.2s;
-        }
-        .stat-card:hover { border-color: #8b5cf6; }
-        .stat-icon {
-            width: 54px; height: 54px; border-radius: 18px;
-            background: rgba(139,92,246,0.15);
-            display: flex; align-items: center; justify-content: center;
-        }
-        .stat-icon .material-icons { font-size: 28px; color: #a78bfa; }
-        .stat-content h3 { font-size: 28px; font-weight: 700; color: white; }
-        .stat-content p { color: #9ca3af; font-size: 0.9rem; }
-        .search-section {
-            padding: 0 28px 20px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: center;
-        }
-        .search-box {
-            flex: 2;
-            min-width: 240px;
-            display: flex;
-            background: #1e1e2d;
-            border: 1px solid #3f3f5e;
-            border-radius: 60px;
-            padding: 4px 4px 4px 20px;
-            align-items: center;
-        }
-        .search-box input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            padding: 14px 5px 14px 0;
-            color: white;
-            font-size: 1rem;
-            outline: none;
-        }
-        .search-box button {
-            background: #2d2d44;
-            border: none;
-            border-radius: 50px;
-            padding: 10px 24px;
-            color: white;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        .section {
-            padding: 8px 28px 28px;
-        }
-        .section-header {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 18px;
-        }
-        .section-header h2 {
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .table-container {
-            background: #1a1a28;
-            border-radius: 24px;
-            border: 1px solid #2f2f48;
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 800px;
-        }
-        th {
-            text-align: left;
-            padding: 18px 20px;
-            color: #9aa1b9;
-            font-weight: 600;
-            background: #202033;
-            border-bottom: 1px solid #33334c;
-        }
-        td {
-            padding: 16px 20px;
-            border-bottom: 1px solid #2a2a40;
-            color: #e0e0f0;
-        }
-        .status {
-            padding: 6px 14px;
-            border-radius: 40px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            display: inline-block;
-        }
-        .status.success { background: #1f3b2c; color: #4ade80; }
-        .status.failed { background: #3b2028; color: #f87171; }
-        .status.pending { background: #3b3420; color: #facc15; }
-        .action-cell {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .small-btn {
-            background: #2f2f4a;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 30px;
-            color: white;
-            font-size: 0.85rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-        }
-        .small-btn.manual { background: #2563eb20; color: #60a5fa; }
-        .toast {
-            position: fixed; top: 30px; right: 30px;
-            background: #23233a; border-left: 5px solid #8b5cf6;
-            border-radius: 16px; padding: 16px 28px;
-            color: white; font-weight: 500; z-index: 2000;
-            opacity: 0; transform: translateX(120%);
-            transition: 0.3s; max-width: 380px;
-            box-shadow: 0 10px 30px black;
-        }
-        .toast.show { opacity: 1; transform: translateX(0); }
-        .toast.success { border-left-color: #22c55e; }
-        .toast.error { border-left-color: #ef4444; }
-        .loader {
-            display: inline-block; width: 20px; height: 20px;
-            border: 3px solid #5b5b7a; border-top: 3px solid #a78bfa;
-            border-radius: 50%; animation: spin 1s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 640px) {
-            .top-bar { flex-direction: column; align-items: start; }
-            .stats-grid { grid-template-columns: 1fr; }
-            .search-section { flex-direction: column; align-items: stretch; }
-            .search-box { width: 100%; }
-        }
-    </style>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>Creator Auto Funding</title>
+
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script src="firebase-config.js"></script>
+<script src="pay.js"></script>
+
+<style>
+
+body{
+background:#0b0b14;
+color:white;
+font-family:Arial;
+margin:0;
+padding:20px;
+}
+
+.dashboard{
+max-width:1200px;
+margin:auto;
+}
+
+.top{
+display:flex;
+justify-content:space-between;
+margin-bottom:30px;
+}
+
+button{
+background:#7c3aed;
+border:none;
+padding:10px 18px;
+color:white;
+border-radius:8px;
+cursor:pointer;
+}
+
+.stats{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:15px;
+margin-bottom:30px;
+}
+
+.card{
+background:#1e1e2d;
+padding:20px;
+border-radius:12px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:#161622;
+}
+
+th,td{
+padding:12px;
+border-bottom:1px solid #2a2a40;
+}
+
+.status-success{color:#4ade80}
+.status-failed{color:#f87171}
+.status-pending{color:#facc15}
+
+.failed-section{
+margin-top:40px;
+}
+
+.small-btn{
+background:#2563eb;
+border:none;
+padding:6px 12px;
+border-radius:6px;
+color:white;
+cursor:pointer;
+}
+
+</style>
 </head>
+
 <body>
+
 <div class="dashboard">
-    <div class="top-bar">
-        <div class="title-section">
-            <h1>⚡ Live Auto‑fund Dashboard</h1>
-            <p>Paystack → Firebase · real transactions · duplicate protected</p>
-        </div>
-        <div class="action-buttons">
-            <button class="btn btn-primary" id="fetchBtn"><span class="material-icons">download</span> Fetch Paystack</button>
-            <button class="btn btn-primary" id="autoAllBtn"><span class="material-icons">play_arrow</span> Auto fund all failed</button>
-            <button class="btn btn-outline" id="refreshBtn"><span class="material-icons">refresh</span> Refresh</button>
-        </div>
-    </div>
 
-    <div class="stats-grid" id="statsGrid">
-        <div class="stat-card"><div class="stat-icon"><span class="material-icons">receipt</span></div><div class="stat-content"><h3 id="totalTx">0</h3><p>Total transactions</p></div></div>
-        <div class="stat-card"><div class="stat-icon"><span class="material-icons">check_circle</span></div><div class="stat-content"><h3 id="successFund">0</h3><p>Successful funding</p></div></div>
-        <div class="stat-card"><div class="stat-icon"><span class="material-icons">error</span></div><div class="stat-content"><h3 id="failedFund">0</h3><p>Failed funding</p></div></div>
-        <div class="stat-card"><div class="stat-icon"><span class="material-icons">account_balance_wallet</span></div><div class="stat-content"><h3 id="totalAmount">₦0</h3><p>Total funded</p></div></div>
-    </div>
+<div class="top">
 
-    <div class="search-section">
-        <div class="search-box">
-            <span class="material-icons" style="color:#6b6b93;">search</span>
-            <input type="text" id="searchInput" placeholder="Search by email or transaction ID...">
-            <button id="searchBtn">Search</button>
-        </div>
-    </div>
+<h2>Creator Auto Funding</h2>
 
-    <div class="section">
-        <div class="section-header">
-            <h2><span class="material-icons">history</span> Transaction history</h2>
-            <span style="color:#7f7fb0;">live from Firebase</span>
-        </div>
-        <div class="table-container">
-            <table>
-                <thead><tr><th>Transaction ID</th><th>Email</th><th>Amount (₦)</th><th>Status</th><th>Funding</th><th>Date</th></tr></thead>
-                <tbody id="txTableBody"><tr><td colspan="6" style="text-align:center;">Loading live transactions…</td></tr></tbody>
-            </table>
-        </div>
-    </div>
+<div>
 
-    <div class="section">
-        <div class="section-header">
-            <h2><span class="material-icons">warning</span> Failed funding</h2>
-            <button class="btn btn-outline" id="retryAllBtn"><span class="material-icons">refresh</span> Retry all failed</button>
-        </div>
-        <div class="table-container">
-            <table>
-                <thead><tr><th>Transaction ID</th><th>Email</th><th>Amount</th><th>Reason</th><th>Date</th><th>Action</th></tr></thead>
-                <tbody id="failedTableBody"><tr><td colspan="6" style="text-align:center;">No failed transactions</td></tr></tbody>
-            </table>
-        </div>
-    </div>
+<button id="fetchBtn">Fetch Paystack</button>
+<button id="retryBtn">Retry Failed</button>
+<button id="refreshBtn">Refresh</button>
+
 </div>
 
-<div class="toast" id="toast"></div>
+</div>
+
+
+<div class="stats">
+
+<div class="card">
+<h3 id="totalTx">0</h3>
+<p>Total Transactions</p>
+</div>
+
+<div class="card">
+<h3 id="successTx">0</h3>
+<p>Successful</p>
+</div>
+
+<div class="card">
+<h3 id="failedTx">0</h3>
+<p>Failed</p>
+</div>
+
+<div class="card">
+<h3 id="totalAmount">₦0</h3>
+<p>Total Funded</p>
+</div>
+
+</div>
+
+
+<table>
+
+<thead>
+
+<tr>
+<th>Transaction</th>
+<th>Email</th>
+<th>Amount</th>
+<th>Status</th>
+<th>Funding</th>
+<th>Date</th>
+</tr>
+
+</thead>
+
+<tbody id="txTable"></tbody>
+
+</table>
+
+
+
+<div class="failed-section">
+
+<h3>Failed Funding</h3>
+
+<table>
+
+<thead>
+<tr>
+<th>Transaction</th>
+<th>Email</th>
+<th>Amount</th>
+<th>Reason</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="failedTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+
 
 <script>
-(function() {
-    // ==================== LIVE FIREBASE INIT ====================
-    // firebase-config.js MUST define window.firebaseConfig
-    if (typeof firebaseConfig === 'undefined') {
-        showToast('ERROR: firebase-config.js not loaded', 'error');
-        return;
-    }
-    
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-    
-    // ==================== CREATOR AUTH ====================
-    const CREATOR_EMAIL = "mynumba100@gmail.com"; // Your creator email
-    
-    // ==================== GLOBAL STATE ====================
-    let allTransactions = []; // from firestore 'transactions' collection
-    
-    // ==================== UI ELEMENTS ====================
-    const totalTxEl = document.getElementById('totalTx');
-    const successFundEl = document.getElementById('successFund');
-    const failedFundEl = document.getElementById('failedFund');
-    const totalAmountEl = document.getElementById('totalAmount');
-    const txTbody = document.getElementById('txTableBody');
-    const failedTbody = document.getElementById('failedTableBody');
-    
-    // ==================== TOAST ====================
-    function showToast(msg, type = 'info') {
-        const toast = document.getElementById('toast');
-        toast.textContent = msg;
-        toast.className = 'toast show ' + type;
-        setTimeout(() => toast.classList.remove('show'), 4000);
-    }
-    
-    // ==================== AUTH GUARD ====================
-    auth.onAuthStateChanged(async (user) => {
-        if (user && user.email === CREATOR_EMAIL) {
-            // Creator authenticated - load data
-            await loadTransactions();
-            setupRealTimeListener();
-        } else if (user) {
-            showToast('Access denied: Creator email required', 'error');
-            setTimeout(() => auth.signOut(), 2000);
-        } else {
-            showToast('Please login as creator', 'error');
-            // Redirect to login page after 2 seconds
-            setTimeout(() => window.location.href = 'index.html', 2000);
-        }
-    });
-    
-    // ==================== REAL-TIME LISTENER ====================
-    function setupRealTimeListener() {
-        db.collection('transactions')
-            .orderBy('timestamp', 'desc')
-            .limit(100)
-            .onSnapshot((snapshot) => {
-                allTransactions = [];
-                snapshot.forEach(doc => {
-                    allTransactions.push({ id: doc.id, ...doc.data() });
-                });
-                updateStatsAndTables();
-            }, (error) => {
-                console.error('Listener error:', error);
-                showToast('Real-time sync error', 'error');
-            });
-    }
-    
-    // ==================== LOAD TRANSACTIONS ====================
-    async function loadTransactions() {
-        try {
-            const snapshot = await db.collection('transactions')
-                .orderBy('timestamp', 'desc')
-                .limit(100)
-                .get();
-            
-            allTransactions = [];
-            snapshot.forEach(doc => {
-                allTransactions.push({ id: doc.id, ...doc.data() });
-            });
-            updateStatsAndTables();
-        } catch (error) {
-            console.error('Error loading transactions:', error);
-            showToast('Failed to load transactions', 'error');
-        }
-    }
-    
-    // ==================== FETCH FROM PAYSTACK (LIVE) ====================
-    async function fetchFromPaystack() {
-        if (!window.paystack) {
-            showToast('pay.js not loaded correctly', 'error');
-            return;
-        }
-        
-        try {
-            showToast('Fetching transactions from Paystack...', 'info');
-            
-            // Call pay.js function to get transactions
-            const transactions = await window.paystack.fetchTransactions();
-            
-            if (!transactions || transactions.length === 0) {
-                showToast('No new transactions found', 'info');
-                return;
-            }
-            
-            // Process each transaction
-            let processed = 0;
-            for (const tx of transactions) {
-                // Check if already exists in Firebase
-                const existing = await db.collection('transactions')
-                    .where('paystackTransactionId', '==', tx.reference)
-                    .get();
-                
-                if (existing.empty) {
-                    // Attempt to auto-fund
-                    await processTransaction(tx);
-                    processed++;
-                }
-            }
-            
-            showToast(`Processed ${processed} new transactions`, 'success');
-        } catch (error) {
-            console.error('Paystack fetch error:', error);
-            showToast('Error fetching from Paystack: ' + error.message, 'error');
-        }
-    }
-    
-    // ==================== PROCESS SINGLE TRANSACTION (LIVE) ====================
-    async function processTransaction(tx) {
-        try {
-            // Verify transaction with Paystack (using pay.js)
-            const verified = await window.paystack.verifyTransaction(tx.reference);
-            
-            if (!verified || verified.data.status !== 'success') {
-                // Save as failed
-                await db.collection('transactions').add({
-                    paystackTransactionId: tx.reference,
-                    email: tx.customer?.email || 'unknown',
-                    amount: (tx.amount || 0) / 100,
-                    status: 'failed',
-                    funded: false,
-                    reason: 'Transaction not successful',
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                return false;
-            }
-            
-            // Find user by email
-            const usersRef = db.collection('users');
-            const userSnapshot = await usersRef.where('email', '==', tx.customer.email).get();
-            
-            if (userSnapshot.empty) {
-                // User not found - save failed
-                await db.collection('transactions').add({
-                    paystackTransactionId: tx.reference,
-                    email: tx.customer.email,
-                    amount: (tx.amount || 0) / 100,
-                    status: 'failed',
-                    funded: false,
-                    reason: 'User email not found in Firebase',
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                return false;
-            }
-            
-            const userDoc = userSnapshot.docs[0];
-            const amountNaira = (tx.amount || 0) / 100;
-            
-            // Use transaction to ensure data consistency
-            await db.runTransaction(async (transaction) => {
-                // Update user wallet
-                const userRef = db.collection('users').doc(userDoc.id);
-                const userData = await transaction.get(userRef);
-                const currentBalance = userData.data()?.walletBalance || 0;
-                
-                transaction.update(userRef, {
-                    walletBalance: currentBalance + amountNaira
-                });
-                
-                // Save transaction record
-                const txRef = db.collection('transactions').doc();
-                transaction.set(txRef, {
-                    paystackTransactionId: tx.reference,
-                    email: tx.customer.email,
-                    amount: amountNaira,
-                    status: 'success',
-                    funded: true,
-                    reason: 'Auto-funded',
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            });
-            
-            showToast(`✅ Funded ${tx.customer.email} ₦${amountNaira}`, 'success');
-            return true;
-            
-        } catch (error) {
-            console.error('Process error:', error);
-            
-            // Save error state
-            await db.collection('transactions').add({
-                paystackTransactionId: tx.reference,
-                email: tx.customer?.email || 'unknown',
-                amount: (tx.amount || 0) / 100,
-                status: 'failed',
-                funded: false,
-                reason: error.message,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            return false;
-        }
-    }
-    
-    // ==================== MANUAL FUND (LIVE) ====================
-    window.manualFund = async (transactionId, email) => {
-        try {
-            showToast('Verifying transaction...', 'info');
-            
-            // Verify with Paystack
-            const verified = await window.paystack.verifyTransaction(transactionId);
-            
-            if (!verified || verified.data.status !== 'success') {
-                showToast('Transaction verification failed', 'error');
-                return;
-            }
-            
-            // Process the verified transaction
-            await processTransaction(verified.data);
-            
-        } catch (error) {
-            console.error('Manual fund error:', error);
-            showToast('Manual funding failed: ' + error.message, 'error');
-        }
-    };
-    
-    // ==================== RETRY ALL FAILED ====================
-    async function retryAllFailed() {
-        const failed = allTransactions.filter(t => 
-            t.status === 'failed' && !t.funded && t.paystackTransactionId
-        );
-        
-        if (failed.length === 0) {
-            showToast('No failed transactions to retry', 'info');
-            return;
-        }
-        
-        showToast(`Retrying ${failed.length} failed transactions...`, 'info');
-        
-        for (const tx of failed) {
-            try {
-                // Verify with Paystack
-                const verified = await window.paystack.verifyTransaction(tx.paystackTransactionId);
-                
-                if (verified && verified.data.status === 'success') {
-                    await processTransaction(verified.data);
-                }
-            } catch (error) {
-                console.error('Retry error:', error);
-            }
-        }
-    }
-    
-    // ==================== UPDATE UI ====================
-    function updateStatsAndTables() {
-        // Calculate stats
-        const total = allTransactions.length;
-        const success = allTransactions.filter(t => t.funded === true).length;
-        const failed = allTransactions.filter(t => t.status === 'failed' || t.funded === false).length;
-        const totalAmount = allTransactions
-            .filter(t => t.funded)
-            .reduce((acc, t) => acc + (t.amount || 0), 0);
-        
-        // Update stats
-        totalTxEl.innerText = total;
-        successFundEl.innerText = success;
-        failedFundEl.innerText = failed;
-        totalAmountEl.innerText = `₦${totalAmount.toLocaleString()}`;
-        
-        // Render all transactions
-        let txHtml = '';
-        allTransactions.slice(0, 50).forEach(t => {
-            const date = t.timestamp?.toDate 
-                ? t.timestamp.toDate().toLocaleString() 
-                : 'N/A';
-            
-            const statusClass = t.funded ? 'success' : (t.status === 'failed' ? 'failed' : 'pending');
-            const fundingText = t.funded ? 'funded' : (t.status === 'failed' ? 'failed' : 'pending');
-            
-            txHtml += `<tr>
-                <td>${t.paystackTransactionId || '—'}</td>
-                <td>${t.email || '—'}</td>
-                <td>₦${(t.amount || 0).toLocaleString()}</td>
-                <td><span class="status ${statusClass}">${t.status || 'pending'}</span></td>
-                <td><span class="status ${t.funded ? 'success' : 'failed'}">${fundingText}</span></td>
-                <td>${date}</td>
-            </tr>`;
-        });
-        
-        txTbody.innerHTML = txHtml || '<tr><td colspan="6">No transactions found</td></tr>';
-        
-        // Render failed transactions
-        const failedTransactions = allTransactions.filter(t => 
-            t.status === 'failed' || (t.status === 'success' && !t.funded)
-        );
-        
-        let failHtml = '';
-        failedTransactions.slice(0, 50).forEach(t => {
-            const date = t.timestamp?.toDate 
-                ? t.timestamp.toDate().toLocaleString() 
-                : 'N/A';
-            
-            failHtml += `<tr>
-                <td>${t.paystackTransactionId || '—'}</td>
-                <td>${t.email || '—'}</td>
-                <td>₦${(t.amount || 0).toLocaleString()}</td>
-                <td>${t.reason || 'Unknown error'}</td>
-                <td>${date}</td>
-                <td class="action-cell">
-                    <button class="small-btn manual" onclick="manualFund('${t.paystackTransactionId}', '${t.email}')">
-                        <span class="material-icons">paid</span> Manual Fund
-                    </button>
-                </td>
-            </tr>`;
-        });
-        
-        failedTbody.innerHTML = failHtml || '<tr><td colspan="6">No failed transactions</td></tr>';
-    }
-    
-    // ==================== SEARCH FUNCTION ====================
-    function searchTransactions(term) {
-        if (!term.trim()) {
-            updateStatsAndTables();
-            return;
-        }
-        
-        const termLower = term.toLowerCase();
-        const filtered = allTransactions.filter(t => 
-            (t.email && t.email.toLowerCase().includes(termLower)) ||
-            (t.paystackTransactionId && t.paystackTransactionId.toLowerCase().includes(termLower))
-        );
-        
-        // Render filtered results
-        let html = '';
-        filtered.slice(0, 50).forEach(t => {
-            const date = t.timestamp?.toDate 
-                ? t.timestamp.toDate().toLocaleString() 
-                : 'N/A';
-            
-            html += `<tr>
-                <td>${t.paystackTransactionId || '—'}</td>
-                <td>${t.email || '—'}</td>
-                <td>₦${(t.amount || 0).toLocaleString()}</td>
-                <td><span class="status ${t.status}">${t.status}</span></td>
-                <td><span class="status ${t.funded ? 'success' : 'failed'}">${t.funded ? 'funded' : 'pending'}</span></td>
-                <td>${date}</td>
-            </tr>`;
-        });
-        
-        txTbody.innerHTML = html || '<tr><td colspan="6">No matching transactions</td></tr>';
-    }
-    
-    // ==================== EVENT LISTENERS ====================
-    document.getElementById('fetchBtn').addEventListener('click', fetchFromPaystack);
-    document.getElementById('refreshBtn').addEventListener('click', loadTransactions);
-    document.getElementById('autoAllBtn').addEventListener('click', retryAllFailed);
-    document.getElementById('retryAllBtn').addEventListener('click', retryAllFailed);
-    
-    document.getElementById('searchBtn').addEventListener('click', () => {
-        const term = document.getElementById('searchInput').value;
-        searchTransactions(term);
-    });
-    
-    document.getElementById('searchInput').addEventListener('keyup', (e) => {
-        if (e.key === 'Enter') {
-            searchTransactions(e.target.value);
-        }
-    });
-    
-    // ==================== INITIAL LOAD ====================
-    // Load will happen after auth state resolved
-    
-})();
+
+firebase.initializeApp(firebaseConfig)
+
+const db=firebase.firestore()
+const auth=firebase.auth()
+
+const CREATOR_EMAIL="mynumba100@gmail.com"
+
+let transactions=[]
+
+const txTable=document.getElementById("txTable")
+const failedTable=document.getElementById("failedTable")
+
+const totalTx=document.getElementById("totalTx")
+const successTx=document.getElementById("successTx")
+const failedTx=document.getElementById("failedTx")
+const totalAmount=document.getElementById("totalAmount")
+
+
+
+auth.onAuthStateChanged(user=>{
+
+if(!user || user.email!==CREATOR_EMAIL){
+
+alert("Creator login required")
+
+location.href="index.html"
+
+return
+
+}
+
+loadTransactions()
+
+listenRealtime()
+
+})
+
+
+
+function listenRealtime(){
+
+db.collection("transactions")
+
+.orderBy("timestamp","desc")
+
+.onSnapshot(snap=>{
+
+transactions=[]
+
+snap.forEach(doc=>{
+
+transactions.push({
+id:doc.id,
+...doc.data()
+})
+
+})
+
+render()
+
+})
+
+}
+
+
+
+async function loadTransactions(){
+
+const snap=await db.collection("transactions")
+
+.orderBy("timestamp","desc")
+
+.get()
+
+transactions=[]
+
+snap.forEach(doc=>{
+
+transactions.push({
+id:doc.id,
+...doc.data()
+})
+
+})
+
+render()
+
+}
+
+
+
+function render(){
+
+txTable.innerHTML=""
+failedTable.innerHTML=""
+
+let success=0
+let failed=0
+let amount=0
+
+transactions.forEach(t=>{
+
+if(t.funded) success++
+else failed++
+
+if(t.funded) amount+=t.amount||0
+
+const date=t.timestamp?.toDate ?
+
+t.timestamp.toDate().toLocaleString()
+
+:"-"
+
+
+txTable.innerHTML+=`
+
+<tr>
+
+<td>${t.paystackTransactionId||"-"}</td>
+<td>${t.email||"-"}</td>
+<td>₦${(t.amount||0).toLocaleString()}</td>
+
+<td class="status-${t.status}">${t.status}</td>
+
+<td>${t.funded?"funded":"failed"}</td>
+
+<td>${date}</td>
+
+</tr>
+
+`
+
+
+if(!t.funded){
+
+failedTable.innerHTML+=`
+
+<tr>
+
+<td>${t.paystackTransactionId}</td>
+<td>${t.email}</td>
+<td>₦${t.amount}</td>
+<td>${t.reason}</td>
+
+<td>
+
+<button class="small-btn"
+
+onclick="manualFund('${t.paystackTransactionId}','${t.email}')">
+
+Manual Fund
+
+</button>
+
+</td>
+
+</tr>
+
+`
+
+}
+
+})
+
+
+totalTx.innerText=transactions.length
+successTx.innerText=success
+failedTx.innerText=failed
+totalAmount.innerText="₦"+amount.toLocaleString()
+
+}
+
+
+
+async function fetchPaystack(){
+
+const list=await window.paystack.fetchTransactions()
+
+for(const tx of list){
+
+await processTransaction(tx)
+
+}
+
+}
+
+
+
+async function processTransaction(tx){
+
+const ref=tx.reference
+
+const existing=await db.collection("transactions")
+
+.doc(ref)
+
+.get()
+
+if(existing.exists){
+
+return
+
+}
+
+const verify=await window.paystack.verifyTransaction(ref)
+
+if(!verify || verify.data.status!=="success"){
+
+await db.collection("transactions")
+
+.doc(ref)
+
+.set({
+
+paystackTransactionId:ref,
+email:tx.customer?.email||"",
+amount:(tx.amount||0)/100,
+status:"failed",
+funded:false,
+reason:"Transaction not successful",
+timestamp:firebase.firestore.FieldValue.serverTimestamp()
+
+})
+
+return
+
+}
+
+const email=verify.data.customer.email
+
+const amount=verify.data.amount/100
+
+const userSnap=await db.collection("users")
+
+.where("email","==",email)
+
+.get()
+
+if(userSnap.empty){
+
+await db.collection("transactions")
+
+.doc(ref)
+
+.set({
+
+paystackTransactionId:ref,
+email,
+amount,
+status:"failed",
+funded:false,
+reason:"User not found",
+timestamp:firebase.firestore.FieldValue.serverTimestamp()
+
+})
+
+return
+
+}
+
+const user=userSnap.docs[0]
+
+await db.runTransaction(async(transaction)=>{
+
+const userRef=db.collection("users").doc(user.id)
+
+const userData=await transaction.get(userRef)
+
+const balance=userData.data().walletBalance||0
+
+transaction.update(userRef,{
+
+walletBalance:balance+amount
+
+})
+
+transaction.set(
+
+db.collection("transactions").doc(ref),
+
+{
+
+paystackTransactionId:ref,
+email,
+amount,
+status:"success",
+funded:true,
+reason:"Auto funded",
+timestamp:firebase.firestore.FieldValue.serverTimestamp()
+
+})
+
+})
+
+}
+
+
+
+window.manualFund=async(ref,email)=>{
+
+const verify=await window.paystack.verifyTransaction(ref)
+
+if(!verify || verify.data.status!=="success"){
+
+alert("Transaction invalid")
+
+return
+
+}
+
+await processTransaction(verify.data)
+
+}
+
+
+
+async function retryFailed(){
+
+const failed=transactions.filter(t=>!t.funded)
+
+for(const tx of failed){
+
+await processTransaction({
+
+reference:tx.paystackTransactionId,
+customer:{email:tx.email},
+amount:tx.amount*100
+
+})
+
+}
+
+}
+
+
+
+document.getElementById("fetchBtn").onclick=fetchPaystack
+document.getElementById("retryBtn").onclick=retryFailed
+document.getElementById("refreshBtn").onclick=loadTransactions
+
 </script>
+
 </body>
 </html>

@@ -1,15 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Creator Funding Dashboard</title>
 
-<title>Creator Auto Funding</title>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script src="firebase-config.js"></script>
 <script src="pay.js"></script>
@@ -17,309 +14,308 @@
 <style>
 
 body{
-background:#0b0b14;
-color:white;
 font-family:Arial;
-margin:0;
-padding:20px;
+background:#0f172a;
+color:white;
+padding:40px;
 }
 
-.dashboard{
-max-width:1100px;
-margin:auto;
-}
-
-.stats{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:15px;
-margin-bottom:25px;
-}
-
-.card{
-background:#1c1c28;
-padding:20px;
-border-radius:12px;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-background:#151520;
-}
-
-th,td{
-padding:12px;
-border-bottom:1px solid #2a2a40;
+h1{
+margin-bottom:20px;
 }
 
 button{
-background:#6c4cff;
+background:#ff7a00;
 border:none;
-padding:8px 14px;
+padding:10px 15px;
 color:white;
 border-radius:6px;
 cursor:pointer;
 }
 
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+td,th{
+padding:12px;
+border-bottom:1px solid #333;
+}
+
+.fail{
+color:#ff4d4d;
+}
+
+.success{
+color:#22c55e;
+}
+
 </style>
 
 </head>
-
 <body>
 
-<div class="dashboard">
+<h1>Creator Funding Dashboard</h1>
 
-<h2>Creator Funding Dashboard</h2>
+<button onclick="loadTransactions()">Load New Transactions</button>
+<button onclick="retryAllFailed()">Auto Fund Failed</button>
 
-<div class="stats">
+<h2>Successful Funding</h2>
 
-<div class="card">
-<h3 id="totalTx">0</h3>
-<p>Total Transactions</p>
-</div>
-
-<div class="card">
-<h3 id="successTx">0</h3>
-<p>Successful</p>
-</div>
-
-<div class="card">
-<h3 id="failedTx">0</h3>
-<p>Failed</p>
-</div>
-
-<div class="card">
-<h3 id="totalAmount">₦0</h3>
-<p>Total Funded</p>
-</div>
-
-</div>
-
-<table>
-
-<thead>
+<table id="successTable">
 <tr>
-<th>Reference</th>
 <th>Email</th>
 <th>Amount</th>
-<th>Status</th>
-<th>Date</th>
+<th>Reference</th>
 </tr>
-</thead>
-
-<tbody id="txTable"></tbody>
-
 </table>
 
-</div>
+<h2>Failed Transactions</h2>
 
+<table id="failedTable">
+<tr>
+<th>Email</th>
+<th>Amount</th>
+<th>Reason</th>
+<th>Action</th>
+</tr>
+</table>
 
 <script>
 
-firebase.initializeApp(firebaseConfig)
+const db = firebase.firestore();
 
-const db = firebase.firestore()
-const auth = firebase.auth()
+let lastTimestamp = 0;
 
-const CREATOR_EMAIL="mynumba100@gmail.com"
+async function loadLastTimestamp(){
 
-let transactions=[]
-let latestReference=null
+const doc = await db.collection("system").doc("funding").get();
 
-const txTable=document.getElementById("txTable")
+if(doc.exists){
 
-const totalTx=document.getElementById("totalTx")
-const successTx=document.getElementById("successTx")
-const failedTx=document.getElementById("failedTx")
-const totalAmount=document.getElementById("totalAmount")
-
-
-auth.onAuthStateChanged(user=>{
-
-if(!user || user.email!==CREATOR_EMAIL){
-
-alert("Creator login required")
-location.href="index.html"
-return
+lastTimestamp = doc.data().lastTimestamp || 0;
 
 }
 
-listenRealtime()
+}
 
-startPaystackWatcher()
+async function saveTimestamp(ts){
 
-})
-
-
-function listenRealtime(){
-
-db.collection("transactions")
-.orderBy("timestamp","desc")
-.onSnapshot(snap=>{
-
-transactions=[]
-
-snap.forEach(doc=>{
-transactions.push(doc.data())
-})
-
-render()
-
-})
+await db.collection("system").doc("funding").set({
+lastTimestamp:ts
+});
 
 }
 
+async function loadTransactions(){
 
-function render(){
+await loadLastTimestamp();
 
-txTable.innerHTML=""
+const transactions = await fetchTransactions(lastTimestamp);
 
-let success=0
-let failed=0
-let amount=0
+for(const tx of transactions){
 
-transactions.forEach(t=>{
-
-if(t.funded) success++
-else failed++
-
-if(t.funded) amount+=t.amount
-
-const date=t.timestamp?.toDate ?
-t.timestamp.toDate().toLocaleString():"-"
-
-txTable.innerHTML+=`
-
-<tr>
-<td>${t.reference}</td>
-<td>${t.email}</td>
-<td>₦${t.amount}</td>
-<td>${t.status}</td>
-<td>${date}</td>
-</tr>
-
-`
-
-})
-
-totalTx.innerText=transactions.length
-successTx.innerText=success
-failedTx.innerText=failed
-totalAmount.innerText="₦"+amount.toLocaleString()
+await processTransaction(tx);
 
 }
 
+}
 
-async function startPaystackWatcher(){
+async function processTransaction(tx){
 
-setInterval(async()=>{
+if(tx.status !== "success") return;
+
+const reference = tx.reference;
+
+const existing = await db.collection("transactions").doc(reference).get();
+
+if(existing.exists){
+
+addFailed(tx,"Duplicate transaction");
+
+return;
+
+}
 
 try{
 
-const list=await window.paystack.getTransactions()
+const verified = await verifyTransaction(reference);
 
-if(!list.length) return
+if(verified.status !== "success"){
 
-for(const tx of list){
+addFailed(tx,"Verification failed");
 
-await handleTransaction(tx)
-
-}
-
-}catch(e){
-
-console.log("Paystack error",e)
+return;
 
 }
 
-},30000)
+const email = verified.customer.email;
 
-}
+const amount = verified.amount / 100;
 
-
-
-async function handleTransaction(tx){
-
-const ref=tx.reference
-
-const existing=await db.collection("transactions").doc(ref).get()
-
-if(existing.exists) return
-
-
-const verify=await window.paystack.verify(ref)
-
-if(!verify || verify.data.status!=="success"){
-
-await db.collection("transactions").doc(ref).set({
-
-reference:ref,
-email:tx.customer?.email||"",
-amount:(tx.amount||0)/100,
-status:"failed",
-funded:false,
-timestamp:firebase.firestore.FieldValue.serverTimestamp()
-
-})
-
-return
-
-}
-
-
-const email=verify.data.customer.email
-const amount=verify.data.amount/100
-
-const userSnap=await db.collection("users")
+const userQuery = await db.collection("users")
 .where("email","==",email)
-.get()
+.get();
 
-if(userSnap.empty){
+if(userQuery.empty){
 
-await db.collection("transactions").doc(ref).set({
+addFailed(tx,"User not found");
 
-reference:ref,
-email,
-amount,
-status:"failed",
-funded:false,
-reason:"User not found",
-timestamp:firebase.firestore.FieldValue.serverTimestamp()
-
-})
-
-return
+return;
 
 }
 
+const userDoc = userQuery.docs[0];
 
-const user=userSnap.docs[0]
+const userRef = userDoc.ref;
 
 await db.runTransaction(async(t)=>{
 
-const userRef=db.collection("users").doc(user.id)
+const snap = await t.get(userRef);
 
-const data=await t.get(userRef)
-
-const balance=data.data().walletBalance||0
+const balance = snap.data().walletBalance || 0;
 
 t.update(userRef,{
 walletBalance:balance+amount
-})
+});
 
-t.set(db.collection("transactions").doc(ref),{
-
-reference:ref,
+t.set(
+db.collection("transactions").doc(reference),
+{
 email,
 amount,
-status:"success",
-funded:true,
-timestamp:firebase.firestore.FieldValue.serverTimestamp()
+reference,
+date:Date.now()
+}
+);
 
-})
+});
 
-})
+addSuccess(email,amount,reference);
+
+if(tx.paid_at){
+
+const ts = new Date(tx.paid_at).getTime();
+
+if(ts > lastTimestamp){
+
+lastTimestamp = ts;
+
+await saveTimestamp(ts);
+
+}
+
+}
+
+}catch(err){
+
+addFailed(tx,err.message);
+
+}
+
+}
+
+function addSuccess(email,amount,ref){
+
+const table = document.getElementById("successTable");
+
+const row = table.insertRow();
+
+row.className="success";
+
+row.innerHTML=`
+<td>${email}</td>
+<td>₦${amount}</td>
+<td>${ref}</td>
+`;
+
+}
+
+function addFailed(tx,reason){
+
+const table = document.getElementById("failedTable");
+
+const row = table.insertRow();
+
+row.className="fail";
+
+row.innerHTML=`
+<td>${tx.customer?.email || "unknown"}</td>
+<td>₦${tx.amount/100}</td>
+<td>${reason}</td>
+<td>
+<button onclick='manualFund("${tx.reference}")'>
+Manual Fund
+</button>
+</td>
+`;
+
+}
+
+async function manualFund(reference){
+
+const verified = await verifyTransaction(reference);
+
+const email = verified.customer.email;
+
+const amount = verified.amount/100;
+
+const userQuery = await db.collection("users")
+.where("email","==",email)
+.get();
+
+if(userQuery.empty){
+
+alert("User not found");
+
+return;
+
+}
+
+const userDoc = userQuery.docs[0];
+
+await db.runTransaction(async(t)=>{
+
+const snap = await t.get(userDoc.ref);
+
+const balance = snap.data().walletBalance || 0;
+
+t.update(userDoc.ref,{
+walletBalance:balance+amount
+});
+
+t.set(
+db.collection("transactions").doc(reference),
+{
+email,
+amount,
+reference,
+date:Date.now()
+}
+);
+
+});
+
+alert("Wallet funded");
+
+}
+
+async function retryAllFailed(){
+
+const rows = document.querySelectorAll("#failedTable tr");
+
+for(let i=1;i<rows.length;i++){
+
+const ref = rows[i].cells[3]
+.querySelector("button")
+.getAttribute("onclick")
+.match(/"(.*?)"/)[1];
+
+await manualFund(ref);
+
+}
 
 }
 

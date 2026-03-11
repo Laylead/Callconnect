@@ -382,7 +382,7 @@
             background: #2463eb;
         }
 
-        /* Section header - Campaigns */
+        /* Section header - renamed to Campaigns */
         .section-header {
             display: flex;
             align-items: center;
@@ -417,16 +417,15 @@
             transform: translateX(5px);
         }
 
-        /* campaign scroller - FIXED CROP ISSUE */
+        /* campaign scroller - FIXED ANIMATION CROP */
         .campaign-scroll {
             display: flex;
             gap: 20px;
             overflow-x: auto;
-            padding: 8px 4px 20px; /* Increased top padding to prevent crop */
+            padding: 15px 4px 25px; /* increased top padding to prevent crop */
             scrollbar-width: thin;
             scrollbar-color: #94a3b8 #e2e8f0;
             -webkit-overflow-scrolling: touch;
-            margin-top: 4px; /* Extra safety margin */
         }
         .campaign-scroll::-webkit-scrollbar {
             height: 6px;
@@ -446,9 +445,10 @@
             border: 1px solid #e9eef2;
             border-radius: 28px;
             padding: 20px;
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
             box-shadow: 0 8px 20px -8px rgba(0,0,0,0.05);
-            transform: translateY(0); /* Reset any transform that might cause crop */
+            transform: translateY(0); /* base state */
+            margin-top: 0;
         }
         .campaign-card:hover {
             transform: translateY(-8px);
@@ -776,20 +776,6 @@
             border-radius: 20px;
         }
 
-        /* Trial attempts warning badge */
-        .attempts-badge {
-            background: rgba(254, 226, 226, 0.95);
-            backdrop-filter: blur(8px);
-            color: #b91c1c;
-            padding: 8px 16px;
-            border-radius: 60px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            border: 1px solid rgba(239,68,68,0.3);
-            text-align: center;
-            margin-bottom: 16px;
-        }
-
         /* Swipe button */
         .swipe-container {
             margin: 24px 0 16px;
@@ -915,6 +901,20 @@
             display: inline-block;
         }
 
+        /* PIN attempts warning badge */
+        .attempts-badge {
+            background: rgba(254, 226, 226, 0.95);
+            backdrop-filter: blur(8px);
+            color: #b91c1c;
+            padding: 8px 16px;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid rgba(239,68,68,0.3);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
         /* ---------- MOBILE RESPONSIVE ---------- */
         @media (max-width: 1200px) {
             .finance-card { min-width: 240px; width: 240px; padding: 22px 18px; }
@@ -1020,7 +1020,7 @@
         <!-- DASHBOARD PAGE -->
         <div id="dashboard-page" class="page active">
             <div class="section-header">
-                <h2 class="section-title"><span class="material-icons">local_fire_department</span> Popular Campaigns</h2>
+                <h2 class="section-title"><span class="material-icons">local_fire_department</span> Campaigns</h2>
                 <span class="view-all-link" id="viewAllCampaignsLink"><span class="material-icons">arrow_forward</span> view all</span>
             </div>
 
@@ -1075,6 +1075,8 @@
     let currentProduct = null;
     let isSwiping = false;
     let giftcardAttempts = 0;
+    let pinAttempts = 0; // track PIN failures for this session
+    const MAX_PIN_ATTEMPTS = 3; // max attempts before ban
     const MAX_GIFTCARD_ATTEMPTS = 3;
     const SHIPPING_COST = 2500;
 
@@ -1107,6 +1109,11 @@
                         userData = doc.data();
                         walletBalance = userData.walletBalance || 0;
                         giftcardAttempts = userData.giftcardAttempts || 0;
+                        // If user is banned, sign them out
+                        if (userData.banned) {
+                            showToast('Account banned due to too many failed attempts', 'error');
+                            auth.signOut();
+                        }
                         updateFinanceCards();
                     }
                 });
@@ -1141,6 +1148,7 @@
                     reservedUnits: 0,
                     totalSpent: 0,
                     giftcardAttempts: 0,
+                    pinAttempts: 0,
                     banned: false,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
@@ -1181,23 +1189,16 @@
     }
 
     function renderCampaigns() {
-        // Filter out completed campaigns AND only show popular ones (with at least 1 reserved unit)
-        // "Popular" = has at least 1 reserved unit (people are buying)
-        const popularCampaigns = campaigns.filter(c => 
-            (c.reserved || 0) < (c.goal || 1) && (c.reserved || 0) > 0
-        );
-        
-        // If no popular campaigns, show a message
+        const activeCampaigns = campaigns.filter(c => (c.reserved || 0) < (c.goal || 1));
         let html = '';
-        if (popularCampaigns.length === 0) {
-            html = '<div style="text-align:center; padding:40px; color:#64748b;">No popular campaigns yet. Be the first to join!</div>';
-        } else {
-            popularCampaigns.forEach(c => {
+        if (activeCampaigns.length === 0) html = '<div style="text-align:center; padding:40px; color:#64748b;">No active campaigns available</div>';
+        else {
+            activeCampaigns.forEach(c => {
                 const progressPercent = Math.min(100, ((c.reserved || 0) / c.goal * 100)).toFixed(1);
                 html += `
                     <div class="campaign-card" data-id="${c.id}">
                         <div class="campaign-img" style="background-image:url('${c.img || 'https://placehold.co/300x200/2463eb/ffffff?text=Product'}')" onclick="showProductDetail('${c.id}')"></div>
-                        <div class="campaign-header"><span class="campaign-title">${c.name}</span><span class="units-badge">🔥 ${c.reserved || 0}/${c.goal}</span></div>
+                        <div class="campaign-header"><span class="campaign-title">${c.name}</span><span class="units-badge">${c.reserved || 0}/${c.goal}</span></div>
                         <div class="price-tag">₦${(c.price || 0).toLocaleString()}</div>
                         <div class="progress-container"><div class="progress-bar-bg"><div class="progress-fill" style="width:${progressPercent}%"></div></div></div>
                         <div class="card-actions"><button class="btn-primary" onclick="handleBuyClick('${c.id}')"><span class="material-icons">shopping_cart</span> Buy Now</button></div>
@@ -1233,6 +1234,7 @@
         const product = campaigns.find(c => c.id == productId);
         if (product && product.reserved >= product.goal) { showToast('Campaign completed', 'warning'); return; }
         if (!currentUser) { showToast('Please login', 'info'); window.location.href = 'login.html'; return; }
+        if (userData?.banned) { showToast('Account banned', 'error'); auth.signOut(); return; }
         showProductDetail(productId);
     };
 
@@ -1317,19 +1319,16 @@
         showPinEntry(productId, units, total, JSON.parse(detailsStr));
     };
 
-    // Track incorrect attempts
-    let localAttempts = 0;
-
     window.showPinEntry = function(productId, units, total, details) {
-        // Get current attempts from userData
-        const attemptsLeft = Math.max(0, MAX_GIFTCARD_ATTEMPTS - (userData?.giftcardAttempts || 0));
+        // Reset pin attempts for this session when showing fresh PIN entry
+        pinAttempts = 0;
+        const remainingAttempts = MAX_PIN_ATTEMPTS - (userData?.pinAttempts || 0);
+        const warningHtml = remainingAttempts <= 2 ? `<div class="attempts-badge"><span class="material-icons" style="font-size:18px; margin-right:4px;">warning</span> ${remainingAttempts} attempts remaining before account ban</div>` : '';
         
         document.getElementById('popupCard').innerHTML = `
             <div class="popup-title">Enter PIN</div>
-            <div style="text-align:center; margin-bottom:10px; font-size:1.2rem;">Total: ₦${total.toLocaleString()}</div>
-            ${(userData?.giftcardAttempts || 0) > 0 ? 
-                `<div class="attempts-badge">⚠️ ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} remaining before lock</div>` : 
-                ''}
+            ${warningHtml}
+            <div style="text-align:center; margin-bottom:20px; font-size:1.2rem;">Total: ₦${total.toLocaleString()}</div>
             <div class="pin-container">${[1,2,3,4].map(i => `<div class="pin-digit"><input type="text" id="pin${i}" maxlength="1" oninput="moveToNext(this,${i+1})" inputmode="numeric"></div>`).join('')}</div>
             <div class="swipe-container" id="swipeContainer"><div class="swipe-track" id="swipeTrack"></div><div class="swipe-thumb" id="swipeThumb" onmousedown="startSwipe(event)" ontouchstart="startSwipe(event)"><span class="material-icons">chevron_right</span></div><div class="swipe-text">Swipe to pay</div></div>
             <div class="popup-actions"><button class="popup-btn popup-btn-outline" onclick="showBuyForm('${productId}')">Back</button></div>
@@ -1342,7 +1341,6 @@
         if (!thumb || !track || !container) return;
         const maxSwipe = container.offsetWidth - 64;
         let isSwiping = false, completed = false;
-        
         const onMove = (e) => {
             if (!isSwiping || completed) return; e.preventDefault();
             let x = (e.type === 'mousemove' ? e.clientX : e.touches[0].clientX) - container.getBoundingClientRect().left - 28;
@@ -1351,62 +1349,52 @@
             track.style.transform = `translateX(-${100 - ((x-4)/(maxSwipe-4)*100)}%)`;
             if (x >= maxSwipe - 10 && !completed) { completed = true; endSwipe(true); }
         };
-        
         const onUp = () => { if (isSwiping && !completed) endSwipe(false); isSwiping = false; };
-        
         const endSwipe = async (success) => {
             isSwiping = false;
             document.removeEventListener('mousemove', onMove); document.removeEventListener('touchmove', onMove);
             document.removeEventListener('mouseup', onUp); document.removeEventListener('touchend', onUp);
-            
             if (success) {
                 const pin = [1,2,3,4].map(i => document.getElementById(`pin${i}`)?.value).join('');
                 if (pin.length === 4) {
                     if (userData?.pin === pin) {
-                        // Success - reset attempts
-                        if (db && currentUser) {
-                            await db.collection('users').doc(currentUser.uid).update({ giftcardAttempts: 0 });
-                            userData.giftcardAttempts = 0;
-                        }
+                        // Success - reset pin attempts
+                        if (db && currentUser) await db.collection('users').doc(currentUser.uid).update({ pinAttempts: 0 });
                         completePurchase(productId, units, total, details);
                     } else {
-                        // Incorrect PIN - increment attempts
-                        const newAttempts = (userData?.giftcardAttempts || 0) + 1;
+                        // Failed attempt - increment and check ban
+                        pinAttempts++;
+                        const totalAttempts = (userData?.pinAttempts || 0) + 1;
                         if (db && currentUser) {
-                            await db.collection('users').doc(currentUser.uid).update({ giftcardAttempts: newAttempts });
-                            userData.giftcardAttempts = newAttempts;
+                            await db.collection('users').doc(currentUser.uid).update({ pinAttempts: totalAttempts });
+                            userData.pinAttempts = totalAttempts;
                         }
                         
-                        const attemptsLeft = MAX_GIFTCARD_ATTEMPTS - newAttempts;
-                        
-                        if (newAttempts >= MAX_GIFTCARD_ATTEMPTS) {
+                        const remaining = MAX_PIN_ATTEMPTS - totalAttempts;
+                        if (remaining <= 0) {
                             // Ban user
                             if (db && currentUser) {
                                 await db.collection('users').doc(currentUser.uid).update({ banned: true });
                                 userData.banned = true;
                             }
-                            showToast('❌ Too many incorrect attempts. Account banned.', 'error');
+                            showToast('Too many incorrect attempts. Account banned.', 'error');
                             closePopup();
-                            if (auth) await auth.signOut();
-                            window.location.href = 'login.html';
+                            auth.signOut();
                         } else {
-                            showToast(`❌ Incorrect PIN. ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} left.`, 'warning');
-                            // Reset swipe and PIN fields
+                            showToast(`Incorrect PIN. ${remaining} attempts left.`, 'warning');
+                            // Reset swipe and PIN fields for retry
+                            resetSwipe(thumb, track);
+                            // Clear PIN inputs
                             [1,2,3,4].forEach(i => {
-                                const field = document.getElementById(`pin${i}`);
-                                if (field) field.value = '';
+                                const inp = document.getElementById(`pin${i}`);
+                                if (inp) inp.value = '';
                             });
                             document.getElementById('pin1')?.focus();
-                            resetSwipe(thumb, track);
                         }
                     }
-                } else { 
-                    showToast('Enter PIN first', 'warning'); 
-                    resetSwipe(thumb, track); 
-                }
+                } else { showToast('Enter PIN first', 'warning'); resetSwipe(thumb, track); }
             } else resetSwipe(thumb, track);
         };
-        
         window.startSwipe = (e) => { e.preventDefault(); isSwiping = true; document.addEventListener('mousemove', onMove); document.addEventListener('touchmove', onMove); document.addEventListener('mouseup', onUp); document.addEventListener('touchend', onUp); };
     }
 
@@ -1423,7 +1411,7 @@
                     joinedCampaigns: firebase.firestore.FieldValue.increment(1), 
                     reservedUnits: firebase.firestore.FieldValue.increment(units), 
                     totalSpent: firebase.firestore.FieldValue.increment(total),
-                    giftcardAttempts: 0 // Reset on success
+                    pinAttempts: 0 // reset attempts on success
                 });
                 batch.update(db.collection('campaigns').doc(productId), { reserved: firebase.firestore.FieldValue.increment(units) });
                 batch.set(db.collection('orders').doc(), { userId: currentUser.uid, productId, productName: product.name, units, pricePerUnit: product.price, shippingPerUnit: product.shippingCost || SHIPPING_COST, subtotal: product.price * units, totalShipping: (product.shippingCost || SHIPPING_COST) * units, total, shippingDetails: details, status: product.reserved >= product.goal ? 'processing' : 'pending', timestamp: firebase.firestore.FieldValue.serverTimestamp() });
@@ -1433,6 +1421,18 @@
         }
         updateFinanceCards(); renderCampaigns(); showConfirmation(total, product.reserved, product.goal);
         playSuccessSound();
+    }
+
+    function showConfirmation(total, reserved, goal) {
+        document.getElementById('popupCard').innerHTML = `
+            <div class="checkmark-container">
+                <svg class="checkmark-svg" viewBox="0 0 52 52"><circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
+                <div class="checkmark-text">Payment Successful!</div>
+                <div class="checkmark-subtext">₦${total.toLocaleString()} • Order confirmed</div>
+                <div class="checkmark-subtext" style="font-size:0.9rem;">${reserved}/${goal} units reserved</div>
+                <button class="popup-btn popup-btn-primary" onclick="closePopup()" style="margin-top:20px;">Done</button>
+            </div>
+        `;
     }
 
     function playSuccessSound() {
@@ -1462,17 +1462,13 @@
         } catch (e) { console.log('Audio not supported'); }
     }
 
-    function showConfirmation(total, reserved, goal) {
-        document.getElementById('popupCard').innerHTML = `
-            <div class="checkmark-container">
-                <svg class="checkmark-svg" viewBox="0 0 52 52"><circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
-                <div class="checkmark-text">Payment Successful!</div>
-                <div class="checkmark-subtext">₦${total.toLocaleString()} • Order confirmed</div>
-                <div class="checkmark-subtext" style="font-size:0.9rem;">${reserved}/${goal} units reserved</div>
-                <button class="popup-btn popup-btn-primary" onclick="closePopup()" style="margin-top:20px;">Done</button>
-            </div>
-        `;
-    }
+    window.redeemGiftCard = async function(code) {
+        if (!currentUser) { showToast('Please login first', 'info'); return; }
+        if (userData?.banned) { showToast('Account banned', 'error'); return; }
+        try {
+            showToast('Gift card feature ready', 'info');
+        } catch (e) { showToast('Error', 'error'); }
+    };
 
     document.getElementById('loginBtn')?.addEventListener('click', () => window.location.href = 'login.html');
     

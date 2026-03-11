@@ -1,37 +1,42 @@
-// TESTING ONLY
+const PAYSTACK_SECRET = "sk_test_5c3e54a3d6b337aee6c5ff8a274ff7236bdc8403";
+const PAYSTACK_BASE = "https://api.paystack.co";
 
-const PAYSTACK_SECRET_KEY = "sk_test_5c3e54a3d6b337aee6c5ff8a274ff7236bdc8403"
+async function fetchTransactions(afterTimestamp){
 
-const PAYSTACK_URL = "https://api.paystack.co"
-
-let lastSeenTransaction = null
-
-window.paystack = {
-
-async getTransactions(){
-
-const res = await fetch(PAYSTACK_URL + "/transaction",{
+const res = await fetch(
+`${PAYSTACK_BASE}/transaction?perPage=50`,
+{
 headers:{
-Authorization:"Bearer "+PAYSTACK_SECRET_KEY
+Authorization:`Bearer ${PAYSTACK_SECRET}`
 }
-})
+}
+);
 
-const data = await res.json()
+const data = await res.json();
 
-return data.data || []
+if(!data.status) throw new Error("Paystack fetch failed");
 
-},
+if(!afterTimestamp) return data.data;
 
-async verify(reference){
+return data.data.filter(t => t.paid_at && new Date(t.paid_at).getTime() > afterTimestamp);
 
-const res = await fetch(PAYSTACK_URL + "/transaction/verify/"+reference,{
+}
+
+async function verifyTransaction(reference){
+
+const res = await fetch(
+`${PAYSTACK_BASE}/transaction/verify/${reference}`,
+{
 headers:{
-Authorization:"Bearer "+PAYSTACK_SECRET_KEY
+Authorization:`Bearer ${PAYSTACK_SECRET}`
 }
-})
-
-return await res.json()
-
 }
+);
+
+const data = await res.json();
+
+if(!data.status) throw new Error("Verification failed");
+
+return data.data;
 
 }

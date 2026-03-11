@@ -1,151 +1,109 @@
-// pay.js
-// Professional Paystack integration for creator dashboard
-// Handles webhooks, transaction verification, and real-time events
-
-class PaystackAPI {
-    constructor() {
-        this.secretKey = 'sk_test_5c3e54a3d6b337aee6c5ff8a274ff7236bdc8403'; // Replace with your actual secret key
-        this.webhookListeners = [];
-        this.baseURL = 'https://api.paystack.co';
-        
-        // Initialize webhook listener if running in browser with EventSource support
-        this.initWebhookListener();
-    }
-
-    /**
-     * Initialize server-sent events for real-time transactions
-     * Note: This requires a backend endpoint that streams Paystack webhooks
-     */
-    initWebhookListener() {
-        // Check if we're in browser environment
-        if (typeof window === 'undefined' || !window.EventSource) return;
-
-        // In production, you'd connect to your own SSE endpoint that receives Paystack webhooks
-        // This is a placeholder - you need to implement a backend endpoint
-        const eventSource = new EventSource('/api/paystack/stream');
-        
-        eventSource.onmessage = (event) => {
-            try {
-                const transaction = JSON.parse(event.data);
-                this.notifyListeners(transaction);
-            } catch (error) {
-                console.error('Error parsing webhook data:', error);
-            }
+// pay.js - Fixed version with proper error handling
+const paystack = {
+    secretKey: 'sk_test_5c3e54a3d6b337aee6c5ff8a274ff7236bdc8403', // REPLACE WITH YOUR ACTUAL SECRET KEY
+    
+    // Headers for Paystack API
+    getHeaders() {
+        return {
+            'Authorization': `Bearer ${this.secretKey}`,
+            'Content-Type': 'application/json'
         };
+    },
 
-        eventSource.onerror = (error) => {
-            console.error('EventSource failed:', error);
-            // Attempt to reconnect after 5 seconds
-            setTimeout(() => this.initWebhookListener(), 5000);
-        };
-    }
-
-    /**
-     * Register a callback for incoming transactions
-     */
-    onTransaction(callback) {
-        if (typeof callback === 'function') {
-            this.webhookListeners.push(callback);
-        }
-    }
-
-    /**
-     * Notify all listeners of new transaction
-     */
-    notifyListeners(transaction) {
-        this.webhookListeners.forEach(listener => {
-            try {
-                listener(transaction);
-            } catch (error) {
-                console.error('Listener error:', error);
-            }
-        });
-    }
-
-    /**
-     * Fetch transactions from Paystack with pagination
-     */
+    // Fetch transactions with better error handling
     async fetchTransactions(options = {}) {
-        const {
-            perPage = 50,
-            page = 1,
-            from = null,
-            to = null,
-            status = 'success'
-        } = options;
-
         try {
-            let url = `${this.baseURL}/transaction?perPage=${perPage}&page=${page}`;
+            console.log('Fetching Paystack transactions...');
             
-            if (from) url += `&from=${from}`;
-            if (to) url += `&to=${to}`;
-            if (status) url += `&status=${status}`;
+            // Build query parameters
+            const params = new URLSearchParams({
+                perPage: options.perPage || 50,
+                page: options.page || 1,
+                status: options.status || 'success'
+            });
+            
+            if (options.from) params.append('from', options.from);
+            if (options.to) params.append('to', options.to);
 
-            const response = await fetch(url, {
+            // Option 1: Direct API call (if CORS is enabled)
+            const response = await fetch(`https://api.paystack.co/transaction?${params}`, {
                 method: 'GET',
-                headers: this.getHeaders()
+                headers: this.getHeaders(),
+                mode: 'cors'
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
             }
 
             const data = await response.json();
-
+            
             if (!data.status) {
                 throw new Error(data.message || 'Failed to fetch transactions');
             }
 
+            console.log(`Fetched ${data.data.length} transactions`);
             return this.normalizeTransactions(data.data);
+
         } catch (error) {
-            console.error('Error fetching transactions:', error);
+            console.error('Paystack fetch error:', error);
+            
+            // Option 2: Fallback to proxy if CORS fails
+            if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+                console.log('Trying proxy fallback...');
+                return this.fetchViaProxy(options);
+            }
+            
             throw error;
         }
-    }
+    },
 
-    /**
-     * Fetch a specific transaction by ID
-     */
-    async fetchTransaction(id) {
+    // Fallback: Use a proxy endpoint (you need to create this on your server)
+    async fetchViaProxy(options) {
         try {
-            const response = await fetch(`${this.baseURL}/transaction/${id}`, {
-                method: 'GET',
-                headers: this.getHeaders()
+            // You need to create this endpoint on your server
+            const response = await fetch('/api/paystack/transactions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(options)
             });
-
+            
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error('Proxy fetch failed');
             }
-
+            
             const data = await response.json();
-
-            if (!data.status) {
-                throw new Error(data.message || 'Failed to fetch transaction');
-            }
-
-            return this.normalizeTransaction(data.data);
+            return data.transactions || [];
         } catch (error) {
-            console.error('Error fetching transaction:', error);
-            throw error;
+            console.error('Proxy fetch error:', error);
+            return []; // Return empty array as fallback
         }
-    }
+    },
 
-    /**
-     * Verify transaction by reference
-     */
+    // Verify transaction with better error handling
     async verifyTransaction(reference) {
         try {
+            console.log(`Verifying transaction: ${reference}`);
+            
             if (!reference) {
-                throw new Error('Transaction reference is required');
+                return {
+                    status: false,
+                    message: 'No reference provided',
+                    data: null
+                };
             }
 
-            const response = await fetch(`${this.baseURL}/transaction/verify/${encodeURIComponent(reference)}`, {
+            // Option 1: Direct API call
+            const response = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
                 method: 'GET',
-                headers: this.getHeaders()
+                headers: this.getHeaders(),
+                mode: 'cors'
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
             }
 
             const data = await response.json();
@@ -158,247 +116,76 @@ class PaystackAPI {
                 };
             }
 
+            console.log('Verification successful');
             return {
                 status: true,
-                message: 'Verification successful',
+                message: 'Verified',
                 data: this.normalizeTransaction(data.data)
             };
+
         } catch (error) {
-            console.error('Error verifying transaction:', error);
+            console.error('Verify error:', error);
+            
+            // Option 2: Try proxy
+            if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+                try {
+                    const proxyResponse = await fetch('/api/paystack/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ reference })
+                    });
+                    
+                    if (proxyResponse.ok) {
+                        const proxyData = await proxyResponse.json();
+                        return proxyData;
+                    }
+                } catch (proxyError) {
+                    console.error('Proxy verify error:', proxyError);
+                }
+            }
+            
             return {
                 status: false,
                 message: error.message,
                 data: null
             };
         }
-    }
+    },
 
-    /**
-     * Get transactions by email
-     */
-    async getTransactionsByEmail(email, options = {}) {
-        try {
-            if (!email) {
-                throw new Error('Email is required');
-            }
-
-            // First get all transactions (Paystack doesn't support email filtering directly)
-            const transactions = await this.fetchTransactions(options);
-            
-            // Filter by email (case-insensitive)
-            return transactions.filter(tx => 
-                tx.customer?.email?.toLowerCase() === email.toLowerCase()
-            );
-        } catch (error) {
-            console.error('Error fetching transactions by email:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Get transaction timeline/events
-     */
-    async getTransactionTimeline(reference) {
-        try {
-            if (!reference) {
-                throw new Error('Transaction reference is required');
-            }
-
-            const response = await fetch(`${this.baseURL}/transaction/timeline/${encodeURIComponent(reference)}`, {
-                method: 'GET',
-                headers: this.getHeaders()
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            return {
-                status: data.status,
-                data: data.data || []
-            };
-        } catch (error) {
-            console.error('Error fetching transaction timeline:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Get transaction totals/stats
-     */
-    async getTransactionTotals(options = {}) {
-        const { from = null, to = null } = options;
-
-        try {
-            let url = `${this.baseURL}/transaction/totals`;
-            const params = new URLSearchParams();
-            
-            if (from) params.append('from', from);
-            if (to) params.append('to', to);
-            
-            if (params.toString()) {
-                url += `?${params.toString()}`;
-            }
-
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: this.getHeaders()
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            return {
-                status: data.status,
-                data: data.data || {}
-            };
-        } catch (error) {
-            console.error('Error fetching transaction totals:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Export transactions (for backup/reporting)
-     */
-    async exportTransactions(options = {}) {
-        const { from = null, to = null, type = 'transaction' } = options;
-
-        try {
-            let url = `${this.baseURL}/transaction/export?type=${type}`;
-            
-            if (from) url += `&from=${from}`;
-            if (to) url += `&to=${to}`;
-
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: this.getHeaders()
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            return {
-                status: data.status,
-                data: data.data || {}
-            };
-        } catch (error) {
-            console.error('Error exporting transactions:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Get headers for API requests
-     */
-    getHeaders() {
-        return {
-            'Authorization': `Bearer ${this.secretKey}`,
-            'Content-Type': 'application/json'
-        };
-    }
-
-    /**
-     * Normalize transaction data to consistent format
-     */
+    // Normalize transaction data
     normalizeTransaction(tx) {
         return {
             reference: tx.reference,
             amount: tx.amount,
             status: tx.status,
             customer: {
-                email: tx.customer?.email || null,
-                code: tx.customer?.customer_code || null,
-                firstName: tx.customer?.first_name || null,
-                lastName: tx.customer?.last_name || null
+                email: tx.customer?.email || 'unknown@example.com',
+                code: tx.customer?.customer_code
             },
-            paidAt: tx.paid_at,
-            createdAt: tx.created_at,
+            paidAt: tx.paid_at || tx.created_at,
             channel: tx.channel,
-            currency: tx.currency,
-            fees: tx.fees,
-            metadata: tx.metadata || {},
-            authorization: tx.authorization ? {
-                last4: tx.authorization.last4,
-                bin: tx.authorization.bin,
-                expMonth: tx.authorization.exp_month,
-                expYear: tx.authorization.exp_year,
-                cardType: tx.authorization.card_type
-            } : null
+            currency: tx.currency
         };
-    }
+    },
 
-    /**
-     * Normalize multiple transactions
-     */
     normalizeTransactions(transactions) {
         return transactions.map(tx => this.normalizeTransaction(tx));
-    }
+    },
 
-    /**
-     * Format amount from kobo to naira
-     */
-    formatAmount(koboAmount) {
-        return (koboAmount / 100).toFixed(2);
+    // Test the connection
+    async testConnection() {
+        try {
+            const response = await fetch('https://api.paystack.co/balance', {
+                headers: this.getHeaders()
+            });
+            const data = await response.json();
+            return data.status;
+        } catch (error) {
+            console.error('Connection test failed:', error);
+            return false;
+        }
     }
-
-    /**
-     * Parse amount from naira to kobo
-     */
-    parseAmount(nairaAmount) {
-        return Math.round(parseFloat(nairaAmount) * 100);
-    }
-
-    /**
-     * Validate transaction data
-     */
-    validateTransaction(transaction) {
-        if (!transaction) {
-            return { valid: false, reason: 'No transaction data' };
-        }
-        
-        if (!transaction.reference) {
-            return { valid: false, reason: 'Missing transaction reference' };
-        }
-        
-        if (!transaction.amount || transaction.amount <= 0) {
-            return { valid: false, reason: 'Invalid amount' };
-        }
-        
-        if (!transaction.customer?.email) {
-            return { valid: false, reason: 'Missing customer email' };
-        }
-        
-        if (transaction.status !== 'success') {
-            return { valid: false, reason: 'Transaction not successful' };
-        }
-        
-        return { valid: true };
-    }
-
-    /**
-     * Set up webhook endpoint (call this from your server)
-     * This is for backend use - not called from frontend
-     */
-    handleWebhook(payload) {
-        // Verify webhook signature (implement proper verification)
-        // Then notify listeners
-        this.notifyListeners(payload);
-        
-        return { received: true };
-    }
-}
-
-// Create singleton instance
-const paystack = new PaystackAPI();
+};
 
 // Export for browser
 if (typeof window !== 'undefined') {

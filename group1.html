@@ -261,7 +261,7 @@
 
         /* FINANCIAL CARDS - PROFESSIONAL OUTER SHADOW + CURVED EDGES */
         .finance-section {
-            margin-bottom: 30px; /* reduced margin, no line */
+            margin-bottom: 30px;
             position: relative;
         }
         
@@ -269,7 +269,7 @@
             display: flex;
             gap: 20px;
             overflow-x: auto;
-            padding: 12px 4px 20px; /* extra padding for outer shadow visibility */
+            padding: 12px 4px 20px;
             scroll-snap-type: x mandatory;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
@@ -283,13 +283,12 @@
             min-width: 260px;
             width: 260px;
             background: linear-gradient(145deg, #0f2b45, #0a1e30);
-            border-radius: 32px; /* more curved edges */
+            border-radius: 32px;
             padding: 24px 20px;
             scroll-snap-align: start;
-            /* OUTER shadow - professional, elevated */
             box-shadow: 0 20px 35px -8px rgba(0, 20, 40, 0.25), 0 0 0 1px rgba(255,255,255,0.1) inset;
             transition: all 0.3s ease;
-            border: none; /* clean outer look */
+            border: none;
             color: white;
             position: relative;
             overflow: hidden;
@@ -383,14 +382,12 @@
             background: #2463eb;
         }
 
-        /* NO LINE AFTER WALLET - removed completely */
-
-        /* Section header - renamed to Campaigns */
+        /* Section header - Campaigns */
         .section-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin: 20px 0 20px; /* reduced top margin */
+            margin: 20px 0 20px;
             flex-wrap: wrap;
             gap: 15px;
         }
@@ -420,15 +417,16 @@
             transform: translateX(5px);
         }
 
-        /* campaign scroller */
+        /* campaign scroller - FIXED CROP ISSUE */
         .campaign-scroll {
             display: flex;
             gap: 20px;
             overflow-x: auto;
-            padding: 4px 4px 20px;
+            padding: 8px 4px 20px; /* Increased top padding to prevent crop */
             scrollbar-width: thin;
             scrollbar-color: #94a3b8 #e2e8f0;
             -webkit-overflow-scrolling: touch;
+            margin-top: 4px; /* Extra safety margin */
         }
         .campaign-scroll::-webkit-scrollbar {
             height: 6px;
@@ -450,6 +448,7 @@
             padding: 20px;
             transition: all 0.3s ease;
             box-shadow: 0 8px 20px -8px rgba(0,0,0,0.05);
+            transform: translateY(0); /* Reset any transform that might cause crop */
         }
         .campaign-card:hover {
             transform: translateY(-8px);
@@ -627,7 +626,7 @@
         .mobile-nav-item.active { color: #2463eb; background: #eef2ff; }
         .mobile-nav-item:hover { background: #f1f5f9; }
 
-        /* ---------- POPUP MODALS (ORIGINAL STYLE + IMAGES) ---------- */
+        /* ---------- POPUP MODALS ---------- */
         .popup-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(12px);
             display: flex; align-items: center; justify-content: center; z-index: 1000;
@@ -716,7 +715,7 @@
             transform: translateY(-2px);
         }
 
-        /* product detail grid (original) */
+        /* product detail grid */
         .product-detail-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -775,6 +774,20 @@
             text-align: center;
             outline: none;
             border-radius: 20px;
+        }
+
+        /* Trial attempts warning badge */
+        .attempts-badge {
+            background: rgba(254, 226, 226, 0.95);
+            backdrop-filter: blur(8px);
+            color: #b91c1c;
+            padding: 8px 16px;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid rgba(239,68,68,0.3);
+            text-align: center;
+            margin-bottom: 16px;
         }
 
         /* Swipe button */
@@ -871,7 +884,7 @@
         .toast.error { background: rgba(185, 28, 28, 0.95); }
         .toast .material-icons { font-size: 24px; }
 
-        /* shipping cost & total amount (original) */
+        /* shipping cost & total amount */
         .shipping-cost, .total-amount {
             background: #f8fafc;
             border-radius: 20px;
@@ -972,7 +985,7 @@
             </div>
         </div>
 
-        <!-- FINANCE CARDS (professional outer shadow) -->
+        <!-- FINANCE CARDS -->
         <div class="finance-section">
             <div class="finance-scroll" id="financeCards">
                 <div class="finance-card primary">
@@ -1007,7 +1020,7 @@
         <!-- DASHBOARD PAGE -->
         <div id="dashboard-page" class="page active">
             <div class="section-header">
-                <h2 class="section-title"><span class="material-icons">local_fire_department</span> Campaigns</h2>
+                <h2 class="section-title"><span class="material-icons">local_fire_department</span> Popular Campaigns</h2>
                 <span class="view-all-link" id="viewAllCampaignsLink"><span class="material-icons">arrow_forward</span> view all</span>
             </div>
 
@@ -1168,16 +1181,23 @@
     }
 
     function renderCampaigns() {
-        const activeCampaigns = campaigns.filter(c => (c.reserved || 0) < (c.goal || 1));
+        // Filter out completed campaigns AND only show popular ones (with at least 1 reserved unit)
+        // "Popular" = has at least 1 reserved unit (people are buying)
+        const popularCampaigns = campaigns.filter(c => 
+            (c.reserved || 0) < (c.goal || 1) && (c.reserved || 0) > 0
+        );
+        
+        // If no popular campaigns, show a message
         let html = '';
-        if (activeCampaigns.length === 0) html = '<div style="text-align:center; padding:40px; color:#64748b;">No active campaigns available</div>';
-        else {
-            activeCampaigns.forEach(c => {
+        if (popularCampaigns.length === 0) {
+            html = '<div style="text-align:center; padding:40px; color:#64748b;">No popular campaigns yet. Be the first to join!</div>';
+        } else {
+            popularCampaigns.forEach(c => {
                 const progressPercent = Math.min(100, ((c.reserved || 0) / c.goal * 100)).toFixed(1);
                 html += `
                     <div class="campaign-card" data-id="${c.id}">
                         <div class="campaign-img" style="background-image:url('${c.img || 'https://placehold.co/300x200/2463eb/ffffff?text=Product'}')" onclick="showProductDetail('${c.id}')"></div>
-                        <div class="campaign-header"><span class="campaign-title">${c.name}</span><span class="units-badge">${c.reserved || 0}/${c.goal}</span></div>
+                        <div class="campaign-header"><span class="campaign-title">${c.name}</span><span class="units-badge">🔥 ${c.reserved || 0}/${c.goal}</span></div>
                         <div class="price-tag">₦${(c.price || 0).toLocaleString()}</div>
                         <div class="progress-container"><div class="progress-bar-bg"><div class="progress-fill" style="width:${progressPercent}%"></div></div></div>
                         <div class="card-actions"><button class="btn-primary" onclick="handleBuyClick('${c.id}')"><span class="material-icons">shopping_cart</span> Buy Now</button></div>
@@ -1297,10 +1317,19 @@
         showPinEntry(productId, units, total, JSON.parse(detailsStr));
     };
 
+    // Track incorrect attempts
+    let localAttempts = 0;
+
     window.showPinEntry = function(productId, units, total, details) {
+        // Get current attempts from userData
+        const attemptsLeft = Math.max(0, MAX_GIFTCARD_ATTEMPTS - (userData?.giftcardAttempts || 0));
+        
         document.getElementById('popupCard').innerHTML = `
             <div class="popup-title">Enter PIN</div>
-            <div style="text-align:center; margin-bottom:20px; font-size:1.2rem;">Total: ₦${total.toLocaleString()}</div>
+            <div style="text-align:center; margin-bottom:10px; font-size:1.2rem;">Total: ₦${total.toLocaleString()}</div>
+            ${(userData?.giftcardAttempts || 0) > 0 ? 
+                `<div class="attempts-badge">⚠️ ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} remaining before lock</div>` : 
+                ''}
             <div class="pin-container">${[1,2,3,4].map(i => `<div class="pin-digit"><input type="text" id="pin${i}" maxlength="1" oninput="moveToNext(this,${i+1})" inputmode="numeric"></div>`).join('')}</div>
             <div class="swipe-container" id="swipeContainer"><div class="swipe-track" id="swipeTrack"></div><div class="swipe-thumb" id="swipeThumb" onmousedown="startSwipe(event)" ontouchstart="startSwipe(event)"><span class="material-icons">chevron_right</span></div><div class="swipe-text">Swipe to pay</div></div>
             <div class="popup-actions"><button class="popup-btn popup-btn-outline" onclick="showBuyForm('${productId}')">Back</button></div>
@@ -1313,6 +1342,7 @@
         if (!thumb || !track || !container) return;
         const maxSwipe = container.offsetWidth - 64;
         let isSwiping = false, completed = false;
+        
         const onMove = (e) => {
             if (!isSwiping || completed) return; e.preventDefault();
             let x = (e.type === 'mousemove' ? e.clientX : e.touches[0].clientX) - container.getBoundingClientRect().left - 28;
@@ -1321,19 +1351,62 @@
             track.style.transform = `translateX(-${100 - ((x-4)/(maxSwipe-4)*100)}%)`;
             if (x >= maxSwipe - 10 && !completed) { completed = true; endSwipe(true); }
         };
+        
         const onUp = () => { if (isSwiping && !completed) endSwipe(false); isSwiping = false; };
-        const endSwipe = (success) => {
+        
+        const endSwipe = async (success) => {
             isSwiping = false;
             document.removeEventListener('mousemove', onMove); document.removeEventListener('touchmove', onMove);
             document.removeEventListener('mouseup', onUp); document.removeEventListener('touchend', onUp);
+            
             if (success) {
                 const pin = [1,2,3,4].map(i => document.getElementById(`pin${i}`)?.value).join('');
                 if (pin.length === 4) {
-                    if (userData?.pin === pin) completePurchase(productId, units, total, details);
-                    else { showToast('Incorrect PIN', 'error'); resetSwipe(thumb, track); }
-                } else { showToast('Enter PIN first', 'warning'); resetSwipe(thumb, track); }
+                    if (userData?.pin === pin) {
+                        // Success - reset attempts
+                        if (db && currentUser) {
+                            await db.collection('users').doc(currentUser.uid).update({ giftcardAttempts: 0 });
+                            userData.giftcardAttempts = 0;
+                        }
+                        completePurchase(productId, units, total, details);
+                    } else {
+                        // Incorrect PIN - increment attempts
+                        const newAttempts = (userData?.giftcardAttempts || 0) + 1;
+                        if (db && currentUser) {
+                            await db.collection('users').doc(currentUser.uid).update({ giftcardAttempts: newAttempts });
+                            userData.giftcardAttempts = newAttempts;
+                        }
+                        
+                        const attemptsLeft = MAX_GIFTCARD_ATTEMPTS - newAttempts;
+                        
+                        if (newAttempts >= MAX_GIFTCARD_ATTEMPTS) {
+                            // Ban user
+                            if (db && currentUser) {
+                                await db.collection('users').doc(currentUser.uid).update({ banned: true });
+                                userData.banned = true;
+                            }
+                            showToast('❌ Too many incorrect attempts. Account banned.', 'error');
+                            closePopup();
+                            if (auth) await auth.signOut();
+                            window.location.href = 'login.html';
+                        } else {
+                            showToast(`❌ Incorrect PIN. ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} left.`, 'warning');
+                            // Reset swipe and PIN fields
+                            [1,2,3,4].forEach(i => {
+                                const field = document.getElementById(`pin${i}`);
+                                if (field) field.value = '';
+                            });
+                            document.getElementById('pin1')?.focus();
+                            resetSwipe(thumb, track);
+                        }
+                    }
+                } else { 
+                    showToast('Enter PIN first', 'warning'); 
+                    resetSwipe(thumb, track); 
+                }
             } else resetSwipe(thumb, track);
         };
+        
         window.startSwipe = (e) => { e.preventDefault(); isSwiping = true; document.addEventListener('mousemove', onMove); document.addEventListener('touchmove', onMove); document.addEventListener('mouseup', onUp); document.addEventListener('touchend', onUp); };
     }
 
@@ -1345,7 +1418,13 @@
         if (db && currentUser) {
             try {
                 const batch = db.batch();
-                batch.update(db.collection('users').doc(currentUser.uid), { walletBalance: firebase.firestore.FieldValue.increment(-total), joinedCampaigns: firebase.firestore.FieldValue.increment(1), reservedUnits: firebase.firestore.FieldValue.increment(units), totalSpent: firebase.firestore.FieldValue.increment(total) });
+                batch.update(db.collection('users').doc(currentUser.uid), { 
+                    walletBalance: firebase.firestore.FieldValue.increment(-total), 
+                    joinedCampaigns: firebase.firestore.FieldValue.increment(1), 
+                    reservedUnits: firebase.firestore.FieldValue.increment(units), 
+                    totalSpent: firebase.firestore.FieldValue.increment(total),
+                    giftcardAttempts: 0 // Reset on success
+                });
                 batch.update(db.collection('campaigns').doc(productId), { reserved: firebase.firestore.FieldValue.increment(units) });
                 batch.set(db.collection('orders').doc(), { userId: currentUser.uid, productId, productName: product.name, units, pricePerUnit: product.price, shippingPerUnit: product.shippingCost || SHIPPING_COST, subtotal: product.price * units, totalShipping: (product.shippingCost || SHIPPING_COST) * units, total, shippingDetails: details, status: product.reserved >= product.goal ? 'processing' : 'pending', timestamp: firebase.firestore.FieldValue.serverTimestamp() });
                 batch.set(db.collection('transactions').doc(), { userId: currentUser.uid, type: 'purchase', amount: total, description: `Purchased ${units} × ${product.name}`, status: 'completed', timestamp: firebase.firestore.FieldValue.serverTimestamp() });
@@ -1353,15 +1432,12 @@
             } catch (e) { console.warn('Error saving:', e); }
         }
         updateFinanceCards(); renderCampaigns(); showConfirmation(total, product.reserved, product.goal);
-        // Fixed: Play success sound
         playSuccessSound();
     }
 
-    // Fixed sound function that actually works
     function playSuccessSound() {
         try {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            // First beep
             const osc1 = audioCtx.createOscillator();
             const gain1 = audioCtx.createGain();
             osc1.type = 'sine';
@@ -1372,7 +1448,6 @@
             osc1.start();
             osc1.stop(audioCtx.currentTime + 0.15);
             
-            // Second higher beep
             setTimeout(() => {
                 const osc2 = audioCtx.createOscillator();
                 const gain2 = audioCtx.createGain();
@@ -1398,16 +1473,6 @@
             </div>
         `;
     }
-
-    // Gift card redemption (simplified but functional)
-    window.redeemGiftCard = async function(code) {
-        if (!currentUser) { showToast('Please login first', 'info'); return; }
-        if (userData?.banned) { showToast('Account banned', 'error'); return; }
-        try {
-            // Mock check - in real app would query Firestore
-            showToast('Gift card feature ready', 'info');
-        } catch (e) { showToast('Error', 'error'); }
-    };
 
     document.getElementById('loginBtn')?.addEventListener('click', () => window.location.href = 'login.html');
     

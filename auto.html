@@ -4,553 +4,677 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Creator Funding Dashboard</title>
+    
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    
+    <!-- External files -->
     <script src="firebase-config.js"></script>
     <script src="pay.js"></script>
+    
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #0f172a;
-            color: white;
-            padding: 20px;
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
         }
+        
+        body {
+            background: #0f172a;
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
         .container {
             max-width: 1200px;
             margin: 0 auto;
         }
+        
         h1 {
-            color: #f97316;
-            margin-bottom: 20px;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #f97316, #d946ef);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .error-box {
-            background: #7f1d1d;
-            color: #fecaca;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+        
+        .subtitle {
+            color: #94a3b8;
             margin-bottom: 30px;
         }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #f97316, #d946ef);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(249, 115, 22, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #1e293b;
+            color: white;
+            border: 1px solid #334155;
+        }
+        
+        .btn-secondary:hover {
+            background: #2d3a4e;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
         .stat-card {
             background: #1e293b;
+            border-radius: 12px;
             padding: 20px;
-            border-radius: 10px;
-            border-left: 4px solid #f97316;
+            border: 1px solid #334155;
         }
+        
         .stat-card h3 {
-            margin: 0 0 10px 0;
-            color: #94a3b8;
-            font-size: 0.9rem;
-        }
-        .stat-card .value {
             font-size: 2rem;
-            font-weight: bold;
-            color: white;
+            margin-bottom: 5px;
+            color: #f97316;
         }
-        button {
-            background: #f97316;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-size: 1rem;
-            cursor: pointer;
-            margin-right: 10px;
-            margin-bottom: 10px;
+        
+        .stat-card p {
+            color: #94a3b8;
         }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        
+        .section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #334155;
         }
-        button.secondary {
-            background: #334155;
+        
+        .section h2 {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
+        
         table {
             width: 100%;
             border-collapse: collapse;
-            background: #1e293b;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-top: 20px;
         }
+        
         th {
-            background: #0f172a;
+            text-align: left;
+            padding: 15px;
             color: #94a3b8;
             font-weight: 600;
-            padding: 15px;
-            text-align: left;
-        }
-        td {
-            padding: 15px;
             border-bottom: 1px solid #334155;
         }
-        .success { color: #4ade80; }
-        .failed { color: #f87171; }
+        
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #2d3a4e;
+        }
+        
+        .success {
+            color: #4ade80;
+        }
+        
+        .failed {
+            color: #f87171;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-badge.success {
+            background: #166534;
+            color: #86efac;
+        }
+        
+        .status-badge.failed {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            background: #f97316;
+            color: white;
+        }
+        
+        .action-btn:hover {
+            background: #ea580c;
+        }
+        
         .toast {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #1e293b;
-            color: white;
             padding: 15px 25px;
             border-radius: 8px;
-            border-left: 4px solid #f97316;
-            display: none;
+            color: white;
+            font-weight: 500;
             z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .toast.success {
+            background: #166534;
+        }
+        
+        .toast.error {
+            background: #7f1d1d;
+        }
+        
+        .toast.info {
+            background: #1e293b;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #334155;
+            border-top: 3px solid #f97316;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            table {
+                font-size: 14px;
+            }
+            
+            td, th {
+                padding: 10px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>💰 Creator Funding Dashboard</h1>
+        <h1>⚡ Creator Funding Dashboard</h1>
+        <div class="subtitle">Paystack → Firebase Wallet · Real-time · Duplicate Safe</div>
         
-        <div id="errorBox" class="error-box"></div>
+        <div class="button-group">
+            <button class="btn-primary" onclick="fetchPaystackTransactions()">
+                <span>📥</span> Fetch New Transactions
+            </button>
+            <button class="btn-secondary" onclick="retryAllFailed()">
+                <span>🔄</span> Retry All Failed
+            </button>
+            <button class="btn-secondary" onclick="loadDashboardData()">
+                <span>🔄</span> Refresh Data
+            </button>
+        </div>
         
-        <div class="stats">
+        <div class="stats-grid">
             <div class="stat-card">
-                <h3>TOTAL TRANSACTIONS</h3>
-                <div class="value" id="totalTx">0</div>
+                <h3 id="totalTx">0</h3>
+                <p>Total Transactions</p>
             </div>
             <div class="stat-card">
-                <h3>SUCCESSFUL</h3>
-                <div class="value" id="successCount">0</div>
+                <h3 id="successfulTx">0</h3>
+                <p>Successful Funding</p>
             </div>
             <div class="stat-card">
-                <h3>FAILED</h3>
-                <div class="value" id="failedCount">0</div>
+                <h3 id="failedTx">0</h3>
+                <p>Failed Funding</p>
             </div>
             <div class="stat-card">
-                <h3>TOTAL FUNDED</h3>
-                <div class="value" id="totalAmount">₦0</div>
+                <h3 id="totalAmount">₦0</h3>
+                <p>Total Amount Funded</p>
             </div>
         </div>
-
-        <div>
-            <button onclick="testConnection()" id="testBtn">🔌 Test Connection</button>
-            <button onclick="loadTransactions()" id="fetchBtn">📥 Fetch New Transactions</button>
-            <button onclick="retryAllFailed()" class="secondary" id="retryBtn">🔄 Auto Fund Failed</button>
-            <button onclick="refreshView()" class="secondary">↻ Refresh View</button>
+        
+        <!-- Successful Transactions -->
+        <div class="section">
+            <h2>✅ Successful Funding</h2>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Amount</th>
+                            <th>Reference</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="successTable">
+                        <tr>
+                            <td colspan="4" style="text-align: center;">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-
-        <h2>✅ Successful Funding</h2>
-        <table id="successTable">
-            <thead>
-                <tr>
-                    <th>Email</th>
-                    <th>Amount</th>
-                    <th>Reference</th>
-                    <th>Date</th>
-                </tr>
-            </thead>
-            <tbody id="successBody"></tbody>
-        </table>
-
-        <h2>❌ Failed Transactions</h2>
-        <table id="failedTable">
-            <thead>
-                <tr>
-                    <th>Email</th>
-                    <th>Amount</th>
-                    <th>Reason</th>
-                    <th>Reference</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="failedBody"></tbody>
-        </table>
+        
+        <!-- Failed Transactions -->
+        <div class="section">
+            <h2>❌ Failed Transactions</h2>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Amount</th>
+                            <th>Reason</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="failedTable">
+                        <tr>
+                            <td colspan="5" style="text-align: center;">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-
-    <div class="toast" id="toast"></div>
-
+    
+    <div id="toast" class="toast" style="display: none;"></div>
+    
     <script>
-        const db = firebase.firestore();
-        let lastTimestamp = 0;
-
-        // Show toast message
+        // Initialize Firebase
+        let db;
+        
+        try {
+            if (typeof firebaseConfig !== 'undefined') {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                console.log('Firebase initialized successfully');
+            } else {
+                console.error('Firebase config not found');
+                showToast('Firebase configuration missing', 'error');
+            }
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            showToast('Failed to initialize Firebase', 'error');
+        }
+        
+        // Show toast notification
         function showToast(message, type = 'info') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
+            toast.className = `toast ${type}`;
             toast.style.display = 'block';
-            toast.style.borderLeftColor = type === 'error' ? '#ef4444' : '#f97316';
+            
             setTimeout(() => {
                 toast.style.display = 'none';
-            }, 3000);
-        }
-
-        // Show error
-        function showError(message) {
-            const errorBox = document.getElementById('errorBox');
-            errorBox.textContent = message;
-            errorBox.style.display = 'block';
-            setTimeout(() => {
-                errorBox.style.display = 'none';
             }, 5000);
         }
-
-        // Test Paystack connection
-        async function testConnection() {
-            const testBtn = document.getElementById('testBtn');
-            testBtn.disabled = true;
-            testBtn.textContent = '⏳ Testing...';
-            
+        
+        // Load dashboard data from Firebase
+        async function loadDashboardData() {
             try {
-                const isConnected = await paystack.testConnection();
-                if (isConnected) {
-                    showToast('✅ Paystack connection successful!', 'success');
-                } else {
-                    showError('❌ Paystack connection failed. Check your secret key.');
+                if (!db) {
+                    showToast('Firebase not initialized', 'error');
+                    return;
                 }
-            } catch (error) {
-                showError('Connection test failed: ' + error.message);
-            } finally {
-                testBtn.disabled = false;
-                testBtn.textContent = '🔌 Test Connection';
-            }
-        }
-
-        // Load last timestamp from Firebase
-        async function loadLastTimestamp() {
-            try {
-                const doc = await db.collection('system').doc('funding').get();
-                if (doc.exists) {
-                    lastTimestamp = doc.data().lastTimestamp || 0;
-                }
-            } catch (error) {
-                console.error('Error loading timestamp:', error);
-            }
-        }
-
-        // Save timestamp
-        async function saveTimestamp(ts) {
-            try {
-                await db.collection('system').doc('funding').set({
-                    lastTimestamp: ts
-                }, { merge: true });
-            } catch (error) {
-                console.error('Error saving timestamp:', error);
-            }
-        }
-
-        // Load all stored transactions
-        async function loadStoredTransactions() {
-            try {
-                const snapshot = await db.collection('transactions')
-                    .orderBy('date', 'desc')
+                
+                const transactionsSnapshot = await db.collection('transactions')
+                    .orderBy('timestamp', 'desc')
                     .limit(100)
                     .get();
                 
                 const transactions = [];
-                snapshot.forEach(doc => transactions.push({ id: doc.id, ...doc.data() }));
+                transactionsSnapshot.forEach(doc => {
+                    transactions.push({ id: doc.id, ...doc.data() });
+                });
                 
                 updateTables(transactions);
+                updateStats(transactions);
+                
             } catch (error) {
-                console.error('Error loading stored transactions:', error);
-                showError('Failed to load transactions from Firebase');
+                console.error('Error loading dashboard data:', error);
+                showToast('Failed to load dashboard data: ' + error.message, 'error');
             }
         }
-
-        // Update UI tables
+        
+        // Update tables with transaction data
         function updateTables(transactions) {
-            const successList = transactions.filter(t => t.funded === true);
-            const failedList = transactions.filter(t => t.status === 'failed' || t.funded === false);
-
-            // Update stats
-            document.getElementById('totalTx').textContent = transactions.length;
-            document.getElementById('successCount').textContent = successList.length;
-            document.getElementById('failedCount').textContent = failedList.length;
+            const successTable = document.getElementById('successTable');
+            const failedTable = document.getElementById('failedTable');
             
-            const totalFunded = successList.reduce((sum, t) => sum + (t.amount || 0), 0);
-            document.getElementById('totalAmount').textContent = `₦${totalFunded.toLocaleString()}`;
-
-            // Success table
-            const successBody = document.getElementById('successBody');
-            successBody.innerHTML = successList.map(t => `
-                <tr>
-                    <td>${t.email || '—'}</td>
-                    <td class="success">₦${(t.amount || 0).toLocaleString()}</td>
-                    <td>${t.reference || '—'}</td>
-                    <td>${t.date ? new Date(t.date).toLocaleString() : '—'}</td>
-                </tr>
-            `).join('') || '<tr><td colspan="4" style="text-align:center">No successful transactions</td></tr>';
-
-            // Failed table
-            const failedBody = document.getElementById('failedBody');
-            failedBody.innerHTML = failedList.map(t => `
-                <tr>
-                    <td>${t.email || '—'}</td>
-                    <td>₦${(t.amount || 0).toLocaleString()}</td>
-                    <td class="failed">${t.reason || 'Unknown error'}</td>
-                    <td>${t.reference || '—'}</td>
-                    <td>
-                        <button onclick="manualFund('${t.reference}', '${t.email}')" style="padding:5px 10px;font-size:0.9rem">
-                            Manual Fund
-                        </button>
-                    </td>
-                </tr>
-            `).join('') || '<tr><td colspan="5" style="text-align:center">No failed transactions</td></tr>';
+            const successful = transactions.filter(t => t.funded === true);
+            const failed = transactions.filter(t => t.funded === false || t.status === 'failed');
+            
+            // Update success table
+            if (successful.length === 0) {
+                successTable.innerHTML = '<tr><td colspan="4" style="text-align: center;">No successful transactions</td></tr>';
+            } else {
+                successTable.innerHTML = successful.map(t => `
+                    <tr>
+                        <td>${t.email || 'N/A'}</td>
+                        <td class="success">₦${(t.amount || 0).toLocaleString()}</td>
+                        <td>${t.reference || t.paystackTransactionId || 'N/A'}</td>
+                        <td>${t.timestamp ? new Date(t.timestamp.toDate()).toLocaleString() : 'N/A'}</td>
+                    </tr>
+                `).join('');
+            }
+            
+            // Update failed table
+            if (failed.length === 0) {
+                failedTable.innerHTML = '<tr><td colspan="5" style="text-align: center;">No failed transactions</td></tr>';
+            } else {
+                failedTable.innerHTML = failed.map(t => `
+                    <tr>
+                        <td>${t.email || 'N/A'}</td>
+                        <td class="failed">₦${(t.amount || 0).toLocaleString()}</td>
+                        <td>${t.reason || 'Unknown error'}</td>
+                        <td>${t.timestamp ? new Date(t.timestamp.toDate()).toLocaleString() : 'N/A'}</td>
+                        <td>
+                            <button class="action-btn" onclick="manualFund('${t.reference || t.paystackTransactionId}')">
+                                Manual Fund
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
         }
-
-        // Load new transactions from Paystack
-        async function loadTransactions() {
-            const fetchBtn = document.getElementById('fetchBtn');
-            fetchBtn.disabled = true;
-            fetchBtn.textContent = '⏳ Fetching...';
+        
+        // Update statistics
+        function updateStats(transactions) {
+            const total = transactions.length;
+            const successful = transactions.filter(t => t.funded === true).length;
+            const failed = transactions.filter(t => t.funded === false || t.status === 'failed').length;
+            const totalAmount = transactions
+                .filter(t => t.funded === true)
+                .reduce((sum, t) => sum + (t.amount || 0), 0);
             
+            document.getElementById('totalTx').textContent = total;
+            document.getElementById('successfulTx').textContent = successful;
+            document.getElementById('failedTx').textContent = failed;
+            document.getElementById('totalAmount').textContent = `₦${totalAmount.toLocaleString()}`;
+        }
+        
+        // Fetch transactions from Paystack
+        async function fetchPaystackTransactions() {
             try {
-                await loadLastTimestamp();
+                showToast('Fetching transactions from Paystack...', 'info');
                 
-                // Fetch from Paystack
-                const transactions = await paystack.fetchTransactions({
-                    perPage: 50,
-                    status: 'success'
-                });
-
-                if (!transactions || transactions.length === 0) {
-                    showToast('No new transactions found', 'info');
+                if (!window.paystack) {
+                    showToast('pay.js not loaded', 'error');
                     return;
                 }
-
+                
+                const transactions = await paystack.fetchTransactions({ perPage: 50 });
+                
+                if (!transactions || transactions.length === 0) {
+                    showToast('No transactions found', 'info');
+                    return;
+                }
+                
                 let processed = 0;
+                
                 for (const tx of transactions) {
-                    // Skip older transactions
-                    if (tx.paidAt && new Date(tx.paidAt).getTime() <= lastTimestamp) {
+                    // Check if transaction already exists
+                    const existingTx = await db.collection('transactions')
+                        .where('reference', '==', tx.reference)
+                        .get();
+                    
+                    if (!existingTx.empty) {
+                        console.log('Transaction already exists:', tx.reference);
                         continue;
                     }
-
-                    // Check if already exists
-                    const existing = await db.collection('transactions').doc(tx.reference).get();
-                    if (existing.exists) continue;
-
+                    
                     // Process the transaction
-                    await processTransaction(tx);
-                    processed++;
+                    const result = await processTransaction(tx);
+                    if (result) processed++;
                 }
-
-                showToast(`✅ Processed ${processed} new transactions`, 'success');
-                await loadStoredTransactions();
-
+                
+                showToast(`Processed ${processed} new transactions`, 'success');
+                await loadDashboardData();
+                
             } catch (error) {
-                console.error('Error loading transactions:', error);
-                showError('Failed to load transactions: ' + error.message);
-            } finally {
-                fetchBtn.disabled = false;
-                fetchBtn.textContent = '📥 Fetch New Transactions';
+                console.error('Error fetching transactions:', error);
+                showToast('Failed to fetch transactions: ' + error.message, 'error');
             }
         }
-
-        // Process single transaction
+        
+        // Process a single transaction
         async function processTransaction(tx) {
             try {
-                // Verify with Paystack
-                const verified = await paystack.verifyTransaction(tx.reference);
+                // Validate transaction
+                if (tx.status !== 'success') {
+                    await saveFailedTransaction(tx, 'Transaction not successful');
+                    return false;
+                }
                 
-                if (!verified.status || !verified.data) {
-                    await storeFailedTx(tx, 'Verification failed');
-                    return;
+                if (!tx.customer?.email) {
+                    await saveFailedTransaction(tx, 'Missing customer email');
+                    return false;
                 }
-
-                const txData = verified.data;
                 
-                // Validate
-                if (txData.status !== 'success') {
-                    await storeFailedTx(tx, 'Transaction not successful');
-                    return;
+                if (!tx.amount || tx.amount <= 0) {
+                    await saveFailedTransaction(tx, 'Invalid amount');
+                    return false;
                 }
-
-                const email = txData.customer?.email;
-                if (!email) {
-                    await storeFailedTx(tx, 'Missing email');
-                    return;
+                
+                // Find user by email
+                const usersRef = db.collection('users');
+                const userSnapshot = await usersRef.where('email', '==', tx.customer.email).get();
+                
+                if (userSnapshot.empty) {
+                    await saveFailedTransaction(tx, 'User not found in Firebase');
+                    return false;
                 }
-
-                const amount = txData.amount / 100; // Convert from kobo
-                if (!amount || amount <= 0) {
-                    await storeFailedTx(tx, 'Invalid amount');
-                    return;
-                }
-
-                // Find user
-                const userSnap = await db.collection('users').where('email', '==', email).get();
-                if (userSnap.empty) {
-                    await storeFailedTx(tx, 'User not found');
-                    return;
-                }
-
-                const userDoc = userSnap.docs[0];
-
-                // Fund wallet
-                await db.runTransaction(async (transaction) => {
-                    const userRef = db.collection('users').doc(userDoc.id);
-                    const userData = await transaction.get(userRef);
-                    const currentBalance = userData.data()?.walletBalance || 0;
-
-                    transaction.update(userRef, {
-                        walletBalance: currentBalance + amount
-                    });
-
-                    transaction.set(db.collection('transactions').doc(tx.reference), {
-                        email: email,
-                        amount: amount,
-                        reference: tx.reference,
-                        date: Date.now(),
-                        funded: true,
-                        status: 'success'
-                    });
+                
+                const userDoc = userSnapshot.docs[0];
+                const userData = userDoc.data();
+                const amountNaira = tx.amount / 100;
+                
+                // Update user wallet and save transaction in a batch
+                const batch = db.batch();
+                
+                // Update user wallet
+                const userRef = db.collection('users').doc(userDoc.id);
+                batch.update(userRef, {
+                    walletBalance: (userData.walletBalance || 0) + amountNaira,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-
-                // Update timestamp if needed
-                if (txData.paidAt) {
-                    const ts = new Date(txData.paidAt).getTime();
-                    if (ts > lastTimestamp) {
-                        lastTimestamp = ts;
-                        await saveTimestamp(ts);
-                    }
-                }
-
-                console.log(`✅ Funded ${email} ₦${amount}`);
-
-            } catch (error) {
-                console.error('Process error:', error);
-                await storeFailedTx(tx, error.message);
-            }
-        }
-
-        // Store failed transaction
-        async function storeFailedTx(tx, reason) {
-            try {
-                await db.collection('transactions').doc(tx.reference).set({
-                    email: tx.customer?.email || 'unknown',
-                    amount: (tx.amount || 0) / 100,
+                
+                // Save transaction record
+                const txRef = db.collection('transactions').doc();
+                batch.set(txRef, {
                     reference: tx.reference,
-                    date: Date.now(),
-                    funded: false,
-                    status: 'failed',
-                    reason: reason
-                }, { merge: true });
-            } catch (error) {
-                console.error('Error storing failed tx:', error);
-            }
-        }
-
-        // Manual fund
-        async function manualFund(reference, email) {
-            if (!reference) {
-                showError('Invalid reference');
-                return;
-            }
-
-            try {
-                showToast('Processing manual fund...', 'info');
-                
-                const verified = await paystack.verifyTransaction(reference);
-                
-                if (!verified.status || !verified.data) {
-                    showError('Verification failed');
-                    return;
-                }
-
-                const txData = verified.data;
-                const amount = txData.amount / 100;
-
-                // Find user
-                const userSnap = await db.collection('users').where('email', '==', email).get();
-                if (userSnap.empty) {
-                    showError('User not found');
-                    return;
-                }
-
-                const userDoc = userSnap.docs[0];
-
-                // Fund wallet
-                await db.runTransaction(async (transaction) => {
-                    const userRef = db.collection('users').doc(userDoc.id);
-                    const userData = await transaction.get(userRef);
-                    const currentBalance = userData.data()?.walletBalance || 0;
-
-                    transaction.update(userRef, {
-                        walletBalance: currentBalance + amount
-                    });
-
-                    transaction.set(db.collection('transactions').doc(reference), {
-                        email: email,
-                        amount: amount,
-                        reference: reference,
-                        date: Date.now(),
-                        funded: true,
-                        status: 'success',
-                        reason: 'Manually funded'
-                    }, { merge: true });
+                    email: tx.customer.email,
+                    amount: amountNaira,
+                    status: 'success',
+                    funded: true,
+                    reason: 'Auto-funded from Paystack',
+                    paystackData: tx,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
-
-                showToast(`✅ Funded ₦${amount}`, 'success');
-                await loadStoredTransactions();
-
+                
+                await batch.commit();
+                
+                showToast(`✅ Funded ${tx.customer.email}: ₦${amountNaira}`, 'success');
+                return true;
+                
             } catch (error) {
-                console.error('Manual fund error:', error);
-                showError('Manual fund failed: ' + error.message);
+                console.error('Error processing transaction:', error);
+                await saveFailedTransaction(tx, 'Processing error: ' + error.message);
+                return false;
             }
         }
-
-        // Retry all failed
-        async function retryAllFailed() {
-            const retryBtn = document.getElementById('retryBtn');
-            retryBtn.disabled = true;
-            retryBtn.textContent = '⏳ Processing...';
-            
+        
+        // Save failed transaction
+        async function saveFailedTransaction(tx, reason) {
             try {
-                const snapshot = await db.collection('transactions')
+                await db.collection('transactions').add({
+                    reference: tx.reference || 'unknown',
+                    email: tx.customer?.email || 'unknown',
+                    amount: tx.amount ? tx.amount / 100 : 0,
+                    status: 'failed',
+                    funded: false,
+                    reason: reason,
+                    paystackData: tx,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (error) {
+                console.error('Error saving failed transaction:', error);
+            }
+        }
+        
+        // Manual fund a transaction
+        async function manualFund(reference) {
+            try {
+                showToast('Processing manual funding...', 'info');
+                
+                if (!reference) {
+                    showToast('Invalid transaction reference', 'error');
+                    return;
+                }
+                
+                // Verify with Paystack
+                const verification = await paystack.verifyTransaction(reference);
+                
+                if (!verification.status || verification.data.status !== 'success') {
+                    showToast('Transaction verification failed', 'error');
+                    return;
+                }
+                
+                const tx = verification.data;
+                
+                // Find user
+                const userSnapshot = await db.collection('users')
+                    .where('email', '==', tx.customer.email)
+                    .get();
+                
+                if (userSnapshot.empty) {
+                    showToast('User not found', 'error');
+                    return;
+                }
+                
+                const userDoc = userSnapshot.docs[0];
+                const userData = userDoc.data();
+                const amountNaira = tx.amount / 100;
+                
+                // Update in a batch
+                const batch = db.batch();
+                
+                batch.update(db.collection('users').doc(userDoc.id), {
+                    walletBalance: (userData.walletBalance || 0) + amountNaira
+                });
+                
+                batch.update(db.collection('transactions').doc(reference), {
+                    funded: true,
+                    status: 'success',
+                    reason: 'Manually funded'
+                });
+                
+                await batch.commit();
+                
+                showToast(`✅ Manually funded: ₦${amountNaira}`, 'success');
+                await loadDashboardData();
+                
+            } catch (error) {
+                console.error('Manual funding error:', error);
+                showToast('Manual funding failed: ' + error.message, 'error');
+            }
+        }
+        
+        // Retry all failed transactions
+        async function retryAllFailed() {
+            try {
+                const failedSnapshot = await db.collection('transactions')
                     .where('funded', '==', false)
                     .limit(50)
                     .get();
-
-                if (snapshot.empty) {
-                    showToast('No failed transactions', 'info');
+                
+                if (failedSnapshot.empty) {
+                    showToast('No failed transactions to retry', 'info');
                     return;
                 }
-
+                
+                showToast(`Retrying ${failedSnapshot.size} transactions...`, 'info');
+                
                 let retried = 0;
-                for (const doc of snapshot.docs) {
-                    const data = doc.data();
-                    if (data.reference) {
-                        await manualFund(data.reference, data.email);
+                
+                for (const doc of failedSnapshot.docs) {
+                    const tx = doc.data();
+                    if (tx.reference) {
+                        await manualFund(tx.reference);
                         retried++;
                     }
                 }
-
+                
                 showToast(`Retried ${retried} transactions`, 'success');
-                await loadStoredTransactions();
-
+                await loadDashboardData();
+                
             } catch (error) {
-                console.error('Retry error:', error);
-                showError('Failed to retry transactions');
-            } finally {
-                retryBtn.disabled = false;
-                retryBtn.textContent = '🔄 Auto Fund Failed';
+                console.error('Error retrying failed:', error);
+                showToast('Failed to retry: ' + error.message, 'error');
             }
         }
-
-        // Refresh view
-        async function refreshView() {
-            await loadStoredTransactions();
-            showToast('View refreshed', 'success');
-        }
-
-        // Initialize
-        loadStoredTransactions();
-
-        // Make functions global
-        window.loadTransactions = loadTransactions;
+        
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', loadDashboardData);
+        
+        // Make functions global for button clicks
+        window.fetchPaystackTransactions = fetchPaystackTransactions;
         window.retryAllFailed = retryAllFailed;
-        window.refreshView = refreshView;
+        window.loadDashboardData = loadDashboardData;
         window.manualFund = manualFund;
-        window.testConnection = testConnection;
+        
     </script>
 </body>
 </html>
